@@ -1,0 +1,652 @@
+﻿# CURSOR RULES - Monero Marketplace Tor v2.0
+# Updated: 2024-12 (avec suggestions utilisateur)
+# Classification: STRICT - Zero Security Theater
+
+project_type: "monero-escrow-marketplace"
+deployment_target: "tor-hidden-service-production"
+quality_level: "production-ready-only"
+security_theater: "FORBIDDEN"
+
+# ============================================
+# SECTION 1: AUTOMATION & VERIFICATION
+# ============================================
+
+cursor_automation:
+  pre_code_generation:
+    enabled: true
+    
+    checks:
+      - name: "spec_exists"
+        script: |
+          # Vérifier que la spec existe
+          $functionName = $env:FUNCTION_NAME
+          $specPath = "docs/specs/$functionName.md"
+          
+          if (-not (Test-Path $specPath)) {
+              Write-Host " STOP - Spec manquante" -ForegroundColor Red
+              Write-Host "Crée d'abord: $specPath" -ForegroundColor Yellow
+              Write-Host "Utilise: .\scripts\new-spec.ps1 $functionName" -ForegroundColor Cyan
+              throw "Spec manquante pour $functionName"
+          }
+        blocking: true
+      
+      - name: "monero_running"
+        script: |
+          # Vérifier que Monero RPC est accessible
+          try {
+              $response = Invoke-RestMethod 
+                -Uri "http://127.0.0.1:18082/json_rpc" 
+                -Method Post 
+                -ContentType "application/json" 
+                -Body '{"jsonrpc":"2.0","id":"0","method":"get_version"}' 
+                -TimeoutSec 5
+              
+              Write-Host " Monero RPC accessible (v$($response.result.version))" -ForegroundColor Green
+          } catch {
+              Write-Host " WARNING - Monero RPC non accessible" -ForegroundColor Yellow
+              Write-Host "Lance: .\scripts\start-testnet.ps1" -ForegroundColor Cyan
+          }
+        blocking: false
+      
+      - name: "cargo_check"
+        script: |
+          # Vérifier que le projet compile
+          $result = cargo check 2>&1
+          if ($LASTEXITCODE -ne 0) {
+              Write-Host " STOP - Projet ne compile pas" -ForegroundColor Red
+              Write-Host $result
+              throw "Fix compilation errors first"
+          }
+        blocking: true
+  
+  post_code_generation:
+    enabled: true
+    
+    actions:
+      - name: "auto_format"
+        script: "cargo fmt"
+        
+      - name: "clippy_check"
+        script: |
+          cargo clippy -- -D warnings 2>&1
+          if ($LASTEXITCODE -ne 0) {
+              Write-Host " Clippy warnings detected" -ForegroundColor Yellow
+          }
+      
+      - name: "update_metrics"
+        script: ".\scripts\update-metrics.ps1"
+
+# ============================================
+# SECTION 2: TEMPLATES PRÊTS À L'EMPLOI
+# ============================================
+
+templates:
+  spec_template: |
+    ## Spec: {function_name}
+    
+    ### Objectif
+    [Décrire en 1 ligne ce que fait cette fonction]
+    
+    ### Préconditions
+    - [ ] monero-wallet-rpc tourne sur localhost:18082
+    - [ ] Wallet ouvert et déverrouillé
+    - [ ] [Autres préconditions spécifiques]
+    
+    ### Input
+    `
+ust
+    // Types exacts des paramètres
+    param1: Type1,
+    param2: Type2,
+    `
+    
+    ### Output
+    `
+ust
+    Result<ReturnType, ErrorType>
+    `
+    
+    ### Erreurs Possibles
+    - ErrorType::Variant1 - [Quand ça arrive]
+    - ErrorType::Variant2 - [Quand ça arrive]
+    
+    ### Dépendances
+    `	oml
+    [dependencies]
+    dep1 = "version"
+    `
+    
+    ### Test de Validation (PowerShell)
+    `powershell
+    # Setup
+    .\scripts\start-testnet.ps1
+    
+    # Test manuel
+    Invoke-RestMethod -Uri "http://127.0.0.1:18082/json_rpc" 
+      -Method Post -ContentType "application/json" 
+      -Body '{"jsonrpc":"2.0","id":"0","method":"{rpc_method}"}'
+    
+    # Expected output:
+    # result : @{...}
+    `
+    
+    ### Estimation
+    - Code: XX min
+    - Test: XX min
+    - Total: XX min
+    
+    ### Status
+    - [ ] Spec validée
+    - [ ] Code écrit
+    - [ ] Tests passent
+    - [ ] Reality check fait
+
+# ============================================
+# SECTION 3: MÉTRIQUES DE QUALITÉ
+# ============================================
+
+metrics:
+  enabled: true
+  
+  track_per_commit:
+    lines_of_code:
+      command: |
+        $rust = (Get-ChildItem -Recurse -Include *.rs | Get-Content | Measure-Object -Line).Lines
+        Write-Host "Rust LOC: $rust"
+      
+      thresholds:
+        warning: 5000
+        error: 10000
+    
+    unwrap_count:
+      command: |
+        $unwraps = Select-String -Path "*/src/*.rs" -Pattern "\.unwrap\(\)" | Measure-Object | Select-Object -ExpandProperty Count
+        Write-Host "Unwraps trouvés: $unwraps"
+      
+      thresholds:
+        warning: 5
+        error: 10
+    
+    todo_count:
+      command: |
+        $todos = Select-String -Path "*/src/*.rs" -Pattern "TODO|FIXME" | Measure-Object | Select-Object -ExpandProperty Count
+        Write-Host "TODOs: $todos"
+      
+      thresholds:
+        warning: 10
+        error: 20
+
+# ============================================
+# SECTION 4: RÈGLES MONERO SPÉCIFIQUES
+# ============================================
+
+monero_rules:
+  rpc_calls:
+    always_check:
+      - "monero-wallet-rpc tourne sur localhost:18082"
+      - "Wallet ouvert et déverrouillé"
+      - "Daemon testnet synchronisé"
+    
+    error_handling:
+      required: true
+      must_handle:
+        - "Connection refused (RPC down)"
+        - "Wallet locked"
+        - "Wallet busy"
+        - "Invalid state (déjà multisig)"
+        - "Timeout (>30s)"
+      
+      forbidden:
+        - ".unwrap()" # sans message d'erreur
+        - ".expect()" # idem
+      
+      allowed:
+        - ".context('message clair')?"
+        - "match result { Ok(..) => .., Err(e) => .. }"
+  
+  multisig_flow:
+    strict_order: true
+    steps:
+      1: "prepare_multisig"
+      2: "make_multisig (avec 2 autres infos)"
+      3: "export_multisig_info"
+      4: "import_multisig_info (2 autres exports)"
+      5: "Répéter 3-4 (oui, vraiment)"
+      6: "Vérifier is_multisig()"
+
+# ============================================
+# SECTION 5: RÈGLES RUST PRODUCTION
+# ============================================
+
+rust_rules:
+  dependencies:
+    allowed_only:
+      tokio:
+        version: "1.35"
+        features: ["full"]
+        reason: "Async runtime standard"
+      
+      reqwest:
+        version: "0.11"
+        features: ["json"]
+        reason: "HTTP client pour Monero RPC"
+      
+      serde:
+        version: "1.0"
+        features: ["derive"]
+        reason: "Serialization"
+      
+      serde_json:
+        version: "1.0"
+        reason: "JSON parsing"
+      
+      anyhow:
+        version: "1.0"
+        reason: "Error handling"
+      
+      thiserror:
+        version: "1.0"
+        reason: "Custom errors"
+  
+  error_handling:
+    mandatory: true
+    pattern: |
+      //  TOUJOURS utiliser Result<T, E>
+      pub async fn my_function() -> Result<ReturnType, MyError> {
+          let value = risky_call()
+              .await
+              .context("Message clair de ce qui a échoué")?;
+          
+          Ok(value)
+      }
+      
+      //  JAMAIS
+      pub async fn my_function() -> ReturnType {
+          let value = risky_call().await.unwrap(); // INTERDIT
+          value
+      }
+
+# ============================================
+# SECTION 6: INTERDICTIONS ABSOLUES
+# ============================================
+
+forbidden_patterns:
+  code:
+    - pattern: "\.unwrap\(\)"
+      severity: "ERROR"
+      message: "Utilise .context('message')? ou match"
+    
+    - pattern: "\.expect\(\"[^\"]*\"\)"
+      severity: "ERROR"
+      message: "Utilise proper error handling"
+    
+    - pattern: "panic!\("
+      severity: "ERROR"
+      message: "Retourne Result<T, E> au lieu de panic"
+    
+    - pattern: "println!\("
+      severity: "WARNING"
+      message: "Utilise tracing::info! ou tracing::debug!"
+  
+  comments:
+    - pattern: "should work"
+      severity: "ERROR"
+      message: "Teste-le. Pas de suppositions."
+    
+    - pattern: "TODO: test"
+      severity: "ERROR"
+      message: "Écris le test MAINTENANT, pas plus tard"
+
+# ============================================
+# SECTION 7: ENFORCEMENT
+# ============================================
+
+enforcement:
+  level: "STRICT"
+  
+  on_code_generation:
+    checks:
+      - "Spec existe (docs/specs/)"
+      - " 100 lignes par fonction"
+      - "Pas de unwrap/expect"
+      - "Error handling présent"
+      - "Commentaire HYPOTHÈSES"
+    
+    block_if_missing: true
+  
+  on_file_save:
+    run:
+      - "cargo fmt"
+      - "cargo clippy -- -D warnings"
+  
+  on_commit:
+    run:
+      - "cargo test"
+      - "scripts/test-rpc.ps1"
+    
+    block_if_fail: true
+
+# ============================================
+# SECTION 8: QUICK START
+# ============================================
+
+quick_start:
+  new_developer:
+    steps:
+      - step: 1
+        name: "Setup Monero"
+        command: ".\scripts\setup-monero.ps1"
+        
+      - step: 2
+        name: "Start Testnet"
+        command: ".\scripts\start-testnet.ps1"
+        
+      - step: 3
+        name: "Create Spec"
+        command: ".\scripts\new-spec.ps1 my_function"
+        
+      - step: 4
+        name: "Write Code"
+        note: "Cursor va te guider"
+        
+      - step: 5
+        name: "Reality Check"
+        command: ".\scripts\reality-check.ps1 my_function"
+        
+      - step: 6
+        name: "Commit"
+        command: ".\scripts\pre-commit.ps1 && git commit"
+
+# ============================================
+# SECTION 9: TOR-SPECIFIC REALITY CHECKS
+# ============================================
+
+tor_reality_checks:
+  enabled: true
+  mandatory_for_production: true
+  
+  trigger:
+    on_function_generation: true
+    on_network_code: true  # Tout code faisant des requêtes réseau
+    on_monero_rpc: true
+  
+  workflow:
+    step_1:
+      name: "Détecter code Tor-sensible"
+      patterns:
+        - "reqwest::"
+        - "curl"
+        - "http://"
+        - "https://"
+        - ".onion"
+        - "monero-wallet-rpc"
+        - "SocksProxy"
+      
+      on_match:
+        message: |
+          🧅 CODE TOR-SENSIBLE DÉTECTÉ
+          
+          Cette fonction fait des appels réseau ou utilise Monero RPC.
+          Reality Check Tor OBLIGATOIRE.
+    
+    step_2:
+      name: "Générer Reality Check Tor"
+      script: ".\scripts\auto-reality-check-tor.ps1 {function_name}"
+      blocking: true
+    
+    step_3:
+      name: "Exécuter Tests Automatiques"
+      tests:
+        - "Tor daemon running"
+        - "IP leak check"
+        - "Monero RPC isolation"
+        - "Port exposure check"
+        - "Logs audit"
+      
+      on_failure:
+        block_commit: true
+        message: |
+          ⛔ TESTS TOR AUTOMATIQUES ÉCHOUÉS
+          
+          Fixes requis avant commit.
+          Voir: docs/reality-checks/tor-{function_name}-{date}.md
+    
+    step_4:
+      name: "Compléter Tests Manuels"
+      checklist:
+        - "DNS leak test"
+        - "Fingerprinting test"
+        - "Hidden service test (si applicable)"
+        - "Traffic analysis check"
+      
+      prompt: |
+        ⏸️ TESTS MANUELS REQUIS
+        
+        Complète les tests manuels dans le reality check.
+        Tape "tor tests done" pour continuer.
+      
+      wait_for: "tor tests done"
+    
+    step_5:
+      name: "Validation Finale"
+      script: ".\scripts\validate-reality-check-tor.ps1 {function_name}"
+      blocking: true
+      
+      on_validation_fail:
+        prevent_merge: true
+        message: "❌ Reality Check Tor invalide - ne pas merger"
+
+  critical_checks:
+    # Ces checks DOIVENT passer pour merge en production
+    mandatory:
+      - name: "No IP leaks"
+        test: "curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org/api/ip"
+        expected: '{"IsTor":true}'
+        
+      - name: "RPC isolated"
+        test: "netstat -an | Select-String '18082'"
+        expected: "127.0.0.1:18082"
+        not_expected: "0.0.0.0:18082"
+        
+      - name: "No .onion in logs"
+        test: "Select-String -Path 'logs/*.log' -Pattern '\\.onion' -CaseSensitive"
+        expected: "No matches found"
+        
+      - name: "No credentials in logs"
+        test: "Select-String -Path 'logs/*.log' -Pattern 'password|view_key|spend_key' -CaseSensitive"
+        expected: "No matches found"
+  
+  opsec_guidelines:
+    never_log:
+      - ".onion addresses"
+      - "View keys"
+      - "Spend keys"
+      - "Passwords"
+      - "Real IP addresses"
+      - "User-Agent strings"
+    
+    always_use:
+      - "SOCKS5 proxy (127.0.0.1:9050)"
+      - "Generic User-Agent"
+      - "UTC timezone"
+      - "Rounded timestamps"
+    
+    never_expose:
+      - "Monero RPC on 0.0.0.0"
+      - "Real identity metadata"
+      - "Circuit information"
+      - "Node fingerprints"
+
+  threat_model:
+    adversaries:
+      - name: "ISP / Network Surveillance"
+        capabilities:
+          - "Monitor all clearnet traffic"
+          - "Deep packet inspection"
+          - "Timing correlation"
+        
+        mitigations:
+          - "Route all traffic via Tor"
+          - "Use bridges if Tor blocked"
+          - "Add random delays"
+      
+      - name: "Exit Node Operator"
+        capabilities:
+          - "Read unencrypted exit traffic"
+          - "MITM attacks"
+        
+        mitigations:
+          - "Use .onion services (no exit)"
+          - "HTTPS for clearnet"
+          - "Verify certificates"
+      
+      - name: "Blockchain Analysis"
+        capabilities:
+          - "Link Monero transactions"
+          - "Timing analysis"
+          - "Amount correlation"
+        
+        mitigations:
+          - "Use Monero over Tor"
+          - "Churn outputs"
+          - "Random transaction delays"
+      
+      - name: "Global Passive Adversary"
+        capabilities:
+          - "Monitor all internet traffic"
+          - "Traffic correlation attacks"
+          - "Timing analysis"
+        
+        mitigations:
+          - "Multiple Tor circuits"
+          - "Dummy traffic"
+          - "Long-lived connections"
+          - "Note: Perfect protection impossible"
+
+# ============================================
+# SECTION 10: CURSOR ASSISTANT INSTRUCTIONS - TOR MODE
+# ============================================
+
+cursor_tor_mode:
+  enabled: true
+  
+  when_generating_network_code:
+    always_remind: |
+      🧅 TOR MODE ACTIVÉ
+      
+      Ce code fait des appels réseau. Rappels OPSEC:
+      
+      1. ✅ Utilise SOCKS5 proxy (127.0.0.1:9050)
+      2. ✅ Generic User-Agent
+      3. ✅ Handle timeouts (Tor = lent)
+      4. ✅ Pas de fallback clearnet
+      5. ✅ Log uniquement metadata (pas IPs/domains)
+      
+      Reality Check Tor sera automatiquement généré après.
+  
+  when_generating_monero_code:
+    always_remind: |
+      💰 MONERO + TOR
+      
+      Rappels critiques:
+      
+      1. ⛔ RPC bind UNIQUEMENT sur 127.0.0.1
+      2. ⛔ JAMAIS log de view/spend keys
+      3. ⛔ JAMAIS expose wallet RPC publiquement
+      4. ✅ Monero daemon via Tor (si remote)
+      5. ✅ Multisig info échangée via Tor .onion
+      
+      Reality Check Tor + audit automatique seront faits.
+  
+  forbidden_patterns_tor:
+    - pattern: 'reqwest::get\("http[^"]*"\)'
+      without: ".socks5_proxy"
+      message: "❌ Requête HTTP sans proxy Tor - utilise .socks5_proxy()"
+    
+    - pattern: "--rpc-bind-ip 0.0.0.0"
+      message: "❌ DANGER - RPC exposé publiquement! Utilise 127.0.0.1"
+    
+    - pattern: 'log.*\.onion'
+      message: "❌ Ne log JAMAIS d'adresses .onion"
+    
+    - pattern: 'log.*view_key|spend_key|password'
+      message: "❌ Ne log JAMAIS de credentials"
+    
+    - pattern: 'std::net::TcpStream::connect'
+      without: "via Tor proxy"
+      message: "⚠️ Connexion TCP directe - bypass Tor? Utilise SOCKS5 proxy"
+
+  code_templates_tor:
+    http_request_via_tor: |
+      use reqwest::Proxy;
+      
+      async fn fetch_via_tor(url: &str) -> Result<String> {
+          let proxy = Proxy::all("socks5h://127.0.0.1:9050")
+              .context("Échec configuration proxy Tor")?;
+          
+          let client = reqwest::Client::builder()
+              .proxy(proxy)
+              .user_agent("Mozilla/5.0 (Windows NT 10.0; rv:102.0) Gecko/20100101 Firefox/102.0")
+              .timeout(Duration::from_secs(30))  // Tor = lent
+              .build()
+              .context("Échec création client")?;
+          
+          let response = client.get(url)
+              .send()
+              .await
+              .context("Échec requête via Tor")?;
+          
+          // OPSEC: Ne log PAS l'URL (peut contenir .onion)
+          tracing::debug!("Requête Tor réussie");
+          
+          response.text().await.context("Échec lecture réponse")
+      }
+    
+    monero_rpc_isolated: |
+      use std::net::{IpAddr, Ipv4Addr};
+      
+      async fn start_wallet_rpc() -> Result<Child> {
+          let process = Command::new("monero-wallet-rpc")
+              .args(&[
+                  "--testnet",
+                  "--wallet-file", "buyer",
+                  "--password", "",
+                  "--rpc-bind-ip", "127.0.0.1",  // ⚠️ CRUCIAL - localhost ONLY
+                  "--rpc-bind-port", "18082",
+                  "--disable-rpc-login",
+                  "--daemon-address", "127.0.0.1:28081",  // Daemon local ou via Tor
+              ])
+              .stdout(Stdio::null())
+              .stderr(Stdio::null())
+              .spawn()
+              .context("Échec lancement wallet RPC")?;
+          
+          // OPSEC: Vérifier que RPC n'est PAS exposé publiquement
+          tokio::time::sleep(Duration::from_secs(5)).await;
+          verify_rpc_isolated().await?;
+          
+          Ok(process)
+      }
+      
+      async fn verify_rpc_isolated() -> Result<()> {
+          // Vérifier que port 18082 écoute SEULEMENT sur localhost
+          let output = Command::new("netstat")
+              .args(&["-an"])
+              .output()
+              .context("Échec netstat")?;
+          
+          let stdout = String::from_utf8_lossy(&output.stdout);
+          
+          if stdout.contains("0.0.0.0:18082") {
+              return Err(anyhow::anyhow!(
+                  "⚠️ DANGER - RPC exposé publiquement sur 0.0.0.0:18082!"
+              ));
+          }
+          
+          if !stdout.contains("127.0.0.1:18082") {
+              return Err(anyhow::anyhow!("RPC non détecté sur localhost"));
+          }
+          
+          tracing::info!("✓ RPC correctement isolé sur localhost");
+          Ok(())
+      }

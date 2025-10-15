@@ -1,0 +1,19 @@
+{
+    "tor_connected":  false,
+    "tor_functions":  0,
+    "network_functions":  4,
+    "timestamp":  "2025-10-15 00:29:34",
+    "rpc_exposed_publicly":  [
+
+                             ],
+    "monero_rpc_running":  false,
+    "security_violations":  0,
+    "tor_daemon_running":  false,
+    "tor_coverage":  25,
+    "onion_refs_in_code":  0,
+    "tor_reality_checks":  1,
+    "onion_refs_in_logs":  0,
+    "date":  "2025-10-15",
+    "functions_without_tor_check":  3,
+    "tor_exit_node":  "N/A"
+}

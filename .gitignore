@@ -1,0 +1,40 @@
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Monero
+/testnet/
+*.wallet
+*.keys
+*.address.txt
+
+# Logs
+*.log
+
+# Metrics (keep structure but ignore data)
+/docs/metrics/daily-*.json
+/docs/metrics/weekly-*.md
+
+# Temporary files
+*.tmp
+*.temp
+
+# Environment
+.env
+.env.local
+
+# Build artifacts
+/dist/
+/build/
