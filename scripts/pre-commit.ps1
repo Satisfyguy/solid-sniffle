@@ -141,8 +141,38 @@ if ($todoCount -eq 0) {
     $errors++
 }
 
-# 8. Mise a jour des metriques
-Write-Host "`n8. Mise a jour des metriques..." -ForegroundColor Yellow
+# 8. Check Security Theatre
+Write-Host "`n8. Checking for security theatre..." -ForegroundColor Yellow
+try {
+    & ".\scripts\check-security-theatre-simple.ps1"
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "   No security theatre detected" -ForegroundColor Green
+    } else {
+        Write-Host "   Security theatre detected!" -ForegroundColor Red
+        $errors++
+    }
+} catch {
+    Write-Host "   Error during security theatre check: $_" -ForegroundColor Red
+    $errors++
+}
+
+# 9. Check Monero/Tor Security
+Write-Host "`n9. Checking Monero/Tor security..." -ForegroundColor Yellow
+try {
+    & ".\scripts\check-monero-tor-final.ps1"
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "   No Monero/Tor security issues detected" -ForegroundColor Green
+    } else {
+        Write-Host "   Monero/Tor security issues detected!" -ForegroundColor Red
+        $errors++
+    }
+} catch {
+    Write-Host "   Error during Monero/Tor security check: $_" -ForegroundColor Red
+    $errors++
+}
+
+# 10. Mise a jour des metriques
+Write-Host "`n10. Mise a jour des metriques..." -ForegroundColor Yellow
 try {
     & ".\scripts\update-metrics.ps1"
     if ($LASTEXITCODE -eq 0) {

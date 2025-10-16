@@ -6,9 +6,10 @@ use clap::{Parser, Subcommand};
 use monero_marketplace_common::{
     error::Result,
     types::MoneroConfig,
+    MONERO_RPC_URL,
 };
 use monero_marketplace_wallet::MoneroClient;
-use tracing::{info, error};
+use tracing::{info, error, warn};
 
 /// Monero Marketplace CLI
 #[derive(Parser)]
@@ -20,7 +21,7 @@ struct Cli {
     command: Commands,
     
     /// Monero RPC URL
-    #[arg(long, default_value = "http://127.0.0.1:18082/json_rpc")]
+    #[arg(long, default_value = MONERO_RPC_URL)]
     rpc_url: String,
     
     /// RPC timeout in seconds
@@ -49,6 +50,9 @@ enum MultisigCommands {
     Prepare,
     /// Make multisig
     Make {
+        /// Threshold (number of signatures required, e.g., 2 for 2-of-3)
+        #[arg(short, long, default_value = "2")]
+        threshold: u32,
         /// Multisig info from other participants
         #[arg(short, long)]
         info: Vec<String>,
@@ -87,67 +91,68 @@ async fn main() -> Result<()> {
         Commands::Status => {
             info!("Getting wallet status...");
             let status = client.get_wallet_status().await?;
-            println!("Wallet Status:");
-            println!("  Multisig: {}", status.is_multisig);
+            info!("Wallet Status:");
+            info!("  Multisig: {}", status.is_multisig);
             if let Some(threshold) = status.multisig_threshold {
                 if let Some(total) = status.multisig_total {
-                    println!("  Threshold: {}/{}", threshold, total);
+                    info!("  Threshold: {}/{}", threshold, total);
                 } else {
-                    println!("  Threshold: {}/?", threshold);
+                    info!("  Threshold: {}/?", threshold);
                 }
             }
-            println!("  Balance: {} XMR", status.balance as f64 / 1e12);
-            println!("  Unlocked: {} XMR", status.unlocked_balance as f64 / 1e12);
+            info!("  Balance: {} XMR", status.balance as f64 / 1e12);
+            info!("  Unlocked: {} XMR", status.unlocked_balance as f64 / 1e12);
         }
         
         Commands::Info => {
             info!("Getting complete wallet information...");
             let wallet_info = client.get_wallet_info().await?;
-            println!("Wallet Information:");
-            println!("  Version: {}", wallet_info.version);
-            println!("  Balance: {} XMR", wallet_info.balance as f64 / 1e12);
-            println!("  Unlocked: {} XMR", wallet_info.unlocked_balance as f64 / 1e12);
-            println!("  Multisig: {}", wallet_info.is_multisig);
+            info!("Wallet Information:");
+            info!("  Version: {}", wallet_info.version);
+            info!("  Balance: {} XMR", wallet_info.balance as f64 / 1e12);
+            info!("  Unlocked: {} XMR", wallet_info.unlocked_balance as f64 / 1e12);
+            info!("  Multisig: {}", wallet_info.is_multisig);
             if let Some(threshold) = wallet_info.multisig_threshold {
                 if let Some(total) = wallet_info.multisig_total {
-                    println!("  Threshold: {}/{}", threshold, total);
+                    info!("  Threshold: {}/{}", threshold, total);
                 } else {
-                    println!("  Threshold: {}/?", threshold);
+                    info!("  Threshold: {}/?", threshold);
                 }
             }
-            println!("  Block Height: {}", wallet_info.block_height);
-            println!("  Daemon Block Height: {}", wallet_info.daemon_block_height);
+            info!("  Block Height: {}", wallet_info.block_height);
+            info!("  Daemon Block Height: {}", wallet_info.daemon_block_height);
         }
         
         Commands::Multisig { command } => {
             match command {
                 MultisigCommands::Prepare => {
                     info!("Preparing multisig...");
-                    let info = client.multisig().prepare_multisig().await?;
-                    println!("Multisig info: {}", info.info);
+                    let result = client.multisig().prepare_multisig().await?;
+                    info!("Multisig info: {}", result.multisig_info);
                 }
                 
-                MultisigCommands::Make { info } => {
-                    info!("Making multisig with {} infos...", info.len());
-                    let result = client.multisig().make_multisig(info).await?;
-                    println!("Multisig info: {}", result.info);
+                MultisigCommands::Make { threshold, info } => {
+                    info!("Making {}-of-{} multisig with {} infos...", threshold, info.len() + 1, info.len());
+                    let result = client.multisig().make_multisig(threshold, info).await?;
+                    info!("Multisig address: {}", result.address);
+                    info!("Multisig info: {}", result.multisig_info);
                 }
                 
                 MultisigCommands::Export => {
                     info!("Exporting multisig info...");
                     let info = client.multisig().export_multisig_info().await?;
-                    println!("Multisig info: {}", info.info);
+                    info!("Multisig info: {}", info.info);
                 }
                 
                 MultisigCommands::Import { info } => {
                     info!("Importing {} multisig infos...", info.len());
                     let outputs = client.multisig().import_multisig_info(info).await?;
-                    println!("Imported multisig info, {} outputs", outputs);
+                    info!("Imported multisig info, {} outputs", outputs);
                 }
                 
                 MultisigCommands::Check => {
                     let is_multisig = client.multisig().is_multisig().await?;
-                    println!("Wallet is multisig: {}", is_multisig);
+                    info!("Wallet is multisig: {}", is_multisig);
                 }
             }
         }
@@ -156,8 +161,8 @@ async fn main() -> Result<()> {
             info!("Testing RPC connection...");
             match client.rpc().get_version().await {
                 Ok(version) => {
-                    println!("✅ RPC connection successful");
-                    println!("Monero version: {}", version);
+                    info!("✅ RPC connection successful");
+                    info!("Monero version: {}", version);
                 }
                 Err(e) => {
                     error!("❌ RPC connection failed: {}", e);

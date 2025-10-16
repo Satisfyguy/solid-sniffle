@@ -5,6 +5,7 @@
 use monero_marketplace_common::{
     error::Result,
     types::MoneroConfig,
+    TEST_RPC_URL,
 };
 use monero_marketplace_wallet::MoneroClient;
 
@@ -78,7 +79,7 @@ async fn test_multisig_operations() -> Result<()> {
 #[tokio::test]
 async fn test_error_handling() {
     let config = MoneroConfig {
-        rpc_url: "http://127.0.0.1:9999/json_rpc".to_string(),
+        rpc_url: TEST_RPC_URL.to_string(),
         timeout_seconds: 1,
         ..Default::default()
     };
@@ -87,7 +88,7 @@ async fn test_error_handling() {
         .expect("Failed to create client for integration test");
     let result = client.get_wallet_info().await;
     
-    // Should fail with network error
+    // Expected to fail with network error (no RPC running)
     assert!(result.is_err());
 }
 

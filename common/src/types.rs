@@ -1,7 +1,7 @@
 //! Common types for Monero Marketplace
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use crate::MONERO_RPC_URL;
 
 /// Monero address type
 pub type MoneroAddress = String;
@@ -131,6 +131,8 @@ impl RpcRequest {
 /// RPC response structure
 #[derive(Debug, Deserialize)]
 pub struct RpcResponse<T> {
+    pub jsonrpc: String,  // Toujours "2.0"
+    pub id: String,       // Match request ID
     pub result: Option<T>,
     pub error: Option<RpcErrorDetails>,
 }
@@ -140,12 +142,33 @@ pub struct RpcResponse<T> {
 pub struct RpcErrorDetails {
     pub code: i32,
     pub message: String,
+    #[serde(default)]
+    pub data: Option<serde_json::Value>,  // Détails additionnels
 }
 
 /// Prepare multisig result
 #[derive(Debug, Deserialize)]
 pub struct PrepareMultisigResult {
     pub multisig_info: String,
+}
+
+/// Make multisig result (step 2/6)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MakeMultisigResult {
+    pub address: String,      // Multisig address (starts with "5" on testnet)
+    pub multisig_info: String, // Info for next step (export/import)
+}
+
+/// Export multisig info result (step 3/6)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExportMultisigInfoResult {
+    pub info: String,  // Multisig info to share with other participants
+}
+
+/// Import multisig info result (step 4/6)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImportMultisigInfoResult {
+    pub n_outputs: u64,  // Number of outputs imported
 }
 
 /// Configuration for Monero RPC
@@ -160,7 +183,7 @@ pub struct MoneroConfig {
 impl Default for MoneroConfig {
     fn default() -> Self {
         Self {
-            rpc_url: "http://127.0.0.1:18082/json_rpc".to_string(),
+            rpc_url: MONERO_RPC_URL.to_string(),
             rpc_user: None,
             rpc_password: None,
             timeout_seconds: 30,

@@ -11,4 +11,3 @@ pub mod tor;
 pub use client::MoneroClient;
 pub use rpc::MoneroRpcClient;
 pub use multisig::MultisigManager;
-pub use tor::check_tor_connection;

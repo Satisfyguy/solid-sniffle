@@ -1,8 +1,8 @@
 //! Multisig functionality for Monero escrow
 
 use monero_marketplace_common::{
-    error::{Error, Result},
-    types::MultisigInfo,
+    error::{Error, Result, MoneroError},
+    types::{MultisigInfo, MakeMultisigResult, ExportMultisigInfoResult, ImportMultisigInfoResult},
 };
 use crate::rpc::MoneroRpcClient;
 
@@ -17,110 +17,212 @@ impl MultisigManager {
         Self { rpc_client }
     }
 
-    /// Prepare multisig (step 1 of multisig creation)
+    /// Prepare multisig (step 1/6 of multisig setup)
+    ///
+    /// Generates multisig info for this wallet that must be shared
+    /// with other participants.
     pub async fn prepare_multisig(&self) -> Result<MultisigInfo> {
-        #[derive(serde::Deserialize)]
-        struct PrepareResponse {
-            multisig_info: String,
-        }
-
-        let response: PrepareResponse = self
-            .rpc_client
-            .call("prepare_multisig", None)
+        self.rpc_client
+            .prepare_multisig()
             .await
-            .context("Failed to prepare multisig")?;
-
-        Ok(MultisigInfo {
-            info: response.multisig_info,
-        })
+            .map_err(|e| match e {
+                MoneroError::RpcUnreachable => Error::MoneroRpc("RPC unreachable".to_string()),
+                MoneroError::AlreadyMultisig => Error::Multisig("Already in multisig mode".to_string()),
+                MoneroError::NotMultisig => Error::Multisig("Not in multisig mode".to_string()),
+                MoneroError::WalletLocked => Error::Wallet("Wallet locked".to_string()),
+                MoneroError::ValidationError(msg) => Error::InvalidInput(msg),
+                MoneroError::InvalidResponse(msg) => Error::MoneroRpc(format!("Invalid response: {}", msg)),
+                MoneroError::NetworkError(msg) => Error::Internal(format!("Network error: {}", msg)),
+                MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
+                MoneroError::WalletBusy => Error::Wallet("Wallet busy".to_string()),
+            })
     }
 
-    /// Make multisig (step 2 of multisig creation)
-    pub async fn make_multisig(&self, multisig_infos: Vec<String>) -> Result<MultisigInfo> {
-        if multisig_infos.len() != 2 {
-            return Err(Error::Multisig(
-                "make_multisig requires exactly 2 multisig infos".to_string(),
-            ));
-        }
-
-        #[derive(serde::Deserialize)]
-        struct MakeResponse {
-            multisig_info: String,
-        }
-
-        let params = serde_json::json!({
-            "multisig_info": multisig_infos
-        });
-
-        let response: MakeResponse = self
-            .rpc_client
-            .call("make_multisig", Some(params))
+    /// Make multisig (step 2/6 of multisig setup)
+    ///
+    /// Creates a 2-of-3 multisig wallet by combining multisig info
+    /// from all participants.
+    ///
+    /// # Arguments
+    /// * `threshold` - Number of signatures required (2 for 2-of-3)
+    /// * `multisig_infos` - Vec of multisig_info from other participants
+    ///
+    /// # Returns
+    /// MakeMultisigResult containing:
+    /// - `address`: Shared multisig address
+    /// - `multisig_info`: Info for next step (export/import)
+    pub async fn make_multisig(
+        &self,
+        threshold: u32,
+        multisig_infos: Vec<String>,
+    ) -> Result<MakeMultisigResult> {
+        self.rpc_client
+            .make_multisig(threshold, multisig_infos)
             .await
-            .context("Failed to make multisig")?;
-
-        Ok(MultisigInfo {
-            info: response.multisig_info,
-        })
+            .map_err(|e| match e {
+                MoneroError::RpcUnreachable => Error::MoneroRpc("RPC unreachable".to_string()),
+                MoneroError::AlreadyMultisig => Error::Multisig("Already in multisig mode".to_string()),
+                MoneroError::NotMultisig => Error::Multisig("Not in multisig mode".to_string()),
+                MoneroError::WalletLocked => Error::Wallet("Wallet locked".to_string()),
+                MoneroError::WalletBusy => Error::Wallet("Wallet busy".to_string()),
+                MoneroError::ValidationError(msg) => Error::InvalidInput(msg),
+                MoneroError::InvalidResponse(msg) => Error::MoneroRpc(format!("Invalid response: {}", msg)),
+                MoneroError::NetworkError(msg) => Error::Internal(format!("Network error: {}", msg)),
+                MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
+            })
     }
 
-    /// Export multisig info
-    pub async fn export_multisig_info(&self) -> Result<MultisigInfo> {
-        #[derive(serde::Deserialize)]
-        struct ExportResponse {
-            info: String,
-        }
-
-        let response: ExportResponse = self
-            .rpc_client
-            .call("export_multisig_info", None)
+    /// Export multisig info (step 3/6 of multisig setup)
+    ///
+    /// Exporte les informations de synchronisation du wallet.
+    /// Cette fonction doit être appelée DEUX fois:
+    /// - Round 1: Après make_multisig
+    /// - Round 2: Après premier import_multisig_info
+    ///
+    /// # Returns
+    /// ExportMultisigInfoResult containing the info to share with other participants
+    pub async fn export_multisig_info(&self) -> Result<ExportMultisigInfoResult> {
+        self.rpc_client
+            .export_multisig_info()
             .await
-            .context("Failed to export multisig info")?;
-
-        Ok(MultisigInfo {
-            info: response.info,
-        })
+            .map_err(|e| match e {
+                MoneroError::RpcUnreachable => Error::MoneroRpc("RPC unreachable".to_string()),
+                MoneroError::NotMultisig => Error::Multisig("Not in multisig mode".to_string()),
+                MoneroError::WalletLocked => Error::Wallet("Wallet locked".to_string()),
+                MoneroError::WalletBusy => Error::Wallet("Wallet busy".to_string()),
+                MoneroError::ValidationError(msg) => Error::InvalidInput(msg),
+                MoneroError::InvalidResponse(msg) => Error::MoneroRpc(format!("Invalid response: {}", msg)),
+                MoneroError::NetworkError(msg) => Error::Internal(format!("Network error: {}", msg)),
+                MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
+                MoneroError::AlreadyMultisig => Error::Multisig("Already in multisig mode".to_string()),
+            })
     }
 
-    /// Import multisig info
-    pub async fn import_multisig_info(&self, multisig_infos: Vec<String>) -> Result<u32> {
-        #[derive(serde::Deserialize)]
-        struct ImportResponse {
-            n_outputs: u32,
-        }
-
-        let params = serde_json::json!({
-            "info": multisig_infos
-        });
-
-        let response: ImportResponse = self
-            .rpc_client
-            .call("import_multisig_info", Some(params))
+    /// Import multisig info (step 4/6 of multisig setup)
+    ///
+    /// Importe les informations de synchronisation des autres participants.
+    /// Cette fonction doit être appelée DEUX fois:
+    /// - Round 1: Importer infos après make_multisig
+    /// - Round 2: Importer infos après premier export round 2
+    ///
+    /// # Arguments
+    /// * `multisig_infos` - Vec des infos exportées des AUTRES participants (N-1)
+    ///
+    /// # Returns
+    /// ImportMultisigInfoResult with number of outputs imported
+    pub async fn import_multisig_info(
+        &self,
+        multisig_infos: Vec<String>,
+    ) -> Result<ImportMultisigInfoResult> {
+        self.rpc_client
+            .import_multisig_info(multisig_infos)
             .await
-            .context("Failed to import multisig info")?;
+            .map_err(|e| match e {
+                MoneroError::RpcUnreachable => Error::MoneroRpc("RPC unreachable".to_string()),
+                MoneroError::NotMultisig => Error::Multisig("Not in multisig mode".to_string()),
+                MoneroError::WalletLocked => Error::Wallet("Wallet locked".to_string()),
+                MoneroError::WalletBusy => Error::Wallet("Wallet busy".to_string()),
+                MoneroError::ValidationError(msg) => Error::InvalidInput(msg),
+                MoneroError::InvalidResponse(msg) => Error::MoneroRpc(format!("Invalid response: {}", msg)),
+                MoneroError::NetworkError(msg) => Error::Internal(format!("Network error: {}", msg)),
+                MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
+                MoneroError::AlreadyMultisig => Error::Multisig("Already in multisig mode".to_string()),
+            })
+    }
 
-        Ok(response.n_outputs)
+    /// Helper: Effectue un round complet d'export/import pour synchronisation
+    ///
+    /// Cette fonction doit être appelée DEUX fois pour compléter la synchronisation multisig.
+    /// Elle encapsule le pattern export → échanger → importer.
+    ///
+    /// # Arguments
+    /// * `get_other_exports` - Fonction async qui récupère les exports des autres participants
+    ///   Cette fonction permet l'échange out-of-band (PGP, Tor, Signal, etc.)
+    ///
+    /// # Returns
+    /// (export_info, import_result) - Les infos exportées et le résultat de l'import
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # use wallet::MultisigManager;
+    /// # async fn example(manager: &MultisigManager) -> Result<(), Box<dyn std::error::Error>> {
+    /// // Round 1
+    /// let (my_export_r1, import_r1) = manager
+    ///     .sync_multisig_round(|| async {
+    ///         // Ici: échanger les exports via canal sécurisé
+    ///         // Par exemple: récupérer via Tor .onion, PGP email, etc.
+    ///         let other_exports = vec!["...".to_string(), "...".to_string()];
+    ///         Ok(other_exports)
+    ///     })
+    ///     .await?;
+    ///
+    /// // Round 2
+    /// let (my_export_r2, import_r2) = manager
+    ///     .sync_multisig_round(|| async {
+    ///         let other_exports = vec!["...".to_string(), "...".to_string()];
+    ///         Ok(other_exports)
+    ///     })
+    ///     .await?;
+    ///
+    /// // Maintenant synchronisé!
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn sync_multisig_round<F, Fut>(
+        &self,
+        get_other_exports: F,
+    ) -> Result<(ExportMultisigInfoResult, ImportMultisigInfoResult)>
+    where
+        F: FnOnce() -> Fut,
+        Fut: std::future::Future<Output = Result<Vec<String>>>,
+    {
+        // 1. Exporter nos infos
+        let my_export = self.export_multisig_info().await?;
+
+        // 2. Récupérer exports des autres (via canal sécurisé)
+        let other_exports = get_other_exports().await?;
+
+        // 3. Importer les infos des autres
+        let import_result = self.import_multisig_info(other_exports).await?;
+
+        Ok((my_export, import_result))
     }
 
     /// Check if wallet is multisig
     pub async fn is_multisig(&self) -> Result<bool> {
         self.rpc_client.is_multisig().await
+            .map_err(|e| match e {
+                MoneroError::RpcUnreachable => Error::MoneroRpc("RPC unreachable".to_string()),
+                MoneroError::AlreadyMultisig => Error::Multisig("Already in multisig mode".to_string()),
+                MoneroError::NotMultisig => Error::Multisig("Not in multisig mode".to_string()),
+                MoneroError::WalletLocked => Error::Wallet("Wallet locked".to_string()),
+                MoneroError::WalletBusy => Error::Wallet("Wallet busy".to_string()),
+                MoneroError::ValidationError(msg) => Error::InvalidInput(msg),
+                MoneroError::InvalidResponse(msg) => Error::MoneroRpc(format!("Invalid response: {}", msg)),
+                MoneroError::NetworkError(msg) => Error::Internal(format!("Network error: {}", msg)),
+                MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
+            })
     }
 
     /// Get multisig info
     pub async fn get_multisig_info(&self) -> Result<MultisigInfo> {
-        #[derive(serde::Deserialize)]
-        struct InfoResponse {
-            info: String,
-        }
-
-        let response: InfoResponse = self
-            .rpc_client
-            .call("get_multisig_info", None)
-            .await
-            .context("Failed to get multisig info")?;
+        // Note: This delegates to the RPC client's export_multisig_info method
+        // which returns the multisig info for this wallet
+        let export_result = self.rpc_client.export_multisig_info().await
+            .map_err(|e| match e {
+                MoneroError::RpcUnreachable => Error::MoneroRpc("RPC unreachable".to_string()),
+                MoneroError::NotMultisig => Error::Multisig("Not in multisig mode".to_string()),
+                MoneroError::WalletLocked => Error::Wallet("Wallet locked".to_string()),
+                MoneroError::WalletBusy => Error::Wallet("Wallet busy".to_string()),
+                MoneroError::ValidationError(msg) => Error::InvalidInput(msg),
+                MoneroError::InvalidResponse(msg) => Error::MoneroRpc(format!("Invalid response: {}", msg)),
+                MoneroError::NetworkError(msg) => Error::Internal(format!("Network error: {}", msg)),
+                MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
+                MoneroError::AlreadyMultisig => Error::Multisig("Already in multisig mode".to_string()),
+            })?;
 
         Ok(MultisigInfo {
-            info: response.info,
+            multisig_info: export_result.info,
         })
     }
 }
@@ -136,8 +238,7 @@ mod tests {
         let rpc_client = MoneroRpcClient::new(config)
             .expect("Failed to create RPC client for test");
         let manager = MultisigManager::new(rpc_client);
-        // Manager created successfully
-        assert!(true);
+        // Manager created successfully - test passes if no panic
     }
 
     // Note: Integration tests would require a running Monero wallet

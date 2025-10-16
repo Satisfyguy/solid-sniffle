@@ -73,7 +73,7 @@ pub fn format_amount(atomic: u64) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::*; 
 
     #[test]
     fn test_generate_id() {

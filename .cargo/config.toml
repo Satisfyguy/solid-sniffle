@@ -1,0 +1,393 @@
+# Cargo configuration for strict linting
+[build]
+# Use GNU toolchain to avoid Git's link.exe conflicts
+target = "x86_64-pc-windows-gnu"
+
+[target.x86_64-pc-windows-gnu]
+# Use GNU toolchain for better compatibility with Git Bash
+# This avoids conflicts with Git's link.exe
+
+# Clippy configuration for security theatre prevention
+[clippy]
+# Deny all warnings by default
+all-targets = true
+warnings-as-errors = true
+
+# Security theatre prevention lints
+deny = [
+    "clippy::todo",           # Prevent todo!() macros
+    "clippy::unimplemented",  # Prevent unimplemented!() macros
+    "clippy::panic",          # Prevent panic!() macros
+    "clippy::unwrap_used",    # Prevent .unwrap() usage
+    "clippy::print_stdout",   # Prevent println!() in production
+    "clippy::print_stderr",   # Prevent eprintln!() in production
+    "clippy::dbg_macro",      # Prevent dbg!() macros
+    "clippy::expect_used",    # Warn on .expect() usage
+    "clippy::panic_in_result_fn", # Prevent panic in Result functions
+    "clippy::unnecessary_unwrap", # Prevent unnecessary unwrap
+    "clippy::unnecessary_result", # Prevent unnecessary Result wrapping
+    "clippy::missing_panics_doc", # Require panic documentation
+    "clippy::missing_errors_doc", # Require error documentation
+    "clippy::unused_self",    # Prevent unused self parameters
+    "clippy::needless_pass_by_value", # Prevent unnecessary value passing
+    "clippy::needless_borrow", # Prevent unnecessary borrowing
+    "clippy::redundant_clone", # Prevent redundant cloning
+    "clippy::useless_conversion", # Prevent useless conversions
+    "clippy::cast_lossless",  # Prevent lossy casts
+    "clippy::cast_possible_truncation", # Prevent truncating casts
+    "clippy::cast_possible_wrap", # Prevent wrapping casts
+    "clippy::cast_sign_loss", # Prevent sign loss in casts
+    "clippy::float_cmp",      # Prevent direct float comparisons
+    "clippy::float_cmp_const", # Prevent const float comparisons
+    "clippy::absurd_extreme_comparisons", # Prevent absurd comparisons
+    "clippy::clone_on_ref_ptr", # Prevent cloning reference pointers
+    "clippy::copy_iterator",  # Prevent copying iterators
+    "clippy::default_trait_access", # Prevent default trait access
+    "clippy::derive_partial_eq_without_eq", # Require Eq with PartialEq
+    "clippy::empty_enum",     # Prevent empty enums
+    "clippy::enum_glob_use",  # Prevent enum glob imports
+    "clippy::enum_variant_names", # Prevent similar variant names
+    "clippy::eval_order_dependence", # Prevent eval order dependence
+    "clippy::explicit_auto_deref", # Prevent explicit auto deref
+    "clippy::explicit_iter_loop", # Prefer for loops over iter
+    "clippy::explicit_into_iter_loop", # Prefer for loops over into_iter
+    "clippy::fallible_impl_from", # Prevent fallible From implementations
+    "clippy::filter_map",     # Prefer filter_map over filter + map
+    "clippy::filter_map_next", # Prefer filter_map over filter + next
+    "clippy::flat_map_option", # Prefer flatten over flat_map with Option
+    "clippy::flat_map_result", # Prefer flatten over flat_map with Result
+    "clippy::from_iter_instead_of_collect", # Prefer from_iter over collect
+    "clippy::get_unwrap",     # Prevent get().unwrap()
+    "clippy::if_let_mutex",   # Prevent if let with mutex
+    "clippy::if_let_some_result", # Prevent if let with Some(Result)
+    "clippy::if_not_else",    # Prefer else if over if not
+    "clippy::if_same_then_else", # Prevent same then/else branches
+    "clippy::if_then_panic",  # Prevent if then panic
+    "clippy::if_let_redundant_pattern_matching", # Prevent redundant pattern matching
+    "clippy::inefficient_to_string", # Prevent inefficient to_string
+    "clippy::inherent_to_string", # Prevent inherent to_string
+    "clippy::inherent_to_string_shadow_display", # Prevent shadowing Display
+    "clippy::int_plus_one",   # Prevent int + 1 patterns
+    "clippy::integer_arithmetic", # Prevent integer arithmetic
+    "clippy::integer_division", # Prevent integer division
+    "clippy::into_iter_on_ref", # Prevent into_iter on reference
+    "clippy::is_digit_ascii_radix", # Use is_ascii_digit
+    "clippy::items_after_statements", # Prevent items after statements
+    "clippy::large_enum_variant", # Prevent large enum variants
+    "clippy::large_stack_arrays", # Prevent large stack arrays
+    "clippy::large_types_passed_by_value", # Prevent large types by value
+    "clippy::len_without_is_empty", # Require is_empty with len
+    "clippy::len_zero",       # Prevent len == 0 patterns
+    "clippy::let_and_return", # Prevent let and return
+    "clippy::let_underscore_drop", # Prevent let _ = drop
+    "clippy::let_underscore_lock", # Prevent let _ = lock
+    "clippy::let_underscore_must_use", # Prevent let _ = must_use
+    "clippy::linkedlist",     # Prevent LinkedList usage
+    "clippy::logic_bug",      # Prevent logic bugs
+    "clippy::lossy_float_literal", # Prevent lossy float literals
+    "clippy::macro_use_imports", # Prevent macro_use imports
+    "clippy::main_recursion", # Prevent main recursion
+    "clippy::manual_async_fn", # Prefer async fn over manual async
+    "clippy::manual_bits",    # Prevent manual bit operations
+    "clippy::manual_clear",   # Prevent manual clear
+    "clippy::manual_cpp_builtins", # Prevent manual C++ builtins
+    "clippy::manual_enum_glob_use", # Prevent manual enum glob use
+    "clippy::manual_filter_map", # Prevent manual filter_map
+    "clippy::manual_find_map", # Prevent manual find_map
+    "clippy::manual_flatten", # Prevent manual flatten
+    "clippy::manual_for_each", # Prevent manual for_each
+    "clippy::manual_map",     # Prevent manual map
+    "clippy::manual_memcpy",  # Prevent manual memcpy
+    "clippy::manual_non_exhaustive", # Prevent manual non_exhaustive
+    "clippy::manual_ok_or",   # Prevent manual ok_or
+    "clippy::manual_range_contains", # Prevent manual range contains
+    "clippy::manual_retain",  # Prevent manual retain
+    "clippy::manual_saturating_arithmetic", # Prevent manual saturating arithmetic
+    "clippy::manual_skip_while", # Prevent manual skip_while
+    "clippy::manual_split_once", # Prevent manual split_once
+    "clippy::manual_strip",   # Prevent manual strip
+    "clippy::manual_swap",    # Prevent manual swap
+    "clippy::manual_try_fold", # Prevent manual try_fold
+    "clippy::manual_unwrap_or", # Prevent manual unwrap_or
+    "clippy::map_clone",      # Prevent map + clone
+    "clippy::map_collect_result_unit", # Prevent map collect result unit
+    "clippy::map_entry",      # Prevent map entry
+    "clippy::map_flatten",    # Prevent map flatten
+    "clippy::map_unwrap_or",  # Prevent map unwrap_or
+    "clippy::match_as_ref",   # Prevent match as_ref
+    "clippy::match_bool",     # Prevent match bool
+    "clippy::match_like_matches_macro", # Prefer matches! macro
+    "clippy::match_on_vec_items", # Prevent match on vec items
+    "clippy::match_overlapping_arm", # Prevent overlapping match arms
+    "clippy::match_ref_pats", # Prevent match ref patterns
+    "clippy::match_same_arms", # Prevent same match arms
+    "clippy::match_single_binding", # Prevent single binding match
+    "clippy::match_wild_err_arm", # Prevent wild error match arms
+    "clippy::match_wildcard_for_single_variants", # Prevent wildcard for single variants
+    "clippy::maybe_infinite_iter", # Prevent maybe infinite iter
+    "clippy::mem_forget",     # Prevent mem::forget
+    "clippy::mem_replace_option_with_none", # Prevent mem replace option with none
+    "clippy::mem_replace_with_default", # Prevent mem replace with default
+    "clippy::mem_replace_with_uninit", # Prevent mem replace with uninit
+    "clippy::min_max",        # Prevent min max patterns
+    "clippy::misrefactored_assign_op", # Prevent misrefactored assign op
+    "clippy::missing_const_for_fn", # Require const for functions
+    "clippy::missing_docs_in_private_items", # Require docs for private items
+    "clippy::missing_errors_doc", # Require error documentation
+    "clippy::missing_panics_doc", # Require panic documentation
+    "clippy::missing_safety_doc", # Require safety documentation
+    "clippy::mixed_read_write_in_expression", # Prevent mixed read/write
+    "clippy::module_inception", # Prevent module inception
+    "clippy::module_name_repetitions", # Prevent module name repetitions
+    "clippy::modulo_arithmetic", # Prevent modulo arithmetic
+    "clippy::multiple_crate_versions", # Prevent multiple crate versions
+    "clippy::multiple_inherent_impl", # Prevent multiple inherent impl
+    "clippy::mut_mutex_lock", # Prevent mut mutex lock
+    "clippy::mut_mut",        # Prevent mut mut
+    "clippy::mut_reference",  # Prevent mut reference
+    "clippy::mutex_atomic",   # Prevent mutex atomic
+    "clippy::mutex_integer",  # Prevent mutex integer
+    "clippy::naive_bytecount", # Prevent naive bytecount
+    "clippy::needless_arbitrary_self_type", # Prevent needless arbitrary self type
+    "clippy::needless_borrow", # Prevent needless borrow
+    "clippy::needless_continue", # Prevent needless continue
+    "clippy::needless_doctest_main", # Prevent needless doctest main
+    "clippy::needless_for_each", # Prevent needless for_each
+    "clippy::needless_pass_by_value", # Prevent needless pass by value
+    "clippy::needless_question_mark", # Prevent needless question mark
+    "clippy::needless_range_loop", # Prevent needless range loop
+    "clippy::needless_return", # Prevent needless return
+    "clippy::needless_update", # Prevent needless update
+    "clippy::neg_cmp_op_on_partial_ord", # Prevent neg cmp op on partial ord
+    "clippy::neg_multiply",   # Prevent neg multiply
+    "clippy::new_ret_no_self", # Prevent new ret no self
+    "clippy::new_without_default", # Prevent new without default
+    "clippy::new_without_default_derive", # Prevent new without default derive
+    "clippy::no_effect",      # Prevent no effect
+    "clippy::no_effect_replace", # Prevent no effect replace
+    "clippy::non_ascii_literal", # Prevent non ascii literal
+    "clippy::non_octal_unix_permissions", # Prevent non octal unix permissions
+    "clippy::non_send_fields_in_send_ty", # Prevent non send fields in send ty
+    "clippy::non_standard_macro_braces", # Prevent non standard macro braces
+    "clippy::nonminimal_bool", # Prevent nonminimal bool
+    "clippy::nonsensical_open_options", # Prevent nonsensical open options
+    "clippy::not_unsafe_ptr_arg_deref", # Prevent not unsafe ptr arg deref
+    "clippy::ok_expect",      # Prevent ok expect
+    "clippy::op_ref",         # Prevent op ref
+    "clippy::option_as_ref_deref", # Prevent option as ref deref
+    "clippy::option_env_unwrap", # Prevent option env unwrap
+    "clippy::option_if_let_else", # Prevent option if let else
+    "clippy::option_map_unit_fn", # Prevent option map unit fn
+    "clippy::option_map_or_none", # Prevent option map or none
+    "clippy::option_map_or_else", # Prevent option map or else
+    "clippy::option_option",  # Prevent option option
+    "clippy::or_fun_call",    # Prevent or fun call
+    "clippy::out_of_bounds_indexing", # Prevent out of bounds indexing
+    "clippy::overflow_check_conditional", # Prevent overflow check conditional
+    "clippy::panic",          # Prevent panic
+    "clippy::panic_in_result_fn", # Prevent panic in result fn
+    "clippy::panic_params",   # Prevent panic params
+    "clippy::partialeq_ne_impl", # Prevent partialeq ne impl
+    "clippy::path_buf_push_overwrite", # Prevent path buf push overwrite
+    "clippy::pattern_type_mismatch", # Prevent pattern type mismatch
+    "clippy::peekable_next_if", # Prevent peekable next if
+    "clippy::perf",           # Enable performance lints
+    "clippy::possible_missing_comma", # Prevent possible missing comma
+    "clippy::precedence",     # Prevent precedence issues
+    "clippy::print_stdout",   # Prevent print stdout
+    "clippy::print_stderr",   # Prevent print stderr
+    "clippy::ptr_arg",        # Prevent ptr arg
+    "clippy::ptr_as_ptr",     # Prevent ptr as ptr
+    "clippy::ptr_eq",         # Prevent ptr eq
+    "clippy::ptr_offset_with_cast", # Prevent ptr offset with cast
+    "clippy::pub_enum_variant_names", # Prevent pub enum variant names
+    "clippy::question_mark",  # Prevent question mark
+    "clippy::range_minus_one", # Prevent range minus one
+    "clippy::range_plus_one", # Prevent range plus one
+    "clippy::range_step_by_zero", # Prevent range step by zero
+    "clippy::range_zip_with_len", # Prevent range zip with len
+    "clippy::redundant_closure", # Prevent redundant closure
+    "clippy::redundant_closure_call", # Prevent redundant closure call
+    "clippy::redundant_closure_for_method_calls", # Prevent redundant closure for method calls
+    "clippy::redundant_else", # Prevent redundant else
+    "clippy::redundant_field_names", # Prevent redundant field names
+    "clippy::redundant_guards", # Prevent redundant guards
+    "clippy::redundant_pattern", # Prevent redundant pattern
+    "clippy::redundant_pattern_matching", # Prevent redundant pattern matching
+    "clippy::redundant_slicing", # Prevent redundant slicing
+    "clippy::redundant_static_lifetimes", # Prevent redundant static lifetimes
+    "clippy::ref_binding_to_reference", # Prevent ref binding to reference
+    "clippy::ref_in_deref",   # Prevent ref in deref
+    "clippy::ref_option_ref", # Prevent ref option ref
+    "clippy::reference",      # Prevent reference issues
+    "clippy::regex",          # Prevent regex issues
+    "clippy::repeat_once",    # Prevent repeat once
+    "clippy::replace_consts", # Prevent replace consts
+    "clippy::result_map_unit_fn", # Prevent result map unit fn
+    "clippy::result_map_or_else", # Prevent result map or else
+    "clippy::result_map_or_else_unit_fn", # Prevent result map or else unit fn
+    "clippy::result_unit_err", # Prevent result unit err
+    "clippy::reverse_range_loop", # Prevent reverse range loop
+    "clippy::same_functions_in_if_condition", # Prevent same functions in if condition
+    "clippy::same_item_push", # Prevent same item push
+    "clippy::search_is_some", # Prevent search is some
+    "clippy::self_assignment", # Prevent self assignment
+    "clippy::self_named_constructors", # Prevent self named constructors
+    "clippy::semicolon_if_nothing_returned", # Prevent semicolon if nothing returned
+    "clippy::semicolon_outside_block", # Prevent semicolon outside block
+    "clippy::serde_api_misuse", # Prevent serde api misuse
+    "clippy::shadow_reuse",   # Prevent shadow reuse
+    "clippy::shadow_same",    # Prevent shadow same
+    "clippy::shadow_unrelated", # Prevent shadow unrelated
+    "clippy::should_assert_eq", # Prevent should assert eq
+    "clippy::should_implement_trait", # Prevent should implement trait
+    "clippy::single_char_add_str", # Prevent single char add str
+    "clippy::single_char_lifetime_names", # Prevent single char lifetime names
+    "clippy::single_char_pattern", # Prevent single char pattern
+    "clippy::single_component_path_imports", # Prevent single component path imports
+    "clippy::single_match",   # Prevent single match
+    "clippy::single_match_else", # Prevent single match else
+    "clippy::size_of_in_element_count", # Prevent size of in element count
+    "clippy::skip_while_next", # Prevent skip while next
+    "clippy::slow_vector_initialization", # Prevent slow vector initialization
+    "clippy::stable_sort_primitive", # Prevent stable sort primitive
+    "clippy::str_to_string",  # Prevent str to string
+    "clippy::string_add",     # Prevent string add
+    "clippy::string_add_assign", # Prevent string add assign
+    "clippy::string_extend_chars", # Prevent string extend chars
+    "clippy::string_lit_as_bytes", # Prevent string lit as bytes
+    "clippy::string_slice",   # Prevent string slice
+    "clippy::string_to_string", # Prevent string to string
+    "clippy::suboptimal_flops", # Prevent suboptimal flops
+    "clippy::suspicious_arithmetic_impl", # Prevent suspicious arithmetic impl
+    "clippy::suspicious_assignment_formatting", # Prevent suspicious assignment formatting
+    "clippy::suspicious_auto_trait_impls", # Prevent suspicious auto trait impls
+    "clippy::suspicious_else_formatting", # Prevent suspicious else formatting
+    "clippy::suspicious_map", # Prevent suspicious map
+    "clippy::suspicious_op_assign_impl", # Prevent suspicious op assign impl
+    "clippy::suspicious_operation_groupings", # Prevent suspicious operation groupings
+    "clippy::suspicious_splitn", # Prevent suspicious splitn
+    "clippy::suspicious_unary_op_formatting", # Prevent suspicious unary op formatting
+    "clippy::tabs_in_doc_comments", # Prevent tabs in doc comments
+    "clippy::temporary_assignment", # Prevent temporary assignment
+    "clippy::temporary_cstring_as_ptr", # Prevent temporary cstring as ptr
+    "clippy::todo",           # Prevent todo
+    "clippy::too_many_arguments", # Prevent too many arguments
+    "clippy::too_many_lines", # Prevent too many lines
+    "clippy::toplevel_ref_arg", # Prevent toplevel ref arg
+    "clippy::transmute_bytes_to_str", # Prevent transmute bytes to str
+    "clippy::transmute_int_to_bool", # Prevent transmute int to bool
+    "clippy::transmute_int_to_char", # Prevent transmute int to char
+    "clippy::transmute_int_to_float", # Prevent transmute int to float
+    "clippy::transmute_ptr_to_ptr", # Prevent transmute ptr to ptr
+    "clippy::transmute_ptr_to_ref", # Prevent transmute ptr to ref
+    "clippy::transmute_undefined_repr", # Prevent transmute undefined repr
+    "clippy::transmuting_null", # Prevent transmuting null
+    "clippy::trivial_regex",  # Prevent trivial regex
+    "clippy::trivially_copy_pass_by_ref", # Prevent trivially copy pass by ref
+    "clippy::try_err",        # Prevent try err
+    "clippy::type_complexity", # Prevent type complexity
+    "clippy::type_repetition_in_bounds", # Prevent type repetition in bounds
+    "clippy::unimplemented",  # Prevent unimplemented
+    "clippy::uninit_assumed_init", # Prevent uninit assumed init
+    "clippy::uninit_vec",     # Prevent uninit vec
+    "clippy::unit_arg",       # Prevent unit arg
+    "clippy::unit_cmp",       # Prevent unit cmp
+    "clippy::unit_return",    # Prevent unit return
+    "clippy::unnecessary_cast", # Prevent unnecessary cast
+    "clippy::unnecessary_filter_map", # Prevent unnecessary filter map
+    "clippy::unnecessary_fold", # Prevent unnecessary fold
+    "clippy::unnecessary_lazy_evaluations", # Prevent unnecessary lazy evaluations
+    "clippy::unnecessary_mut_passed", # Prevent unnecessary mut passed
+    "clippy::unnecessary_operation", # Prevent unnecessary operation
+    "clippy::unnecessary_self_imports", # Prevent unnecessary self imports
+    "clippy::unnecessary_sort_by", # Prevent unnecessary sort by
+    "clippy::unnecessary_unwrap", # Prevent unnecessary unwrap
+    "clippy::unnecessary_wraps", # Prevent unnecessary wraps
+    "clippy::unneeded_field_pattern", # Prevent unneeded field pattern
+    "clippy::unneeded_wildcard_pattern", # Prevent unneeded wildcard pattern
+    "clippy::unreachable",    # Prevent unreachable
+    "clippy::unreachable_pub", # Prevent unreachable pub
+    "clippy::unsafe_derive_deserialize", # Prevent unsafe derive deserialize
+    "clippy::unsafe_removed_from_name", # Prevent unsafe removed from name
+    "clippy::unseparated_literal_suffix", # Prevent unseparated literal suffix
+    "clippy::unstable_as_slice", # Prevent unstable as slice
+    "clippy::unstable_as_mut_slice", # Prevent unstable as mut slice
+    "clippy::unused_async",   # Prevent unused async
+    "clippy::unused_collect", # Prevent unused collect
+    "clippy::unused_io_amount", # Prevent unused io amount
+    "clippy::unused_self",    # Prevent unused self
+    "clippy::unused_unit",    # Prevent unused unit
+    "clippy::unused_write",   # Prevent unused write
+    "clippy::unwrap_in_result", # Prevent unwrap in result
+    "clippy::unwrap_used",    # Prevent unwrap used
+    "clippy::use_debug",      # Prevent use debug
+    "clippy::use_self",       # Prevent use self
+    "clippy::used_underscore_binding", # Prevent used underscore binding
+    "clippy::useless_asref",  # Prevent useless asref
+    "clippy::useless_let_if_seq", # Prevent useless let if seq
+    "clippy::useless_transmute", # Prevent useless transmute
+    "clippy::useless_vec",    # Prevent useless vec
+    "clippy::verbose_file_reads", # Prevent verbose file reads
+    "clippy::vtable_address_comparisons", # Prevent vtable address comparisons
+    "clippy::while_immutable_condition", # Prevent while immutable condition
+    "clippy::while_let_loop", # Prevent while let loop
+    "clippy::while_let_on_iterator", # Prevent while let on iterator
+    "clippy::write_literal",  # Prevent write literal
+    "clippy::write_with_newline", # Prevent write with newline
+    "clippy::wrong_self_convention", # Prevent wrong self convention
+    "clippy::wrong_transmute", # Prevent wrong transmute
+    "clippy::zero_divided_by_zero", # Prevent zero divided by zero
+    "clippy::zero_prefixed_literal", # Prevent zero prefixed literal
+    "clippy::zero_ptr",       # Prevent zero ptr
+    "clippy::zero_width_space", # Prevent zero width space
+]
+
+# Allow some lints that are too strict for development
+allow = [
+    "clippy::expect_used",    # Allow expect with clear messages
+    "clippy::missing_docs_in_private_items", # Allow missing docs in private items
+    "clippy::too_many_arguments", # Allow many arguments for now
+    "clippy::too_many_lines", # Allow many lines for now
+    "clippy::type_complexity", # Allow complex types for now
+    "clippy::module_name_repetitions", # Allow module name repetitions
+    "clippy::single_char_lifetime_names", # Allow single char lifetime names
+    "clippy::upper_case_acronyms", # Allow upper case acronyms
+    "clippy::needless_doctest_main", # Allow needless doctest main
+    "clippy::non_ascii_literal", # Allow non ascii literal
+    "clippy::tabs_in_doc_comments", # Allow tabs in doc comments
+    "clippy::unseparated_literal_suffix", # Allow unseparated literal suffix
+    "clippy::zero_prefixed_literal", # Allow zero prefixed literal
+    "clippy::zero_width_space", # Allow zero width space
+    "clippy::upper_case_acronyms", # Allow upper case acronyms
+    "clippy::non_ascii_literal", # Allow non ascii literal
+    "clippy::tabs_in_doc_comments", # Allow tabs in doc comments
+    "clippy::unseparated_literal_suffix", # Allow unseparated literal suffix
+    "clippy::zero_prefixed_literal", # Allow zero prefixed literal
+    "clippy::zero_width_space", # Allow zero width space
+]
+
+# Additional configuration
+[clippy.all]
+# Enable all clippy lints
+all = true
+
+# Disable some lints that are too noisy
+[clippy.nursery]
+# Enable nursery lints (experimental)
+nursery = true
+
+# Disable some lints that are too strict
+[clippy.pedantic]
+# Enable pedantic lints
+pedantic = true
+
+# Disable some lints that are too strict
+[clippy.cargo]
+# Enable cargo lints
+cargo = true
+
+# Disable some lints that are too strict
+[clippy.restriction]
+# Enable restriction lints
+restriction = true

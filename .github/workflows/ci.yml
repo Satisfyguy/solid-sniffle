@@ -1,0 +1,132 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  security-check:
+    name: Security Theatre & Code Quality
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+        
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+          
+    - name: Check Security Theatre
+      run: |
+        if (Test-Path "scripts/check-security-theatre-simple.ps1") {
+          pwsh -ExecutionPolicy Bypass -File "scripts/check-security-theatre-simple.ps1"
+        } else {
+          Write-Host "Security theatre check script not found, skipping..."
+        }
+        
+    - name: Cargo Check
+      run: cargo check --workspace
+      
+    - name: Cargo Format Check
+      run: cargo fmt --all -- --check
+      
+    - name: Cargo Clippy
+      run: cargo clippy --workspace -- -D warnings
+      
+    - name: Cargo Test
+      run: cargo test --workspace --lib
+      
+    - name: Generate Metrics
+      run: |
+        if (Test-Path "scripts/update-metrics.ps1") {
+          pwsh -ExecutionPolicy Bypass -File "scripts/update-metrics.ps1"
+        }
+        
+    - name: Upload Metrics
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: code-metrics
+        path: docs/metrics/
+        retention-days: 7
+
+  build:
+    name: Build All Targets
+    runs-on: ${{ matrix.os }}
+    needs: security-check
+    
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+          
+    - name: Build
+      run: cargo build --workspace --release
+      
+    - name: Upload Build Artifacts
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-build
+        path: target/release/
+        retention-days: 7
+
+  documentation:
+    name: Documentation
+    runs-on: ubuntu-latest
+    needs: security-check
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rust-docs
+        
+    - name: Generate Documentation
+      run: cargo doc --workspace --no-deps
+      
+    - name: Deploy Documentation
+      if: github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./target/doc

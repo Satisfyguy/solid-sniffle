@@ -11,6 +11,10 @@ description = "Command-line interface for Monero Marketplace"
 name = "monero-marketplace"
 path = "src/main.rs"
 
+[[bin]]
+name = "test-tool"
+path = "src/test_tool.rs"
+
 [dependencies]
 monero-marketplace-common = { path = "../common" }
 monero-marketplace-wallet = { path = "../wallet" }

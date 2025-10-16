@@ -51,19 +51,28 @@ pub enum TorError {
 pub enum MoneroError {
     #[error("Monero RPC unreachable (is wallet RPC running?)")]
     RpcUnreachable,
-    
+
     #[error("Wallet already in multisig mode")]
     AlreadyMultisig,
-    
+
+    #[error("Wallet not in multisig mode")]
+    NotMultisig,
+
     #[error("Wallet locked (password required)")]
     WalletLocked,
-    
+
+    #[error("Wallet busy (operation in progress)")]
+    WalletBusy,
+
+    #[error("Validation error: {0}")]
+    ValidationError(String),
+
     #[error("Invalid RPC response: {0}")]
     InvalidResponse(String),
-    
+
     #[error("Network error: {0}")]
     NetworkError(String),
-    
+
     #[error("RPC error: {0}")]
     RpcError(String),
 }
