@@ -1,210 +1,174 @@
 #!/usr/bin/env bash
 # scripts/setup-3-wallets-testnet.sh
-# Configure 3 Monero wallets for 2-of-3 multisig testing
-
-set -e  # Exit on error
+# CORRECT APPROACH: Single RPC server with --wallet-dir managing multiple wallets
 
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
-BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${CYAN}"
-cat << "EOF"
-╔═══════════════════════════════════════╗
-║  Monero 3-Wallet Testnet Setup      ║
-║  2-of-3 Multisig Configuration       ║
-╚═══════════════════════════════════════╝
-EOF
-echo -e "${NC}"
+echo -e "${CYAN}🔧 [V3] Setup 3-Wallet Monero Testnet Environment${NC}\n"
 
-# Configuration
-MONERO_DIR="$HOME/monero-testnet"
-WALLETS_DIR="$HOME/monero-testnet-wallets"
-BASE_RPC_PORT=18082
+# --- Configuration ---
+MONERO_PATH="$HOME/monero-testnet"
+WALLET_DIR="$MONERO_PATH/rpc_wallets"
+RPC_PORT="18082"  # Single RPC server on one port
+declare -a WALLETS=("buyer" "vendor" "arbiter")
 
-# Find Monero binaries
-MONEROD=$(find "$MONERO_DIR" -name "monerod" -type f | head -n 1)
-WALLET_RPC=$(find "$MONERO_DIR" -name "monero-wallet-rpc" -type f | head -n 1)
-WALLET_CLI=$(find "$MONERO_DIR" -name "monero-wallet-cli" -type f | head -n 1)
+# --- Find Binaries ---
+MONEROD=$(find "$MONERO_PATH" -name "monerod" -type f | head -n 1)
+WALLET_RPC=$(find "$MONERO_PATH" -name "monero-wallet-rpc" -type f | head -n 1)
 
-if [[ -z "$MONEROD" ]] || [[ -z "$WALLET_RPC" ]] || [[ -z "$WALLET_CLI" ]]; then
-    echo -e "${RED}❌ Monero binaries not found in $MONERO_DIR${NC}"
-    echo -e "${YELLOW}💡 Run ./scripts/ubuntu-setup.sh first${NC}"
+if [[ -z "$MONEROD" || -z "$WALLET_RPC" ]]; then
+    echo -e "${RED}❌ Monero binaries not found in $MONERO_PATH${NC}"
+    echo -e "${YELLOW}Please run ./scripts/ubuntu-setup.sh first.${NC}"
     exit 1
 fi
+echo -e "${GREEN}✅ Monero binaries found.${NC}\n"
 
-MONERO_BIN_DIR=$(dirname "$MONEROD")
-echo -e "${GREEN}✅ Monero binaries found: $MONERO_BIN_DIR${NC}\n"
-
-# Function to print step
-print_step() {
-    echo -e "\n${BLUE}═══ $1 ═══${NC}\n"
-}
-
-# Function to check if process is running
-is_running() {
-    pgrep -f "$1" > /dev/null
-}
-
-# Step 1: Create wallets directory
-print_step "Step 1: Creating wallets directory"
-mkdir -p "$WALLETS_DIR"/{wallet1,wallet2,wallet3}
-echo -e "${GREEN}✅ Wallets directory created: $WALLETS_DIR${NC}"
-
-# Step 2: Check monerod
-print_step "Step 2: Checking monerod"
-if is_running "monerod.*--testnet"; then
-    echo -e "${GREEN}✅ monerod is already running${NC}"
+# --- 1. Start Daemon ---
+echo -e "${YELLOW}1️⃣ Starting testnet daemon...${NC}"
+if pgrep -x "monerod" > /dev/null; then
+    echo -e "${GREEN}   ✅ Daemon already running${NC}"
 else
-    echo -e "${YELLOW}⚠️  monerod is not running${NC}"
-    echo -e "${CYAN}Starting monerod in background...${NC}"
-
-    "$MONEROD" \
-        --testnet \
-        --detach \
-        --data-dir "$MONERO_DIR/testnet-data" \
-        --log-file "$MONERO_DIR/monerod.log"
-
-    echo -e "${CYAN}Waiting for monerod to start (10 seconds)...${NC}"
+    "$MONEROD" --testnet --detach --log-file "$MONERO_PATH/monerod.log"
+    echo -e "${CYAN}   Waiting for daemon (10s)...${NC}"
     sleep 10
+    echo -e "${GREEN}   ✅ Daemon started${NC}"
+fi
+echo ""
 
-    if is_running "monerod.*--testnet"; then
-        echo -e "${GREEN}✅ monerod started successfully${NC}"
-    else
-        echo -e "${RED}❌ Failed to start monerod${NC}"
+# --- 2. Clean Up Old Processes and Wallets ---
+echo -e "${YELLOW}2️⃣ Cleaning up old environment...${NC}"
+CLEANUP_SCRIPT="$(dirname "$0")/cleanup-monero.sh"
+if [ -f "$CLEANUP_SCRIPT" ]; then
+    chmod +x "$CLEANUP_SCRIPT"
+    "$CLEANUP_SCRIPT"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}❌ Cleanup failed. Please run cleanup-monero.sh manually.${NC}"
         exit 1
     fi
+else
+    echo -e "${YELLOW}⚠️  cleanup-monero.sh not found, using basic cleanup...${NC}"
+    pkill -9 -f monero-wallet-rpc 2>/dev/null || true
+    sleep 3
+    rm -rf "$WALLET_DIR"
+    mkdir -p "$WALLET_DIR"
+    echo -e "${GREEN}   ✅ Basic cleanup done.${NC}"
 fi
+echo ""
 
-# Step 3: Create 3 wallets
-print_step "Step 3: Creating 3 test wallets"
+# --- 3. Start SINGLE RPC Server with --wallet-dir ---
+echo -e "${YELLOW}3️⃣ Starting RPC service...${NC}"
+echo -e "${CYAN}   Starting wallet RPC on port $RPC_PORT with --wallet-dir...${NC}"
 
-for i in 1 2 3; do
-    WALLET_DIR="$WALLETS_DIR/wallet$i"
-    WALLET_FILE="$WALLET_DIR/wallet$i"
+"$WALLET_RPC" \
+    --testnet \
+    --rpc-bind-ip 127.0.0.1 \
+    --rpc-bind-port "$RPC_PORT" \
+    --disable-rpc-login \
+    --daemon-address 127.0.0.1:28081 \
+    --wallet-dir "$WALLET_DIR" \
+    --log-file "$MONERO_PATH/wallet-rpc.log" \
+    --detach
 
-    echo -e "${CYAN}Creating wallet $i...${NC}"
+echo -e "${CYAN}   Waiting for RPC to initialize (8s)...${NC}"
+sleep 8
+echo -e "${GREEN}   ✅ RPC service launched.${NC}\n"
 
-    if [[ -f "$WALLET_FILE" ]]; then
-        echo -e "${YELLOW}⚠️  Wallet $i already exists, skipping creation${NC}"
+# --- 4. Create Wallets via RPC ---
+echo -e "${YELLOW}4️⃣ Creating wallets via RPC...${NC}"
+
+for WALLET_NAME in "${WALLETS[@]}"; do
+    echo -e "${CYAN}   Creating wallet '$WALLET_NAME'...${NC}"
+
+    # Create wallet
+    CREATE_RESPONSE=$(curl -s -X POST "http://127.0.0.1:$RPC_PORT/json_rpc" \
+        -H 'Content-Type: application/json' \
+        -d '{
+            "jsonrpc":"2.0",
+            "id":"0",
+            "method":"create_wallet",
+            "params":{
+                "filename":"'$WALLET_NAME'",
+                "password":"",
+                "language":"English"
+            }
+        }')
+
+    # Check for errors
+    if echo "$CREATE_RESPONSE" | grep -q '"error"'; then
+        ERROR_MSG=$(echo "$CREATE_RESPONSE" | grep -oP '(?<="message":")[^"]+')
+        echo -e "${RED}   ❌ Failed to create $WALLET_NAME: $ERROR_MSG${NC}"
     else
-        # Create wallet using wallet-cli in non-interactive mode
-        expect << EOF
-set timeout 30
-spawn "$WALLET_CLI" --testnet --generate-new-wallet "$WALLET_FILE" --password "" --mnemonic-language English
-expect "Generated new wallet:"
-expect "View key:"
-expect eof
-EOF
+        echo -e "${GREEN}   ✅ $WALLET_NAME created${NC}"
+    fi
 
-        if [[ -f "$WALLET_FILE" ]]; then
-            echo -e "${GREEN}✅ Wallet $i created${NC}"
-        else
-            echo -e "${RED}❌ Failed to create wallet $i${NC}"
-            exit 1
-        fi
+    # Open the wallet to get its address
+    OPEN_RESPONSE=$(curl -s -X POST "http://127.0.0.1:$RPC_PORT/json_rpc" \
+        -H 'Content-Type: application/json' \
+        -d '{
+            "jsonrpc":"2.0",
+            "id":"0",
+            "method":"open_wallet",
+            "params":{
+                "filename":"'$WALLET_NAME'",
+                "password":""
+            }
+        }')
+
+    sleep 1
+done
+echo -e "\n${GREEN}   ✅ All wallets created.${NC}\n"
+
+# --- 5. Health Checks ---
+echo -e "${YELLOW}5️⃣ Performing health checks...${NC}"
+echo -e "${CYAN}   Testing each wallet...${NC}\n"
+
+ALL_OK=true
+for WALLET_NAME in "${WALLETS[@]}"; do
+    echo -e "${CYAN}   Checking $WALLET_NAME...${NC}"
+
+    # Open wallet
+    curl -s -X POST "http://127.0.0.1:$RPC_PORT/json_rpc" \
+        -H 'Content-Type: application/json' \
+        -d '{"jsonrpc":"2.0","id":"0","method":"open_wallet","params":{"filename":"'$WALLET_NAME'","password":""}}' > /dev/null
+
+    sleep 1
+
+    # Get address
+    response=$(curl -s --max-time 5 \
+        -X POST "http://127.0.0.1:$RPC_PORT/json_rpc" \
+        -H 'Content-Type: application/json' \
+        -d '{"jsonrpc":"2.0","id":"0","method":"get_address"}')
+
+    if [[ -z "$response" ]] || ! echo "$response" | grep -q "address"; then
+        echo -e "${RED}   ❌ Failed to get address for $WALLET_NAME${NC}"
+        echo -e "${YELLOW}      Check log: $MONERO_PATH/wallet-rpc.log${NC}"
+        ALL_OK=false
+    else
+        ADDRESS=$(echo "$response" | grep -oP '(?<="address": ")([a-zA-Z0-9]+)' | head -n 1)
+        echo -e "${GREEN}   ✅ $WALLET_NAME OK - Address: ${ADDRESS:0:12}...${NC}"
     fi
 done
 
-# Step 4: Start wallet RPC servers
-print_step "Step 4: Starting wallet RPC servers"
+echo ""
 
-for i in 1 2 3; do
-    WALLET_FILE="$WALLETS_DIR/wallet$i/wallet$i"
-    RPC_PORT=$((BASE_RPC_PORT + i - 1))
-
-    echo -e "${CYAN}Starting wallet RPC $i on port $RPC_PORT...${NC}"
-
-    # Kill existing RPC if running
-    if is_running "monero-wallet-rpc.*$RPC_PORT"; then
-        echo -e "${YELLOW}⚠️  Killing existing RPC on port $RPC_PORT${NC}"
-        pkill -f "monero-wallet-rpc.*$RPC_PORT" || true
-        sleep 2
-    fi
-
-    # Start RPC
-    "$WALLET_RPC" \
-        --testnet \
-        --wallet-file "$WALLET_FILE" \
-        --password "" \
-        --rpc-bind-port "$RPC_PORT" \
-        --disable-rpc-login \
-        --daemon-address localhost:28081 \
-        --trusted-daemon \
-        --log-file "$WALLETS_DIR/wallet$i/rpc.log" \
-        --detach &
-
-    # Wait for RPC to start
-    echo -e "${CYAN}Waiting for RPC to start...${NC}"
-    for attempt in {1..10}; do
-        if curl -s "http://127.0.0.1:$RPC_PORT/json_rpc" > /dev/null 2>&1; then
-            echo -e "${GREEN}✅ Wallet RPC $i started on port $RPC_PORT${NC}"
-            break
-        fi
-
-        if [[ $attempt -eq 10 ]]; then
-            echo -e "${RED}❌ Failed to start wallet RPC $i${NC}"
-            exit 1
-        fi
-
-        sleep 2
-    done
-done
-
-# Step 5: Display information
-print_step "Setup Complete! 🎉"
-
-echo -e "${GREEN}✅ 3 wallets created${NC}"
-echo -e "${GREEN}✅ 3 wallet RPC servers running${NC}"
-
-echo -e "\n${CYAN}══════════════════════════════════════${NC}"
-echo -e "${CYAN}  Wallet Information${NC}"
-echo -e "${CYAN}══════════════════════════════════════${NC}\n"
-
-echo -e "${YELLOW}Wallet 1:${NC}"
-echo -e "  Directory: $WALLETS_DIR/wallet1"
-echo -e "  RPC Port: 18082"
-echo -e "  RPC URL: http://127.0.0.1:18082/json_rpc"
-
-echo -e "\n${YELLOW}Wallet 2:${NC}"
-echo -e "  Directory: $WALLETS_DIR/wallet2"
-echo -e "  RPC Port: 18083"
-echo -e "  RPC URL: http://127.0.0.1:18083/json_rpc"
-
-echo -e "\n${YELLOW}Wallet 3:${NC}"
-echo -e "  Directory: $WALLETS_DIR/wallet3"
-echo -e "  RPC Port: 18084"
-echo -e "  RPC URL: http://127.0.0.1:18084/json_rpc"
-
-echo -e "\n${CYAN}══════════════════════════════════════${NC}"
-echo -e "${CYAN}  Next Steps${NC}"
-echo -e "${CYAN}══════════════════════════════════════${NC}\n"
-
-echo -e "1. ${YELLOW}Test wallet connections:${NC}"
-echo -e "   ${GREEN}cargo run --bin monero-marketplace -- --rpc-url http://127.0.0.1:18082/json_rpc test${NC}"
-echo -e "   ${GREEN}cargo run --bin monero-marketplace -- --rpc-url http://127.0.0.1:18083/json_rpc test${NC}"
-echo -e "   ${GREEN}cargo run --bin monero-marketplace -- --rpc-url http://127.0.0.1:18084/json_rpc test${NC}"
-
-echo -e "\n2. ${YELLOW}Prepare multisig (step 1/6):${NC}"
-echo -e "   ${GREEN}cargo run --bin monero-marketplace -- --rpc-url http://127.0.0.1:18082/json_rpc multisig prepare${NC}"
-echo -e "   ${GREEN}# Repeat for wallet 2 and 3...${NC}"
-
-echo -e "\n3. ${YELLOW}Make multisig (step 2/6):${NC}"
-echo -e "   ${GREEN}cargo run --bin monero-marketplace -- --rpc-url http://127.0.0.1:18082/json_rpc multisig make -t 2 -i <info2> -i <info3>${NC}"
-echo -e "   ${GREEN}# Repeat for wallet 2 and 3...${NC}"
-
-echo -e "\n4. ${YELLOW}Stop all services:${NC}"
-echo -e "   ${GREEN}pkill -f monero-wallet-rpc${NC}"
-echo -e "   ${GREEN}pkill -f monerod${NC}"
-
-echo -e "\n5. ${YELLOW}View logs:${NC}"
-echo -e "   ${GREEN}tail -f $WALLETS_DIR/wallet1/rpc.log${NC}"
-echo -e "   ${GREEN}tail -f $MONERO_DIR/monerod.log${NC}"
-
-echo -e "\n${CYAN}══════════════════════════════════════${NC}"
-echo -e "${GREEN}Happy testing! 🦀🔐${NC}"
-echo -e "${CYAN}══════════════════════════════════════${NC}\n"
+if [ "$ALL_OK" = true ]; then
+    echo -e "${GREEN}✅ All 3 wallets are working correctly!${NC}"
+    echo -e "\n${CYAN}📋 Summary:${NC}"
+    echo "  - RPC Server: http://127.0.0.1:$RPC_PORT"
+    echo "  - Wallet Directory: $WALLET_DIR"
+    echo "  - Wallets: buyer, vendor, arbiter"
+    echo ""
+    echo -e "${YELLOW}💡 Usage:${NC}"
+    echo "  Use RPC calls to open_wallet before each operation:"
+    echo "  curl -X POST http://127.0.0.1:$RPC_PORT/json_rpc -d '{\"method\":\"open_wallet\",\"params\":{\"filename\":\"buyer\"}}'"
+    echo ""
+    exit 0
+else
+    echo -e "${RED}❌ One or more wallets failed health check. Check logs.${NC}"
+    exit 1
+fi

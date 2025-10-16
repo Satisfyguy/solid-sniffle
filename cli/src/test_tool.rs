@@ -5,17 +5,18 @@
 use anyhow::Result;
 use monero_marketplace_common::{error::MoneroError, types::MoneroConfig, MONERO_RPC_URL};
 use monero_marketplace_wallet::rpc::MoneroRpcClient;
+use tracing::{error, info, warn};
 
 #[tokio::main]
 async fn main() -> Result<()> {
     // Setup logging
     tracing_subscriber::fmt().init();
 
-    println!("🧅 Monero Marketplace - CLI Test Tool v2.0");
-    println!("==========================================\n");
+    info!("🧅 Monero Marketplace - CLI Test Tool v2.0");
+    info!("==========================================\n");
 
     // Test 1: Création Client RPC
-    println!("1️⃣ Testing RPC Client creation...");
+    info!("1️⃣ Testing RPC Client creation...");
     let config = MoneroConfig {
         rpc_url: MONERO_RPC_URL.to_string(),
         rpc_user: None,
@@ -25,61 +26,61 @@ async fn main() -> Result<()> {
 
     let client = match MoneroRpcClient::new(config) {
         Ok(client) => {
-            println!("   ✅ RPC Client created successfully");
+            info!("   ✅ RPC Client created successfully");
             client
         }
         Err(e) => {
-            println!("   ❌ RPC Client creation failed: {}", e);
+            error!("   ❌ RPC Client creation failed: {}", e);
             return Ok(());
         }
     };
 
-    println!();
+    info!("");
 
     // Test 2: Vérification Connexion
-    println!("2️⃣ Testing RPC connection...");
+    info!("2️⃣ Testing RPC connection...");
     match client.check_connection().await {
         Ok(_) => {
-            println!("   ✅ RPC connection successful");
+            info!("   ✅ RPC connection successful");
         }
         Err(e) => {
-            println!("   ❌ RPC connection failed: {}", e);
-            println!("   💡 Launch wallet RPC: monero-wallet-rpc --testnet ...");
+            error!("   ❌ RPC connection failed: {}", e);
+            info!("   💡 Launch wallet RPC: monero-wallet-rpc --testnet ...");
             return Ok(());
         }
     }
 
-    println!();
+    info!("");
 
     // Test 3: prepare_multisig
-    println!("3️⃣ Testing prepare_multisig...");
+    info!("3️⃣ Testing prepare_multisig...");
 
     match client.prepare_multisig().await {
         Ok(info) => {
-            println!("   ✅ prepare_multisig succeeded");
-            println!("   Info: {}...", &info.multisig_info[..50]);
-            println!("   Length: {} chars", info.multisig_info.len());
+            info!("   ✅ prepare_multisig succeeded");
+            info!("   Info: {}...", &info.multisig_info[..50]);
+            info!("   Length: {} chars", info.multisig_info.len());
 
             // Validation
             if info.multisig_info.starts_with("MultisigV1") {
-                println!("   ✅ Validation passed (prefix OK)");
+                info!("   ✅ Validation passed (prefix OK)");
             } else {
-                println!("   ⚠️ Validation warning: Invalid prefix");
+                warn!("   ⚠️ Validation warning: Invalid prefix");
             }
         }
         Err(MoneroError::AlreadyMultisig) => {
-            println!("   ⚠️ Wallet already in multisig mode (normal if test replayed)");
-            println!("   💡 To reset: close RPC, delete wallet, recreate");
+            warn!("   ⚠️ Wallet already in multisig mode (normal if test replayed)");
+            info!("   💡 To reset: close RPC, delete wallet, recreate");
         }
         Err(e) => {
-            println!("   ❌ prepare_multisig failed: {}", e);
+            error!("   ❌ prepare_multisig failed: {}", e);
         }
     }
 
-    println!();
+    info!("");
 
     // Test 4: Appels Concurrents
-    println!("4️⃣ Testing concurrent calls...");
+    info!("4️⃣ Testing concurrent calls...");
     let client_arc = std::sync::Arc::new(client);
     let handles: Vec<_> = (0..3)
         .map(|i| {
@@ -95,20 +96,20 @@ async fn main() -> Result<()> {
 
     for handle in handles {
         match handle.await {
-            Ok(result) => println!("   {}", result),
-            Err(e) => println!("   ❌ Task failed: {}", e),
+            Ok(result) => info!("   {}", result),
+            Err(e) => error!("   ❌ Task failed: {}", e),
         }
     }
 
-    println!();
-    println!("✅ All tests completed");
-    println!();
-    println!("📊 Summary:");
-    println!("   - RPC Client: Thread-safe with Mutex + Semaphore");
-    println!("   - Retry Logic: Backoff exponential implemented");
-    println!("   - Validation: Stricte multisig_info validation");
-    println!("   - Timeouts: Configurable via MONERO_RPC_TIMEOUT_SECS");
-    println!("   - Logging: Structured with tracing");
+    info!("");
+    info!("✅ All tests completed");
+    info!("");
+    info!("📊 Summary:");
+    info!("   - RPC Client: Thread-safe with Mutex + Semaphore");
+    info!("   - Retry Logic: Backoff exponential implemented");
+    info!("   - Validation: Stricte multisig_info validation");
+    info!("   - Timeouts: Configurable via MONERO_RPC_TIMEOUT_SECS");
+    info!("   - Logging: Structured with tracing");
 
     Ok(())
 }

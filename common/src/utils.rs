@@ -87,6 +87,7 @@ pub fn format_amount(atomic: u64) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tracing;
 
     #[test]
     fn test_generate_id() {
@@ -111,7 +112,7 @@ mod tests {
         // Valid addresses
         let result = validate_monero_address("4AdUndXHHZ6cFdRPAgP6zBFmZ1hBpiPsjCd1TqWLjokCLQcaQa4Yf8ZgWa61uB1DkHGrC1XqVjro7ykm5rF8YvP9aYTFjk");
         if let Err(e) = &result {
-            eprintln!("Validation error: {}", e);
+            tracing::error!("Validation error: {}", e);
         }
         assert!(result.is_ok());
 

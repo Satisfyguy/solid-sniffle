@@ -168,8 +168,9 @@ impl MultisigManager {
     ///
     /// # Examples
     /// ```no_run
-    /// # use wallet::MultisigManager;
-    /// # async fn example(manager: &MultisigManager) -> Result<(), Box<dyn std::error::Error>> {
+    /// # use monero_marketplace_wallet::multisig::MultisigManager;
+    /// # use monero_marketplace_common::error::Result;
+    /// # async fn example(manager: &MultisigManager) -> Result<()> {
     /// // Round 1
     /// let (my_export_r1, import_r1) = manager
     ///     .sync_multisig_round(|| async {

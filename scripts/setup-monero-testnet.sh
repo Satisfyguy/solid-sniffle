@@ -92,7 +92,7 @@ if [[ ! -f "$WALLET_PATH" ]]; then
     # Use wallet-cli with expect to automate password entry
     if command -v expect > /dev/null; then
         expect << EOF
-spawn "$WALLET_CLI" --testnet --generate-new-wallet "$WALLET_PATH"
+spawn "$WALLET_CLI" --testnet --generate-new-wallet "$WALLET_PATH" --restore-height 9000
 expect "Enter a new password for the wallet:"
 send "\r"
 expect "Confirm password:"

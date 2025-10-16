@@ -97,8 +97,8 @@ impl MoneroRpcClient {
     ///
     /// # Examples
     /// ```no_run
-    /// # use wallet::MoneroRpcClient;
-    /// # use common::MoneroConfig;
+    /// # use monero_marketplace_wallet::rpc::MoneroRpcClient;
+    /// # use monero_marketplace_common::types::MoneroConfig;
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let config = MoneroConfig::default();
     /// let client = MoneroRpcClient::new(config)?;
@@ -168,8 +168,8 @@ impl MoneroRpcClient {
     ///
     /// # Examples
     /// ```no_run
-    /// # use wallet::MoneroRpcClient;
-    /// # use common::MoneroConfig;
+    /// # use monero_marketplace_wallet::rpc::MoneroRpcClient;
+    /// # use monero_marketplace_common::types::MoneroConfig;
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let config = MoneroConfig::default();
     /// let client = MoneroRpcClient::new(config)?;
@@ -240,8 +240,8 @@ impl MoneroRpcClient {
     ///
     /// # Examples
     /// ```no_run
-    /// # use wallet::MoneroRpcClient;
-    /// # use common::MoneroConfig;
+    /// # use monero_marketplace_wallet::rpc::MoneroRpcClient;
+    /// # use monero_marketplace_common::types::MoneroConfig;
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let config = MoneroConfig::default();
     /// let client = MoneroRpcClient::new(config)?;
@@ -349,8 +349,8 @@ impl MoneroRpcClient {
     ///
     /// # Examples
     /// ```no_run
-    /// # use wallet::MoneroRpcClient;
-    /// # use common::MoneroConfig;
+    /// # use monero_marketplace_wallet::rpc::MoneroRpcClient;
+    /// # use monero_marketplace_common::types::MoneroConfig;
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let config = MoneroConfig::default();
     /// let client = MoneroRpcClient::new(config)?;
@@ -513,8 +513,8 @@ impl MoneroRpcClient {
     ///
     /// # Examples
     /// ```no_run
-    /// # use wallet::MoneroRpcClient;
-    /// # use common::MoneroConfig;
+    /// # use monero_marketplace_wallet::rpc::MoneroRpcClient;
+    /// # use monero_marketplace_common::types::MoneroConfig;
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let config = MoneroConfig::default();
     /// let client = MoneroRpcClient::new(config)?;
@@ -642,8 +642,8 @@ impl MoneroRpcClient {
     ///
     /// # Examples
     /// ```no_run
-    /// # use wallet::MoneroRpcClient;
-    /// # use common::MoneroConfig;
+    /// # use monero_marketplace_wallet::rpc::MoneroRpcClient;
+    /// # use monero_marketplace_common::types::MoneroConfig;
     /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
     /// let config = MoneroConfig::default();
     /// let client = MoneroRpcClient::new(config)?;

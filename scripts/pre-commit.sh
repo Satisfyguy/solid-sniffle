@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+. "$HOME/.cargo/env"
 # Script: pre-commit.sh
 # Pre-commit verifications
 # Usage: ./scripts/pre-commit.sh
