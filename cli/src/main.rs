@@ -1,15 +1,11 @@
 //! Monero Marketplace CLI
-//! 
+//!
 //! Command-line interface for the Monero Marketplace
 
 use clap::{Parser, Subcommand};
-use monero_marketplace_common::{
-    error::Result,
-    types::MoneroConfig,
-    MONERO_RPC_URL,
-};
+use monero_marketplace_common::{types::MoneroConfig, MONERO_RPC_URL};
 use monero_marketplace_wallet::MoneroClient;
-use tracing::{info, error, warn};
+use tracing::{error, info};
 
 /// Monero Marketplace CLI
 #[derive(Parser)]
@@ -19,11 +15,11 @@ use tracing::{info, error, warn};
 struct Cli {
     #[command(subcommand)]
     command: Commands,
-    
+
     /// Monero RPC URL
     #[arg(long, default_value = MONERO_RPC_URL)]
     rpc_url: String,
-    
+
     /// RPC timeout in seconds
     #[arg(long, default_value = "30")]
     timeout: u64,
@@ -70,7 +66,7 @@ enum MultisigCommands {
 }
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> anyhow::Result<()> {
     // Initialize tracing
     tracing_subscriber::fmt::init();
 
@@ -103,14 +99,17 @@ async fn main() -> Result<()> {
             info!("  Balance: {} XMR", status.balance as f64 / 1e12);
             info!("  Unlocked: {} XMR", status.unlocked_balance as f64 / 1e12);
         }
-        
+
         Commands::Info => {
             info!("Getting complete wallet information...");
             let wallet_info = client.get_wallet_info().await?;
             info!("Wallet Information:");
             info!("  Version: {}", wallet_info.version);
             info!("  Balance: {} XMR", wallet_info.balance as f64 / 1e12);
-            info!("  Unlocked: {} XMR", wallet_info.unlocked_balance as f64 / 1e12);
+            info!(
+                "  Unlocked: {} XMR",
+                wallet_info.unlocked_balance as f64 / 1e12
+            );
             info!("  Multisig: {}", wallet_info.is_multisig);
             if let Some(threshold) = wallet_info.multisig_threshold {
                 if let Some(total) = wallet_info.multisig_total {
@@ -122,41 +121,44 @@ async fn main() -> Result<()> {
             info!("  Block Height: {}", wallet_info.block_height);
             info!("  Daemon Block Height: {}", wallet_info.daemon_block_height);
         }
-        
-        Commands::Multisig { command } => {
-            match command {
-                MultisigCommands::Prepare => {
-                    info!("Preparing multisig...");
-                    let result = client.multisig().prepare_multisig().await?;
-                    info!("Multisig info: {}", result.multisig_info);
-                }
-                
-                MultisigCommands::Make { threshold, info } => {
-                    info!("Making {}-of-{} multisig with {} infos...", threshold, info.len() + 1, info.len());
-                    let result = client.multisig().make_multisig(threshold, info).await?;
-                    info!("Multisig address: {}", result.address);
-                    info!("Multisig info: {}", result.multisig_info);
-                }
-                
-                MultisigCommands::Export => {
-                    info!("Exporting multisig info...");
-                    let info = client.multisig().export_multisig_info().await?;
-                    info!("Multisig info: {}", info.info);
-                }
-                
-                MultisigCommands::Import { info } => {
-                    info!("Importing {} multisig infos...", info.len());
-                    let outputs = client.multisig().import_multisig_info(info).await?;
-                    info!("Imported multisig info, {} outputs", outputs);
-                }
-                
-                MultisigCommands::Check => {
-                    let is_multisig = client.multisig().is_multisig().await?;
-                    info!("Wallet is multisig: {}", is_multisig);
-                }
+
+        Commands::Multisig { command } => match command {
+            MultisigCommands::Prepare => {
+                info!("Preparing multisig...");
+                let result = client.multisig().prepare_multisig().await?;
+                info!("Multisig info: {}", result.multisig_info);
             }
-        }
-        
+
+            MultisigCommands::Make { threshold, info } => {
+                info!(
+                    "Making {}-of-{} multisig with {} infos...",
+                    threshold,
+                    info.len() + 1,
+                    info.len()
+                );
+                let result = client.multisig().make_multisig(threshold, info).await?;
+                info!("Multisig address: {}", result.address);
+                info!("Multisig info: {}", result.multisig_info);
+            }
+
+            MultisigCommands::Export => {
+                info!("Exporting multisig info...");
+                let info = client.multisig().export_multisig_info().await?;
+                info!("Multisig info: {}", info.info);
+            }
+
+            MultisigCommands::Import { info } => {
+                info!("Importing {} multisig infos...", info.len());
+                let result = client.multisig().import_multisig_info(info).await?;
+                info!("Imported multisig info, {} outputs", result.n_outputs);
+            }
+
+            MultisigCommands::Check => {
+                let is_multisig = client.multisig().is_multisig().await?;
+                info!("Wallet is multisig: {}", is_multisig);
+            }
+        },
+
         Commands::Test => {
             info!("Testing RPC connection...");
             match client.rpc().get_version().await {
@@ -166,7 +168,7 @@ async fn main() -> Result<()> {
                 }
                 Err(e) => {
                     error!("❌ RPC connection failed: {}", e);
-                    return Err(e);
+                    return Err(anyhow::anyhow!("RPC connection failed: {}", e));
                 }
             }
         }

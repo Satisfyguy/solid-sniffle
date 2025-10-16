@@ -1,10 +1,10 @@
 //! High-level Monero client
 
+use crate::{multisig::MultisigManager, rpc::MoneroRpcClient};
 use monero_marketplace_common::{
-    error::{Result, Error, MoneroError},
-    types::{MoneroConfig, WalletStatus, WalletInfo},
+    error::{Error, MoneroError, Result},
+    types::{MoneroConfig, WalletInfo, WalletStatus},
 };
-use crate::{rpc::MoneroRpcClient, multisig::MultisigManager};
 
 /// High-level Monero client
 pub struct MoneroClient {
@@ -15,10 +15,9 @@ pub struct MoneroClient {
 impl MoneroClient {
     /// Create a new Monero client
     pub fn new(config: MoneroConfig) -> Result<Self> {
-        let rpc_client = MoneroRpcClient::new(config)
-            .map_err(convert_monero_error)?;
+        let rpc_client = MoneroRpcClient::new(config).map_err(convert_monero_error)?;
         let multisig_manager = MultisigManager::new(rpc_client.clone());
-        
+
         Ok(Self {
             rpc_client,
             multisig_manager,
@@ -27,14 +26,20 @@ impl MoneroClient {
 
     /// Get wallet status
     pub async fn get_wallet_status(&self) -> Result<WalletStatus> {
-        let (balance, unlocked_balance) = self.rpc_client.get_balance().await
+        let (balance, unlocked_balance) = self
+            .rpc_client
+            .get_balance()
+            .await
             .map_err(convert_monero_error)?;
-        let is_multisig = self.rpc_client.is_multisig().await
+        let is_multisig = self
+            .rpc_client
+            .is_multisig()
+            .await
             .map_err(convert_monero_error)?;
-        
+
         // Note: In a real implementation, you'd get multisig threshold/total
         // from additional RPC calls
-        
+
         Ok(WalletStatus {
             is_multisig,
             multisig_threshold: if is_multisig { Some(2) } else { None },
@@ -48,21 +53,36 @@ impl MoneroClient {
     /// Get complete wallet information
     pub async fn get_wallet_info(&self) -> Result<WalletInfo> {
         // Get version
-        let version = self.rpc_client.get_version().await
+        let version = self
+            .rpc_client
+            .get_version()
+            .await
             .map_err(convert_monero_error)?;
 
         // Get balance
-        let (balance, unlocked_balance) = self.rpc_client.get_balance().await
+        let (balance, unlocked_balance) = self
+            .rpc_client
+            .get_balance()
+            .await
             .map_err(convert_monero_error)?;
 
         // Check if multisig
-        let is_multisig = self.rpc_client.is_multisig().await
+        let is_multisig = self
+            .rpc_client
+            .is_multisig()
+            .await
             .map_err(convert_monero_error)?;
 
         // Get block height from RPC
-        let block_height = self.rpc_client.get_block_height().await
+        let block_height = self
+            .rpc_client
+            .get_block_height()
+            .await
             .map_err(convert_monero_error)?;
-        let daemon_block_height = self.rpc_client.get_daemon_block_height().await
+        let daemon_block_height = self
+            .rpc_client
+            .get_daemon_block_height()
+            .await
             .map_err(convert_monero_error)?;
 
         Ok(WalletInfo {
@@ -122,7 +142,8 @@ mod tests {
 
         // Verify the error is a network/RPC error, not a structure error
         match result.unwrap_err() {
-            monero_marketplace_common::error::Error::MoneroRpc(_) | monero_marketplace_common::error::Error::Network(_) => {
+            monero_marketplace_common::error::Error::MoneroRpc(_)
+            | monero_marketplace_common::error::Error::Network(_) => {
                 // Expected - no Monero wallet running
             }
             _ => {
@@ -149,4 +170,3 @@ fn convert_monero_error(e: MoneroError) -> Error {
         MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
     }
 }
-

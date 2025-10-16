@@ -17,12 +17,12 @@ This project has **zero tolerance for security theatre**. All code is automatica
 - Hardcoded credentials
 - Logging of sensitive data (.onion addresses, keys, IPs)
 
-**Before generating ANY code**, run: `.\scripts\check-security-theatre-simple.ps1`
+**Before generating ANY code**, run: `./scripts/check-security-theatre.sh`
 
 ## Build & Test Commands
 
 ### Development Environment
-```powershell
+```bash
 # Build all workspace members
 cargo build --workspace
 
@@ -48,30 +48,38 @@ cargo check --workspace
 ```
 
 ### Pre-commit Validation
-```powershell
+```bash
 # Full pre-commit checks (runs automatically on git commit)
-.\scripts\pre-commit.ps1
+./scripts/pre-commit.sh
 
 # Security theatre detection
-.\scripts\check-security-theatre-simple.ps1 -Verbose
+./scripts/check-security-theatre.sh --verbose
 
 # Security dashboard
-.\scripts\security-dashboard-basic.ps1
+./scripts/security-dashboard.sh
 
 # Security alerts
-.\scripts\security-alerts-basic.ps1
+./scripts/security-alerts.sh
 ```
 
 ### Monero Testnet Setup
-```powershell
+```bash
+# Install Tor daemon (if not already installed)
+sudo apt update && sudo apt install -y tor
+sudo systemctl start tor
+sudo systemctl enable tor
+
+# Verify Tor is running
+curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org
+
 # Setup Monero testnet wallets
-.\scripts\setup-monero-testnet.ps1
+./scripts/setup-monero-testnet.sh
 
 # Start testnet (if needed)
-.\scripts\start-testnet.ps1
+./scripts/start-testnet.sh
 
 # Test RPC connectivity
-.\scripts\test-rpc.ps1
+./scripts/test-rpc.sh
 ```
 
 ## Architecture Overview
@@ -199,17 +207,17 @@ pub async fn my_rpc_call(&self) -> Result<MyType, MoneroError> {
 **Every function must have a specification before implementation.**
 
 ### Workflow
-```powershell
+```bash
 # 1. Create spec
-.\scripts\new-spec.ps1 my_function
+./scripts/new-spec.sh my_function
 
 # 2. Edit spec at docs/specs/my_function.md
 # 3. Implement function
 # 4. If function does network calls, create Reality Check
-.\scripts\auto-reality-check-tor.ps1 my_function
+./scripts/auto-reality-check-tor.sh my_function
 
 # 5. Validate Reality Check
-.\scripts\validate-reality-check-tor.ps1 my_function
+./scripts/validate-reality-check-tor.sh my_function
 ```
 
 ### Spec Template Structure
@@ -219,7 +227,7 @@ pub async fn my_rpc_call(&self) -> Result<MyType, MoneroError> {
 - **Output** - Return type and Result
 - **Erreurs Possibles** - All error variants and when they occur
 - **Dépendances** - Required crates/versions
-- **Test de Validation** - PowerShell commands to manually test
+- **Test de Validation** - Bash commands to manually test
 - **Estimation** - Time estimates
 - **Status** - Checkboxes for completion tracking
 
@@ -237,7 +245,7 @@ pub async fn my_rpc_call(&self) -> Result<MyType, MoneroError> {
 ### Reality Check Storage
 - Auto-generated at: `docs/reality-checks/tor-{function_name}-{date}.md`
 - Manual validation required before merge to production
-- Validated with: `.\scripts\validate-reality-check-tor.ps1 {function_name}`
+- Validated with: `./scripts/validate-reality-check-tor.sh {function_name}`
 
 ## Testing Strategy
 
@@ -273,7 +281,7 @@ use monero_marketplace_common::{
 
 ## Git Hooks
 
-**Pre-commit hook runs automatically** at `.git/hooks/pre-commit` (or via `.\scripts\pre-commit.ps1`):
+**Pre-commit hook runs automatically** at `.git/hooks/pre-commit` (or via `./scripts/pre-commit.sh`):
 1. Cargo check
 2. Cargo fmt --check
 3. Cargo clippy -- -D warnings
@@ -283,6 +291,15 @@ use monero_marketplace_common::{
 7. Test RPC connectivity
 
 **Commits are blocked if any check fails.**
+
+### Setup Git Hook (Ubuntu)
+```bash
+# Make pre-commit hook executable
+chmod +x .git/hooks/pre-commit
+
+# Or symlink to script
+ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
+```
 
 ## Exception Handling
 
@@ -331,14 +348,14 @@ cli/src/test_tool.rs:println!
 - `.cursorrules` - Comprehensive development rules (1100+ lines)
 - `.cargo/config.toml` - Clippy configuration (200+ lints)
 - `.security-theatre-ignore` - Legitimate exceptions
-- `scripts/pre-commit.ps1` - Pre-commit validation pipeline
+- `scripts/pre-commit.sh` - Pre-commit validation pipeline
 - `docs/DEVELOPER-GUIDE.md` - Detailed development guide
 - `docs/SECURITY-THEATRE-PREVENTION.md` - Security theatre documentation
 
 ## When In Doubt
 
-1. Run security dashboard: `.\scripts\security-dashboard-basic.ps1`
-2. Check for alerts: `.\scripts\security-alerts-basic.ps1`
+1. Run security dashboard: `./scripts/security-dashboard.sh`
+2. Check for alerts: `./scripts/security-alerts.sh`
 3. Review relevant spec in `docs/specs/`
 4. Check Reality Check in `docs/reality-checks/`
 5. Consult `.cursorrules` for specific patterns

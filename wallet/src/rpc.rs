@@ -2,14 +2,15 @@
 
 use monero_marketplace_common::{
     error::MoneroError,
-    types::{MultisigInfo, PrepareMultisigResult, MakeMultisigResult,
-    ExportMultisigInfoResult, ImportMultisigInfoResult, MoneroConfig,
-    RpcRequest, RpcResponse},
+    types::{
+        ExportMultisigInfoResult, ImportMultisigInfoResult, MakeMultisigResult, MoneroConfig,
+        MultisigInfo, PrepareMultisigResult, RpcRequest, RpcResponse,
+    },
     MAX_MULTISIG_INFO_LEN, MIN_MULTISIG_INFO_LEN,
 };
 use reqwest::Client;
-use std::time::Duration;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration as TokioDuration};
 
@@ -60,14 +61,14 @@ impl MoneroRpcClient {
             semaphore: Arc::new(Semaphore::new(5)), // Max 5 requêtes concurrentes
         })
     }
-    
+
     /// Vérifie que RPC est accessible
     pub async fn check_connection(&self) -> Result<(), MoneroError> {
         let request = RpcRequest::new("get_version");
 
         let response = self
             .client
-            .post(&format!("{}/json_rpc", self.url))
+            .post(format!("{}/json_rpc", self.url))
             .json(&request)
             .send()
             .await
@@ -102,13 +103,16 @@ impl MoneroRpcClient {
     /// let config = MoneroConfig::default();
     /// let client = MoneroRpcClient::new(config)?;
     /// let version = client.get_version().await?;
-    /// println!("Wallet RPC version: {}", version);
+    /// tracing::info!("Wallet RPC version: {}", version);
     /// # Ok(())
     /// # }
     /// ```
     pub async fn get_version(&self) -> Result<u32, MoneroError> {
         // Acquérir permit pour rate limiting
-        let _permit = self.semaphore.acquire().await
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
             .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
 
         // Acquérir lock pour sérialiser les appels RPC
@@ -118,7 +122,7 @@ impl MoneroRpcClient {
 
         let response = self
             .client
-            .post(&format!("{}/json_rpc", self.url))
+            .post(format!("{}/json_rpc", self.url))
             .json(&request)
             .send()
             .await
@@ -170,14 +174,17 @@ impl MoneroRpcClient {
     /// let config = MoneroConfig::default();
     /// let client = MoneroRpcClient::new(config)?;
     /// let (unlocked, total) = client.get_balance().await?;
-    /// println!("Unlocked: {} atomic units", unlocked);
-    /// println!("Total: {} atomic units", total);
+    /// tracing::info!("Unlocked: {} atomic units", unlocked);
+    /// tracing::info!("Total: {} atomic units", total);
     /// # Ok(())
     /// # }
     /// ```
     pub async fn get_balance(&self) -> Result<(u64, u64), MoneroError> {
         // Acquérir permit pour rate limiting
-        let _permit = self.semaphore.acquire().await
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
             .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
 
         // Acquérir lock pour sérialiser les appels RPC
@@ -187,7 +194,7 @@ impl MoneroRpcClient {
 
         let response = self
             .client
-            .post(&format!("{}/json_rpc", self.url))
+            .post(format!("{}/json_rpc", self.url))
             .json(&request)
             .send()
             .await
@@ -212,9 +219,9 @@ impl MoneroRpcClient {
             .result
             .ok_or_else(|| MoneroError::InvalidResponse("Missing result field".to_string()))?;
 
-        let unlocked_balance = result["unlocked_balance"]
-            .as_u64()
-            .ok_or_else(|| MoneroError::InvalidResponse("Invalid unlocked_balance format".to_string()))?;
+        let unlocked_balance = result["unlocked_balance"].as_u64().ok_or_else(|| {
+            MoneroError::InvalidResponse("Invalid unlocked_balance format".to_string())
+        })?;
 
         let balance = result["balance"]
             .as_u64()
@@ -253,7 +260,13 @@ impl MoneroRpcClient {
                 Ok(result) => return Ok(result),
                 Err(e) if retries < max_retries => {
                     let delay = TokioDuration::from_millis(100 * 2u64.pow(retries));
-                    tracing::debug!("Retry {}/{}: {} (waiting {:?})", retries + 1, max_retries, e, delay);
+                    tracing::debug!(
+                        "Retry {}/{}: {} (waiting {:?})",
+                        retries + 1,
+                        max_retries,
+                        e,
+                        delay
+                    );
                     sleep(delay).await;
                     retries += 1;
                 }
@@ -261,10 +274,13 @@ impl MoneroRpcClient {
             }
         }
     }
-    
+
     async fn prepare_multisig_inner(&self) -> Result<MultisigInfo, MoneroError> {
         // Acquérir permit pour rate limiting
-        let _permit = self.semaphore.acquire().await
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
             .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
 
         // Acquérir lock pour sérialiser les appels RPC
@@ -275,7 +291,7 @@ impl MoneroRpcClient {
         // Appel RPC avec gestion d'erreur
         let response = self
             .client
-            .post(&format!("{}/json_rpc", self.url))
+            .post(format!("{}/json_rpc", self.url))
             .json(&request)
             .send()
             .await
@@ -358,11 +374,20 @@ impl MoneroRpcClient {
         let max_retries = 3;
 
         loop {
-            match self.make_multisig_inner(threshold, multisig_info.clone()).await {
+            match self
+                .make_multisig_inner(threshold, multisig_info.clone())
+                .await
+            {
                 Ok(result) => return Ok(result),
                 Err(e) if retries < max_retries => {
                     let delay = TokioDuration::from_millis(100 * 2u64.pow(retries));
-                    tracing::debug!("Retry {}/{}: {} (waiting {:?})", retries + 1, max_retries, e, delay);
+                    tracing::debug!(
+                        "Retry {}/{}: {} (waiting {:?})",
+                        retries + 1,
+                        max_retries,
+                        e,
+                        delay
+                    );
                     sleep(delay).await;
                     retries += 1;
                 }
@@ -381,28 +406,31 @@ impl MoneroRpcClient {
         // 1. Vérifier threshold valide (2 pour 2-of-3)
         if threshold < 2 {
             return Err(MoneroError::ValidationError(
-                "Threshold must be at least 2".to_string()
+                "Threshold must be at least 2".to_string(),
             ));
         }
 
         // 2. Vérifier nombre de multisig_info (doit être = total - 1)
         // Pour 2-of-3, on doit avoir 2 autres infos
         if multisig_info.len() < 2 {
-            return Err(MoneroError::ValidationError(
-                format!("Need at least 2 multisig_info, got {}", multisig_info.len())
-            ));
+            return Err(MoneroError::ValidationError(format!(
+                "Need at least 2 multisig_info, got {}",
+                multisig_info.len()
+            )));
         }
 
         // 3. Valider chaque multisig_info
         for (i, info) in multisig_info.iter().enumerate() {
-            validate_multisig_info(info)
-                .map_err(|e| MoneroError::ValidationError(
-                    format!("Invalid multisig_info[{}]: {}", i, e)
-                ))?;
+            validate_multisig_info(info).map_err(|e| {
+                MoneroError::ValidationError(format!("Invalid multisig_info[{}]: {}", i, e))
+            })?;
         }
 
         // Acquérir permit pour rate limiting
-        let _permit = self.semaphore.acquire().await
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
             .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
 
         // Acquérir lock pour sérialiser les appels RPC
@@ -418,7 +446,7 @@ impl MoneroRpcClient {
         // Appel RPC avec gestion d'erreur
         let response = self
             .client
-            .post(&format!("{}/json_rpc", self.url))
+            .post(format!("{}/json_rpc", self.url))
             .json(&request)
             .send()
             .await
@@ -461,7 +489,7 @@ impl MoneroRpcClient {
         // 1. Vérifier que address n'est pas vide
         if result.address.is_empty() {
             return Err(MoneroError::InvalidResponse(
-                "Empty multisig address returned".to_string()
+                "Empty multisig address returned".to_string(),
             ));
         }
 
@@ -507,7 +535,13 @@ impl MoneroRpcClient {
                 Ok(result) => return Ok(result),
                 Err(e) if retries < max_retries => {
                     let delay = TokioDuration::from_millis(100 * 2u64.pow(retries));
-                    tracing::debug!("Retry {}/{}: {} (waiting {:?})", retries + 1, max_retries, e, delay);
+                    tracing::debug!(
+                        "Retry {}/{}: {} (waiting {:?})",
+                        retries + 1,
+                        max_retries,
+                        e,
+                        delay
+                    );
                     sleep(delay).await;
                     retries += 1;
                 }
@@ -518,7 +552,10 @@ impl MoneroRpcClient {
 
     async fn export_multisig_info_inner(&self) -> Result<ExportMultisigInfoResult, MoneroError> {
         // Acquérir permit pour rate limiting
-        let _permit = self.semaphore.acquire().await
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
             .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
 
         // Acquérir lock pour sérialiser les appels RPC
@@ -529,7 +566,7 @@ impl MoneroRpcClient {
         // Appel RPC avec gestion d'erreur
         let response = self
             .client
-            .post(&format!("{}/json_rpc", self.url))
+            .post(format!("{}/json_rpc", self.url))
             .json(&request)
             .send()
             .await
@@ -550,9 +587,7 @@ impl MoneroRpcClient {
         // Handle RPC errors
         if let Some(error) = rpc_response.error {
             return Err(match error.message.as_str() {
-                msg if msg.contains("not") && msg.contains("multisig") => {
-                    MoneroError::NotMultisig
-                }
+                msg if msg.contains("not") && msg.contains("multisig") => MoneroError::NotMultisig,
                 msg if msg.contains("locked") => MoneroError::WalletLocked,
                 msg if msg.contains("busy") => MoneroError::WalletBusy,
                 _ => MoneroError::RpcError(error.message),
@@ -567,21 +602,23 @@ impl MoneroRpcClient {
         // VALIDATION POST-REQUÊTE: Info non vide
         if result.info.is_empty() {
             return Err(MoneroError::InvalidResponse(
-                "Empty multisig info returned".to_string()
+                "Empty multisig info returned".to_string(),
             ));
         }
 
         // Validation longueur
         if result.info.len() < 100 {
-            return Err(MoneroError::InvalidResponse(
-                format!("Multisig info too short: {} chars", result.info.len())
-            ));
+            return Err(MoneroError::InvalidResponse(format!(
+                "Multisig info too short: {} chars",
+                result.info.len()
+            )));
         }
 
         if result.info.len() > 5000 {
-            return Err(MoneroError::InvalidResponse(
-                format!("Multisig info too long: {} chars", result.info.len())
-            ));
+            return Err(MoneroError::InvalidResponse(format!(
+                "Multisig info too long: {} chars",
+                result.info.len()
+            )));
         }
 
         Ok(result)
@@ -616,7 +653,7 @@ impl MoneroRpcClient {
     /// let arb_export = "...".to_string();
     ///
     /// let result = client.import_multisig_info(vec![seller_export, arb_export]).await?;
-    /// println!("Imported {} outputs", result.n_outputs);
+    /// tracing::info!("Imported {} outputs", result.n_outputs);
     /// # Ok(())
     /// # }
     /// ```
@@ -633,7 +670,13 @@ impl MoneroRpcClient {
                 Ok(result) => return Ok(result),
                 Err(e) if retries < max_retries => {
                     let delay = TokioDuration::from_millis(100 * 2u64.pow(retries));
-                    tracing::debug!("Retry {}/{}: {} (waiting {:?})", retries + 1, max_retries, e, delay);
+                    tracing::debug!(
+                        "Retry {}/{}: {} (waiting {:?})",
+                        retries + 1,
+                        max_retries,
+                        e,
+                        delay
+                    );
                     sleep(delay).await;
                     retries += 1;
                 }
@@ -651,33 +694,40 @@ impl MoneroRpcClient {
         // 1. Vérifier qu'il y a au moins 1 info
         if infos.is_empty() {
             return Err(MoneroError::ValidationError(
-                "Need at least 1 multisig info to import".to_string()
+                "Need at least 1 multisig info to import".to_string(),
             ));
         }
 
         // 2. Pour 2-of-3, on attend exactement 2 infos (N-1)
         if infos.len() < 2 {
-            return Err(MoneroError::ValidationError(
-                format!("Expected at least 2 infos for 2-of-3 multisig, got {}", infos.len())
-            ));
+            return Err(MoneroError::ValidationError(format!(
+                "Expected at least 2 infos for 2-of-3 multisig, got {}",
+                infos.len()
+            )));
         }
 
         // 3. Valider chaque info
         for (i, info) in infos.iter().enumerate() {
             if info.is_empty() {
-                return Err(MoneroError::ValidationError(
-                    format!("Info[{}] is empty", i)
-                ));
+                return Err(MoneroError::ValidationError(format!(
+                    "Info[{}] is empty",
+                    i
+                )));
             }
             if info.len() < 100 {
-                return Err(MoneroError::ValidationError(
-                    format!("Info[{}] too short: {} chars", i, info.len())
-                ));
+                return Err(MoneroError::ValidationError(format!(
+                    "Info[{}] too short: {} chars",
+                    i,
+                    info.len()
+                )));
             }
         }
 
         // Acquérir permit pour rate limiting
-        let _permit = self.semaphore.acquire().await
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
             .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
 
         // Acquérir lock pour sérialiser les appels RPC
@@ -692,7 +742,7 @@ impl MoneroRpcClient {
         // Appel RPC avec gestion d'erreur
         let response = self
             .client
-            .post(&format!("{}/json_rpc", self.url))
+            .post(format!("{}/json_rpc", self.url))
             .json(&request)
             .send()
             .await
@@ -713,9 +763,7 @@ impl MoneroRpcClient {
         // Handle RPC errors
         if let Some(error) = rpc_response.error {
             return Err(match error.message.as_str() {
-                msg if msg.contains("not") && msg.contains("multisig") => {
-                    MoneroError::NotMultisig
-                }
+                msg if msg.contains("not") && msg.contains("multisig") => MoneroError::NotMultisig,
                 msg if msg.contains("locked") => MoneroError::WalletLocked,
                 msg if msg.contains("busy") => MoneroError::WalletBusy,
                 msg if msg.contains("invalid") || msg.contains("Invalid") => {
@@ -739,17 +787,20 @@ impl MoneroRpcClient {
     /// Get current block height
     pub async fn get_block_height(&self) -> Result<u64, MoneroError> {
         // Acquérir permit pour rate limiting
-        let _permit = self.semaphore.acquire().await
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
             .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
-        
+
         // Acquérir lock pour sérialiser les appels RPC
         let _guard = self.rpc_lock.lock().await;
-        
+
         let request = RpcRequest::new("get_height");
-        
+
         let response = self
             .client
-            .post(&format!("{}/json_rpc", self.url))
+            .post(format!("{}/json_rpc", self.url))
             .json(&request)
             .send()
             .await
@@ -760,48 +811,51 @@ impl MoneroRpcClient {
                     MoneroError::NetworkError(e.to_string())
                 }
             })?;
-        
+
         let rpc_response: RpcResponse<serde_json::Value> = response
             .json()
             .await
             .map_err(|e| MoneroError::InvalidResponse(format!("JSON parse: {}", e)))?;
-        
+
         if let Some(error) = rpc_response.error {
             return Err(MoneroError::RpcError(error.message));
         }
-        
+
         let result = rpc_response
             .result
             .ok_or_else(|| MoneroError::InvalidResponse("Missing result field".to_string()))?;
-        
+
         let height = result["height"]
             .as_u64()
             .ok_or_else(|| MoneroError::InvalidResponse("Invalid height format".to_string()))?;
-        
+
         Ok(height)
     }
-    
+
     /// Get daemon block height
     pub async fn get_daemon_block_height(&self) -> Result<u64, MoneroError> {
         // Pour simplifier, on retourne la même valeur que get_block_height
         // En réalité, ce serait un appel RPC différent vers le daemon
         self.get_block_height().await
     }
-    
+
     /// Check if wallet is multisig
     pub async fn is_multisig(&self) -> Result<bool, MoneroError> {
         // Acquérir permit pour rate limiting
-        let _permit = self.semaphore.acquire().await
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
             .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
-        
+
         // Acquérir lock pour sérialiser les appels RPC
         let _guard = self.rpc_lock.lock().await;
-        
+
         let request = RpcRequest::new("is_multisig");
-        
+
         let response = self
             .client
-            .post(&format!("{}/json_rpc", self.url))
+            .post(format!("{}/json_rpc", self.url))
             .json(&request)
             .send()
             .await
@@ -812,24 +866,24 @@ impl MoneroRpcClient {
                     MoneroError::NetworkError(e.to_string())
                 }
             })?;
-        
+
         let rpc_response: RpcResponse<serde_json::Value> = response
             .json()
             .await
             .map_err(|e| MoneroError::InvalidResponse(format!("JSON parse: {}", e)))?;
-        
+
         if let Some(error) = rpc_response.error {
             return Err(MoneroError::RpcError(error.message));
         }
-        
+
         let result = rpc_response
             .result
             .ok_or_else(|| MoneroError::InvalidResponse("Missing result field".to_string()))?;
-        
+
         let is_multisig = result["multisig"]
             .as_bool()
             .ok_or_else(|| MoneroError::InvalidResponse("Invalid multisig format".to_string()))?;
-        
+
         Ok(is_multisig)
     }
 }
@@ -837,7 +891,7 @@ impl MoneroRpcClient {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_monero_rpc_client_localhost_only() {
         // OPSEC: Vérifier que client rejette URLs publiques
@@ -864,7 +918,7 @@ mod tests {
         let result = MoneroRpcClient::new(config);
         assert!(result.is_ok());
     }
-    
+
     #[tokio::test]
     async fn test_prepare_multisig() {
         // SETUP: monero-wallet-rpc doit tourner sur 18082
@@ -878,7 +932,7 @@ mod tests {
                 return;
             }
         };
-        
+
         // Vérifier connexion d'abord
         match client.check_connection().await {
             Ok(_) => tracing::info!("RPC accessible"),
@@ -888,10 +942,10 @@ mod tests {
                 return;
             }
         }
-        
+
         // Tester prepare_multisig
         let result = client.prepare_multisig().await;
-        
+
         match &result {
             Ok(info) => {
                 tracing::info!("prepare_multisig OK");
@@ -911,7 +965,7 @@ mod tests {
             }
         }
     }
-    
+
     #[tokio::test]
     async fn test_prepare_multisig_rpc_down() {
         // Test avec RPC pas lancé
@@ -928,13 +982,13 @@ mod tests {
                 return;
             }
         };
-        
+
         let result = client.prepare_multisig().await;
-        
+
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), MoneroError::RpcUnreachable));
     }
-    
+
     #[tokio::test]
     async fn test_prepare_multisig_concurrent() {
         // Test appels concurrents (doit être thread-safe)
@@ -950,34 +1004,33 @@ mod tests {
         let handles: Vec<_> = (0..5)
             .map(|_| {
                 let client = Arc::clone(&client);
-                tokio::spawn(async move {
-                    client.prepare_multisig().await
-                })
+                tokio::spawn(async move { client.prepare_multisig().await })
             })
             .collect();
 
         // Tous doivent réussir OU échouer proprement (pas de panic)
         for handle in handles {
-            let result = handle.await
-                .expect("Task should complete without panic");
+            let result = handle.await.expect("Task should complete without panic");
             // Peut échouer si RPC pas lancé, mais ne doit pas panic
             assert!(result.is_ok() || result.is_err());
         }
     }
-    
+
     #[tokio::test]
     async fn test_validate_multisig_info() {
         // Test validation stricte
         use super::validate_multisig_info;
 
-        // Cas valides
-        assert!(validate_multisig_info("MultisigV1KF8h5VRkfxPZwvR9Sk2v3d7e...").is_ok());
+        // Cas valides - Utiliser strings de longueur réaliste (>= 100 chars)
+        let valid_info = format!("MultisigV1{}", "K".repeat(100)); // > MIN_MULTISIG_INFO_LEN
+        assert!(validate_multisig_info(&valid_info).is_ok());
 
         // Cas invalides
         assert!(validate_multisig_info("InvalidPrefix...").is_err());
         assert!(validate_multisig_info("MultisigV1").is_err()); // Trop court
         assert!(validate_multisig_info(&"MultisigV1".repeat(1000)).is_err()); // Trop long
-        assert!(validate_multisig_info("MultisigV1@#$%").is_err()); // Caractères invalides
+        let invalid_chars = format!("MultisigV1{}", "@#$%".repeat(30)); // Caractères invalides
+        assert!(validate_multisig_info(&invalid_chars).is_err());
     }
 
     #[tokio::test]
@@ -993,27 +1046,34 @@ mod tests {
         };
 
         // Cas 1: threshold trop bas
-        let result = client.make_multisig(1, vec![
-            "MultisigV1KF8h5VRkfxPZwvR9Sk2v3d7e...".to_string(),
-            "MultisigV1KF8h5VRkfxPZwvR9Sk2v3d7f...".to_string(),
-        ]).await;
+        let fake_info1 = format!("MultisigV1{}", "A".repeat(100));
+        let fake_info2 = format!("MultisigV1{}", "B".repeat(100));
+        let result = client
+            .make_multisig(1, vec![fake_info1.clone(), fake_info2.clone()])
+            .await;
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), MoneroError::ValidationError(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            MoneroError::ValidationError(_)
+        ));
 
         // Cas 2: pas assez de multisig_info
-        let result = client.make_multisig(2, vec![
-            "MultisigV1KF8h5VRkfxPZwvR9Sk2v3d7e...".to_string(),
-        ]).await;
+        let result = client.make_multisig(2, vec![fake_info1.clone()]).await;
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), MoneroError::ValidationError(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            MoneroError::ValidationError(_)
+        ));
 
         // Cas 3: multisig_info invalide
-        let result = client.make_multisig(2, vec![
-            "InvalidInfo".to_string(),
-            "MultisigV1KF8h5VRkfxPZwvR9Sk2v3d7e...".to_string(),
-        ]).await;
+        let result = client
+            .make_multisig(2, vec!["InvalidInfo".to_string(), fake_info1.clone()])
+            .await;
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), MoneroError::ValidationError(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            MoneroError::ValidationError(_)
+        ));
     }
 
     #[tokio::test]
@@ -1043,10 +1103,9 @@ mod tests {
         // NOTE: Ce test nécessite une configuration manuelle complexe
         // avec 3 wallets RPC et leurs infos prepare_multisig
         // Pour l'instant, on teste juste que l'erreur est propre
-        let result = client.make_multisig(2, vec![
-            "MultisigV1KF8h5VRkfxPZwvR9Sk2v3d7e...".to_string(),
-            "MultisigV1KF8h5VRkfxPZwvR9Sk2v3d7f...".to_string(),
-        ]).await;
+        let fake_info1 = format!("MultisigV1{}", "A".repeat(100));
+        let fake_info2 = format!("MultisigV1{}", "B".repeat(100));
+        let result = client.make_multisig(2, vec![fake_info1, fake_info2]).await;
 
         match &result {
             Ok(result) => {
@@ -1091,15 +1150,14 @@ mod tests {
             }
         };
 
-        let result = client.make_multisig(2, vec![
-            "MultisigV1KF8h5VRkfxPZwvR9Sk2v3d7e...".to_string(),
-            "MultisigV1KF8h5VRkfxPZwvR9Sk2v3d7f...".to_string(),
-        ]).await;
+        let fake_info1 = format!("MultisigV1{}", "A".repeat(100));
+        let fake_info2 = format!("MultisigV1{}", "B".repeat(100));
+        let result = client.make_multisig(2, vec![fake_info1, fake_info2]).await;
 
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), MoneroError::RpcUnreachable));
     }
-    
+
     #[tokio::test]
     async fn test_export_multisig_info_validation() {
         // Test export validation (sans RPC)
@@ -1151,26 +1209,41 @@ mod tests {
         // Cas 1: Liste vide
         let result = client.import_multisig_info(vec![]).await;
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), MoneroError::ValidationError(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            MoneroError::ValidationError(_)
+        ));
 
         // Cas 2: Pas assez d'infos (< 2 pour 2-of-3)
         let fake_info = "a".repeat(150); // > 100 chars pour validation
         let result = client.import_multisig_info(vec![fake_info]).await;
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), MoneroError::ValidationError(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            MoneroError::ValidationError(_)
+        ));
 
         // Cas 3: Info trop courte
-        let result = client.import_multisig_info(vec!["short".to_string(), "also_short".to_string()]).await;
+        let result = client
+            .import_multisig_info(vec!["short".to_string(), "also_short".to_string()])
+            .await;
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), MoneroError::ValidationError(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            MoneroError::ValidationError(_)
+        ));
 
         // Cas 4: Info vide
         let fake_info = "a".repeat(150);
-        let result = client.import_multisig_info(vec!["".to_string(), fake_info]).await;
+        let result = client
+            .import_multisig_info(vec!["".to_string(), fake_info])
+            .await;
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), MoneroError::ValidationError(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            MoneroError::ValidationError(_)
+        ));
     }
-
 }
 
 /// Validation stricte multisig_info
@@ -1178,21 +1251,25 @@ fn validate_multisig_info(info: &str) -> Result<(), MoneroError> {
     // Doit commencer par MultisigV1
     if !info.starts_with("MultisigV1") {
         return Err(MoneroError::InvalidResponse(
-            "Invalid multisig_info prefix".to_string()
+            "Invalid multisig_info prefix".to_string(),
         ));
     }
 
     // Longueur attendue (base64)
     if info.len() < MIN_MULTISIG_INFO_LEN || info.len() > MAX_MULTISIG_INFO_LEN {
-        return Err(MoneroError::InvalidResponse(
-            format!("Invalid multisig_info length: {}", info.len())
-        ));
+        return Err(MoneroError::InvalidResponse(format!(
+            "Invalid multisig_info length: {}",
+            info.len()
+        )));
     }
 
     // Caractères valides (base64 + prefix)
-    if !info.chars().all(|c| c.is_alphanumeric() || c == '+' || c == '/' || c == '=') {
+    if !info
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '+' || c == '/' || c == '=')
+    {
         return Err(MoneroError::InvalidResponse(
-            "Invalid characters in multisig_info".to_string()
+            "Invalid characters in multisig_info".to_string(),
         ));
     }
 

@@ -1,25 +1,29 @@
 //! CLI Test Tool pour tests manuels
-//! 
+//!
 //! Outil simple pour tester les fonctionnalités refactorées
 
 use anyhow::Result;
-use tracing_subscriber;
-use wallet::rpc::MoneroRpcClient;
-use common::{MoneroError, MONERO_RPC_URL};
+use monero_marketplace_common::{error::MoneroError, types::MoneroConfig, MONERO_RPC_URL};
+use monero_marketplace_wallet::rpc::MoneroRpcClient;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     // Setup logging
-    tracing_subscriber::fmt()
-        .with_env_filter("wallet=info,cli=debug")
-        .init();
-    
+    tracing_subscriber::fmt().init();
+
     println!("🧅 Monero Marketplace - CLI Test Tool v2.0");
     println!("==========================================\n");
-    
+
     // Test 1: Création Client RPC
     println!("1️⃣ Testing RPC Client creation...");
-    let client = match MoneroRpcClient::new(MONERO_RPC_URL.to_string()) {
+    let config = MoneroConfig {
+        rpc_url: MONERO_RPC_URL.to_string(),
+        rpc_user: None,
+        rpc_password: None,
+        timeout_seconds: 30,
+    };
+
+    let client = match MoneroRpcClient::new(config) {
         Ok(client) => {
             println!("   ✅ RPC Client created successfully");
             client
@@ -29,9 +33,9 @@ async fn main() -> Result<()> {
             return Ok(());
         }
     };
-    
+
     println!();
-    
+
     // Test 2: Vérification Connexion
     println!("2️⃣ Testing RPC connection...");
     match client.check_connection().await {
@@ -44,18 +48,18 @@ async fn main() -> Result<()> {
             return Ok(());
         }
     }
-    
+
     println!();
-    
+
     // Test 3: prepare_multisig
     println!("3️⃣ Testing prepare_multisig...");
-    
+
     match client.prepare_multisig().await {
         Ok(info) => {
             println!("   ✅ prepare_multisig succeeded");
             println!("   Info: {}...", &info.multisig_info[..50]);
             println!("   Length: {} chars", info.multisig_info.len());
-            
+
             // Validation
             if info.multisig_info.starts_with("MultisigV1") {
                 println!("   ✅ Validation passed (prefix OK)");
@@ -71,9 +75,9 @@ async fn main() -> Result<()> {
             println!("   ❌ prepare_multisig failed: {}", e);
         }
     }
-    
+
     println!();
-    
+
     // Test 4: Appels Concurrents
     println!("4️⃣ Testing concurrent calls...");
     let client_arc = std::sync::Arc::new(client);
@@ -88,14 +92,14 @@ async fn main() -> Result<()> {
             })
         })
         .collect();
-    
+
     for handle in handles {
         match handle.await {
             Ok(result) => println!("   {}", result),
             Err(e) => println!("   ❌ Task failed: {}", e),
         }
     }
-    
+
     println!();
     println!("✅ All tests completed");
     println!();
@@ -105,6 +109,6 @@ async fn main() -> Result<()> {
     println!("   - Validation: Stricte multisig_info validation");
     println!("   - Timeouts: Configurable via MONERO_RPC_TIMEOUT_SECS");
     println!("   - Logging: Structured with tracing");
-    
+
     Ok(())
 }

@@ -1,10 +1,10 @@
 //! Multisig functionality for Monero escrow
 
-use monero_marketplace_common::{
-    error::{Error, Result, MoneroError},
-    types::{MultisigInfo, MakeMultisigResult, ExportMultisigInfoResult, ImportMultisigInfoResult},
-};
 use crate::rpc::MoneroRpcClient;
+use monero_marketplace_common::{
+    error::{Error, MoneroError, Result},
+    types::{ExportMultisigInfoResult, ImportMultisigInfoResult, MakeMultisigResult, MultisigInfo},
+};
 
 /// Multisig manager for handling escrow operations
 pub struct MultisigManager {
@@ -27,12 +27,18 @@ impl MultisigManager {
             .await
             .map_err(|e| match e {
                 MoneroError::RpcUnreachable => Error::MoneroRpc("RPC unreachable".to_string()),
-                MoneroError::AlreadyMultisig => Error::Multisig("Already in multisig mode".to_string()),
+                MoneroError::AlreadyMultisig => {
+                    Error::Multisig("Already in multisig mode".to_string())
+                }
                 MoneroError::NotMultisig => Error::Multisig("Not in multisig mode".to_string()),
                 MoneroError::WalletLocked => Error::Wallet("Wallet locked".to_string()),
                 MoneroError::ValidationError(msg) => Error::InvalidInput(msg),
-                MoneroError::InvalidResponse(msg) => Error::MoneroRpc(format!("Invalid response: {}", msg)),
-                MoneroError::NetworkError(msg) => Error::Internal(format!("Network error: {}", msg)),
+                MoneroError::InvalidResponse(msg) => {
+                    Error::MoneroRpc(format!("Invalid response: {}", msg))
+                }
+                MoneroError::NetworkError(msg) => {
+                    Error::Internal(format!("Network error: {}", msg))
+                }
                 MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
                 MoneroError::WalletBusy => Error::Wallet("Wallet busy".to_string()),
             })
@@ -61,13 +67,19 @@ impl MultisigManager {
             .await
             .map_err(|e| match e {
                 MoneroError::RpcUnreachable => Error::MoneroRpc("RPC unreachable".to_string()),
-                MoneroError::AlreadyMultisig => Error::Multisig("Already in multisig mode".to_string()),
+                MoneroError::AlreadyMultisig => {
+                    Error::Multisig("Already in multisig mode".to_string())
+                }
                 MoneroError::NotMultisig => Error::Multisig("Not in multisig mode".to_string()),
                 MoneroError::WalletLocked => Error::Wallet("Wallet locked".to_string()),
                 MoneroError::WalletBusy => Error::Wallet("Wallet busy".to_string()),
                 MoneroError::ValidationError(msg) => Error::InvalidInput(msg),
-                MoneroError::InvalidResponse(msg) => Error::MoneroRpc(format!("Invalid response: {}", msg)),
-                MoneroError::NetworkError(msg) => Error::Internal(format!("Network error: {}", msg)),
+                MoneroError::InvalidResponse(msg) => {
+                    Error::MoneroRpc(format!("Invalid response: {}", msg))
+                }
+                MoneroError::NetworkError(msg) => {
+                    Error::Internal(format!("Network error: {}", msg))
+                }
                 MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
             })
     }
@@ -91,10 +103,16 @@ impl MultisigManager {
                 MoneroError::WalletLocked => Error::Wallet("Wallet locked".to_string()),
                 MoneroError::WalletBusy => Error::Wallet("Wallet busy".to_string()),
                 MoneroError::ValidationError(msg) => Error::InvalidInput(msg),
-                MoneroError::InvalidResponse(msg) => Error::MoneroRpc(format!("Invalid response: {}", msg)),
-                MoneroError::NetworkError(msg) => Error::Internal(format!("Network error: {}", msg)),
+                MoneroError::InvalidResponse(msg) => {
+                    Error::MoneroRpc(format!("Invalid response: {}", msg))
+                }
+                MoneroError::NetworkError(msg) => {
+                    Error::Internal(format!("Network error: {}", msg))
+                }
                 MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
-                MoneroError::AlreadyMultisig => Error::Multisig("Already in multisig mode".to_string()),
+                MoneroError::AlreadyMultisig => {
+                    Error::Multisig("Already in multisig mode".to_string())
+                }
             })
     }
 
@@ -123,10 +141,16 @@ impl MultisigManager {
                 MoneroError::WalletLocked => Error::Wallet("Wallet locked".to_string()),
                 MoneroError::WalletBusy => Error::Wallet("Wallet busy".to_string()),
                 MoneroError::ValidationError(msg) => Error::InvalidInput(msg),
-                MoneroError::InvalidResponse(msg) => Error::MoneroRpc(format!("Invalid response: {}", msg)),
-                MoneroError::NetworkError(msg) => Error::Internal(format!("Network error: {}", msg)),
+                MoneroError::InvalidResponse(msg) => {
+                    Error::MoneroRpc(format!("Invalid response: {}", msg))
+                }
+                MoneroError::NetworkError(msg) => {
+                    Error::Internal(format!("Network error: {}", msg))
+                }
                 MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
-                MoneroError::AlreadyMultisig => Error::Multisig("Already in multisig mode".to_string()),
+                MoneroError::AlreadyMultisig => {
+                    Error::Multisig("Already in multisig mode".to_string())
+                }
             })
     }
 
@@ -190,35 +214,45 @@ impl MultisigManager {
 
     /// Check if wallet is multisig
     pub async fn is_multisig(&self) -> Result<bool> {
-        self.rpc_client.is_multisig().await
-            .map_err(|e| match e {
-                MoneroError::RpcUnreachable => Error::MoneroRpc("RPC unreachable".to_string()),
-                MoneroError::AlreadyMultisig => Error::Multisig("Already in multisig mode".to_string()),
-                MoneroError::NotMultisig => Error::Multisig("Not in multisig mode".to_string()),
-                MoneroError::WalletLocked => Error::Wallet("Wallet locked".to_string()),
-                MoneroError::WalletBusy => Error::Wallet("Wallet busy".to_string()),
-                MoneroError::ValidationError(msg) => Error::InvalidInput(msg),
-                MoneroError::InvalidResponse(msg) => Error::MoneroRpc(format!("Invalid response: {}", msg)),
-                MoneroError::NetworkError(msg) => Error::Internal(format!("Network error: {}", msg)),
-                MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
-            })
+        self.rpc_client.is_multisig().await.map_err(|e| match e {
+            MoneroError::RpcUnreachable => Error::MoneroRpc("RPC unreachable".to_string()),
+            MoneroError::AlreadyMultisig => Error::Multisig("Already in multisig mode".to_string()),
+            MoneroError::NotMultisig => Error::Multisig("Not in multisig mode".to_string()),
+            MoneroError::WalletLocked => Error::Wallet("Wallet locked".to_string()),
+            MoneroError::WalletBusy => Error::Wallet("Wallet busy".to_string()),
+            MoneroError::ValidationError(msg) => Error::InvalidInput(msg),
+            MoneroError::InvalidResponse(msg) => {
+                Error::MoneroRpc(format!("Invalid response: {}", msg))
+            }
+            MoneroError::NetworkError(msg) => Error::Internal(format!("Network error: {}", msg)),
+            MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
+        })
     }
 
     /// Get multisig info
     pub async fn get_multisig_info(&self) -> Result<MultisigInfo> {
         // Note: This delegates to the RPC client's export_multisig_info method
         // which returns the multisig info for this wallet
-        let export_result = self.rpc_client.export_multisig_info().await
+        let export_result = self
+            .rpc_client
+            .export_multisig_info()
+            .await
             .map_err(|e| match e {
                 MoneroError::RpcUnreachable => Error::MoneroRpc("RPC unreachable".to_string()),
                 MoneroError::NotMultisig => Error::Multisig("Not in multisig mode".to_string()),
                 MoneroError::WalletLocked => Error::Wallet("Wallet locked".to_string()),
                 MoneroError::WalletBusy => Error::Wallet("Wallet busy".to_string()),
                 MoneroError::ValidationError(msg) => Error::InvalidInput(msg),
-                MoneroError::InvalidResponse(msg) => Error::MoneroRpc(format!("Invalid response: {}", msg)),
-                MoneroError::NetworkError(msg) => Error::Internal(format!("Network error: {}", msg)),
+                MoneroError::InvalidResponse(msg) => {
+                    Error::MoneroRpc(format!("Invalid response: {}", msg))
+                }
+                MoneroError::NetworkError(msg) => {
+                    Error::Internal(format!("Network error: {}", msg))
+                }
                 MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
-                MoneroError::AlreadyMultisig => Error::Multisig("Already in multisig mode".to_string()),
+                MoneroError::AlreadyMultisig => {
+                    Error::Multisig("Already in multisig mode".to_string())
+                }
             })?;
 
         Ok(MultisigInfo {
@@ -235,9 +269,9 @@ mod tests {
     #[tokio::test]
     async fn test_multisig_manager_creation() {
         let config = MoneroConfig::default();
-        let rpc_client = MoneroRpcClient::new(config)
-            .expect("Failed to create RPC client for test");
-        let manager = MultisigManager::new(rpc_client);
+        let rpc_client =
+            MoneroRpcClient::new(config).expect("Failed to create RPC client for test");
+        let _manager = MultisigManager::new(rpc_client);
         // Manager created successfully - test passes if no panic
     }
 
