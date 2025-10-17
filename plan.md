@@ -26,7 +26,7 @@ Stockage persistant (PostgreSQL/SQLite chiffré)
 Authentification utilisateurs (sessions Tor-safe)
 WebSockets pour notifications temps réel
 Phase 3: Escrow & Transactions (4-6 semaines)
-Création de transactions multisig
+✅ Création de transactions multisig
 Signature distribuée (collecting signatures)
 Finalize & broadcast transactions
 Monitoring confirmations blockchain

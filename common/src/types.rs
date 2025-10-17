@@ -18,8 +18,105 @@ pub type EscrowId = String;
 /// User ID type
 pub type UserId = String;
 
-/// Monero RPC request
-#[derive(Debug, Serialize, Deserialize)]
+/// Represents the state of an escrow process.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum EscrowState {
+    /// The escrow has been created but not yet funded.
+    Created,
+    /// The buyer has funded the escrow.
+    Funded,
+    /// The seller has released the funds to the buyer.
+    Released,
+    /// The funds have been refunded to the buyer.
+    Refunded,
+    /// The escrow is in a disputed state, requiring arbiter intervention.
+    Disputed,
+}
+
+/// Contains all the necessary data for an escrow agreement.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EscrowData {
+    pub buyer: UserId,
+    pub seller: UserId,
+    pub arbiter: UserId,
+    pub amount: Amount,
+    pub multisig_address: MoneroAddress,
+}
+
+/// Event triggered when a new escrow is created.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EscrowCreated {
+    pub escrow_id: EscrowId,
+    pub data: EscrowData,
+}
+
+/// Event triggered when an escrow is funded by the buyer.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EscrowFunded {
+    pub escrow_id: EscrowId,
+    pub tx_hash: TxHash,
+}
+
+/// Event triggered when funds are released to the seller.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EscrowReleased {
+    pub escrow_id: EscrowId,
+    pub tx_hash: TxHash,
+}
+
+/// Event triggered when funds are refunded to the buyer.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EscrowRefunded {
+    pub escrow_id: EscrowId,
+    pub tx_hash: TxHash,
+}
+
+/// Event triggered when an escrow enters dispute state.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EscrowDisputed {
+    pub escrow_id: EscrowId,
+    pub reason: String,
+    pub disputed_by: UserId,
+}
+
+/// Complete escrow information with state management
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Escrow {
+    pub id: EscrowId,
+    pub data: EscrowData,
+    pub state: EscrowState,
+    pub created_at: u64,
+    pub updated_at: u64,
+    pub funding_tx_hash: Option<TxHash>,
+    pub release_tx_hash: Option<TxHash>,
+    pub refund_tx_hash: Option<TxHash>,
+    pub dispute_reason: Option<String>,
+    pub disputed_by: Option<UserId>,
+}
+
+/// Escrow operation result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum EscrowResult {
+    Created(Escrow),
+    Funded {
+        escrow_id: EscrowId,
+        tx_hash: TxHash,
+    },
+    Released {
+        escrow_id: EscrowId,
+        tx_hash: TxHash,
+    },
+    Refunded {
+        escrow_id: EscrowId,
+        tx_hash: TxHash,
+    },
+    Disputed {
+        escrow_id: EscrowId,
+        reason: String,
+    },
+}
+
+/// Monero RPC request#[derive(Debug, Serialize, Deserialize)]
 pub struct MoneroRpcRequest {
     pub jsonrpc: String,
     pub id: String,
@@ -231,4 +328,101 @@ pub struct TransactionInfo {
     pub timestamp: u64,
     pub amount: Amount,
     pub fee: Amount,
+}
+
+// ============================================================================
+// ESCROW IMPLEMENTATIONS
+// ============================================================================
+
+impl EscrowState {
+    /// Check if a state transition is valid
+    pub fn can_transition_to(&self, new_state: &EscrowState) -> bool {
+        use EscrowState::*;
+        matches!(
+            (self, new_state),
+            (Created, Funded)
+                | (Funded, Released)
+                | (Funded, Refunded)
+                | (Funded, Disputed)
+                | (Disputed, Released)
+                | (Disputed, Refunded)
+        )
+    }
+
+    /// Get the next possible states from current state
+    pub fn next_possible_states(&self) -> Vec<EscrowState> {
+        use EscrowState::*;
+        match self {
+            Created => vec![Funded],
+            Funded => vec![Released, Refunded, Disputed],
+            Disputed => vec![Released, Refunded],
+            Released | Refunded => vec![], // Terminal states
+        }
+    }
+}
+
+impl Escrow {
+    /// Create a new escrow
+    pub fn new(id: EscrowId, data: EscrowData) -> Self {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+
+        Self {
+            id,
+            data,
+            state: EscrowState::Created,
+            created_at: now,
+            updated_at: now,
+            funding_tx_hash: None,
+            release_tx_hash: None,
+            refund_tx_hash: None,
+            dispute_reason: None,
+            disputed_by: None,
+        }
+    }
+
+    /// Transition to a new state if valid
+    pub fn transition_to(&mut self, new_state: EscrowState) -> Result<(), String> {
+        if !self.state.can_transition_to(&new_state) {
+            return Err(format!(
+                "Invalid state transition from {:?} to {:?}",
+                self.state, new_state
+            ));
+        }
+
+        self.state = new_state;
+        self.updated_at = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+
+        Ok(())
+    }
+
+    /// Check if escrow is in a terminal state
+    pub fn is_terminal(&self) -> bool {
+        matches!(self.state, EscrowState::Released | EscrowState::Refunded)
+    }
+
+    /// Check if escrow can be funded
+    pub fn can_be_funded(&self) -> bool {
+        matches!(self.state, EscrowState::Created)
+    }
+
+    /// Check if escrow can be released
+    pub fn can_be_released(&self) -> bool {
+        matches!(self.state, EscrowState::Funded | EscrowState::Disputed)
+    }
+
+    /// Check if escrow can be refunded
+    pub fn can_be_refunded(&self) -> bool {
+        matches!(self.state, EscrowState::Funded | EscrowState::Disputed)
+    }
+
+    /// Check if escrow can be disputed
+    pub fn can_be_disputed(&self) -> bool {
+        matches!(self.state, EscrowState::Funded)
+    }
 }

@@ -31,6 +31,25 @@ pub enum Error {
 
     #[error("Internal error: {0}")]
     Internal(String),
+
+    // Escrow-specific errors
+    #[error("Escrow not found: {0}")]
+    EscrowNotFound(String),
+
+    #[error("Invalid escrow state: {0}")]
+    InvalidState(String),
+
+    #[error("Unauthorized: {0}")]
+    Unauthorized(String),
+
+    #[error("Invalid amount: {0}")]
+    InvalidAmount(String),
+
+    #[error("Invalid user: {0}")]
+    InvalidUser(String),
+
+    #[error("Invalid transaction: {0}")]
+    InvalidTransaction(String),
 }
 
 /// Tor-specific errors
