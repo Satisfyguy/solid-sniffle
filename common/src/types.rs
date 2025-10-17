@@ -98,7 +98,7 @@ pub struct Escrow {
 /// Escrow operation result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum EscrowResult {
-    Created(Escrow),
+    Created(Box<Escrow>),
     Funded {
         escrow_id: EscrowId,
         tx_hash: TxHash,

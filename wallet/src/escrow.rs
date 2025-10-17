@@ -89,7 +89,7 @@ impl EscrowManager {
         }
 
         info!("Escrow created successfully: {}", escrow_id);
-        Ok(EscrowResult::Created(escrow))
+        Ok(EscrowResult::Created(Box::new(escrow)))
     }
 
     /// Fund an escrow (buyer deposits funds to multisig address)
@@ -119,7 +119,7 @@ impl EscrowManager {
         // Update escrow state
         escrow
             .transition_to(EscrowState::Funded)
-            .map_err(|e| Error::InvalidState(e))?;
+            .map_err(Error::InvalidState)?;
         escrow.funding_tx_hash = Some(funding_tx_hash.clone());
 
         // Store updated escrow
@@ -176,8 +176,7 @@ impl EscrowManager {
         let mut updated_escrow = escrow.clone();
         updated_escrow
             .transition_to(EscrowState::Released)
-            .map_err(|e| Error::InvalidState(e))?;
-        updated_escrow.release_tx_hash = Some(release_tx_hash.clone());
+            .map_err(Error::InvalidState)?;
 
         // Store updated escrow
         {
@@ -233,7 +232,7 @@ impl EscrowManager {
         let mut updated_escrow = escrow.clone();
         updated_escrow
             .transition_to(EscrowState::Refunded)
-            .map_err(|e| Error::InvalidState(e))?;
+            .map_err(Error::InvalidState)?;
         updated_escrow.refund_tx_hash = Some(refund_tx_hash.clone());
 
         // Store updated escrow
@@ -288,7 +287,7 @@ impl EscrowManager {
         let mut updated_escrow = escrow.clone();
         updated_escrow
             .transition_to(EscrowState::Disputed)
-            .map_err(|e| Error::InvalidState(e))?;
+            .map_err(Error::InvalidState)?;
         updated_escrow.dispute_reason = Some(reason.clone());
         updated_escrow.disputed_by = Some(disputed_by.clone());
 
@@ -380,11 +379,7 @@ impl EscrowManager {
 
         // Verify transaction amount matches escrow amount (allow small fee variance)
         const FEE_TOLERANCE: u64 = 1_000_000_000; // 0.001 XMR tolerance for fees
-        let amount_difference = if tx_info.amount > escrow.data.amount {
-            tx_info.amount - escrow.data.amount
-        } else {
-            escrow.data.amount - tx_info.amount
-        };
+        let amount_difference = tx_info.amount.abs_diff(escrow.data.amount);
 
         if amount_difference > FEE_TOLERANCE {
             return Err(Error::InvalidTransaction(format!(

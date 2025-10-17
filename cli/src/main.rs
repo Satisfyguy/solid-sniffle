@@ -183,7 +183,11 @@ async fn main() -> Result<()> {
                 }
             }
 
-            MultisigCommands::Make { session, threshold, mut info } => {
+            MultisigCommands::Make {
+                session,
+                threshold,
+                mut info,
+            } => {
                 if let Some(session_id) = session {
                     let mut checkpoint = checkpoint::load_checkpoint(&session_id)?;
                     info!("Making multisig for session '{}'...", session_id);
@@ -200,7 +204,10 @@ async fn main() -> Result<()> {
                         info.len()
                     );
 
-                    let result = client.multisig().make_multisig(threshold, info.clone()).await?;
+                    let result = client
+                        .multisig()
+                        .make_multisig(threshold, info.clone())
+                        .await?;
                     info!("Multisig address: {}", result.address);
                     info!("Multisig info for sync: {}", result.multisig_info);
 
@@ -211,7 +218,6 @@ async fn main() -> Result<()> {
                     checkpoint.required_signatures = Some(threshold);
                     checkpoint::save_checkpoint(&checkpoint)?;
                     info!("Checkpoint '{}' saved.", session_id);
-
                 } else {
                     info!(
                         "Making {}-of-{} multisig with {} infos...",
@@ -242,9 +248,13 @@ async fn main() -> Result<()> {
             }
 
             MultisigCommands::Import { session, info } => {
-                 if let Some(session_id) = session {
+                if let Some(session_id) = session {
                     let mut checkpoint = checkpoint::load_checkpoint(&session_id)?;
-                    info!("Importing {} multisig info(s) for session '{}'...", info.len(), session_id);
+                    info!(
+                        "Importing {} multisig info(s) for session '{}'...",
+                        info.len(),
+                        session_id
+                    );
 
                     let result = client.multisig().import_multisig_info(info.clone()).await?;
                     info!("Imported multisig info, {} outputs", result.n_outputs);
@@ -260,11 +270,11 @@ async fn main() -> Result<()> {
 
                     checkpoint::save_checkpoint(&checkpoint)?;
                     info!("Checkpoint '{}' saved.", session_id);
-                 } else {
+                } else {
                     info!("Importing {} multisig infos (stateless)...", info.len());
                     let result = client.multisig().import_multisig_info(info).await?;
                     info!("Imported multisig info, {} outputs", result.n_outputs);
-                 }
+                }
             }
 
             MultisigCommands::Check => {
@@ -281,7 +291,10 @@ async fn main() -> Result<()> {
                     info!("No checkpoints found.");
                 } else {
                     for cp in checkpoints {
-                        info!("  - Session: {}, Step: {:?}, Updated: {}", cp.session_id, cp.current_step, cp.last_updated);
+                        info!(
+                            "  - Session: {}, Step: {:?}, Updated: {}",
+                            cp.session_id, cp.current_step, cp.last_updated
+                        );
                     }
                 }
             }
