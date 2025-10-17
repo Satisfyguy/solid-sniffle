@@ -886,6 +886,287 @@ impl MoneroRpcClient {
 
         Ok(is_multisig)
     }
+
+    /// Transfer funds (multisig) - Creates unsigned transaction
+    ///
+    /// # Arguments
+    /// * `destinations` - List of (address, amount) pairs
+    ///
+    /// # Returns
+    /// CreateTransactionResult with unsigned transaction data
+    pub async fn transfer_multisig(
+        &self,
+        destinations: Vec<monero_marketplace_common::types::TransferDestination>,
+    ) -> Result<monero_marketplace_common::types::CreateTransactionResult, MoneroError> {
+        use monero_marketplace_common::types::CreateTransactionResult;
+
+        // Acquérir permit pour rate limiting
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
+            .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
+
+        // Acquérir lock pour sérialiser les appels RPC
+        let _guard = self.rpc_lock.lock().await;
+
+        // Construire liste de destinations pour le RPC
+        let dest_array: Vec<serde_json::Value> = destinations
+            .iter()
+            .map(|d| {
+                serde_json::json!({
+                    "address": d.address,
+                    "amount": d.amount
+                })
+            })
+            .collect();
+
+        let mut request = RpcRequest::new("transfer");
+        request.params = Some(serde_json::json!({
+            "destinations": dest_array,
+            "do_not_relay": true, // Ne pas diffuser immédiatement (multisig)
+        }));
+
+        let response = self
+            .client
+            .post(format!("{}/json_rpc", self.url))
+            .json(&request)
+            .send()
+            .await
+            .map_err(|e| {
+                if e.is_connect() {
+                    MoneroError::RpcUnreachable
+                } else {
+                    MoneroError::NetworkError(e.to_string())
+                }
+            })?;
+
+        let rpc_response: RpcResponse<serde_json::Value> = response
+            .json()
+            .await
+            .map_err(|e| MoneroError::InvalidResponse(format!("JSON parse: {}", e)))?;
+
+        if let Some(error) = rpc_response.error {
+            return Err(MoneroError::RpcError(error.message));
+        }
+
+        let result = rpc_response
+            .result
+            .ok_or_else(|| MoneroError::InvalidResponse("Missing result field".to_string()))?;
+
+        Ok(CreateTransactionResult {
+            tx_data_hex: result["tx_blob"].as_str().unwrap_or("").to_string(),
+            tx_hash: result["tx_hash"].as_str().unwrap_or("").to_string(),
+            tx_key: result["tx_key"].as_str().unwrap_or("").to_string(),
+            amount: result["amount"].as_u64().unwrap_or(0),
+            fee: result["fee"].as_u64().unwrap_or(0),
+            multisig_txset: result["multisig_txset"].as_str().unwrap_or("").to_string(),
+        })
+    }
+
+    /// Sign a multisig transaction
+    ///
+    /// # Arguments
+    /// * `tx_data_hex` - Unsigned or partially signed transaction data
+    ///
+    /// # Returns
+    /// SignMultisigResult with signed transaction data
+    pub async fn sign_multisig(
+        &self,
+        tx_data_hex: String,
+    ) -> Result<monero_marketplace_common::types::SignMultisigResult, MoneroError> {
+        use monero_marketplace_common::types::SignMultisigResult;
+
+        // Acquérir permit pour rate limiting
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
+            .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
+
+        // Acquérir lock pour sérialiser les appels RPC
+        let _guard = self.rpc_lock.lock().await;
+
+        let mut request = RpcRequest::new("sign_multisig");
+        request.params = Some(serde_json::json!({
+            "tx_data_hex": tx_data_hex,
+        }));
+
+        let response = self
+            .client
+            .post(format!("{}/json_rpc", self.url))
+            .json(&request)
+            .send()
+            .await
+            .map_err(|e| {
+                if e.is_connect() {
+                    MoneroError::RpcUnreachable
+                } else {
+                    MoneroError::NetworkError(e.to_string())
+                }
+            })?;
+
+        let rpc_response: RpcResponse<serde_json::Value> = response
+            .json()
+            .await
+            .map_err(|e| MoneroError::InvalidResponse(format!("JSON parse: {}", e)))?;
+
+        if let Some(error) = rpc_response.error {
+            return Err(MoneroError::RpcError(error.message));
+        }
+
+        let result = rpc_response
+            .result
+            .ok_or_else(|| MoneroError::InvalidResponse("Missing result field".to_string()))?;
+
+        let tx_hash_list = result["tx_hash_list"]
+            .as_array()
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|v| v.as_str().map(String::from))
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        Ok(SignMultisigResult {
+            tx_data_hex: result["tx_data_hex"].as_str().unwrap_or("").to_string(),
+            tx_hash_list,
+        })
+    }
+
+    /// Submit (finalize and broadcast) a multisig transaction
+    ///
+    /// # Arguments
+    /// * `tx_data_hex` - Fully signed transaction data (with 2-of-3 signatures)
+    ///
+    /// # Returns
+    /// SubmitMultisigResult with transaction hash(es)
+    pub async fn submit_multisig(
+        &self,
+        tx_data_hex: String,
+    ) -> Result<monero_marketplace_common::types::SubmitMultisigResult, MoneroError> {
+        use monero_marketplace_common::types::SubmitMultisigResult;
+
+        // Acquérir permit pour rate limiting
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
+            .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
+
+        // Acquérir lock pour sérialiser les appels RPC
+        let _guard = self.rpc_lock.lock().await;
+
+        let mut request = RpcRequest::new("submit_multisig");
+        request.params = Some(serde_json::json!({
+            "tx_data_hex": tx_data_hex,
+        }));
+
+        let response = self
+            .client
+            .post(format!("{}/json_rpc", self.url))
+            .json(&request)
+            .send()
+            .await
+            .map_err(|e| {
+                if e.is_connect() {
+                    MoneroError::RpcUnreachable
+                } else {
+                    MoneroError::NetworkError(e.to_string())
+                }
+            })?;
+
+        let rpc_response: RpcResponse<serde_json::Value> = response
+            .json()
+            .await
+            .map_err(|e| MoneroError::InvalidResponse(format!("JSON parse: {}", e)))?;
+
+        if let Some(error) = rpc_response.error {
+            return Err(MoneroError::RpcError(error.message));
+        }
+
+        let result = rpc_response
+            .result
+            .ok_or_else(|| MoneroError::InvalidResponse("Missing result field".to_string()))?;
+
+        let tx_hash_list = result["tx_hash_list"]
+            .as_array()
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|v| v.as_str().map(String::from))
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        Ok(SubmitMultisigResult { tx_hash_list })
+    }
+
+    /// Get transaction information by transaction ID
+    ///
+    /// # Arguments
+    /// * `tx_hash` - Transaction hash to query
+    ///
+    /// # Returns
+    /// TransactionInfo with confirmation status
+    pub async fn get_transfer_by_txid(
+        &self,
+        tx_hash: String,
+    ) -> Result<monero_marketplace_common::types::TransactionInfo, MoneroError> {
+        use monero_marketplace_common::types::TransactionInfo;
+
+        // Acquérir permit pour rate limiting
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
+            .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
+
+        // Acquérir lock pour sérialiser les appels RPC
+        let _guard = self.rpc_lock.lock().await;
+
+        let mut request = RpcRequest::new("get_transfer_by_txid");
+        request.params = Some(serde_json::json!({
+            "txid": tx_hash,
+        }));
+
+        let response = self
+            .client
+            .post(format!("{}/json_rpc", self.url))
+            .json(&request)
+            .send()
+            .await
+            .map_err(|e| {
+                if e.is_connect() {
+                    MoneroError::RpcUnreachable
+                } else {
+                    MoneroError::NetworkError(e.to_string())
+                }
+            })?;
+
+        let rpc_response: RpcResponse<serde_json::Value> = response
+            .json()
+            .await
+            .map_err(|e| MoneroError::InvalidResponse(format!("JSON parse: {}", e)))?;
+
+        if let Some(error) = rpc_response.error {
+            return Err(MoneroError::RpcError(error.message));
+        }
+
+        let result = rpc_response
+            .result
+            .ok_or_else(|| MoneroError::InvalidResponse("Missing result field".to_string()))?;
+
+        let transfer = &result["transfer"];
+
+        Ok(TransactionInfo {
+            tx_hash: transfer["txid"].as_str().unwrap_or("").to_string(),
+            confirmations: transfer["confirmations"].as_u64().unwrap_or(0),
+            block_height: transfer["height"].as_u64().unwrap_or(0),
+            timestamp: transfer["timestamp"].as_u64().unwrap_or(0),
+            amount: transfer["amount"].as_u64().unwrap_or(0),
+            fee: transfer["fee"].as_u64().unwrap_or(0),
+        })
+    }
 }
 
 #[cfg(test)]

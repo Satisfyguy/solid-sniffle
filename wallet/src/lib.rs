@@ -7,7 +7,9 @@ pub mod client;
 pub mod multisig;
 pub mod rpc;
 pub mod tor;
+pub mod transaction;
 
 pub use client::MoneroClient;
 pub use multisig::MultisigManager;
 pub use rpc::MoneroRpcClient;
+pub use transaction::TransactionManager;

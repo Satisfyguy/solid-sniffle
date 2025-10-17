@@ -190,3 +190,45 @@ impl Default for MoneroConfig {
         }
     }
 }
+
+/// Transaction destination (recipient address and amount)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TransferDestination {
+    pub address: MoneroAddress,
+    pub amount: Amount,
+}
+
+/// Result from creating a multisig transaction
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateTransactionResult {
+    pub tx_data_hex: String,    // Unsigned transaction data (hex)
+    pub tx_hash: TxHash,        // Transaction hash
+    pub tx_key: String,         // Transaction key
+    pub amount: Amount,         // Total amount being sent
+    pub fee: Amount,            // Transaction fee
+    pub multisig_txset: String, // Multisig transaction set for signing
+}
+
+/// Result from signing a multisig transaction
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SignMultisigResult {
+    pub tx_data_hex: String,       // Partially signed transaction data
+    pub tx_hash_list: Vec<TxHash>, // List of transaction hashes
+}
+
+/// Result from submitting (finalizing) a multisig transaction
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SubmitMultisigResult {
+    pub tx_hash_list: Vec<TxHash>, // List of submitted transaction hashes
+}
+
+/// Transaction status information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TransactionInfo {
+    pub tx_hash: TxHash,
+    pub confirmations: u64,
+    pub block_height: u64,
+    pub timestamp: u64,
+    pub amount: Amount,
+    pub fee: Amount,
+}

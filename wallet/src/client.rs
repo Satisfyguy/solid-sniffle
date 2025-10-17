@@ -1,6 +1,6 @@
 //! High-level Monero client
 
-use crate::{multisig::MultisigManager, rpc::MoneroRpcClient};
+use crate::{multisig::MultisigManager, rpc::MoneroRpcClient, transaction::TransactionManager};
 use monero_marketplace_common::{
     error::{Error, MoneroError, Result},
     types::{MoneroConfig, WalletInfo, WalletStatus},
@@ -10,6 +10,7 @@ use monero_marketplace_common::{
 pub struct MoneroClient {
     rpc_client: MoneroRpcClient,
     multisig_manager: MultisigManager,
+    transaction_manager: TransactionManager,
 }
 
 impl MoneroClient {
@@ -17,10 +18,12 @@ impl MoneroClient {
     pub fn new(config: MoneroConfig) -> Result<Self> {
         let rpc_client = MoneroRpcClient::new(config).map_err(convert_monero_error)?;
         let multisig_manager = MultisigManager::new(rpc_client.clone());
+        let transaction_manager = TransactionManager::new(rpc_client.clone());
 
         Ok(Self {
             rpc_client,
             multisig_manager,
+            transaction_manager,
         })
     }
 
@@ -101,6 +104,11 @@ impl MoneroClient {
     /// Get multisig manager
     pub fn multisig(&self) -> &MultisigManager {
         &self.multisig_manager
+    }
+
+    /// Get transaction manager
+    pub fn transaction(&self) -> &TransactionManager {
+        &self.transaction_manager
     }
 
     /// Get RPC client
