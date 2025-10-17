@@ -2,6 +2,7 @@
 
 use crate::MONERO_RPC_URL;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Monero address type
 pub type MoneroAddress = String;
@@ -424,5 +425,64 @@ impl Escrow {
     /// Check if escrow can be disputed
     pub fn can_be_disputed(&self) -> bool {
         matches!(self.state, EscrowState::Funded)
+    }
+}
+
+// ============================================================================
+// CHECKPOINT IMPLEMENTATIONS
+// ============================================================================
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum WorkflowStep {
+    Initiated,
+    Prepared,
+    Made,
+    SyncedRound1,
+    SyncedRound2,
+    Ready,
+    // Transaction-related steps
+    TxCreationStarted,
+    TxCreated,
+    TxSigned,
+    TxFinalized,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Checkpoint {
+    pub session_id: String,
+    pub current_step: WorkflowStep,
+    pub last_updated: String, // ISO 8601 timestamp
+    pub multisig_address: Option<String>,
+    pub required_signatures: Option<u32>,
+    // Stores this wallet's own generated multisig info/keys
+    pub local_multisig_info: Option<String>,
+    // Stores multisig info received from other participants
+    pub remote_multisig_infos: Vec<String>,
+    // Stores data related to a transaction being created/signed
+    pub transaction_data: Option<TransactionCheckpointData>,
+    // Generic key-value store for future use or user notes
+    pub metadata: HashMap<String, String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TransactionCheckpointData {
+    pub unsigned_tx_set: Option<String>,
+    pub collected_signatures: Vec<String>,
+    pub tx_hash: Option<String>,
+}
+
+impl Checkpoint {
+    pub fn new(session_id: String) -> Self {
+        Self {
+            session_id,
+            current_step: WorkflowStep::Initiated,
+            last_updated: chrono::Utc::now().to_rfc3339(),
+            multisig_address: None,
+            required_signatures: None,
+            local_multisig_info: None,
+            remote_multisig_infos: Vec::new(),
+            transaction_data: None,
+            metadata: HashMap::new(),
+        }
     }
 }

@@ -3,7 +3,7 @@ members = [
     "common",
     "wallet", 
     "cli"
-]
+, "server"]
 resolver = "2"
 
 [workspace.package]

@@ -107,6 +107,9 @@ docs/.doctrees/
 # Jupyter Notebook
 .ipynb_checkpoints
 
+# Gemini CLI Checkpoints
+.checkpoints/
+
 # Coverage reports
 coverage/
 *.lcov
