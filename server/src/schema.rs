@@ -1,20 +1,27 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    users (id) {
-        id -> Text,
-        username -> Text,
-        password_hash -> Text,
-        role -> Text,
+    escrows (id) {
+        id -> Uuid,
+        order_id -> Uuid,
+        buyer_id -> Text,
+        vendor_id -> Text,
+        arbiter_id -> Text,
+        amount -> BigInt,
+        multisig_address -> Nullable<Text>,
+        status -> Text,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+        buyer_wallet_info -> Nullable<Binary>,
+        vendor_wallet_info -> Nullable<Binary>,
+        arbiter_wallet_info -> Nullable<Binary>,
     }
 }
 
 diesel::table! {
     listings (id) {
-        id -> Text,
-        vendor_id -> Text,
+        id -> Uuid,
+        vendor_id -> Uuid,
         title -> Text,
         description -> Text,
         price_xmr -> BigInt,
@@ -27,11 +34,11 @@ diesel::table! {
 
 diesel::table! {
     orders (id) {
-        id -> Text,
-        buyer_id -> Nullable<Text>,
-        vendor_id -> Nullable<Text>,
-        listing_id -> Nullable<Text>,
-        escrow_id -> Nullable<Text>,
+        id -> Uuid,
+        buyer_id -> Nullable<Uuid>,
+        vendor_id -> Nullable<Uuid>,
+        listing_id -> Nullable<Uuid>,
+        escrow_id -> Nullable<Uuid>,
         status -> Text,
         total_xmr -> BigInt,
         created_at -> Timestamp,
@@ -40,23 +47,9 @@ diesel::table! {
 }
 
 diesel::table! {
-    escrows (id) {
-        id -> Text,
-        order_id -> Text,
-        buyer_wallet_info -> Nullable<Text>,
-        vendor_wallet_info -> Nullable<Text>,
-        arbiter_wallet_info -> Nullable<Text>,
-        multisig_address -> Nullable<Text>,
-        status -> Text,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
-    }
-}
-
-diesel::table! {
     transactions (id) {
-        id -> Text,
-        escrow_id -> Text,
+        id -> Uuid,
+        escrow_id -> Uuid,
         tx_hash -> Nullable<Text>,
         amount_xmr -> BigInt,
         confirmations -> Integer,
@@ -64,4 +57,30 @@ diesel::table! {
     }
 }
 
-diesel::allow_tables_to_appear_in_same_query!(users, listings, orders, escrows, transactions,);
+diesel::table! {
+    users (id) {
+        id -> Uuid,
+        username -> Text,
+        password_hash -> Text,
+        role -> Text,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::joinable!(escrows -> orders (order_id));
+// diesel::joinable!(escrows -> users (buyer_id)); // Commented out due to type mismatch (Text vs Uuid)
+diesel::joinable!(listings -> users (vendor_id));
+diesel::joinable!(orders -> escrows (escrow_id));
+diesel::joinable!(orders -> listings (listing_id));
+diesel::joinable!(orders -> users (buyer_id));
+diesel::joinable!(orders -> users (vendor_id));
+diesel::joinable!(transactions -> escrows (escrow_id));
+
+diesel::allow_tables_to_appear_in_same_query!(
+    escrows,
+    listings,
+    orders,
+    transactions,
+    users,
+);

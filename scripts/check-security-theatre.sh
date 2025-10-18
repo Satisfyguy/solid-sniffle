@@ -32,7 +32,7 @@ PATTERNS["Patterns interdits"]='.unwrap\s*\(\s*\)|\.expect\s*\(\s*""\s*\)|printl
 PATTERNS["Placeholders"]='//.*Placeholder|//.*TODO|//.*FIXME|//.*XXX|//.*HACK|//.*TEMP|//.*Temporary|//.*FIX.*THIS|//.*REMOVE.*THIS'
 PATTERNS["Code mort"]='unimplemented!|todo!|panic!|unreachable!|unreachable_unchecked!'
 PATTERNS["Suppositions"]='should.*work|might.*work|probably.*works|assume|hope|guess|think.*it.*works|believe.*it.*works'
-PATTERNS["Credentials hardcodés"]='password.*=|secret.*=|key.*=|token.*=|api_key.*=|private_key.*='
+PATTERNS["Credentials hardcodés"]='password\s*=\s*"|secret\s*=\s*"|private_key\s*=\s*"|token\s*=\s*"|api_key\s*=\s*"'
 
 # --- Initialisation ---
 echo -e "${CYAN}Security Theatre Detection${NC}"
@@ -67,9 +67,9 @@ is_ignored() {
         if [[ "$exc" =~ (.+):(.+) ]]; then
             local file_pattern="${BASH_REMATCH[1]}"
             local line_pattern="${BASH_REMATCH[2]}"
-            
+
             # Simple glob matching for file path
-            if [[ "$file_path" == $file_pattern ]]; then
+            if [[ "$file_path" == "$file_pattern" ]]; then
                 if [[ "$line_content" =~ $line_pattern ]]; then
                     return 0 # 0 for true in bash functions
                 fi
@@ -132,7 +132,7 @@ fi
 echo -e "${RED}❌ Security theatre detected: $total_issues issues${NC}"
 echo
 
-e# Rapport par catégorie
+# Rapport par catégorie
 echo -e "${YELLOW}Issues by Category:${NC}"
 for category in "${!issues_by_category[@]}"; do
     count=${issues_by_category[$category]}

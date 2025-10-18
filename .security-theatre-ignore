@@ -74,6 +74,10 @@ docs/**/*.md://\s*TODO
 **/tests/*.rs:secret\s*=\s*"test"
 **/tests/*.rs:key\s*=\s*"test"
 
+# Cryptographic key generation in tests (not real credentials)
+./server/tests/integration_tests.rs:let key = generate_key.*
+./server/tests/integration_tests.rs:let wrong_key = generate_key.*
+
 # Example credentials in documentation
 docs/**/*.md:password\s*=\s*"example"
 docs/**/*.md:secret\s*=\s*"example"

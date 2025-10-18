@@ -21,7 +21,8 @@ async fn setup_test_db() -> Result<db::DbPool> {
 
     // Run migrations
     let mut conn = pool.get()?;
-    conn.run_pending_migrations(MIGRATIONS).unwrap();
+    conn.run_pending_migrations(MIGRATIONS)
+        .map_err(|e| anyhow::anyhow!("Failed to run migrations: {}", e))?;
 
     Ok(pool)
 }
@@ -44,12 +45,22 @@ async fn test_user_crud() -> Result<()> {
     // Test Read by ID
     let fetched_user_by_id = User::find_by_id(&pool, user.id.clone()).await?;
     assert!(fetched_user_by_id.is_some());
-    assert_eq!(fetched_user_by_id.unwrap().username, "testuser");
+    assert_eq!(
+        fetched_user_by_id
+            .expect("User should exist after creation")
+            .username,
+        "testuser"
+    );
 
     // Test Read by Username
     let fetched_user_by_username = User::find_by_username(&pool, "testuser".to_string()).await?;
     assert!(fetched_user_by_username.is_some());
-    assert_eq!(fetched_user_by_username.unwrap().id, user.id);
+    assert_eq!(
+        fetched_user_by_username
+            .expect("User should exist when queried by username")
+            .id,
+        user.id
+    );
 
     // Test Update
     let updated_user_data = UpdateUser {
