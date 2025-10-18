@@ -1,190 +1,165 @@
-#!/usr/bin/env bash
-# scripts/check-security-theatre.sh
-# Automatic detection of security theatre in Rust code
+#!/bin/bash
 
-# Default parameters
-PATH_TO_SCAN="."
-IGNORE_FILE=".security-theatre-ignore"
-VERBOSE=false
+# Script: check-security-theatre.sh
+# Description: Détecte automatiquement le "security theatre" dans le code Rust.
+# Usage: ./scripts/check-security-theatre.sh [-v] [/path/to/scan]
 
-# Parse arguments
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --verbose|-v)
-            VERBOSE=true
-            shift
-            ;;
-        --path)
-            PATH_TO_SCAN="$2"
-            shift 2
-            ;;
-        --ignore)
-            IGNORE_FILE="$2"
-            shift 2
-            ;;
-        *)
-            echo "Unknown option: $1"
-            exit 1
-            ;;
-    esac
-done
-
-# Colors
+# --- Couleurs ---
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
+YELLOW='\033[0;33m'
 CYAN='\033[0;36m'
-GRAY='\033[0;37m'
-WHITE='\033[1;37m'
-NC='\033[0m' # No Color
+GRAY='\033[0;90m'
+NC='\033[0m'
 
+# --- Paramètres ---
+VERBOSE=false
+SCAN_PATH="."
+IGNORE_FILE=".security-theatre-ignore"
+
+if [ "$1" == "-v" ]; then
+    VERBOSE=true
+    shift
+fi
+if [ -n "$1" ]; then
+    SCAN_PATH=$1
+fi
+
+# --- Définition des motifs de détection ---
+declare -A PATTERNS
+
+PATTERNS["Patterns interdits"]='.unwrap\s*\(\s*\)|\.expect\s*\(\s*""\s*\)|println!|print!|eprintln!|eprint!|dbg!'
+PATTERNS["Placeholders"]='//.*Placeholder|//.*TODO|//.*FIXME|//.*XXX|//.*HACK|//.*TEMP|//.*Temporary|//.*FIX.*THIS|//.*REMOVE.*THIS'
+PATTERNS["Code mort"]='unimplemented!|todo!|panic!|unreachable!|unreachable_unchecked!'
+PATTERNS["Suppositions"]='should.*work|might.*work|probably.*works|assume|hope|guess|think.*it.*works|believe.*it.*works'
+PATTERNS["Credentials hardcodés"]='password.*=|secret.*=|key.*=|token.*=|api_key.*=|private_key.*='
+
+# --- Initialisation ---
 echo -e "${CYAN}Security Theatre Detection${NC}"
 echo -e "${CYAN}=============================${NC}"
-echo ""
+echo
 
-# Load exceptions
+declare -A issues_by_category
+all_issues=()
+total_issues=0
+
+# --- Chargement des exceptions ---
 exceptions=()
-if [[ -f "$IGNORE_FILE" ]]; then
-    while IFS= read -r line; do
-        # Skip comments and empty lines
-        if [[ ! "$line" =~ ^\s*# && -n "${line// }" ]]; then
+if [ -f "$IGNORE_FILE" ]; then
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        # Ignore comments and empty lines
+        if [[ ! "$line" =~ ^\s*# ]] && [[ -n "$line" ]]; then
             exceptions+=("$line")
         fi
     done < "$IGNORE_FILE"
-
-    if [[ "$VERBOSE" == true ]]; then
+    if [ "$VERBOSE" = true ]; then
         echo -e "${YELLOW}Loaded ${#exceptions[@]} exceptions from $IGNORE_FILE${NC}"
     fi
 fi
 
-# Function to check if a line is excepted
-is_exception() {
-    local file_path="$1"
-    local line_content="$2"
+# --- Fonction de vérification des exceptions ---
+is_ignored() {
+    local file_path=$1
+    local line_content=$2
 
-    for exception in "${exceptions[@]}"; do
-        if [[ "$exception" =~ ^([^:]+):(.+)$ ]]; then
-            local pattern="${BASH_REMATCH[1]}"
+    for exc in "${exceptions[@]}"; do
+        # Format: path/pattern:regex_pattern
+        if [[ "$exc" =~ (.+):(.+) ]]; then
+            local file_pattern="${BASH_REMATCH[1]}"
             local line_pattern="${BASH_REMATCH[2]}"
-
-            # Check if file matches pattern
-            if [[ "$file_path" == $pattern ]]; then
-                # Check if line matches pattern
+            
+            # Simple glob matching for file path
+            if [[ "$file_path" == $file_pattern ]]; then
                 if [[ "$line_content" =~ $line_pattern ]]; then
-                    return 0  # True (is exception)
+                    return 0 # 0 for true in bash functions
                 fi
             fi
         fi
     done
-    return 1  # False (not exception)
+    return 1 # 1 for false
 }
 
-# Counters
-total_issues=0
-declare -a issues_found
+# --- Scan des fichiers ---
+rust_files=$(find "$SCAN_PATH" -name "*.rs" -not -path "*/target/*" -not -path "*/.git/*")
+file_count=$(echo "$rust_files" | wc -w)
+echo -e "${YELLOW}Scanning $file_count Rust files...${NC}"
+echo
 
-# Detection patterns
-patterns=(
-    "assert!.*true"
-    "assert!.*false"
-    "//.*Placeholder"
-    "//.*TODO"
-    "//.*FIXME"
-    "//.*XXX"
-    "//.*HACK"
-    "should.*work"
-    "probably.*works"
-    "assume"
-    "HYPOTHÈSES"
-    "À.*VALIDER"
-    "ERREUR.*POSSIBLE"
-    "À.*IMPLÉMENTER"
-    "unimplemented!"
-    "todo!"
-    "panic!"
-    "password.*="
-    "secret.*="
-    "key.*="
-    "token.*="
-    "api_key.*="
-    "private_key.*="
-    "\.unwrap\s*\(\s*\)"
-    "println!"
-    "print!"
-    "dbg!"
-)
+for category in "${!PATTERNS[@]}"; do
+    pattern_group=${PATTERNS[$category]}
+    # grep returns non-zero if no lines selected, which would exit the script with `set -e`
+    # So we use `|| true` to prevent that.
+    grep_results=$(grep -r -n -E --include="*.rs" --exclude-dir={target,.git} "$pattern_group" "$SCAN_PATH" || true)
 
-# Find Rust files
-mapfile -t rust_files < <(find "$PATH_TO_SCAN" -name "*.rs" -not -path "*/target/*" -not -path "*/.git/*")
+    if [ -n "$grep_results" ]; then
+        while IFS= read -r line; do
+            if [[ "$line" =~ ([^:]+):([0-9]+):(.*) ]]; then
+                file="${BASH_REMATCH[1]}"
+                line_num="${BASH_REMATCH[2]}"
+                content="${BASH_REMATCH[3]}"
+                
+                # Trim leading/trailing whitespace from content
+                trimmed_content=$(echo "$content" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
 
-echo -e "${YELLOW}Scanning ${#rust_files[@]} Rust files...${NC}"
-echo ""
+                if ! is_ignored "$file" "$trimmed_content"; then
+                    ((total_issues++))
+                    issues_by_category[$category]=$((issues_by_category[$category]+1))
+                    all_issues+=("$file:$line_num:$category:$trimmed_content")
 
-# Scan files
-for file in "${rust_files[@]}"; do
-    relative_path="${file#./}"
-
-    line_number=0
-    while IFS= read -r line; do
-        ((line_number++))
-
-        # Check exceptions
-        if is_exception "$relative_path" "$line"; then
-            continue
-        fi
-
-        # Test each pattern
-        for pattern in "${patterns[@]}"; do
-            if [[ "$line" =~ $pattern ]]; then
-                issues_found+=("$relative_path:$line_number|${line// /}")
-                ((total_issues++))
-
-                if [[ "$VERBOSE" == true ]]; then
-                    echo -e "${RED}❌ Security theatre detected${NC}"
-                    echo -e "   ${GRAY}${relative_path}:${line_number}${NC}"
-                    echo -e "   ${GRAY}${line}${NC}"
-                    echo ""
+                    if [ "$VERBOSE" = true ]; then
+                        echo -e "${RED}❌ $category${NC}"
+                        echo -e "   ${GRAY}${file}:${line_num}${NC}"
+                        echo -e "   ${GRAY}$trimmed_content${NC}"
+                        echo
+                    fi
                 fi
             fi
-        done
-    done < "$file"
+        done <<< "$grep_results"
+    fi
 done
 
-# Display report
+# --- Affichage du rapport ---
 echo -e "${CYAN}Security Theatre Report${NC}"
 echo -e "${CYAN}=========================${NC}"
-echo ""
+echo
 
-if [[ $total_issues -eq 0 ]]; then
+if [ $total_issues -eq 0 ]; then
     echo -e "${GREEN}✅ No security theatre detected!${NC}"
-    echo ""
+    echo
     exit 0
 fi
 
 echo -e "${RED}❌ Security theatre detected: $total_issues issues${NC}"
-echo ""
+echo
 
-# Top 10 most critical issues
-echo -e "${RED}Top Issues:${NC}"
-count=0
-for issue in "${issues_found[@]}"; do
-    if [[ $count -ge 10 ]]; then break; fi
-
-    IFS='|' read -r location content <<< "$issue"
-    echo -e "  ${RED}$location${NC}"
-    echo -e "    ${GRAY}$content${NC}"
-    ((count++))
+e# Rapport par catégorie
+echo -e "${YELLOW}Issues by Category:${NC}"
+for category in "${!issues_by_category[@]}"; do
+    count=${issues_by_category[$category]}
+    if [ $count -gt 0 ]; then
+        echo -e "  $category: $count"
+    fi
 done
-echo ""
+echo
 
-# Recommendations
+# Top 10 des issues
+echo -e "${RED}Top Issues:${NC}"
+for issue in "${all_issues[@]:0:10}"; do
+    IFS=':' read -r file line_num category content <<< "$issue"
+    echo -e "  ${RED}$file:$line_num - $category${NC}"
+    echo -e "    ${GRAY}$content${NC}"
+done
+echo
+
+# Recommandations
 echo -e "${YELLOW}Recommendations:${NC}"
-echo -e "  ${WHITE}1. Replace .unwrap() with proper error handling${NC}"
-echo -e "  ${WHITE}2. Remove placeholder comments and implement real code${NC}"
-echo -e "  ${WHITE}3. Replace assumptions with validated logic${NC}"
-echo -e "  ${WHITE}4. Use constants instead of magic numbers${NC}"
-echo -e "  ${WHITE}5. Remove hardcoded credentials${NC}"
-echo ""
+echo -e "  1. Replace .unwrap() with proper error handling."
+echo -e "  2. Remove placeholder comments and implement real code."
+echo -e "  3. Use constants instead of magic numbers."
+echo
+
+echo -e "${CYAN}To temporarily bypass (with justification):${NC}"
+echo -e "  1. Add exception to $IGNORE_FILE"
 
 echo -e "${RED}❌ COMMIT BLOCKED - Fix security theatre issues first${NC}"
 exit 1

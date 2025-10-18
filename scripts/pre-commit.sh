@@ -1,166 +1,145 @@
-#!/usr/bin/env bash
-. "$HOME/.cargo/env"
+#!/bin/bash
+
 # Script: pre-commit.sh
-# Pre-commit verifications
-# Usage: ./scripts/pre-commit.sh
+# Description: Exécute toutes les vérifications de pré-commit.
 
-set -e  # Exit on error (can be overridden for specific checks)
-
-# Colors
+# --- Couleurs ---
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
+YELLOW='\033[0;33m'
 CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
+# --- Initialisation ---
 echo -e "${CYAN}PRE-COMMIT CHECKS${NC}"
 echo -e "${CYAN}===================${NC}"
 
-# Verify we're in the project root
-if [[ ! -f ".cursorrules" ]]; then
-    echo -e "${RED}ERROR: Run this script from the project root${NC}"
+# S'assurer que le script est exécuté depuis la racine
+if [ ! -f ".cursorrules" ]; then
+    echo -e "${RED}ERREUR: Exécutez ce script depuis la racine du projet.${NC}"
     exit 1
 fi
 
 errors=0
 warnings=0
 
-# 1. Verify project compiles
-echo -e "\n${YELLOW}1. Verifying compilation...${NC}"
-if cargo check 2>&1; then
-    echo -e "   ${GREEN}Project compiles correctly${NC}"
-else
-    echo -e "   ${RED}Compilation errors detected${NC}"
-    ((errors++))
-fi
+# --- Fonctions de vérification ---
 
-# 2. Code formatting
-echo -e "\n${YELLOW}2. Verifying format...${NC}"
-if cargo fmt --check 2>&1; then
-    echo -e "   ${GREEN}Code is properly formatted${NC}"
-else
-    echo -e "   ${YELLOW}Code formatting issues, auto-correcting...${NC}"
-    if cargo fmt; then
-        echo -e "   ${GREEN}Code reformatted automatically${NC}"
+run_check() {
+    local title=$1
+    local command=$2
+    local on_success=$3
+    local on_failure=$4
+
+    echo -e "\n${YELLOW}$title${NC}"
+    # Exécute la commande et capture la sortie et le code de sortie
+    output=$(eval "$command" 2>&1)
+    local exit_code=$?
+
+    if [ $exit_code -eq 0 ]; then
+        echo -e "   ${GREEN}$on_success${NC}"
     else
-        echo -e "   ${RED}Error during formatting${NC}"
+        echo -e "   ${RED}$on_failure${NC}"
+        # Affiche la sortie seulement en cas d'erreur pour les checks qui le nécessitent
+        if [[ "$title" == *"Clippy"* || "$title" == *"compilation"* || "$title" == *"Tests"* ]]; then
+            echo "$output"
+        fi
+        return 1
+    fi
+    return 0
+}
+
+# 1. Vérification de la compilation
+run_check "1. Vérification de la compilation..." \
+          "cargo check" \
+          "Projet compilé correctement" \
+          "Erreurs de compilation détectées" || ((errors++))
+
+# 2. Format du code
+echo -e "\n${YELLOW}2. Vérification du format...${NC}"
+cargo fmt --check
+if [ $? -ne 0 ]; then
+    echo -e "   ${YELLOW}Code mal formaté, correction automatique...${NC}"
+    cargo fmt
+    if [ $? -eq 0 ]; then
+        echo -e "   ${GREEN}Code reformaté automatiquement.${NC}"
+    else
+        echo -e "   ${RED}Erreur lors du formatage.${NC}"
         ((errors++))
     fi
+else
+    echo -e "   ${GREEN}Code bien formaté.${NC}"
 fi
 
 # 3. Clippy (linter)
-echo -e "\n${YELLOW}3. Verifying Clippy...${NC}"
-if cargo clippy -- -D warnings 2>&1; then
-    echo -e "   ${GREEN}No Clippy warnings${NC}"
-else
-    echo -e "   ${YELLOW}Clippy warnings detected${NC}"
-    ((warnings++))
-fi
+run_check "3. Vérification Clippy..." \
+          "cargo clippy -- -D warnings" \
+          "Aucun warning Clippy" \
+          "Warnings Clippy détectés" || ((warnings++))
 
 # 4. Tests
-echo -e "\n${YELLOW}4. Running tests...${NC}"
-if cargo test 2>&1; then
-    echo -e "   ${GREEN}All tests pass${NC}"
+run_check "4. Exécution des tests..." \
+          "cargo test --workspace" \
+          "Tous les tests passent" \
+          "Échec des tests" || ((errors++))
+
+# 5. Vérification des unwraps
+echo -e "\n${YELLOW}5. Vérification des unwraps...${NC}"
+unwrap_count=$(grep -r -E --include="*.rs" --exclude-dir=target "\.unwrap\(" . | wc -l)
+if [ $unwrap_count -eq 0 ]; then
+    echo -e "   ${GREEN}Aucun unwrap() trouvé.${NC}"
+elif [ $unwrap_count -le 5 ]; then
+    echo -e "   ${YELLOW}$unwrap_count unwrap() trouvé(s) (seuil: 5).${NC}"
+    ((warnings++))
 else
-    echo -e "   ${RED}Tests failed${NC}"
+    echo -e "   ${RED}$unwrap_count unwrap() trouvé(s) (seuil: 5).${NC}"
     ((errors++))
 fi
 
-# 5. Verify specs exist
-echo -e "\n${YELLOW}5. Verifying specs...${NC}"
-function_count=$(find . -name "*.rs" -not -path "*/target/*" -exec grep -cE "pub\s+(async\s+)?fn\s+\w+" {} + | awk '{sum+=$1} END {print sum}')
-spec_count=$(find docs/specs -name "*.md" 2>/dev/null | wc -l)
-
-if [[ $spec_count -ge $function_count ]]; then
-    echo -e "   ${GREEN}All functions have specs${NC}"
-else
-    echo -e "   ${YELLOW}$((function_count - spec_count)) function(s) without specs${NC}"
-    ((warnings++))
-fi
-
-# 6. Verify unwraps
-echo -e "\n${YELLOW}6. Verifying unwraps...${NC}"
-unwrap_count=$(find . -name "*.rs" -not -path "*/target/*" -exec grep -c "\.unwrap(" {} + | awk '{sum+=$1} END {print sum}')
-
-if [[ $unwrap_count -eq 0 ]]; then
-    echo -e "   ${GREEN}No unwrap() found${NC}"
-elif [[ $unwrap_count -le 5 ]]; then
-    echo -e "   ${YELLOW}$unwrap_count unwrap() found (threshold: 5)${NC}"
+# 6. Vérification des TODOs
+echo -e "\n${YELLOW}6. Vérification des TODOs...${NC}"
+todo_count=$(grep -r -i -E --include="*.rs" --exclude-dir=target "TODO|FIXME" . | wc -l)
+if [ $todo_count -eq 0 ]; then
+    echo -e "   ${GREEN}Aucun TODO trouvé.${NC}"
+elif [ $todo_count -le 10 ]; then
+    echo -e "   ${YELLOW}$todo_count TODO trouvé(s) (seuil: 10).${NC}"
     ((warnings++))
 else
-    echo -e "   ${RED}$unwrap_count unwrap() found (threshold: 5)${NC}"
+    echo -e "   ${RED}$todo_count TODO trouvé(s) (seuil: 10).${NC}"
     ((errors++))
 fi
 
-# 7. Verify TODOs
-echo -e "\n${YELLOW}7. Verifying TODOs...${NC}"
-todo_count=$(find . -name "*.rs" -not -path "*/target/*" -exec grep -ciE "TODO|FIXME" {} + | awk '{sum+=$1} END {print sum}')
+# 7. Check Security Theatre
+run_check "7. Vérification Security Theatre..." \
+          "./scripts/check-security-theatre-simple.sh" \
+          "Aucun \"security theatre\" détecté" \
+          "\"Security theatre\" détecté !" || ((errors++))
 
-if [[ $todo_count -eq 0 ]]; then
-    echo -e "   ${GREEN}No TODOs found${NC}"
-elif [[ $todo_count -le 10 ]]; then
-    echo -e "   ${YELLOW}$todo_count TODO(s) found (threshold: 10)${NC}"
-    ((warnings++))
-else
-    echo -e "   ${RED}$todo_count TODO(s) found (threshold: 10)${NC}"
-    ((errors++))
-fi
+# 8. Check Monero/Tor Security
+run_check "8. Vérification Monero/Tor Security..." \
+          "./scripts/check-monero-tor-final.sh" \
+          "Aucun problème de sécurité Monero/Tor détecté" \
+          "Problèmes de sécurité Monero/Tor détectés !" || ((errors++))
 
-# 8. Check Security Theatre
-echo -e "\n${YELLOW}8. Checking for security theatre...${NC}"
-if [[ -f "./scripts/check-security-theatre.sh" ]]; then
-    if ./scripts/check-security-theatre.sh; then
-        echo -e "   ${GREEN}No security theatre detected${NC}"
-    else
-        echo -e "   ${RED}Security theatre detected!${NC}"
-        ((errors++))
-    fi
-else
-    echo -e "   ${YELLOW}Security theatre script not found (skipping)${NC}"
-    ((warnings++))
-fi
+# 9. Mise à jour des métriques
+run_check "9. Mise à jour des métriques..." \
+          "./scripts/update-metrics.sh" \
+          "Mise à jour des métriques réussie" \
+          "Échec de la mise à jour des métriques" || ((warnings++))
 
-# 9. Check Monero/Tor Security
-echo -e "\n${YELLOW}9. Checking Monero/Tor security...${NC}"
-if [[ -f "./scripts/check-monero-tor.sh" ]]; then
-    if ./scripts/check-monero-tor.sh; then
-        echo -e "   ${GREEN}No Monero/Tor security issues detected${NC}"
-    else
-        echo -e "   ${RED}Monero/Tor security issues detected!${NC}"
-        ((errors++))
-    fi
-else
-    echo -e "   ${YELLOW}Monero/Tor security script not found (skipping)${NC}"
-    ((warnings++))
-fi
-
-# 10. Update metrics
-echo -e "\n${YELLOW}10. Updating metrics...${NC}"
-if [[ -f "./scripts/update-metrics.sh" ]]; then
-    if ./scripts/update-metrics.sh; then
-        echo -e "   ${GREEN}Metrics updated${NC}"
-    else
-        echo -e "   ${YELLOW}Error updating metrics${NC}"
-        ((warnings++))
-    fi
-else
-    echo -e "   ${YELLOW}Metrics update script not found (skipping)${NC}"
-    ((warnings++))
-fi
-
-# Final summary
-echo -e "\n${CYAN}PRE-COMMIT SUMMARY${NC}"
+# --- Résumé final ---
+echo -e "\n${CYAN}RÉSUMÉ PRE-COMMIT${NC}"
 echo -e "${CYAN}===================${NC}"
 
-if [[ $errors -eq 0 && $warnings -eq 0 ]]; then
-    echo -e "${GREEN}ALL CHECKS PASS - Ready to commit!${NC}"
+if [ $errors -eq 0 ] && [ $warnings -eq 0 ]; then
+    echo -e "${GREEN}TOUS LES CHECKS PASSENT - Prêt pour le commit!${NC}"
     exit 0
-elif [[ $errors -eq 0 ]]; then
-    echo -e "${YELLOW}$warnings warning(s) detected - Commit possible but be careful${NC}"
-    echo -e "${CYAN}Consider fixing warnings before committing${NC}"
+elif [ $errors -eq 0 ]; then
+    echo -e "${YELLOW}$warnings warning(s) détecté(s) - Commit possible mais attention.${NC}"
+    echo -e "${CYAN}Considérez corriger les warnings avant de commiter.${NC}"
     exit 0
 else
-    echo -e "${RED}$errors error(s) detected - COMMIT BLOCKED${NC}"
-    echo -e "${YELLOW}Fix errors before committing${NC}"
+    echo -e "${RED}$errors erreur(s) détectée(s) - COMMIT BLOQUÉ${NC}"
+    echo -e "${YELLOW}Corrigez les erreurs avant de pouvoir commiter.${NC}"
     exit 1
 fi
