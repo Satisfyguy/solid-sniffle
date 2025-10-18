@@ -1,23 +1,24 @@
-use super::{db, models::user::*, crypto::encryption::*};
+use super::{crypto::encryption::*, db, models::user::*};
 use anyhow::Result;
+use diesel::Connection;
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use dotenvy::dotenv;
 use std::env;
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use diesel::Connection;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("../migrations");
 
 async fn setup_test_db() -> Result<db::DbPool> {
     dotenv().ok();
-    let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| "test_database.sqlite".to_string());
-    
+    let database_url =
+        env::var("DATABASE_URL").unwrap_or_else(|_| "test_database.sqlite".to_string());
+
     // Ensure a clean database for each test
     if std::path::Path::new(&database_url).exists() {
         std::fs::remove_file(&database_url)?;
     }
 
     let pool = db::create_pool(&database_url)?;
-    
+
     // Run migrations
     let mut conn = pool.get()?;
     conn.run_pending_migrations(MIGRATIONS).unwrap();

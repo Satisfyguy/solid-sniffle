@@ -1,9 +1,9 @@
-use actix_web::{web, App, HttpServer};
+use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 
+mod crypto;
 mod db;
 mod models;
 mod schema;
-mod crypto;
 
 async fn health_check() -> impl Responder {
     HttpResponse::Ok().json(serde_json::json!({

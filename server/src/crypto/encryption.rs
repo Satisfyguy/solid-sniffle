@@ -1,9 +1,8 @@
-use anyhow::Result;
 use aes_gcm::{
     aead::{Aead, KeyInit, OsRng},
-    Aes256Gcm, Nonce, Key,
+    Aes256Gcm, Key, Nonce,
 };
-use rand::Rng;
+use anyhow::Result;
 use base64::{engine::general_purpose, Engine as _};
 
 const NONCE_SIZE: usize = 12; // AES-GCM standard nonce size
