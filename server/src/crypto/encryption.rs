@@ -26,7 +26,7 @@ pub fn encrypt_field(plaintext: &str, key: &[u8]) -> Result<Vec<u8>> {
         .map_err(|e| anyhow::anyhow!("Encryption failed: {}", e))?;
 
     // Prepend nonce to ciphertext for storage
-    let mut result = nonce_bytes;
+    let mut result = nonce_bytes.to_vec();
     result.extend_from_slice(&ciphertext);
     Ok(result)
 }

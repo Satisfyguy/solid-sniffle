@@ -36,13 +36,17 @@ CREATE TABLE orders (
 CREATE TABLE escrows (
     id TEXT PRIMARY KEY,
     order_id TEXT REFERENCES orders(id) ON DELETE CASCADE,
-    buyer_wallet_info TEXT, -- ENCRYPTED
-    vendor_wallet_info TEXT, -- ENCRYPTED
-    arbiter_wallet_info TEXT, -- ENCRYPTED
+    buyer_id TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    vendor_id TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    arbiter_id TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    amount BIGINT NOT NULL CHECK (amount > 0),
     multisig_address VARCHAR(95),
     status VARCHAR(50) NOT NULL DEFAULT 'init',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    buyer_wallet_info BLOB, -- ENCRYPTED multisig info
+    vendor_wallet_info BLOB, -- ENCRYPTED multisig info
+    arbiter_wallet_info BLOB -- ENCRYPTED multisig info
 );
 
 CREATE TABLE transactions (
@@ -58,4 +62,7 @@ CREATE INDEX idx_listings_vendor ON listings(vendor_id);
 CREATE INDEX idx_orders_buyer ON orders(buyer_id);
 CREATE INDEX idx_orders_vendor ON orders(vendor_id);
 CREATE INDEX idx_escrows_order ON escrows(order_id);
+CREATE INDEX idx_escrows_buyer ON escrows(buyer_id);
+CREATE INDEX idx_escrows_vendor ON escrows(vendor_id);
+CREATE INDEX idx_escrows_arbiter ON escrows(arbiter_id);
 CREATE INDEX idx_transactions_escrow ON transactions(escrow_id);

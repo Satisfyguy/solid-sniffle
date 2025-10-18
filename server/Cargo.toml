@@ -19,6 +19,8 @@ aes-gcm = "0.10"
 rand = "0.8"
 base64 = "0.22"
 anyhow = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 monero-marketplace-common = { path = "../common" }
 monero-marketplace-wallet = { path = "../wallet" }
 

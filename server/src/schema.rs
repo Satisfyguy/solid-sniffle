@@ -4,9 +4,9 @@ diesel::table! {
     escrows (id) {
         id -> Uuid,
         order_id -> Uuid,
-        buyer_id -> Text,
-        vendor_id -> Text,
-        arbiter_id -> Text,
+        buyer_id -> Uuid,
+        vendor_id -> Uuid,
+        arbiter_id -> Uuid,
         amount -> BigInt,
         multisig_address -> Nullable<Text>,
         status -> Text,
@@ -69,7 +69,6 @@ diesel::table! {
 }
 
 diesel::joinable!(escrows -> orders (order_id));
-// diesel::joinable!(escrows -> users (buyer_id)); // Commented out due to type mismatch (Text vs Uuid)
 diesel::joinable!(listings -> users (vendor_id));
 diesel::joinable!(orders -> escrows (escrow_id));
 diesel::joinable!(orders -> listings (listing_id));
