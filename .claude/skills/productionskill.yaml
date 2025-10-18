@@ -1,0 +1,2390 @@
+# Monero Marketplace Production-Ready Development Skill v2.0
+
+## 🎯 Mission Critical Context
+
+You're developing a **production-grade Monero escrow marketplace** with multisig wallets handling real money. Every line of code you write will be used in production. There is NO separate "production version" - what you code today ships to main
+```
+
+---
+
+## 🔐 Security Hardening Checklist
+
+### Authentication & Authorization
+- [ ] Password hashing with Argon2id (time cost ≥ 2, memory cost ≥ 19MB)
+- [ ] Session tokens: cryptographically random, 32+ bytes
+- [ ] CSRF tokens on all state-changing operations
+- [ ] Rate limiting: 5 failed logins per IP per hour
+- [ ] Account lockout after 5 failed attempts (24h cooldown)
+- [ ] JWT tokens with short expiration (2h) and refresh mechanism
+- [ ] Role-based access control (RBAC) for all endpoints
+
+### Input Validation
+- [ ] Validate all inputs at API boundary (never trust client)
+- [ ] Sanitize file uploads (magic number verification, size limits)
+- [ ] SQL injection prevention (parameterized queries only)
+- [ ] XSS prevention (escape all user content)
+- [ ] Path traversal prevention (validate file paths)
+- [ ] Email validation with DNS MX record check
+- [ ] Amount validation (min/max limits, decimal precision)
+
+### Cryptography
+- [ ] TLS 1.3 only (disable TLS 1.2 and below)
+- [ ] Perfect Forward Secrecy (PFS) enabled
+- [ ] Strong cipher suites only (AEAD ciphers)
+- [ ] HSTS header with long max-age (31536000)
+- [ ] Certificate pinning for critical connections
+- [ ] Encryption at rest (AES-256-GCM for DB, disk encryption)
+- [ ] Secure key derivation (PBKDF2/Argon2 for passwords)
+
+### Monero Security
+- [ ] Wallet RPC behind firewall (no public exposure)
+- [ ] Authentication on all RPC calls
+- [ ] View-only wallets where possible
+- [ ] Multisig address verification (all parties confirm)
+- [ ] Transaction verification before broadcast
+- [ ] Balance reconciliation (detect discrepancies)
+- [ ] Automatic wallet backups (encrypted, off-site)
+
+### Network Security
+- [ ] Tor hidden service as primary interface
+- [ ] DDoS protection (rate limiting + CloudFlare/similar)
+- [ ] IP allowlisting for admin endpoints
+- [ ] Fail2ban for repeated failures
+- [ ] Network segmentation (DB, RPC, app in separate networks)
+- [ ] Egress filtering (only allow necessary outbound)
+
+### Application Security
+- [ ] No secrets in code/logs/errors
+- [ ] Secure headers (CSP, X-Frame-Options, etc.)
+- [ ] CORS properly configured
+- [ ] Dependency scanning (cargo audit, Dependabot)
+- [ ] Container scanning (Trivy, Clair)
+- [ ] Regular security updates
+- [ ] Principle of least privilege (minimal permissions)
+
+---
+
+## 📊 Production-Ready Checklist
+
+### Code Quality (Automated)
+- [ ] All tests passing (`cargo test --workspace`)
+- [ ] Zero clippy warnings (`cargo clippy -- -D warnings`)
+- [ ] Code coverage ≥85% (`cargo tarpaulin`)
+- [ ] Zero TODO/FIXME in `server/src/` (excluding tests)
+- [ ] All functions documented (missing_docs lint)
+- [ ] No `.unwrap()` in production paths
+- [ ] Integration tests against real testnet
+
+### Security Audit
+- [ ] External security audit completed (professional firm)
+- [ ] All critical/high vulnerabilities fixed
+- [ ] Penetration testing performed
+- [ ] Code review by 2+ senior developers
+- [ ] Bug bounty program active (minimum 4 weeks)
+- [ ] Security documentation complete
+- [ ] Incident response plan tested
+
+### Infrastructure
+- [ ] Production environment provisioned
+- [ ] Monero daemon fully synced (mainnet)
+- [ ] 3 wallet RPC instances operational
+- [ ] Database backups automated (hourly incremental, daily full)
+- [ ] Backup restoration tested successfully
+- [ ] Monitoring and alerting operational
+- [ ] Tor .onion service configured
+- [ ] SSL/TLS certificates valid and auto-renewing
+- [ ] DDoS protection configured
+- [ ] Firewall rules applied and tested
+
+### Operational Readiness
+- [ ] Runbook documented and reviewed
+  - Deployment procedures
+  - Rollback procedures
+  - Backup/restore procedures
+  - Incident response playbook
+  - On-call rotation schedule
+- [ ] 24/7 on-call team defined (minimum 2 people)
+- [ ] Escalation procedures documented
+- [ ] Communication channels established (PagerDuty, Slack, etc.)
+- [ ] Disaster recovery plan tested
+- [ ] Capacity planning completed (expected load + 3x)
+
+### Legal & Compliance
+- [ ] Terms of Service reviewed by lawyer
+- [ ] Privacy Policy compliant with GDPR/local laws
+- [ ] KYC/AML requirements analyzed (consult lawyer)
+- [ ] Data retention policy defined
+- [ ] User data deletion procedures implemented
+- [ ] Jurisdiction considerations documented
+
+### Business Continuity
+- [ ] Key personnel documented (bus factor > 1)
+- [ ] Critical credentials in secure vault (1Password, Bitwarden)
+- [ ] Succession plan for key roles
+- [ ] Financial reserves (3-6 months operating costs)
+- [ ] Insurance coverage evaluated
+
+---
+
+## 🚀 Go-Live Decision Matrix
+
+### ✅ GO CRITERIA (All must be met)
+
+| Category | Requirement | Status |
+|----------|-------------|--------|
+| **Security** | External audit: 0 critical, <5 high findings | ☐ |
+| | Penetration testing passed | ☐ |
+| | Bug bounty: 50+ researchers, 0 critical unfixed | ☐ |
+| **Quality** | Code coverage ≥85% | ☐ |
+| | Zero TODOs in production code | ☐ |
+| | Integration tests: 100% pass rate | ☐ |
+| **Infrastructure** | All services healthy (7-day uptime) | ☐ |
+| | Monero daemon synced, <1 block behind | ☐ |
+| | Backup/restore tested successfully | ☐ |
+| | Monitoring: 0 false positives | ☐ |
+| **Operations** | On-call team available (2+ people) | ☐ |
+| | Runbook tested with 2+ drills | ☐ |
+| | Incident response: <15 min MTTA | ☐ |
+| **Beta Testing** | 50+ beta users | ☐ |
+| | 100+ successful escrows | ☐ |
+| | 0 fund losses | ☐ |
+| | User satisfaction ≥4.0/5.0 | ☐ |
+
+### 🛑 NO-GO CRITERIA (Any blocks launch)
+
+- ❌ Any unresolved CRITICAL security finding
+- ❌ Failed backup restoration test
+- ❌ Unstable Monero RPC (<99% uptime in last 7 days)
+- ❌ Database corruption detected
+- ❌ Any fund loss in beta (even if reimbursed)
+- ❌ On-call team unavailable
+- ❌ Missing legal review (ToS/Privacy Policy)
+- ❌ Key personnel unavailable for 2+ weeks post-launch
+
+### ⚠️ CONSIDER DELAYING IF:
+
+- Integration test pass rate <98%
+- Beta testing <30 days
+- Code coverage <80%
+- On-call team has <2 people
+- Documentation incomplete
+- High-severity findings >10
+- User-reported bugs >20 (unfixed)
+
+---
+
+## 🔄 Post-Launch Operations
+
+### Daily Checklist
+```bash
+# Morning checks (automated)
+./scripts/health-check-production.sh
+./scripts/check-blockchain-sync.sh
+./scripts/verify-backups.sh
+
+# Review dashboards
+# - Grafana: Error rates, latency, active escrows
+# - Prometheus: Resource usage
+# - Application logs: Errors/warnings
+```
+
+### Weekly Tasks
+- Review security logs for anomalies
+- Check disk space trends
+- Verify backup retention policy
+- Update dependencies (security patches)
+- Review on-call incidents and improve runbook
+- Capacity planning review
+
+### Monthly Tasks
+- Rotate encryption keys (if using file-based)
+- Full disaster recovery drill
+- Review and update incident response plan
+- Security audit of access logs
+- Performance optimization review
+- Cost optimization review
+
+### Quarterly Tasks
+- External penetration testing
+- Dependency major version updates
+- Infrastructure capacity review
+- Review and update documentation
+- On-call team retrospective
+- Business continuity plan review
+
+---
+
+## 🎓 Development Best Practices
+
+### Error Handling Philosophy
+
+```rust
+// ❌ NEVER: Swallowing errors
+let result = some_operation();  // Ignoring Result
+
+// ❌ NEVER: Generic error messages
+return Err(anyhow!("Failed"));
+
+// ❌ NEVER: Panicking in production paths
+let value = config.get("key").unwrap();
+
+// ✅ ALWAYS: Context-rich errors
+let value = config
+    .get("key")
+    .context("Missing required configuration key 'key'")?;
+
+// ✅ ALWAYS: Structured logging with context
+tracing::error!(
+    escrow_id = %escrow_id,
+    user_id = %user_id,
+    error = %e,
+    "Failed to release escrow funds"
+);
+
+// ✅ ALWAYS: Actionable error messages
+return Err(WalletError::InsufficientFunds {
+    required: amount,
+    available: balance,
+    suggestion: "Please deposit additional funds or reduce the escrow amount"
+});
+```
+
+### Testing Strategy
+
+```rust
+// Unit tests: Fast, isolated, test business logic
+#[test]
+fn test_escrow_amount_validation() {
+    let escrow = Escrow::new(50_000_000); // 0.05 XMR
+    assert!(escrow.validate().is_ok());
+    
+    let escrow = Escrow::new(1_000_000_000_000); // 1000 XMR
+    assert!(matches!(
+        escrow.validate(),
+        Err(ValidationError::AmountExceedsMaximum { .. })
+    ));
+}
+
+// Integration tests: Real services, end-to-end flows
+#[tokio::test]
+async fn test_full_escrow_with_real_monero() {
+    let env = TestEnvironment::with_real_testnet().await;
+    // Test against actual Monero testnet
+}
+
+// Property-based tests: Fuzzing critical paths
+#[quickcheck]
+fn test_multisig_address_deterministic(seed: u64) -> bool {
+    // Verify same inputs always produce same output
+}
+```
+
+### Logging Levels
+
+```rust
+// ERROR: System is in degraded state, requires immediate attention
+tracing::error!(
+    escrow_id = %escrow_id,
+    error = %e,
+    "Failed to finalize multisig - manual intervention required"
+);
+
+// WARN: Unexpected but handled, may indicate future problem
+tracing::warn!(
+    user_id = %user_id,
+    attempt_count = failed_attempts,
+    "Repeated failed login attempts detected"
+);
+
+// INFO: Normal operational events (state changes)
+tracing::info!(
+    escrow_id = %escrow_id,
+    from_status = ?old_status,
+    to_status = ?new_status,
+    "Escrow status changed"
+);
+
+// DEBUG: Detailed info for troubleshooting (dev/staging only)
+tracing::debug!(
+    rpc_url = %url,
+    method = "get_balance",
+    duration_ms = duration.as_millis(),
+    "Monero RPC call completed"
+);
+```
+
+### Performance Optimization
+
+```rust
+// Connection pooling
+lazy_static! {
+    static ref DB_POOL: PgPool = create_pool();
+}
+
+// Caching (with TTL)
+#[cached(time = 300, result = true)]  // 5 min cache
+async fn get_xmr_usd_rate() -> Result<f64> {
+    // Expensive API call
+}
+
+// Batch operations
+let escrows = get_active_escrows().await?;
+let balances = fetch_balances_batch(&escrows).await?;
+
+// Async where possible
+tokio::spawn(async move {
+    send_notification(user_id, event).await;
+});
+
+// Database indexes on foreign keys
+CREATE INDEX idx_escrows_order_id ON escrows(order_id);
+CREATE INDEX idx_orders_buyer_id ON orders(buyer_id);
+CREATE INDEX idx_orders_status ON orders(status) WHERE status = 'active';
+```
+
+---
+
+## 🧰 Troubleshooting Guide
+
+### Common Issues
+
+**Problem**: Monero RPC timeout
+```bash
+# Check RPC is accessible
+curl -X POST http://localhost:18083/json_rpc \
+  -d '{"jsonrpc":"2.0","id":"0","method":"get_version"}' \
+  -H 'Content-Type: application/json'
+
+# Check wallet RPC logs
+docker logs wallet-rpc-1
+
+# Restart RPC if needed
+docker-compose restart wallet-rpc-1
+```
+
+**Problem**: Database connection pool exhausted
+```sql
+-- Check active connections
+SELECT count(*) FROM pg_stat_activity;
+
+-- Kill idle connections
+SELECT pg_terminate_backend(pid) 
+FROM pg_stat_activity 
+WHERE state = 'idle' 
+AND state_change < current_timestamp - interval '10 minutes';
+```
+
+**Problem**: Escrow stuck in "SetupInProgress"
+```bash
+# Check wallet states in database
+psql -c "SELECT id, status, multisig_state FROM escrows WHERE status = 'setup_in_progress';"
+
+# Manual recovery (last resort)
+./scripts/recover-stuck-escrow.sh <escrow_id>
+```
+
+---
+
+## 📚 Critical References
+
+### Documentation
+- **Monero RPC**: https://www.getmonero.org/resources/developer-guides/wallet-rpc.html
+- **Multisig Guide**: https://github.com/monero-project/monero/blob/master/docs/multisig.md
+- **Diesel ORM**: https://diesel.rs/guides/
+- **Actix-web**: https://actix.rs/docs/
+
+### Security Resources
+- **OWASP Top 10**: https://owasp.org/www-project-top-ten/
+- **Rust Security**: https://anssi-fr.github.io/rust-guide/
+- **Cryptography**: https://github.com/RustCrypto
+
+---
+
+## 🎯 Success Metrics
+
+Track these KPIs post-launch:
+
+| Metric | Target | Alert Threshold |
+|--------|--------|-----------------|
+| Uptime | 99.9% | <99% |
+| API Response Time (P95) | <200ms | >500ms |
+| Monero RPC Latency (P95) | <2s | >5s |
+| Error Rate | <0.1% | >1% |
+| Successful Escrows | >95% | <90% |
+| Time to Multisig Setup | <5min | >15min |
+| User Satisfaction | >4.5/5 | <4.0/5 |
+| Security Incidents | 0 | Any |
+
+---
+
+## 🔄 Continuous Improvement
+
+### Post-Mortem Process
+After any incident:
+1. **Document** within 24h (timeline, root cause, impact)
+2. **Identify** action items (technical, process, documentation)
+3. **Assign** owners with deadlines
+4. **Track** completion
+5. **Share** learnings with team
+6. **Update** runbooks/monitoring
+
+### Feedback Loop
+- Weekly: Review user feedback, identify patterns
+- Bi-weekly: Sprint retrospective (what went well, what to improve)
+- Monthly: Technical debt review, prioritize improvements
+- Quarterly: Architecture review, plan refactors
+
+---
+
+## 🎬 Final Words
+
+**Remember**: You're building financial infrastructure. Lives and livelihoods depend on this system working correctly. When in doubt:
+
+1. **Fail safe**: Better to reject a transaction than process it incorrectly
+2. **Be transparent**: Log everything, hide nothing (except secrets)
+3. **Trust no one**: Validate all inputs, verify all outputs
+4. **Automate everything**: Humans make mistakes, especially under pressure
+5. **Test in production**: (but carefully, with feature flags and monitoring)
+
+**The goal isn't just working code - it's production-grade, secure, maintainable, observable, and scalable financial infrastructure.**
+
+Good luck! 🚀net.
+
+**Zero-tolerance policy**: No placeholders, no TODOs in production paths, no `.unwrap()` without justification, no mocks in integration tests.
+
+---
+
+## 🏗️ Core Architecture
+
+### ✅ Production-Ready Components (100%)
+- **wallet**: Multisig implementation, E2E tests, zero placeholders
+- **cli**: Full command interface with error handling
+- **common**: Shared types, error handling, and utilities
+- **server/database**: Diesel models, R2D2 pool, AES-256-GCM encryption
+- **server/services/escrow**: Real orchestration logic with DB integration
+
+### 🚧 Components Requiring Transformation
+1. **WalletManager** (`server/src/wallet_manager.rs`): Documented stubs → Real Monero RPC integration
+2. **WebSocketServer** (`server/src/websocket.rs`): Logging mode → actix-web-actors implementation
+3. **Encryption Keys**: Ephemeral keys → Persistent key management with rotation
+4. **Rate Limiting**: Basic implementation → Production-grade distributed rate limiting
+5. **Health Checks**: Missing → Comprehensive health monitoring
+
+---
+
+## 🔒 Production-First Principles
+
+### CRITICAL RULES
+
+1. **One Codebase**: No dev/prod branches. Use environment variables and feature flags exclusively
+2. **Real Services**: Integration tests against Monero testnet/stagenet, never mocks for critical paths
+3. **Fail Fast**: Invalid config = crash at startup with clear error message, no degraded mode
+4. **Observable**: Structured logs + metrics + traces from day 1
+5. **Zero Placeholders**: No TODO/FIXME/unimplemented!() in production code paths
+6. **Immutable Deployments**: Every deployment is versioned and reproducible
+7. **Circuit Breakers**: All external service calls protected with circuit breakers
+8. **Idempotency**: All state-changing operations must be idempotent
+
+### Configuration Strategy
+
+```rust
+// server/src/config.rs
+use serde::{Deserialize, Serialize};
+use std::time::Duration;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Environment {
+    Development,  // Testnet, verbose logs, relaxed limits
+    Staging,      // Stagenet, production-like config
+    Production,   // Mainnet, strict limits, monitoring
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AppConfig {
+    // Environment
+    pub environment: Environment,
+    pub version: String,
+    
+    // Database
+    pub database_url: String,
+    pub database_pool_size: u32,
+    pub database_connection_timeout: Duration,
+    
+    // Monero
+    pub monero_network: MoneroNetwork,
+    pub monero_daemon_url: String,
+    pub monero_wallet_rpc_urls: Vec<String>,
+    pub monero_rpc_timeout: Duration,
+    pub monero_rpc_retry_attempts: u32,
+    
+    // Business Rules
+    pub max_escrow_amount_xmr: u64,
+    pub min_escrow_amount_xmr: u64,
+    pub escrow_timeout_hours: u64,
+    pub dispute_window_hours: u64,
+    
+    // Security
+    pub rate_limit_requests_per_minute: u32,
+    pub rate_limit_burst: u32,
+    pub session_timeout_hours: u64,
+    pub max_failed_login_attempts: u32,
+    pub password_min_length: usize,
+    
+    // Observability
+    pub log_level: String,
+    pub metrics_port: u16,
+    pub tracing_endpoint: Option<String>,
+    
+    // Server
+    pub server_host: String,
+    pub server_port: u16,
+    pub server_workers: usize,
+    pub max_request_size_bytes: usize,
+    
+    // WebSocket
+    pub ws_heartbeat_interval: Duration,
+    pub ws_client_timeout: Duration,
+    pub ws_max_connections_per_ip: usize,
+    
+    // Encryption
+    pub encryption_key_path: String,
+    pub key_rotation_days: u32,
+    
+    // Tor (optional)
+    pub tor_enabled: bool,
+    pub tor_socks_proxy: Option<String>,
+}
+
+impl AppConfig {
+    pub fn from_env() -> anyhow::Result<Self> {
+        dotenvy::dotenv().ok();
+        envy::from_env().context("Failed to load configuration from environment")
+    }
+    
+    pub fn validate(&self) -> anyhow::Result<()> {
+        ensure!(self.database_pool_size > 0, "Database pool size must be > 0");
+        ensure!(self.max_escrow_amount_xmr > self.min_escrow_amount_xmr, 
+                "Max escrow must be greater than min escrow");
+        ensure!(self.monero_wallet_rpc_urls.len() >= 3, 
+                "At least 3 wallet RPC URLs required for multisig");
+        
+        if self.environment == Environment::Production {
+            ensure!(self.monero_network == MoneroNetwork::Mainnet,
+                    "Production must use mainnet");
+            ensure!(self.log_level != "debug",
+                    "Production cannot use debug logging");
+            ensure!(self.rate_limit_requests_per_minute <= 100,
+                    "Production rate limit too permissive");
+        }
+        
+        Ok(())
+    }
+}
+```
+
+### Feature Flags (Cargo.toml)
+
+```toml
+[features]
+default = ["testnet"]
+testnet = []
+stagenet = []
+mainnet = []
+monitoring = ["prometheus", "opentelemetry"]
+tor_support = ["arti-client"]
+
+# Mutually exclusive network features
+[package.metadata.cargo-all-features]
+denylist = [
+    "testnet",
+    "stagenet", 
+    "mainnet"
+]
+```
+
+---
+
+## 📋 Implementation Roadmap
+
+### PHASE 1: Core Production Components (Weeks 1-2)
+
+#### 1.1 WalletManager Production Implementation
+**File**: `server/src/wallet_manager.rs`
+
+**Current State**: Documented stubs with clear interfaces
+**Target State**: Full Monero RPC integration with state machine
+
+**Requirements**:
+```rust
+pub struct WalletInstance {
+    pub id: Uuid,
+    pub role: WalletRole,
+    pub rpc_client: MoneroRpcClient,
+    pub address: String,
+    pub multisig_state: MultisigState,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum MultisigState {
+    NotStarted,
+    PreparedInfo(MultisigInfo),
+    InfoExchanged { round: u8, participants: Vec<String> },
+    Ready { address: String },
+}
+
+impl WalletManager {
+    pub async fn create_wallet_instance(
+        &mut self,
+        role: WalletRole,
+    ) -> Result<WalletInstance> {
+        // 1. Select available RPC from pool
+        // 2. Create wallet with unique name
+        // 3. Initialize state tracking
+        // 4. Store in DB for recovery
+    }
+    
+    pub async fn make_multisig(
+        &mut self,
+        wallet_id: Uuid,
+        participants: Vec<String>,
+    ) -> Result<MultisigInfo> {
+        // 1. Validate participants (exactly 3)
+        // 2. Call wallet RPC make_multisig
+        // 3. Update state to PreparedInfo
+        // 4. Persist state change
+    }
+    
+    pub async fn exchange_multisig_info(
+        &mut self,
+        escrow_id: Uuid,
+        info_from_all: Vec<MultisigInfo>,
+    ) -> Result<()> {
+        // 1. Validate all info received
+        // 2. Call exchange_multisig_keys for each wallet
+        // 3. Handle multiple rounds if needed
+        // 4. Update all wallet states
+        // 5. Generate final multisig address
+    }
+    
+    pub async fn finalize_multisig(
+        &mut self,
+        escrow_id: Uuid,
+    ) -> Result<String> {
+        // 1. Verify all wallets in InfoExchanged state
+        // 2. Call finalize_multisig on each
+        // 3. Extract and validate multisig address (all must match)
+        // 4. Update states to Ready
+        // 5. Return multisig address
+    }
+}
+```
+
+**Error Handling Strategy**:
+```rust
+#[derive(Debug, thiserror::Error)]
+pub enum WalletManagerError {
+    #[error("Monero RPC error: {0}")]
+    RpcError(#[from] MoneroRpcError),
+    
+    #[error("Invalid multisig state: expected {expected}, got {actual}")]
+    InvalidState { expected: String, actual: String },
+    
+    #[error("Wallet not found: {0}")]
+    WalletNotFound(Uuid),
+    
+    #[error("All RPC endpoints unavailable")]
+    NoAvailableRpc,
+    
+    #[error("Multisig address mismatch: {addresses:?}")]
+    AddressMismatch { addresses: Vec<String> },
+}
+```
+
+**Integration Tests**:
+```rust
+#[tokio::test]
+async fn test_full_multisig_setup() {
+    let config = test_config();
+    let mut manager = WalletManager::new(config).await.unwrap();
+    
+    // Create 3 wallets (buyer, vendor, arbiter)
+    let buyer = manager.create_wallet_instance(WalletRole::Buyer).await.unwrap();
+    let vendor = manager.create_wallet_instance(WalletRole::Vendor).await.unwrap();
+    let arbiter = manager.create_wallet_instance(WalletRole::Arbiter).await.unwrap();
+    
+    // Prepare multisig
+    let buyer_info = manager.make_multisig(buyer.id, vec![]).await.unwrap();
+    let vendor_info = manager.make_multisig(vendor.id, vec![]).await.unwrap();
+    let arbiter_info = manager.make_multisig(arbiter.id, vec![]).await.unwrap();
+    
+    // Exchange info
+    let escrow_id = Uuid::new_v4();
+    manager.exchange_multisig_info(
+        escrow_id,
+        vec![buyer_info, vendor_info, arbiter_info]
+    ).await.unwrap();
+    
+    // Finalize
+    let multisig_address = manager.finalize_multisig(escrow_id).await.unwrap();
+    
+    assert!(multisig_address.starts_with("4")); // Testnet address
+    assert_eq!(multisig_address.len(), 95);
+}
+```
+
+**Success Criteria**:
+- ✅ Real 2-of-3 multisig creation works end-to-end on testnet
+- ✅ Zero stubs/placeholders remaining
+- ✅ State machine prevents invalid transitions
+- ✅ All error cases handled with recovery strategies
+- ✅ Integration tests pass with real Monero testnet
+- ✅ RPC failures trigger circuit breaker
+
+---
+
+#### 1.2 WebSocket Implementation with Actor System
+**File**: `server/src/websocket.rs`
+
+**Requirements**:
+```rust
+use actix::{Actor, Addr, AsyncContext, StreamHandler};
+use actix_web_actors::ws;
+use std::time::{Duration, Instant};
+
+const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
+const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
+
+pub struct WebSocketSession {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub hb: Instant,
+    pub server: Addr<WebSocketServer>,
+}
+
+impl Actor for WebSocketSession {
+    type Context = ws::WebsocketContext<Self>;
+    
+    fn started(&mut self, ctx: &mut Self::Context) {
+        self.hb(ctx);
+        self.server.do_send(Connect {
+            id: self.id,
+            user_id: self.user_id,
+            addr: ctx.address(),
+        });
+    }
+    
+    fn stopped(&mut self, _ctx: &mut Self::Context) {
+        self.server.do_send(Disconnect { id: self.id });
+    }
+}
+
+impl WebSocketSession {
+    fn hb(&self, ctx: &mut ws::WebsocketContext<Self>) {
+        ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
+            if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
+                tracing::warn!(session_id = %act.id, "Heartbeat timeout, disconnecting");
+                ctx.stop();
+                return;
+            }
+            ctx.ping(b"");
+        });
+    }
+}
+
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebSocketSession {
+    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
+        match msg {
+            Ok(ws::Message::Ping(msg)) => {
+                self.hb = Instant::now();
+                ctx.pong(&msg);
+            }
+            Ok(ws::Message::Pong(_)) => {
+                self.hb = Instant::now();
+            }
+            Ok(ws::Message::Text(text)) => {
+                // Handle incoming messages (auth, subscribe to events)
+                if let Err(e) = self.handle_text_message(text, ctx) {
+                    tracing::error!(error = %e, "Failed to handle message");
+                }
+            }
+            Ok(ws::Message::Close(reason)) => {
+                ctx.close(reason);
+                ctx.stop();
+            }
+            _ => {}
+        }
+    }
+}
+
+pub struct WebSocketServer {
+    sessions: HashMap<Uuid, Addr<WebSocketSession>>,
+    user_sessions: HashMap<Uuid, HashSet<Uuid>>,
+    escrow_subscribers: HashMap<Uuid, HashSet<Uuid>>,
+}
+
+impl Actor for WebSocketServer {
+    type Context = Context<Self>;
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct BroadcastEscrowEvent {
+    pub escrow_id: Uuid,
+    pub event: EscrowEvent,
+}
+
+impl Handler<BroadcastEscrowEvent> for WebSocketServer {
+    type Result = ();
+    
+    fn handle(&mut self, msg: BroadcastEscrowEvent, _ctx: &mut Context<Self>) {
+        if let Some(subscribers) = self.escrow_subscribers.get(&msg.escrow_id) {
+            let payload = serde_json::to_string(&msg.event).unwrap();
+            
+            for session_id in subscribers {
+                if let Some(addr) = self.sessions.get(session_id) {
+                    addr.do_send(WsMessage(payload.clone()));
+                }
+            }
+        }
+    }
+}
+```
+
+**Connection Tracking**:
+- Per-IP connection limits (prevent DoS)
+- Per-user session tracking
+- Escrow-specific subscription system
+- Automatic cleanup on disconnect
+
+**Success Criteria**:
+- ✅ Clients connect to `/ws` successfully
+- ✅ Heartbeat/ping-pong prevents zombie connections
+- ✅ Real-time notifications on escrow state changes
+- ✅ Automatic disconnection and cleanup
+- ✅ Rate limiting per IP address
+- ✅ Load testing: 1000+ concurrent connections
+
+---
+
+#### 1.3 Production-Grade Encryption Key Management
+**New File**: `server/src/crypto/key_manager.rs`
+
+**Requirements**:
+```rust
+use aes_gcm::{Aes256Gcm, Key, Nonce};
+use argon2::{Argon2, PasswordHasher};
+use std::fs;
+use std::os::unix::fs::PermissionsExt;
+
+pub struct KeyManager {
+    master_key: [u8; 32],
+    key_version: u32,
+    key_created_at: DateTime<Utc>,
+}
+
+impl KeyManager {
+    pub fn new(config: &AppConfig) -> Result<Self> {
+        let key_path = Path::new(&config.encryption_key_path);
+        
+        if key_path.exists() {
+            Self::load_existing_key(key_path)
+        } else {
+            Self::generate_and_save_key(key_path)
+        }
+    }
+    
+    fn load_existing_key(path: &Path) -> Result<Self> {
+        // 1. Read key file
+        let key_data = fs::read(path)
+            .context("Failed to read encryption key file")?;
+        
+        // 2. Verify file permissions
+        let metadata = fs::metadata(path)?;
+        let permissions = metadata.permissions();
+        ensure!(
+            permissions.mode() & 0o777 == 0o600,
+            "Key file must have 600 permissions"
+        );
+        
+        // 3. Deserialize and validate
+        let key_info: KeyInfo = serde_json::from_slice(&key_data)?;
+        ensure!(key_info.key.len() == 32, "Invalid key length");
+        
+        // 4. Check if key rotation needed
+        let age_days = (Utc::now() - key_info.created_at).num_days();
+        if age_days > config.key_rotation_days as i64 {
+            tracing::warn!(
+                age_days,
+                "Encryption key rotation recommended"
+            );
+        }
+        
+        Ok(Self {
+            master_key: key_info.key.try_into().unwrap(),
+            key_version: key_info.version,
+            key_created_at: key_info.created_at,
+        })
+    }
+    
+    fn generate_and_save_key(path: &Path) -> Result<Self> {
+        // 1. Generate secure random key
+        let mut key = [0u8; 32];
+        getrandom::getrandom(&mut key)?;
+        
+        // 2. Create key info
+        let key_info = KeyInfo {
+            version: 1,
+            key: key.to_vec(),
+            created_at: Utc::now(),
+            algorithm: "AES-256-GCM".to_string(),
+        };
+        
+        // 3. Save with strict permissions
+        let serialized = serde_json::to_vec_pretty(&key_info)?;
+        fs::write(path, serialized)?;
+        
+        let mut permissions = fs::metadata(path)?.permissions();
+        permissions.set_mode(0o600);
+        fs::set_permissions(path, permissions)?;
+        
+        tracing::info!("Generated new encryption key");
+        
+        Ok(Self {
+            master_key: key,
+            key_version: 1,
+            key_created_at: Utc::now(),
+        })
+    }
+    
+    pub fn encrypt(&self, plaintext: &[u8]) -> Result<Vec<u8>> {
+        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&self.master_key));
+        let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
+        
+        let ciphertext = cipher
+            .encrypt(&nonce, plaintext)
+            .map_err(|e| anyhow!("Encryption failed: {}", e))?;
+        
+        // Prepend nonce to ciphertext
+        let mut result = nonce.to_vec();
+        result.extend_from_slice(&ciphertext);
+        Ok(result)
+    }
+    
+    pub fn decrypt(&self, encrypted: &[u8]) -> Result<Vec<u8>> {
+        ensure!(encrypted.len() >= 12, "Invalid encrypted data");
+        
+        let (nonce_bytes, ciphertext) = encrypted.split_at(12);
+        let nonce = Nonce::from_slice(nonce_bytes);
+        
+        let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(&self.master_key));
+        cipher
+            .decrypt(nonce, ciphertext)
+            .map_err(|e| anyhow!("Decryption failed: {}", e))
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+struct KeyInfo {
+    version: u32,
+    key: Vec<u8>,
+    created_at: DateTime<Utc>,
+    algorithm: String,
+}
+```
+
+**Production Recommendations**:
+```rust
+// For real production, integrate with KMS
+#[cfg(feature = "aws_kms")]
+impl KeyManager {
+    pub async fn from_aws_kms(kms_key_id: &str) -> Result<Self> {
+        let kms_client = aws_sdk_kms::Client::new(&aws_config::load_from_env().await);
+        // Generate data key from KMS
+        // Cache encrypted key in memory
+        // Rotate according to KMS policy
+    }
+}
+
+#[cfg(feature = "vault")]
+impl KeyManager {
+    pub async fn from_vault(vault_path: &str) -> Result<Self> {
+        let vault_client = vaultrs::client::VaultClient::new(/* ... */)?;
+        // Fetch key from Vault
+        // Set up auto-renewal
+    }
+}
+```
+
+**Success Criteria**:
+- ✅ Key persists across server restarts
+- ✅ Encrypted data remains decryptable after restart
+- ✅ Key file permissions automatically set to 600
+- ✅ Key rotation warning after configured days
+- ✅ Integration tests verify encryption/decryption
+- ✅ KMS integration documented for production
+
+---
+
+### PHASE 2: Multi-Environment Configuration (Week 2)
+
+#### 2.1 Environment-Specific Configuration Files
+
+**Directory Structure**:
+```
+server/
+├── .env.development
+├── .env.staging
+├── .env.production.example
+└── config/
+    ├── development.toml
+    ├── staging.toml
+    └── production.toml.example
+```
+
+**Environment Profiles**:
+
+| Parameter | Development | Staging | Production |
+|-----------|-------------|---------|------------|
+| **Network** |
+| Monero Network | Testnet | Stagenet | Mainnet |
+| Daemon URL | Local | Shared testnet | Dedicated |
+| **Limits** |
+| Max Escrow | 10 XMR | 1 XMR | 5 XMR |
+| Min Escrow | 0.01 XMR | 0.1 XMR | 0.1 XMR |
+| Rate Limit | 1000/min | 100/min | 60/min |
+| Burst | 50 | 20 | 10 |
+| **Timeouts** |
+| Session | 24h | 8h | 2h |
+| Escrow | 72h | 48h | 24h |
+| Dispute Window | 168h | 72h | 48h |
+| **Observability** |
+| Log Level | debug | info | warn |
+| Metrics | disabled | enabled | enabled |
+| Tracing | disabled | sampled (10%) | sampled (1%) |
+| **Database** |
+| Pool Size | 5 | 20 | 50 |
+| Connection Timeout | 30s | 10s | 5s |
+| **WebSocket** |
+| Max Conn/IP | 100 | 10 | 5 |
+| Heartbeat | 30s | 10s | 5s |
+
+**Configuration Loader**:
+```rust
+impl AppConfig {
+    pub fn load() -> Result<Self> {
+        let env = std::env::var("APP_ENV")
+            .unwrap_or_else(|_| "development".to_string());
+        
+        let config_file = match env.as_str() {
+            "development" => "config/development.toml",
+            "staging" => "config/staging.toml",
+            "production" => "config/production.toml",
+            _ => bail!("Unknown environment: {}", env),
+        };
+        
+        // 1. Load from TOML file
+        let mut config: AppConfig = toml::from_str(&fs::read_to_string(config_file)?)?;
+        
+        // 2. Override with environment variables
+        config = envy::from_env()?;
+        
+        // 3. Validate configuration
+        config.validate()?;
+        
+        // 4. Log configuration (sanitized)
+        tracing::info!(
+            environment = ?config.environment,
+            version = %config.version,
+            monero_network = ?config.monero_network,
+            "Configuration loaded successfully"
+        );
+        
+        Ok(config)
+    }
+}
+```
+
+**Success Criteria**:
+- ✅ Single binary works in all environments
+- ✅ `APP_ENV=production cargo run` uses production config
+- ✅ Cannot start production without all required variables
+- ✅ Configuration errors are clear and actionable
+- ✅ Secrets never logged
+
+---
+
+#### 2.2 Circuit Breakers for External Services
+
+**New File**: `server/src/resilience/circuit_breaker.rs`
+
+```rust
+use std::sync::Arc;
+use tokio::sync::RwLock;
+
+pub struct CircuitBreaker {
+    state: Arc<RwLock<BreakerState>>,
+    config: BreakerConfig,
+}
+
+#[derive(Clone)]
+struct BreakerConfig {
+    failure_threshold: u32,
+    success_threshold: u32,
+    timeout: Duration,
+    half_open_max_requests: u32,
+}
+
+enum BreakerState {
+    Closed { failure_count: u32 },
+    Open { opened_at: Instant },
+    HalfOpen { success_count: u32, request_count: u32 },
+}
+
+impl CircuitBreaker {
+    pub async fn call<F, T, E>(&self, f: F) -> Result<T, CircuitBreakerError>
+    where
+        F: FnOnce() -> Result<T, E>,
+        E: std::error::Error,
+    {
+        let mut state = self.state.write().await;
+        
+        match *state {
+            BreakerState::Open { opened_at } => {
+                if opened_at.elapsed() >= self.config.timeout {
+                    *state = BreakerState::HalfOpen {
+                        success_count: 0,
+                        request_count: 0,
+                    };
+                } else {
+                    return Err(CircuitBreakerError::Open);
+                }
+            }
+            BreakerState::HalfOpen { request_count, .. } => {
+                if request_count >= self.config.half_open_max_requests {
+                    return Err(CircuitBreakerError::TooManyRequests);
+                }
+            }
+            _ => {}
+        }
+        
+        drop(state);
+        
+        match f() {
+            Ok(result) => {
+                self.on_success().await;
+                Ok(result)
+            }
+            Err(e) => {
+                self.on_failure().await;
+                Err(CircuitBreakerError::CallFailed(e.to_string()))
+            }
+        }
+    }
+}
+```
+
+**Integration**:
+```rust
+// Wrap Monero RPC calls
+pub struct ResilientMoneroRpc {
+    client: MoneroRpcClient,
+    circuit_breaker: CircuitBreaker,
+}
+
+impl ResilientMoneroRpc {
+    pub async fn get_balance(&self, wallet: &str) -> Result<u64> {
+        self.circuit_breaker.call(|| {
+            self.client.get_balance(wallet)
+        }).await?
+    }
+}
+```
+
+---
+
+### PHASE 3: Quality & Security (Week 3)
+
+#### 3.1 Enhanced Pre-commit Hooks
+
+**File**: `scripts/pre-commit.sh`
+
+```bash
+#!/bin/bash
+set -e
+
+echo "🔍 Running pre-commit checks..."
+
+# 1. Format check
+echo "📝 Checking formatting..."
+cargo fmt -- --check || {
+    echo "❌ Code not formatted. Run: cargo fmt"
+    exit 1
+}
+
+# 2. Clippy with strict lints
+echo "🔧 Running clippy..."
+cargo clippy --all-targets --all-features -- \
+    -D warnings \
+    -D clippy::unwrap_used \
+    -D clippy::expect_used \
+    -D clippy::panic \
+    -D clippy::todo \
+    -D clippy::unimplemented || {
+    echo "❌ Clippy checks failed"
+    exit 1
+}
+
+# 3. Check for TODOs in production code
+echo "🚫 Checking for TODOs in src/..."
+if grep -r "TODO\|FIXME\|XXX" server/src --exclude-dir=tests --exclude="*.md"; then
+    echo "❌ Found TODO/FIXME in production code"
+    exit 1
+fi
+
+# 4. Security audit
+echo "🔒 Running security audit..."
+cargo audit || {
+    echo "❌ Security vulnerabilities found"
+    exit 1
+}
+
+# 5. Check for hardcoded secrets
+echo "🔐 Scanning for secrets..."
+if command -v gitleaks &> /dev/null; then
+    gitleaks detect --no-git --verbose || {
+        echo "❌ Potential secrets found"
+        exit 1
+    }
+else
+    echo "⚠️  gitleaks not installed, skipping secret scan"
+fi
+
+# 6. Run tests
+echo "🧪 Running tests..."
+cargo test --workspace --all-features || {
+    echo "❌ Tests failed"
+    exit 1
+}
+
+# 7. Check documentation
+echo "📚 Checking documentation..."
+cargo doc --no-deps --all-features || {
+    echo "❌ Documentation build failed"
+    exit 1
+}
+
+# 8. Verify environment files
+echo "🌍 Validating environment configurations..."
+for env_file in .env.development .env.staging; do
+    if [[ ! -f "$env_file" ]]; then
+        echo "❌ Missing $env_file"
+        exit 1
+    fi
+done
+
+echo "✅ All pre-commit checks passed!"
+```
+
+**Installation**:
+```bash
+chmod +x scripts/pre-commit.sh
+ln -sf ../../scripts/pre-commit.sh .git/hooks/pre-commit
+```
+
+---
+
+#### 3.2 Comprehensive Integration Tests
+
+**New File**: `server/tests/integration/full_escrow_flow.rs`
+
+```rust
+#[tokio::test]
+async fn test_complete_escrow_lifecycle() {
+    let test_env = TestEnvironment::setup().await;
+    
+    // 1. Register users
+    let buyer = test_env.create_user("buyer@example.com", "password123").await?;
+    let vendor = test_env.create_user("vendor@example.com", "password456").await?;
+    let arbiter = test_env.create_arbiter("arbiter@example.com", "password789").await?;
+    
+    // 2. Vendor creates listing
+    let listing = test_env.create_listing(
+        vendor.id,
+        "Test Product",
+        100_000_000, // 0.1 XMR
+    ).await?;
+    
+    // 3. Buyer creates order
+    let order = test_env.create_order(buyer.id, listing.id).await?;
+    assert_eq!(order.status, OrderStatus::Pending);
+    
+    // 4. Initialize escrow (triggers multisig setup)
+    let escrow = test_env.initialize_escrow(order.id, arbiter.id).await?;
+    assert_eq!(escrow.status, EscrowStatus::SetupInProgress);
+    
+    // 5. All participants prepare multisig
+    test_env.complete_multisig_setup(escrow.id).await?;
+    
+    // Verify multisig address generated
+    let escrow = test_env.get_escrow(escrow.id).await?;
+    assert_eq!(escrow.status, EscrowStatus::AwaitingFunding);
+    assert!(escrow.multisig_address.is_some());
+    
+    // 6. Buyer funds escrow
+    let tx_hash = test_env.fund_escrow(
+        buyer.id,
+        escrow.id,
+        100_000_000,
+    ).await?;
+    
+    // Wait for confirmations (testnet)
+    test_env.wait_for_confirmations(tx_hash, 10).await?;
+    
+    // Verify escrow status
+    let escrow = test_env.get_escrow(escrow.id).await?;
+    assert_eq!(escrow.status, EscrowStatus::Funded);
+    assert_eq!(escrow.balance, 100_000_000);
+    
+    // 7. Vendor marks as shipped
+    test_env.mark_shipped(vendor.id, order.id).await?;
+    
+    // 8. Buyer confirms delivery and releases funds
+    test_env.confirm_delivery(buyer.id, order.id).await?;
+    
+    // 9. Release funds (requires 2-of-3 signatures)
+    test_env.release_funds(escrow.id).await?;
+    
+    // Verify final state
+    let escrow = test_env.get_escrow(escrow.id).await?;
+    assert_eq!(escrow.status, EscrowStatus::Released);
+    
+    let order = test_env.get_order(order.id).await?;
+    assert_eq!(order.status, OrderStatus::Completed);
+    
+    // Verify vendor received payment
+    let vendor_balance = test_env.get_user_balance(vendor.id).await?;
+    assert_eq!(vendor_balance, 100_000_000);
+}
+
+#[tokio::test]
+async fn test_dispute_resolution() {
+    let test_env = TestEnvironment::setup().await;
+    
+    // Setup (same as above until funded)
+    let (buyer, vendor, arbiter, escrow) = test_env
+        .setup_funded_escrow()
+        .await?;
+    
+    // Buyer opens dispute
+    let dispute = test_env.open_dispute(
+        buyer.id,
+        escrow.id,
+        "Item not as described",
+    ).await?;
+    
+    assert_eq!(dispute.status, DisputeStatus::Open);
+    
+    // Arbiter reviews evidence
+    test_env.add_dispute_evidence(
+        buyer.id,
+        dispute.id,
+        vec![/* file uploads */],
+    ).await?;
+    
+    test_env.add_dispute_evidence(
+        vendor.id,
+        dispute.id,
+        vec![/* counter-evidence */],
+    ).await?;
+    
+    // Arbiter makes decision (partial refund)
+    let resolution = test_env.resolve_dispute(
+        arbiter.id,
+        dispute.id,
+        ResolutionType::PartialRefund {
+            buyer_amount: 60_000_000,  // 60% to buyer
+            vendor_amount: 40_000_000, // 40% to vendor
+        },
+        "Item was damaged, partial refund warranted",
+    ).await?;
+    
+    // Execute resolution (requires arbiter + one party)
+    test_env.execute_resolution(escrow.id, resolution.id).await?;
+    
+    // Verify final balances
+    let buyer_balance = test_env.get_user_balance(buyer.id).await?;
+    let vendor_balance = test_env.get_user_balance(vendor.id).await?;
+    
+    assert_eq!(buyer_balance, 60_000_000);
+    assert_eq!(vendor_balance, 40_000_000);
+}
+
+#[tokio::test]
+async fn test_websocket_notifications() {
+    let test_env = TestEnvironment::setup().await;
+    
+    // Connect buyer via WebSocket
+    let mut buyer_ws = test_env.connect_websocket(buyer.id).await?;
+    
+    // Subscribe to escrow events
+    buyer_ws.send(WsMessage::Subscribe {
+        escrow_id: escrow.id,
+    }).await?;
+    
+    // Create escrow in another thread
+    let escrow_id = tokio::spawn(async move {
+        test_env.create_escrow(/* ... */).await
+    });
+    
+    // Wait for notification
+    let notification = timeout(
+        Duration::from_secs(5),
+        buyer_ws.recv()
+    ).await??;
+    
+    match notification {
+        WsEvent::EscrowCreated { escrow_id, .. } => {
+            assert_eq!(escrow_id, escrow_id);
+        }
+        _ => panic!("Unexpected notification"),
+    }
+}
+
+#[tokio::test]
+async fn test_concurrent_escrow_operations() {
+    let test_env = TestEnvironment::setup().await;
+    
+    // Create 10 concurrent escrows
+    let mut handles = vec![];
+    
+    for i in 0..10 {
+        let test_env = test_env.clone();
+        let handle = tokio::spawn(async move {
+            let buyer = test_env.create_user(&format!("buyer{}@test.com", i)).await?;
+            let vendor = test_env.create_user(&format!("vendor{}@test.com", i)).await?;
+            let arbiter = test_env.get_arbiter().await?;
+            
+            let listing = test_env.create_listing(vendor.id, "Product").await?;
+            let order = test_env.create_order(buyer.id, listing.id).await?;
+            let escrow = test_env.initialize_escrow(order.id, arbiter.id).await?;
+            
+            test_env.complete_multisig_setup(escrow.id).await?;
+            Ok::<_, anyhow::Error>(escrow.id)
+        });
+        
+        handles.push(handle);
+    }
+    
+    // Wait for all to complete
+    let results = futures::future::join_all(handles).await;
+    
+    // Verify all succeeded
+    for result in results {
+        assert!(result.is_ok());
+    }
+}
+```
+
+**Test Environment Helper**:
+```rust
+pub struct TestEnvironment {
+    db_pool: PgPool,
+    app: TestApp,
+    monero_testnet: MoneroTestnet,
+    ws_server: Addr<WebSocketServer>,
+}
+
+impl TestEnvironment {
+    pub async fn setup() -> Self {
+        // 1. Start isolated test database
+        let db_url = format!(
+            "postgres://test:test@localhost/{}_{}",
+            "test_db",
+            Uuid::new_v4()
+        );
+        
+        let db_pool = create_test_database(&db_url).await;
+        run_migrations(&db_pool).await;
+        
+        // 2. Start local Monero testnet (monerod + 3 wallet RPCs)
+        let monero_testnet = MoneroTestnet::start().await;
+        
+        // 3. Initialize application
+        let config = AppConfig {
+            environment: Environment::Development,
+            database_url: db_url,
+            monero_wallet_rpc_urls: monero_testnet.wallet_urls(),
+            // ... test config
+        };
+        
+        let app = TestApp::new(config).await;
+        
+        Self {
+            db_pool,
+            app,
+            monero_testnet,
+            ws_server: app.ws_server.clone(),
+        }
+    }
+    
+    pub async fn teardown(self) {
+        self.monero_testnet.stop().await;
+        drop_test_database(&self.db_pool).await;
+    }
+}
+```
+
+---
+
+#### 3.3 Production Monitoring & Observability
+
+**New File**: `server/src/telemetry/mod.rs`
+
+```rust
+use opentelemetry::{global, KeyValue};
+use opentelemetry_otlp::WithExportConfig;
+use prometheus::{Encoder, Registry, TextEncoder};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+pub fn init_telemetry(config: &AppConfig) -> anyhow::Result<()> {
+    // 1. Setup tracing
+    let tracer = opentelemetry_otlp::new_pipeline()
+        .tracing()
+        .with_exporter(
+            opentelemetry_otlp::new_exporter()
+                .tonic()
+                .with_endpoint(config.tracing_endpoint.clone().unwrap_or_default())
+        )
+        .with_trace_config(
+            opentelemetry::sdk::trace::config()
+                .with_resource(opentelemetry::sdk::Resource::new(vec![
+                    KeyValue::new("service.name", "monero-marketplace"),
+                    KeyValue::new("service.version", config.version.clone()),
+                    KeyValue::new("environment", format!("{:?}", config.environment)),
+                ]))
+        )
+        .install_batch(opentelemetry::runtime::Tokio)?;
+    
+    // 2. Setup logging
+    let log_layer = tracing_subscriber::fmt::layer()
+        .json()
+        .with_target(true)
+        .with_current_span(true);
+    
+    let telemetry_layer = tracing_opentelemetry::layer().with_tracer(tracer);
+    
+    tracing_subscriber::registry()
+        .with(log_layer)
+        .with(telemetry_layer)
+        .with(tracing_subscriber::EnvFilter::new(&config.log_level))
+        .init();
+    
+    Ok(())
+}
+```
+
+**Metrics Definition** (`server/src/telemetry/metrics.rs`):
+
+```rust
+use prometheus::{
+    register_histogram_vec, register_int_counter_vec, register_int_gauge_vec,
+    HistogramVec, IntCounterVec, IntGaugeVec,
+};
+
+lazy_static! {
+    // Business metrics
+    pub static ref ESCROWS_TOTAL: IntCounterVec = register_int_counter_vec!(
+        "escrows_total",
+        "Total number of escrows created",
+        &["status"]
+    ).unwrap();
+    
+    pub static ref ESCROWS_ACTIVE: IntGaugeVec = register_int_gauge_vec!(
+        "escrows_active",
+        "Number of active escrows",
+        &["status"]
+    ).unwrap();
+    
+    pub static ref ESCROW_VOLUME_XMR: HistogramVec = register_histogram_vec!(
+        "escrow_volume_xmr",
+        "Escrow volume in XMR",
+        &["status"],
+        vec![0.1, 0.5, 1.0, 5.0, 10.0, 50.0]
+    ).unwrap();
+    
+    // Technical metrics
+    pub static ref HTTP_REQUESTS_TOTAL: IntCounterVec = register_int_counter_vec!(
+        "http_requests_total",
+        "Total HTTP requests",
+        &["method", "path", "status"]
+    ).unwrap();
+    
+    pub static ref HTTP_REQUEST_DURATION: HistogramVec = register_histogram_vec!(
+        "http_request_duration_seconds",
+        "HTTP request latency",
+        &["method", "path"],
+        vec![0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
+    ).unwrap();
+    
+    pub static ref MONERO_RPC_CALLS: IntCounterVec = register_int_counter_vec!(
+        "monero_rpc_calls_total",
+        "Monero RPC calls",
+        &["method", "status"]
+    ).unwrap();
+    
+    pub static ref MONERO_RPC_DURATION: HistogramVec = register_histogram_vec!(
+        "monero_rpc_duration_seconds",
+        "Monero RPC latency",
+        &["method"],
+        vec![0.1, 0.5, 1.0, 5.0, 10.0]
+    ).unwrap();
+    
+    pub static ref DB_CONNECTIONS: IntGaugeVec = register_int_gauge_vec!(
+        "db_connections",
+        "Database connection pool",
+        &["state"]
+    ).unwrap();
+    
+    pub static ref WS_CONNECTIONS: IntGaugeVec = register_int_gauge_vec!(
+        "websocket_connections_active",
+        "Active WebSocket connections",
+        &[]
+    ).unwrap();
+    
+    pub static ref CIRCUIT_BREAKER_STATE: IntGaugeVec = register_int_gauge_vec!(
+        "circuit_breaker_state",
+        "Circuit breaker state (0=closed, 1=open, 2=half-open)",
+        &["service"]
+    ).unwrap();
+}
+
+// Middleware for automatic HTTP metrics
+pub struct MetricsMiddleware;
+
+impl<S, B> Transform<S, ServiceRequest> for MetricsMiddleware
+where
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+{
+    fn call(&self, req: ServiceRequest) -> Self::Future {
+        let method = req.method().as_str().to_owned();
+        let path = req.path().to_owned();
+        let start = Instant::now();
+        
+        Box::pin(async move {
+            let res = self.service.call(req).await?;
+            
+            let duration = start.elapsed().as_secs_f64();
+            let status = res.status().as_u16().to_string();
+            
+            HTTP_REQUESTS_TOTAL
+                .with_label_values(&[&method, &path, &status])
+                .inc();
+            
+            HTTP_REQUEST_DURATION
+                .with_label_values(&[&method, &path])
+                .observe(duration);
+            
+            Ok(res)
+        })
+    }
+}
+```
+
+**Alerting Rules** (`deployment/prometheus/alerts.yml`):
+
+```yaml
+groups:
+  - name: monero_marketplace
+    interval: 30s
+    rules:
+      # Service availability
+      - alert: ServiceDown
+        expr: up{job="monero-marketplace"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.instance }} is down"
+          
+      # Monero RPC issues
+      - alert: MoneroRpcDown
+        expr: |
+          sum(rate(monero_rpc_calls_total{status="error"}[5m])) 
+          / sum(rate(monero_rpc_calls_total[5m])) > 0.5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Monero RPC error rate > 50%"
+          
+      - alert: MoneroRpcSlow
+        expr: |
+          histogram_quantile(0.95, 
+            rate(monero_rpc_duration_seconds_bucket[5m])
+          ) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Monero RPC P95 latency > 5s"
+          
+      # Business logic
+      - alert: EscrowStuck
+        expr: |
+          max(time() - escrow_last_update_timestamp{status="funded"}) 
+          > 1800
+        labels:
+          severity: warning
+        annotations:
+          summary: "Escrow stuck in funded state for 30+ minutes"
+          
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m])) 
+          / sum(rate(http_requests_total[5m])) > 0.05
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTP error rate > 5%"
+          
+      # Security
+      - alert: RateLimitExceeded
+        expr: rate(rate_limit_exceeded_total[1m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate of rate limit violations"
+          
+      - alert: FailedLoginAttempts
+        expr: rate(failed_login_attempts_total[5m]) > 5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elevated failed login attempts"
+          
+      # Resource usage
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          db_connections{state="idle"} 
+          / (db_connections{state="idle"} + db_connections{state="active"}) 
+          < 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection pool near exhaustion"
+```
+
+---
+
+### PHASE 4: Production Deployment (Week 4)
+
+#### 4.1 Docker Production Setup
+
+**File**: `deployment/Dockerfile.server`
+
+```dockerfile
+# Build stage
+FROM rust:1.75-slim as builder
+
+WORKDIR /app
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    libssl-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy manifests
+COPY Cargo.toml Cargo.lock ./
+COPY server/Cargo.toml ./server/
+COPY wallet/Cargo.toml ./wallet/
+COPY common/Cargo.toml ./common/
+COPY cli/Cargo.toml ./cli/
+
+# Build dependencies (cached layer)
+RUN mkdir -p server/src wallet/src common/src cli/src && \
+    echo "fn main() {}" > server/src/main.rs && \
+    echo "fn main() {}" > wallet/src/main.rs && \
+    echo "fn main() {}" > common/src/main.rs && \
+    echo "fn main() {}" > cli/src/main.rs && \
+    cargo build --release --features mainnet && \
+    rm -rf server/src wallet/src common/src cli/src
+
+# Copy source
+COPY . .
+
+# Build application
+RUN cargo build --release --features mainnet --bin server
+
+# Runtime stage
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    libssl3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app user
+RUN useradd -m -u 1000 -s /bin/bash appuser
+
+WORKDIR /app
+
+# Copy binary
+COPY --from=builder /app/target/release/server /app/server
+
+# Copy migrations
+COPY server/migrations /app/migrations
+
+# Set ownership
+RUN chown -R appuser:appuser /app
+
+USER appuser
+
+EXPOSE 8080 9090
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
+
+ENTRYPOINT ["/app/server"]
+```
+
+**File**: `deployment/docker-compose.production.yml`
+
+```yaml
+version: '3.8'
+
+services:
+  # Monero daemon
+  monerod:
+    image: sethsimmons/simple-monerod:latest
+    container_name: monerod
+    restart: unless-stopped
+    volumes:
+      - monero-data:/home/monero/.bitmonero
+    ports:
+      - "18081:18081"  # P2P
+      - "18089:18089"  # RPC (restricted)
+    command: >
+      --rpc-bind-ip=0.0.0.0
+      --rpc-bind-port=18089
+      --restricted-rpc
+      --confirm-external-bind
+      --no-igd
+      --db-sync-mode=safe
+      --prune-blockchain
+    networks:
+      - monero-net
+      
+  # Wallet RPC instances (3 for multisig)
+  wallet-rpc-1:
+    image: sethsimmons/simple-monero-wallet-rpc:latest
+    container_name: wallet-rpc-1
+    restart: unless-stopped
+    depends_on:
+      - monerod
+    volumes:
+      - wallet-data-1:/home/monero/wallet
+    environment:
+      - DAEMON_HOST=monerod
+      - DAEMON_PORT=18089
+      - RPC_BIND_PORT=18083
+      - RPC_USER=${WALLET_RPC_USER}
+      - RPC_PASSWORD=${WALLET_RPC_PASSWORD}
+    networks:
+      - monero-net
+      
+  wallet-rpc-2:
+    image: sethsimmons/simple-monero-wallet-rpc:latest
+    container_name: wallet-rpc-2
+    restart: unless-stopped
+    depends_on:
+      - monerod
+    volumes:
+      - wallet-data-2:/home/monero/wallet
+    environment:
+      - DAEMON_HOST=monerod
+      - DAEMON_PORT=18089
+      - RPC_BIND_PORT=18083
+      - RPC_USER=${WALLET_RPC_USER}
+      - RPC_PASSWORD=${WALLET_RPC_PASSWORD}
+    networks:
+      - monero-net
+      
+  wallet-rpc-3:
+    image: sethsimmons/simple-monero-wallet-rpc:latest
+    container_name: wallet-rpc-3
+    restart: unless-stopped
+    depends_on:
+      - monerod
+    volumes:
+      - wallet-data-3:/home/monero/wallet
+    environment:
+      - DAEMON_HOST=monerod
+      - DAEMON_PORT=18089
+      - RPC_BIND_PORT=18083
+      - RPC_USER=${WALLET_RPC_USER}
+      - RPC_PASSWORD=${WALLET_RPC_PASSWORD}
+    networks:
+      - monero-net
+  
+  # PostgreSQL database
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./backups:/backups
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "127.0.0.1:5432:5432"
+    networks:
+      - monero-net
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      
+  # Application server
+  server:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.server
+    container_name: monero-marketplace-server
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - wallet-rpc-1
+      - wallet-rpc-2
+      - wallet-rpc-3
+    volumes:
+      - ./encryption-keys:/app/keys:ro
+      - ./logs:/app/logs
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      - MONERO_WALLET_RPC_URLS=http://wallet-rpc-1:18083,http://wallet-rpc-2:18083,http://wallet-rpc-3:18083
+      - MONERO_DAEMON_URL=http://monerod:18089
+      - ENCRYPTION_KEY_PATH=/app/keys/master.key
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8080
+      - METRICS_PORT=9090
+      - RUST_LOG=info
+    ports:
+      - "127.0.0.1:8080:8080"  # API (behind nginx)
+      - "127.0.0.1:9090:9090"  # Metrics
+    networks:
+      - monero-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    depends_on:
+      - server
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx-cache:/var/cache/nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - monero-net
+      
+  # Tor hidden service
+  tor:
+    image: goldy/tor-hidden-service:latest
+    container_name: tor
+    restart: unless-stopped
+    depends_on:
+      - nginx
+    volumes:
+      - tor-keys:/var/lib/tor/hidden_service
+    environment:
+      - HIDDEN_SERVICE_NAME=monero_marketplace
+      - HIDDEN_SERVICE_PORT=80
+      - HIDDEN_SERVICE_TARGET=nginx:80
+    networks:
+      - monero-net
+      
+  # Prometheus monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    ports:
+      - "127.0.0.1:9091:9090"
+    networks:
+      - monero-net
+      
+  # Grafana dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - monero-net
+
+volumes:
+  monero-data:
+  wallet-data-1:
+  wallet-data-2:
+  wallet-data-3:
+  postgres-data:
+  nginx-cache:
+  tor-keys:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  monero-net:
+    driver: bridge
+```
+
+---
+
+#### 4.2 Deployment Automation
+
+**File**: `scripts/deploy-production.sh`
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+DEPLOYMENT_DIR="$PROJECT_ROOT/deployment"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+# Preflight checks
+preflight_checks() {
+    log_info "Running preflight checks..."
+    
+    # Check environment
+    if [[ "${APP_ENV:-}" != "production" ]]; then
+        log_error "APP_ENV must be set to 'production'"
+        exit 1
+    fi
+    
+    # Check required files
+    if [[ ! -f "$DEPLOYMENT_DIR/.env.production" ]]; then
+        log_error "Missing .env.production file"
+        exit 1
+    fi
+    
+    # Check encryption key
+    if [[ ! -f "$DEPLOYMENT_DIR/encryption-keys/master.key" ]]; then
+        log_error "Missing encryption key"
+        exit 1
+    fi
+    
+    # Verify key permissions
+    key_perms=$(stat -c "%a" "$DEPLOYMENT_DIR/encryption-keys/master.key")
+    if [[ "$key_perms" != "600" ]]; then
+        log_error "Encryption key must have 600 permissions"
+        exit 1
+    fi
+    
+    # Check Git status
+    if [[ -n $(git status --porcelain) ]]; then
+        log_warn "Working directory not clean"
+        read -p "Continue anyway? (y/N) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
+    fi
+    
+    # Run security checks
+    log_info "Running security checks..."
+    cargo audit || {
+        log_error "Security vulnerabilities found"
+        exit 1
+    }
+    
+    # Check for TODOs in production code
+    if grep -r "TODO\|FIXME" server/src --exclude-dir=tests; then
+        log_error "Found TODO/FIXME in production code"
+        exit 1
+    fi
+    
+    log_info "Preflight checks passed ✓"
+}
+
+# Backup database
+backup_database() {
+    log_info "Creating database backup..."
+    
+    local backup_file="backup_$(date +%Y%m%d_%H%M%S).sql"
+    
+    docker exec postgres pg_dump \
+        -U "${DB_USER}" \
+        -d "${DB_NAME}" \
+        > "$DEPLOYMENT_DIR/backups/$backup_file"
+    
+    gzip "$DEPLOYMENT_DIR/backups/$backup_file"
+    
+    log_info "Backup created: $backup_file.gz"
+}
+
+# Build and deploy
+deploy() {
+    log_info "Starting deployment..."
+    
+    cd "$DEPLOYMENT_DIR"
+    
+    # Pull latest code
+    git pull origin main
+    
+    # Build images
+    log_info "Building Docker images..."
+    docker-compose -f docker-compose.production.yml build --no-cache server
+    
+    # Run database migrations
+    log_info "Running database migrations..."
+    docker-compose -f docker-compose.production.yml run --rm server \
+        diesel migration run
+    
+    # Deploy with zero downtime
+    log_info "Deploying new version..."
+    docker-compose -f docker-compose.production.yml up -d --no-deps --force-recreate server
+    
+    # Wait for health check
+    log_info "Waiting for health check..."
+    sleep 10
+    
+    for i in {1..30}; do
+        if curl -f http://localhost:8080/health > /dev/null 2>&1; then
+            log_info "Health check passed ✓"
+            break
+        fi
+        
+        if [[ $i -eq 30 ]]; then
+            log_error "Health check failed after 30 attempts"
+            rollback
+            exit 1
+        fi
+        
+        sleep 2
+    done
+    
+    log_info "Deployment successful ✓"
+}
+
+# Rollback procedure
+rollback() {
+    log_warn "Initiating rollback..."
+    
+    cd "$DEPLOYMENT_DIR"
+    
+    # Revert to previous version
+    docker-compose -f docker-compose.production.yml up -d --no-deps --force-recreate server
+    
+    log_info "Rollback completed"
+}
+
+# Post-deployment checks
+post_deployment_checks() {
+    log_info "Running post-deployment checks..."
+    
+    # Check all services are running
+    if ! docker-compose -f "$DEPLOYMENT_DIR/docker-compose.production.yml" ps | grep -q "Up"; then
+        log_error "Not all services are running"
+        return 1
+    fi
+    
+    # Check metrics endpoint
+    if ! curl -f http://localhost:9090/metrics > /dev/null 2>&1; then
+        log_warn "Metrics endpoint not responding"
+    fi
+    
+    # Check WebSocket
+    if ! wscat -c ws://localhost:8080/ws --execute "ping" > /dev/null 2>&1; then
+        log_warn "WebSocket not responding"
+    fi
+    
+    # Check Monero RPC
+    local rpc_count=$(docker-compose ps | grep wallet-rpc | grep "Up" | wc -l)
+    if [[ $rpc_count -ne 3 ]]; then
+        log_error "Not all wallet RPC instances are running"
+        return 1
+    fi
+    
+    log_info "Post-deployment checks passed ✓"
+}
+
+# Cleanup old versions
+cleanup() {
+    log_info "Cleaning up old Docker images..."
+    docker image prune -f
+    
+    # Keep last 5 backups
+    cd "$DEPLOYMENT_DIR/backups"
+    ls -t backup_*.sql.gz | tail -n +6 | xargs -r rm
+    
+    log_info "Cleanup completed ✓"
+}
+
+# Main execution
+main() {
+    log_info "=== Monero Marketplace Production Deployment ==="
+    log_info "Started at: $(date)"
+    
+    # Load environment
+    source "$DEPLOYMENT_DIR/.env.production"
+    
+    # Execute deployment steps
+    preflight_checks
+    backup_database
+    deploy
+    post_deployment_checks
+    cleanup
+    
+    log_info "=== Deployment Complete ==="
+    log_info "Finished at: $(date)"
+    
+    # Display summary
+    echo ""
+    log_info "Services:"
+    docker-compose -f "$DEPLOYMENT_DIR/docker-compose.production.yml" ps
+    
+    echo ""
+    log_info "Next steps:"
+    echo "  1. Monitor logs: docker-compose logs -f server"
+    echo "  2. Check metrics: http://localhost:9091"
+    echo "  3. View dashboards: http://localhost:3000"
+}
+
+# Trap errors
+trap 'log_error "Deployment failed at line $LINENO"' ERR
+
+# Run
+main "$@"
+```
+
+**File**: `scripts/health-check-production.sh`
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+# Health check script for monitoring
+
+check_service() {
+    local service=$1
+    local url=$2
+    
+    if curl -f -s --max-time 5 "$url" > /dev/null; then
+        echo "✓ $service: healthy"
+        return 0
+    else
+        echo "✗ $service: unhealthy"
+        return 1
+    fi
+}
+
+check_monero_rpc() {
+    local rpc_url=$1
+    local response=$(curl -s --max-time 5 -X POST "$rpc_url/json_rpc" \
+        -d '{"jsonrpc":"2.0","id":"0","method":"get_version"}' \
+        -H 'Content-Type: application/json')
+    
+    if echo "$response" | grep -q "result"; then
+        echo "✓ Monero RPC: healthy"
+        return 0
+    else
+        echo "✗ Monero RPC: unhealthy"
+        return 1
+    fi
+}
+
+main() {
+    echo "=== Health Check ==="
+    echo "Time: $(date)"
+    echo ""
+    
+    local exit_code=0
+    
+    # Check application
+    check_service "API Server" "http://localhost:8080/health" || exit_code=1
+    check_service "Metrics" "http://localhost:9090/metrics" || exit_code=1
+    
+    # Check Monero services
+    check_monero_rpc "http://localhost:18083" || exit_code=1
+    
+    # Check database
+    if docker exec postgres pg_isready -U "$DB_USER" > /dev/null 2>&1; then
+        echo "✓ PostgreSQL: healthy"
+    else
+        echo "✗ PostgreSQL: unhealthy"
+        exit_code=1
+    fi
+    
+    # Check disk space
+    local disk_usage=$(df -h / | tail -1 | awk '{print $5}' | sed 's/%//')
+    if [[ $disk_usage -gt 80 ]]; then
+        echo "⚠ Disk usage: ${disk_usage}% (warning)"
+        exit_code=1
+    else
+        echo "✓ Disk usage: ${disk_usage}%"
+    fi
+    
+    echo ""
+    if [[ $exit_code -eq 0 ]]; then
+        echo "=== All checks passed ==="
+    else
+        echo "=== Some checks failed ==="
+    fi
+    
+    return $exit_code
+}
+
+main

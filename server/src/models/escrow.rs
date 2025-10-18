@@ -11,11 +11,11 @@ use crate::schema::escrows;
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable)]
 #[diesel(table_name = escrows)]
 pub struct Escrow {
-    pub id: Uuid,
-    pub order_id: Uuid,
-    pub buyer_id: Uuid,
-    pub vendor_id: Uuid,
-    pub arbiter_id: Uuid,
+    pub id: String,
+    pub order_id: String,
+    pub buyer_id: String,
+    pub vendor_id: String,
+    pub arbiter_id: String,
     pub amount: i64,
     pub multisig_address: Option<String>,
     pub status: String,
@@ -29,11 +29,11 @@ pub struct Escrow {
 #[derive(Insertable)]
 #[diesel(table_name = escrows)]
 pub struct NewEscrow {
-    pub id: Uuid,
-    pub order_id: Uuid,
-    pub buyer_id: Uuid,
-    pub vendor_id: Uuid,
-    pub arbiter_id: Uuid,
+    pub id: String,
+    pub order_id: String,
+    pub buyer_id: String,
+    pub vendor_id: String,
+    pub arbiter_id: String,
     pub amount: i64,
     pub status: String,
 }
@@ -53,40 +53,40 @@ impl Escrow {
     }
 
     /// Find escrow by ID
-    pub fn find_by_id(conn: &mut SqliteConnection, escrow_id: Uuid) -> Result<Escrow> {
+    pub fn find_by_id(conn: &mut SqliteConnection, escrow_id: String) -> Result<Escrow> {
         escrows::table
-            .filter(escrows::id.eq(escrow_id))
+            .filter(escrows::id.eq(escrow_id.clone()))
             .first(conn)
             .context(format!("Escrow with ID {} not found", escrow_id))
     }
 
     /// Find escrows by buyer ID
-    pub fn find_by_buyer(conn: &mut SqliteConnection, buyer_id: Uuid) -> Result<Vec<Escrow>> {
+    pub fn find_by_buyer(conn: &mut SqliteConnection, buyer_id: String) -> Result<Vec<Escrow>> {
         escrows::table
-            .filter(escrows::buyer_id.eq(buyer_id))
+            .filter(escrows::buyer_id.eq(buyer_id.clone()))
             .load(conn)
             .context(format!("Failed to load escrows for buyer {}", buyer_id))
     }
 
     /// Find escrows by vendor ID
-    pub fn find_by_vendor(conn: &mut SqliteConnection, vendor_id: Uuid) -> Result<Vec<Escrow>> {
+    pub fn find_by_vendor(conn: &mut SqliteConnection, vendor_id: String) -> Result<Vec<Escrow>> {
         escrows::table
-            .filter(escrows::vendor_id.eq(vendor_id))
+            .filter(escrows::vendor_id.eq(vendor_id.clone()))
             .load(conn)
             .context(format!("Failed to load escrows for vendor {}", vendor_id))
     }
 
     /// Find escrows by arbiter ID
-    pub fn find_by_arbiter(conn: &mut SqliteConnection, arbiter_id: Uuid) -> Result<Vec<Escrow>> {
+    pub fn find_by_arbiter(conn: &mut SqliteConnection, arbiter_id: String) -> Result<Vec<Escrow>> {
         escrows::table
-            .filter(escrows::arbiter_id.eq(arbiter_id))
+            .filter(escrows::arbiter_id.eq(arbiter_id.clone()))
             .load(conn)
             .context(format!("Failed to load escrows for arbiter {}", arbiter_id))
     }
 
     /// Update escrow status
-    pub fn update_status(conn: &mut SqliteConnection, escrow_id: Uuid, new_status: &str) -> Result<()> {
-        diesel::update(escrows::table.filter(escrows::id.eq(escrow_id)))
+    pub fn update_status(conn: &mut SqliteConnection, escrow_id: String, new_status: &str) -> Result<()> {
+        diesel::update(escrows::table.filter(escrows::id.eq(escrow_id.clone())))
             .set((
                 escrows::status.eq(new_status),
                 escrows::updated_at.eq(diesel::dsl::now),
@@ -97,8 +97,8 @@ impl Escrow {
     }
 
     /// Update multisig address
-    pub fn update_multisig_address(conn: &mut SqliteConnection, escrow_id: Uuid, address: &str) -> Result<()> {
-        diesel::update(escrows::table.filter(escrows::id.eq(escrow_id)))
+    pub fn update_multisig_address(conn: &mut SqliteConnection, escrow_id: String, address: &str) -> Result<()> {
+        diesel::update(escrows::table.filter(escrows::id.eq(escrow_id.clone())))
             .set((
                 escrows::multisig_address.eq(address),
                 escrows::updated_at.eq(diesel::dsl::now),
@@ -111,18 +111,18 @@ impl Escrow {
     /// Store encrypted wallet info for a party
     pub fn store_wallet_info(
         conn: &mut SqliteConnection,
-        escrow_id: Uuid,
+        escrow_id: String,
         party: &str,
         encrypted_info: Vec<u8>
     ) -> Result<()> {
         let update_result = match party {
-            "buyer" => diesel::update(escrows::table.filter(escrows::id.eq(escrow_id)))
+            "buyer" => diesel::update(escrows::table.filter(escrows::id.eq(escrow_id.clone())))
                 .set(escrows::buyer_wallet_info.eq(Some(encrypted_info)))
                 .execute(conn),
-            "vendor" => diesel::update(escrows::table.filter(escrows::id.eq(escrow_id)))
+            "vendor" => diesel::update(escrows::table.filter(escrows::id.eq(escrow_id.clone())))
                 .set(escrows::vendor_wallet_info.eq(Some(encrypted_info)))
                 .execute(conn),
-            "arbiter" => diesel::update(escrows::table.filter(escrows::id.eq(escrow_id)))
+            "arbiter" => diesel::update(escrows::table.filter(escrows::id.eq(escrow_id.clone())))
                 .set(escrows::arbiter_wallet_info.eq(Some(encrypted_info)))
                 .execute(conn),
             _ => return Err(anyhow::anyhow!("Invalid party: {}", party)),
@@ -133,7 +133,7 @@ impl Escrow {
     }
 
     /// Count how many parties have submitted wallet info
-    pub fn count_wallet_infos(conn: &mut SqliteConnection, escrow_id: Uuid) -> Result<usize> {
+    pub fn count_wallet_infos(conn: &mut SqliteConnection, escrow_id: String) -> Result<usize> {
         let escrow = Self::find_by_id(conn, escrow_id)?;
         let mut count = 0;
         if escrow.buyer_wallet_info.is_some() { count += 1; }
@@ -143,7 +143,7 @@ impl Escrow {
     }
 
     /// Get all wallet infos (returns vec of encrypted data)
-    pub fn get_all_wallet_infos(conn: &mut SqliteConnection, escrow_id: Uuid) -> Result<Vec<Vec<u8>>> {
+    pub fn get_all_wallet_infos(conn: &mut SqliteConnection, escrow_id: String) -> Result<Vec<Vec<u8>>> {
         let escrow = Self::find_by_id(conn, escrow_id)?;
         let mut infos = Vec::new();
         if let Some(buyer_info) = escrow.buyer_wallet_info {

@@ -1,7 +1,7 @@
 -- Schéma SQL corrigé pour la compatibilité avec SQLite
 
 CREATE TABLE users (
-    id TEXT PRIMARY KEY,
+    id TEXT PRIMARY KEY NOT NULL,
     username VARCHAR(50) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL CHECK (role IN ('buyer', 'vendor', 'arbiter', 'admin')),
@@ -10,8 +10,8 @@ CREATE TABLE users (
 );
 
 CREATE TABLE listings (
-    id TEXT PRIMARY KEY,
-    vendor_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY NOT NULL,
+    vendor_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(200) NOT NULL,
     description TEXT NOT NULL,
     price_xmr BIGINT NOT NULL CHECK (price_xmr > 0),
@@ -22,10 +22,10 @@ CREATE TABLE listings (
 );
 
 CREATE TABLE orders (
-    id TEXT PRIMARY KEY,
-    buyer_id TEXT REFERENCES users(id) ON DELETE SET NULL,
-    vendor_id TEXT REFERENCES users(id) ON DELETE SET NULL,
-    listing_id TEXT REFERENCES listings(id) ON DELETE SET NULL,
+    id TEXT PRIMARY KEY NOT NULL,
+    buyer_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    vendor_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    listing_id TEXT NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
     escrow_id TEXT UNIQUE,
     status VARCHAR(50) NOT NULL DEFAULT 'pending',
     total_xmr BIGINT NOT NULL,
@@ -34,8 +34,8 @@ CREATE TABLE orders (
 );
 
 CREATE TABLE escrows (
-    id TEXT PRIMARY KEY,
-    order_id TEXT REFERENCES orders(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY NOT NULL,
+    order_id TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     buyer_id TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     vendor_id TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     arbiter_id TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
@@ -50,8 +50,8 @@ CREATE TABLE escrows (
 );
 
 CREATE TABLE transactions (
-    id TEXT PRIMARY KEY,
-    escrow_id TEXT REFERENCES escrows(id) ON DELETE CASCADE,
+    id TEXT PRIMARY KEY NOT NULL,
+    escrow_id TEXT NOT NULL REFERENCES escrows(id) ON DELETE CASCADE,
     tx_hash VARCHAR(64) UNIQUE,
     amount_xmr BIGINT NOT NULL,
     confirmations INT NOT NULL DEFAULT 0,

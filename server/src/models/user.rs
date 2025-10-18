@@ -11,8 +11,7 @@ use crate::schema::users;
 #[derive(Debug, Clone, Serialize, Deserialize, Queryable, Insertable)]
 #[diesel(table_name = users)]
 pub struct User {
-    #[diesel(column_name = "id")]
-    pub id: Uuid,
+    pub id: String,
     pub username: String,
     pub password_hash: String,
     pub role: String,
@@ -23,7 +22,7 @@ pub struct User {
 #[derive(Insertable)]
 #[diesel(table_name = users)]
 pub struct NewUser {
-    pub id: Uuid,
+    pub id: String,
     pub username: String,
     pub password_hash: String,
     pub role: String,
@@ -44,9 +43,9 @@ impl User {
     }
 
     /// Find user by ID
-    pub fn find_by_id(conn: &mut SqliteConnection, user_id: Uuid) -> Result<User> {
+    pub fn find_by_id(conn: &mut SqliteConnection, user_id: String) -> Result<User> {
         users::table
-            .filter(users::id.eq(user_id))
+            .filter(users::id.eq(user_id.clone()))
             .first(conn)
             .context(format!("User with ID {} not found", user_id))
     }
@@ -70,7 +69,7 @@ impl User {
     }
 
     /// Update user's updated_at timestamp
-    pub fn touch(conn: &mut SqliteConnection, user_id: Uuid) -> Result<()> {
+    pub fn touch(conn: &mut SqliteConnection, user_id: String) -> Result<()> {
         diesel::update(users::table.filter(users::id.eq(user_id)))
             .set(users::updated_at.eq(diesel::dsl::now))
             .execute(conn)
@@ -79,8 +78,8 @@ impl User {
     }
 
     /// Delete user by ID
-    pub fn delete(conn: &mut SqliteConnection, user_id: Uuid) -> Result<()> {
-        diesel::delete(users::table.filter(users::id.eq(user_id)))
+    pub fn delete(conn: &mut SqliteConnection, user_id: String) -> Result<()> {
+        diesel::delete(users::table.filter(users::id.eq(user_id.clone())))
             .execute(conn)
             .context(format!("Failed to delete user {}", user_id))?;
         Ok(())
