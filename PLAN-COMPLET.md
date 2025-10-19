@@ -140,20 +140,24 @@ chmod +x .git/hooks/pre-commit
 
 ## État Actuel du Projet
 
-### 📊 Snapshot (2025-10-17)
+### 📊 Snapshot (2025-10-19) - CHECK-UP COMPLET
 
-| Métrique | Valeur |
-|----------|--------|
-| **Version** | 0.2.2-alpha (Phase 1 + Milestone 2.1 + Production-Ready Skill) |
-| **Score Sécurité** | 95/100 ⬆️ |
-| **Statut** | 🟢 Phase 2 EN COURS (Milestone 2.2) + Production-Ready Skill ACTIF |
-| **Lines of Code** | ~45,100 |
-| **Tests** | 24+ passing ✅ |
-| **Code Coverage** | ~85% |
-| **Security Theatre Violations** | 0 ✅ |
-| **Reality Checks Validés** | 8+ |
-| **Hidden Service** | ✅ bikbopwe33kt6a3hva4zjmj7mer5acvxrmvrky2uqsr6xkzdr676lead.onion |
-| **Production-Ready Skill** | ✅ ACTIF - Zero-tolerance policy en vigueur |
+| Métrique | Valeur | Status |
+|----------|--------|--------|
+| **Version** | 0.2.3-alpha (Phase 2 EN COURS) | 🟡 Milestone 2.2 PARTIEL |
+| **Score Sécurité** | 92/100 | ⚠️ -3 points (violations mineures) |
+| **Statut Global** | 🟡 Phase 2 EN COURS - Architecture en place, implémentation incomplète | |
+| **Lines of Code** | ~6,340 (Rust uniquement) | ⬇️ Recompté précisément |
+| **Fichiers Rust** | 38 fichiers | |
+| **Tests** | 24+ passing ✅ | Wallet crate uniquement |
+| **Code Coverage** | ~75% (wallet), ~20% (server) | ⚠️ Server sous-testé |
+| **Security Theatre Violations** | 1 (tracked in GitHub) | ⚠️ wallet_manager.rs FIXME |
+| **Reality Checks Validés** | 8+ | ✅ |
+| **Hidden Service** | ✅ bikbopwe33kt6a3hva4zjmj7mer5acvxrmvrky2uqsr6xkzdr676lead.onion | ✅ Opérationnel |
+| **Production-Ready Skill** | ✅ ACTIF | Zero-tolerance en vigueur |
+| **Database** | ✅ Schema créé, migrations partielles | ⚠️ Pas de sqlcipher |
+| **API Endpoints** | 2/20 implémentés (10%) | ⚠️ Seulement /health et /auth/register |
+| **Async Functions** | 24 dans server/ | ✅ Architecture async |
 
 ### ✅ Composants Complétés
 
@@ -238,7 +242,102 @@ chmod +x .git/hooks/pre-commit
 - [x] Post-launch operations guide (daily/weekly/monthly) ✅
 - [x] Success metrics & KPIs définis ✅
 
-### 🚀 Prochaine Étape: Milestone 2.2 - API REST Core
+### 🚧 État Actuel Détaillé: Phase 2 EN COURS
+
+**✅ CE QUI EST PRODUCTION-READY:**
+
+**1. Wallet Crate (wallet/) - 95% Production-Ready** ✅
+- ✅ Monero RPC client complet avec retry logic
+- ✅ Multisig workflow 2-of-3 (6 étapes) entièrement testé
+- ✅ Transactions multisig (create, sign, finalize, broadcast)
+- ✅ EscrowManager avec state machine complète
+- ✅ 24+ tests E2E qui passent
+- ✅ Zero security theatre violations
+- ✅ Error handling production-grade
+- ✅ Proper logging (tracing)
+- ⚠️ **MANQUE:** Integration avec server/ (wallet_manager.rs incomplet)
+
+**2. Common Crate (common/) - 100% Production-Ready** ✅
+- ✅ Types partagés bien définis
+- ✅ Error types avec contexte
+- ✅ Constants (XMR_TO_ATOMIC, ports, etc.)
+- ✅ Pas de dépendances problématiques
+
+**3. Server Crate (server/) - 30% Production-Ready** ⚠️
+- ✅ Architecture Actix-web en place
+- ✅ Hidden service .onion fonctionnel
+- ✅ Database schema SQL bien conçu
+- ✅ WebSocket server (structure complète)
+- ✅ 2 migrations Diesel créées
+- ⚠️ **PROBLÈMES MAJEURS:**
+  - ❌ Pas de sqlcipher (encryption at-rest manquante)
+  - ❌ Seulement 2/20 endpoints API implémentés
+  - ❌ Wallet manager stub (release_funds non implémenté)
+  - ❌ Pas de tests d'intégration server
+  - ❌ Auth incomplet (pas de session management)
+  - ❌ Pas de rate limiting
+  - ❌ Pas de CSRF protection
+
+**4. CLI Crate (cli/) - 80% Production-Ready** ✅
+- ✅ Interface fonctionnelle
+- ✅ Intégration avec wallet crate
+- ⚠️ Pas d'intégration avec server API
+
+---
+
+**❌ CE QUI N'EST PAS PRODUCTION-READY:**
+
+**Milestone 2.2 (API REST Core) - 15% Complété** ❌
+- ❌ Database: Schema créé mais **pas de sqlcipher**
+- ❌ Auth: 1/4 endpoints (register only, pas de login/logout/whoami)
+- ❌ Listings: 0/5 endpoints implémentés
+- ❌ Orders: 0/4 endpoints implémentés
+- ❌ Escrow API: 0/6 endpoints implémentés
+- ❌ Users: 0/2 endpoints implémentés
+- ❌ Middleware: Pas de rate limiting, CSRF, ou session management
+- ❌ Tests server: Seulement 1 test d'intégration basique
+
+**Milestone 2.3 (WebSocket + Monitoring) - 20% Complété** ⚠️
+- ✅ WebSocket server structure créée
+- ❌ Pas d'événements fonctionnels
+- ❌ Pas de monitoring/metrics
+- ❌ Pas d'alerting
+
+**Phase 3 (Escrow Flow) - 0% Complété** ❌
+- ❌ Escrow orchestration service non implémenté
+- ❌ Release/Refund flow non implémentés
+- ❌ Dispute resolution non implémenté
+- ❌ Blockchain monitoring non implémenté
+
+---
+
+**🚨 BLOQUEURS CRITIQUES IDENTIFIÉS:**
+
+1. **❌ CRITIQUE: sqlcipher manquant**
+   - Database schema prêt mais **pas de encryption at-rest**
+   - Violation MAJEURE du plan (Phase 2 require sqlcipher)
+   - Impact: Données sensibles (wallet info) non chiffrées
+
+2. **❌ CRITIQUE: Wallet manager incomplet**
+   - `release_funds()` est un STUB
+   - Pas d'intégration réelle entre server et wallet crate
+   - Impact: Flow escrow impossible à tester end-to-end
+
+3. **⚠️ MAJEUR: API endpoints manquants**
+   - 18/20 endpoints manquants (90%)
+   - Pas de flow utilisateur complet
+   - Impact: Impossible de tester le parcours utilisateur
+
+4. **⚠️ MAJEUR: Zero tests server**
+   - Wallet crate: 24+ tests ✅
+   - Server crate: 1 test basique ❌
+   - Impact: Pas de couverture de test pour backend
+
+---
+
+**🎯 PROCHAINE ÉTAPE IMMÉDIATE:**
+
+**Milestone 2.2 à compléter - Priorité CRITIQUE**
 
 **Milestone 2.1 COMPLÉTÉ ✅ - Hidden Service .onion opérationnel**
 **Production-Ready Skill ACTIF ✅ - Standards production-grade en vigueur**
@@ -1991,6 +2090,199 @@ Le skill "production-ready" fournit une matrice de décision détaillée avec cr
 
 ---
 
+---
+
+## 🚀 LISTE DE TÂCHES IMMÉDIATES (PAR PRIORITÉ)
+
+**Générée le:** 2025-10-19 après check-up complet
+
+### 🔴 PRIORITÉ CRITIQUE (À faire IMMÉDIATEMENT)
+
+**1. Implémenter sqlcipher pour database encryption** ⏱️ 1-2 jours
+```bash
+# Tâches:
+- [ ] Installer libsqlcipher-dev sur Ubuntu
+- [ ] Modifier server/Cargo.toml: diesel = { features = ["sqlite", "sqlcipher"] }
+- [ ] Créer encryption key management (env var ENCRYPTION_KEY)
+- [ ] Tester encryption/decryption avec database
+- [ ] Documenter setup dans README
+- [ ] Ajouter Reality Check pour encryption at-rest
+```
+**Justification:** Violation critique du plan. Données sensibles (wallet info) exposées.
+
+**2. Compléter wallet_manager.rs (server/)** ⏱️ 2-3 jours
+```bash
+# Tâches:
+- [ ] Implémenter release_funds() avec vraie logique multisig
+- [ ] Implémenter refund_funds() avec vraie logique multisig
+- [ ] Intégrer avec wallet crate (MoneroClient)
+- [ ] Gérer signatures 2-of-3 correctement
+- [ ] Ajouter tests d'intégration wallet_manager
+- [ ] Supprimer FIXME après implémentation
+```
+**Justification:** Bloque Phase 3 (Escrow Flow). Sans ça, impossible de tester release/refund.
+
+**3. Compléter Auth endpoints** ⏱️ 2 jours
+```bash
+# Tâches:
+- [ ] POST /api/auth/login avec session management
+- [ ] POST /api/auth/logout avec session cleanup
+- [ ] GET /api/auth/whoami pour vérifier session
+- [ ] Implémenter middleware auth (check session)
+- [ ] Ajouter CSRF protection (actix-web-csrf)
+- [ ] Tester flow complet register → login → whoami → logout
+- [ ] Ajouter tests d'intégration auth
+```
+**Justification:** Bloque tous les autres endpoints (require auth).
+
+---
+
+### 🟠 PRIORITÉ HAUTE (Semaine prochaine)
+
+**4. Implémenter Listings endpoints** ⏱️ 3 jours
+```bash
+- [ ] GET /api/listings (pagination, filtres)
+- [ ] GET /api/listings/:id
+- [ ] POST /api/listings (vendor only)
+- [ ] PUT /api/listings/:id (vendor only)
+- [ ] DELETE /api/listings/:id (soft delete)
+- [ ] Tests d'intégration pour chaque endpoint
+```
+
+**5. Implémenter Orders endpoints** ⏱️ 2 jours
+```bash
+- [ ] POST /api/orders (buyer creates order)
+- [ ] GET /api/orders/:id (with auth check)
+- [ ] GET /api/orders/user/:user_id (list user orders)
+- [ ] PUT /api/orders/:id/status (vendor/arbiter only)
+- [ ] Tests d'intégration orders
+```
+
+**6. Ajouter Rate Limiting & Security Middleware** ⏱️ 1 jour
+```bash
+- [ ] Installer actix-governor pour rate limiting
+- [ ] Configurer limits par endpoint (5 req/min pour /register, etc.)
+- [ ] Ajouter security headers (CSP, X-Frame-Options, etc.)
+- [ ] Tester rate limiting avec tests d'intégration
+- [ ] Documenter limits dans API docs
+```
+
+---
+
+### 🟡 PRIORITÉ MOYENNE (2 semaines)
+
+**7. Implémenter Escrow API endpoints** ⏱️ 4 jours
+```bash
+- [ ] POST /api/escrow/init
+- [ ] POST /api/escrow/:id/prepare
+- [ ] POST /api/escrow/:id/make
+- [ ] POST /api/escrow/:id/sync
+- [ ] GET /api/escrow/:id/status
+- [ ] POST /api/escrow/:id/release
+- [ ] POST /api/escrow/:id/dispute
+- [ ] Tests E2E escrow flow complet
+```
+
+**8. Implémenter Escrow Orchestration Service** ⏱️ 5 jours
+```bash
+- [ ] Créer EscrowOrchestrator dans server/src/services/escrow.rs
+- [ ] Implémenter init_escrow()
+- [ ] Implémenter collect_prepare_info() + auto-trigger make_multisig
+- [ ] Implémenter sync rounds (automatique)
+- [ ] Implémenter release_funds() (buyer + vendor)
+- [ ] Implémenter dispute flow (arbiter decision)
+- [ ] Tests E2E orchestration complète
+```
+
+**9. Activer WebSocket notifications** ⏱️ 2 jours
+```bash
+- [ ] Connecter WebSocket server aux événements réels
+- [ ] Implémenter notifications pour escrow events
+- [ ] Implémenter notifications pour order events
+- [ ] Tester notifications en temps réel
+- [ ] Frontend listener (Phase 4)
+```
+
+**10. Créer tests d'intégration server/** ⏱️ 3 jours
+```bash
+- [ ] Setup test database (SQLite in-memory)
+- [ ] Tests pour auth endpoints (register, login, logout)
+- [ ] Tests pour listings endpoints
+- [ ] Tests pour orders endpoints
+- [ ] Tests pour escrow endpoints
+- [ ] Tests pour WebSocket
+- [ ] Target: 80%+ code coverage server/
+```
+
+---
+
+### ⚪ PRIORITÉ BASSE (3-4 semaines)
+
+**11. Blockchain Monitoring Worker** ⏱️ 3 jours
+```bash
+- [ ] Créer background worker
+- [ ] Monitor pending transactions (confirmations)
+- [ ] Envoyer notifications WebSocket (1 conf, 10 confs)
+- [ ] Gérer stuck transactions
+- [ ] Alerting admin pour problèmes
+```
+
+**12. Admin Dashboard Endpoints** ⏱️ 2 jours
+```bash
+- [ ] GET /api/admin/escrows (liste tous les escrows)
+- [ ] GET /api/admin/stats (volume, escrows par status)
+- [ ] GET /api/admin/users (liste users avec KYC-free approach)
+- [ ] Logs et audit trail
+```
+
+**13. OpenAPI Documentation** ⏱️ 1 jour
+```bash
+- [ ] Installer utoipa (OpenAPI for Rust)
+- [ ] Annoter tous les endpoints
+- [ ] Générer swagger.json
+- [ ] Servir Swagger UI sur /api/docs
+```
+
+**14. Production Hardening** ⏱️ 2 jours
+```bash
+- [ ] Configuration production (envs)
+- [ ] Logging production (tracing-subscriber)
+- [ ] Metrics (Prometheus)
+- [ ] Health checks avancés
+- [ ] Graceful shutdown
+```
+
+---
+
+### 📋 ESTIMATION TOTALE
+
+| Priorité | Tâches | Jours | Semaines |
+|----------|--------|-------|----------|
+| **CRITIQUE** | 3 tâches | 5-7 jours | 1 semaine |
+| **HAUTE** | 3 tâches | 6 jours | 1.5 semaines |
+| **MOYENNE** | 4 tâches | 14 jours | 3 semaines |
+| **BASSE** | 4 tâches | 8 jours | 2 semaines |
+| **TOTAL** | **14 tâches** | **33-35 jours** | **~7.5 semaines** |
+
+**Timeline réaliste pour Milestone 2.2 + 2.3 complet:** 8 semaines
+
+**Date cible:** Fin décembre 2025 (si travail continu)
+
+---
+
+### ✅ CHECKLIST AVANT DE COMMENCER
+
+Avant de coder, s'assurer que:
+- [ ] Ubuntu/WSL est configuré correctement
+- [ ] Tor daemon est actif (`sudo service tor status`)
+- [ ] Monero RPC testnet est accessible (http://127.0.0.1:18082)
+- [ ] `cargo check --workspace` passe sans erreurs
+- [ ] `./scripts/check-security-theatre.sh` passe (1 violation trackée OK)
+- [ ] Environment variables configurées (.env)
+- [ ] Production-Ready Skill activé (`/skill production-ready`)
+
+---
+
 ## 📚 Ressources & Documentation
 
 ### Documents Projet
@@ -1999,8 +2291,8 @@ Le skill "production-ready" fournit une matrice de décision détaillée avec cr
 2. [PHASE-1-IMPLEMENTATION.md](PHASE-1-IMPLEMENTATION.md) - Plan Phase 1
 3. [ARCHITECTURE-DECISIONS.md](ARCHITECTURE-DECISIONS.md) - ADRs
 4. [SECURITY-CHECKLIST-PRODUCTION.md](SECURITY-CHECKLIST-PRODUCTION.md) - Checklist
-5. [COMPILATION-WINDOWS.md](COMPILATION-WINDOWS.md) - Fix Windows
-6. [NEXT-STEPS.md](NEXT-STEPS.md) - Actions immédiates
+5. [COMPILATION-WINDOWS.md](COMPILATION-WINDOWS.md) - Fix Windows (archivé, on dev sur Ubuntu)
+6. [NEXT-STEPS.md](NEXT-STEPS.md) - Actions immédiates (peut être obsolète)
 7. [CLAUDE.md](CLAUDE.md) - Instructions Claude Code
 
 ### Documentation Externe

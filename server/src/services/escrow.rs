@@ -1,5 +1,6 @@
 //! Escrow orchestration service for Monero Marketplace
 
+use actix::Addr;
 use anyhow::{Context, Result};
 use std::sync::Arc;
 use tracing::info;
@@ -10,16 +11,18 @@ use crate::crypto::encryption::{encrypt_field, decrypt_field};
 use crate::models::escrow::{Escrow, NewEscrow};
 use crate::models::user::User;
 use crate::wallet_manager::WalletManager;
+use monero_marketplace_common::types::TransferDestination;
+use tokio::sync::Mutex;
 use crate::websocket::{WebSocketServer, WsEvent};
 
 /// Manages escrow operations and state transitions
 pub struct EscrowOrchestrator {
     /// Monero wallet manager for blockchain operations
-    wallet_manager: Arc<WalletManager>,
+    wallet_manager: Arc<Mutex<WalletManager>>,
     /// Database connection pool
     db: DbPool,
-    /// WebSocket server for real-time notifications
-    websocket: Arc<WebSocketServer>,
+    /// WebSocket server actor address for real-time notifications
+    websocket: Addr<WebSocketServer>,
     /// Encryption key for sensitive data
     encryption_key: Vec<u8>,
 }
@@ -27,9 +30,9 @@ pub struct EscrowOrchestrator {
 impl EscrowOrchestrator {
     /// Create a new EscrowOrchestrator
     pub fn new(
-        wallet_manager: Arc<WalletManager>,
+        wallet_manager: Arc<Mutex<WalletManager>>,
         db: DbPool,
-        websocket: Arc<WebSocketServer>,
+        websocket: Addr<WebSocketServer>,
         encryption_key: Vec<u8>,
     ) -> Self {
         Self {
@@ -59,11 +62,11 @@ impl EscrowOrchestrator {
 
         // 2. Create escrow in DB
         let new_escrow = NewEscrow {
-            id: Uuid::new_v4(),
-            order_id,
-            buyer_id,
-            vendor_id,
-            arbiter_id,
+            id: Uuid::new_v4().to_string(),
+            order_id: order_id.to_string(),
+            buyer_id: buyer_id.to_string(),
+            vendor_id: vendor_id.to_string(),
+            arbiter_id: arbiter_id.to_string(),
             amount: amount_atomic,
             status: "created".to_string(),
         };
@@ -72,9 +75,10 @@ impl EscrowOrchestrator {
             .context("Failed to create escrow in database")?;
 
         // 3. Notify parties via WebSocket
-        self.websocket.notify(buyer_id.to_string(), WsEvent::EscrowInit { escrow_id: escrow.id }).await?;
-        self.websocket.notify(vendor_id.to_string(), WsEvent::EscrowInit { escrow_id: escrow.id }).await?;
-        self.websocket.notify(arbiter_id.to_string(), WsEvent::EscrowAssigned { escrow_id: escrow.id }).await?;
+        let escrow_uuid = escrow.id.parse().context("Failed to parse escrow_id to Uuid")?;
+        self.websocket.do_send(WsEvent::EscrowInit { escrow_id: escrow_uuid });
+        self.websocket.do_send(WsEvent::EscrowInit { escrow_id: escrow_uuid });
+        self.websocket.do_send(WsEvent::EscrowAssigned { escrow_id: escrow_uuid });
 
         info!("Escrow {} initialized successfully", escrow.id);
         Ok(escrow)
@@ -103,11 +107,11 @@ impl EscrowOrchestrator {
 
         // Determine which party this user is
         let escrow = db_load_escrow(&self.db, escrow_id).await?;
-        let party = if user_id == escrow.buyer_id {
+        let party = if user_id.to_string() == escrow.buyer_id {
             "buyer"
-        } else if user_id == escrow.vendor_id {
+        } else if user_id.to_string() == escrow.vendor_id {
             "vendor"
-        } else if user_id == escrow.arbiter_id {
+        } else if user_id.to_string() == escrow.arbiter_id {
             "arbiter"
         } else {
             return Err(anyhow::anyhow!("User {} is not part of escrow {}", user_id, escrow_id));
@@ -136,56 +140,38 @@ impl EscrowOrchestrator {
         // Load escrow with all wallet infos
         let escrow = db_load_escrow(&self.db, escrow_id).await?;
 
-        // Ensure all wallet infos are present
-        let buyer_info_enc = escrow.buyer_wallet_info
-            .context("Buyer multisig info missing")?;
-        let vendor_info_enc = escrow.vendor_wallet_info
-            .context("Vendor multisig info missing")?;
-        let arbiter_info_enc = escrow.arbiter_wallet_info
-            .context("Arbiter multisig info missing")?;
+        let escrow_for_buyer = escrow.clone();
+        let mut conn_buyer = self.db.get().context("Failed to get DB connection")?;
+        let buyer = tokio::task::spawn_blocking(move || User::find_by_id(&mut conn_buyer, escrow_for_buyer.buyer_id.clone()))
+            .await??;
 
-        // Decrypt multisig infos
-        let buyer_info = decrypt_field(&buyer_info_enc, &self.encryption_key)
-            .context("Failed to decrypt buyer multisig info")?;
-        let vendor_info = decrypt_field(&vendor_info_enc, &self.encryption_key)
-            .context("Failed to decrypt vendor multisig info")?;
-        let arbiter_info = decrypt_field(&arbiter_info_enc, &self.encryption_key)
-            .context("Failed to decrypt arbiter multisig info")?;
+        let escrow_for_vendor = escrow.clone();
+        let mut conn_vendor = self.db.get().context("Failed to get DB connection")?;
+        let vendor = tokio::task::spawn_blocking(move || User::find_by_id(&mut conn_vendor, escrow_for_vendor.vendor_id.clone()))
+            .await??;
 
-        info!("Decrypted all multisig infos for escrow {}", escrow_id);
+        let escrow_for_arbiter = escrow.clone();
+        let mut conn_arbiter = self.db.get().context("Failed to get DB connection")?;
+        let arbiter = tokio::task::spawn_blocking(move || User::find_by_id(&mut conn_arbiter, escrow_for_arbiter.arbiter_id.clone()))
+            .await??;
 
-        // Call make_multisig for each party (parallel)
-        // NOTE: In production, each wallet would be managed separately
-        // For now, WalletManager handles this internally
-        let (buyer_result, vendor_result, arbiter_result) = tokio::try_join!(
-            self.wallet_manager.make_multisig(
-                buyer_info.clone(),
-                2,
-                vec![vendor_info.clone(), arbiter_info.clone()]
-            ),
-            self.wallet_manager.make_multisig(
-                vendor_info.clone(),
-                2,
-                vec![buyer_info.clone(), arbiter_info.clone()]
-            ),
-            self.wallet_manager.make_multisig(
-                arbiter_info.clone(),
-                2,
-                vec![buyer_info.clone(), vendor_info.clone()]
-            ),
-        ).context("Failed to make multisig wallets")?;
+        let buyer_wallet_id = buyer.wallet_id.ok_or_else(|| anyhow::anyhow!("Buyer wallet ID not found"))?.parse::<Uuid>()?;
+        let vendor_wallet_id = vendor.wallet_id.ok_or_else(|| anyhow::anyhow!("Vendor wallet ID not found"))?.parse::<Uuid>()?;
+        let arbiter_wallet_id = arbiter.wallet_id.ok_or_else(|| anyhow::anyhow!("Arbiter wallet ID not found"))?.parse::<Uuid>()?;
 
-        // Verify all parties generated the same multisig address
-        if buyer_result.address != vendor_result.address || buyer_result.address != arbiter_result.address {
-            return Err(anyhow::anyhow!(
-                "Multisig addresses do not match: buyer={}, vendor={}, arbiter={}",
-                buyer_result.address,
-                vendor_result.address,
-                arbiter_result.address
-            ));
-        }
+        let mut wallet_manager = self.wallet_manager.lock().await;
 
-        let multisig_address = buyer_result.address;
+        // 1. Prepare multisig for each participant
+        let buyer_info = wallet_manager.make_multisig(buyer_wallet_id, vec![]).await?;
+        let vendor_info = wallet_manager.make_multisig(vendor_wallet_id, vec![]).await?;
+        let arbiter_info = wallet_manager.make_multisig(arbiter_wallet_id, vec![]).await?;
+
+        // 2. Exchange multisig info
+        wallet_manager.exchange_multisig_info(escrow_id, vec![buyer_info, vendor_info, arbiter_info]).await?;
+
+        // 3. Finalize multisig
+        let multisig_address = wallet_manager.finalize_multisig(escrow_id).await?;
+
         info!("Multisig address created successfully: {}", multisig_address);
 
         // Store multisig address in DB
@@ -197,25 +183,25 @@ impl EscrowOrchestrator {
             .context("Failed to update escrow status")?;
 
         // Notify parties
-        self.websocket.notify(
-            escrow.buyer_id.to_string(),
-            WsEvent::EscrowStatusChanged { escrow_id, new_status: "funded".to_string() }
-        ).await?;
-        self.websocket.notify(
-            escrow.vendor_id.to_string(),
-            WsEvent::EscrowStatusChanged { escrow_id, new_status: "funded".to_string() }
-        ).await?;
-        self.websocket.notify(
-            escrow.arbiter_id.to_string(),
-            WsEvent::EscrowStatusChanged { escrow_id, new_status: "funded".to_string() }
-        ).await?;
+        self.websocket.do_send(WsEvent::EscrowStatusChanged {
+            escrow_id,
+            new_status: "funded".to_string()
+        });
+        self.websocket.do_send(WsEvent::EscrowStatusChanged {
+            escrow_id,
+            new_status: "funded".to_string()
+        });
+        self.websocket.do_send(WsEvent::EscrowStatusChanged {
+            escrow_id,
+            new_status: "funded".to_string()
+        });
 
         info!("Multisig setup complete for escrow {}", escrow_id);
         Ok(())
     }
 
     /// Assign an arbiter using round-robin selection
-    async fn assign_arbiter(&self) -> Result<Uuid> {
+    async fn assign_arbiter(&self) -> Result<String> {
         // Get connection from pool
         let mut conn = self.db.get().context("Failed to get DB connection")?;
 
@@ -235,7 +221,7 @@ impl EscrowOrchestrator {
         let selected_arbiter = &arbiters[0];
 
         info!("Selected arbiter: {} ({})", selected_arbiter.username, selected_arbiter.id);
-        Ok(selected_arbiter.id)
+        Ok(selected_arbiter.id.clone())
     }
 
     /// Release funds to vendor (buyer approves)
@@ -243,12 +229,21 @@ impl EscrowOrchestrator {
         let escrow = db_load_escrow(&self.db, escrow_id).await?;
 
         // Only buyer can release funds
-        if requester_id != escrow.buyer_id {
+        if requester_id.to_string() != escrow.buyer_id {
             return Err(anyhow::anyhow!("Only buyer can release funds"));
         }
 
-        // TODO: Implement multisig transaction signing
-        // This requires calling Monero RPC to sign and submit transaction
+        let mut conn = self.db.get().context("Failed to get DB connection")?;
+        let vendor = tokio::task::spawn_blocking(move || User::find_by_id(&mut conn, escrow.vendor_id.to_string()))
+            .await??;
+
+        let destination = TransferDestination {
+            address: vendor.wallet_address.ok_or_else(|| anyhow::anyhow!("Vendor wallet address not found"))?,
+            amount: escrow.amount as u64,
+        };
+
+        let mut wallet_manager = self.wallet_manager.lock().await;
+        wallet_manager.release_funds(escrow_id, vec![destination]).await?;
 
         db_update_escrow_status(&self.db, escrow_id, "released").await?;
         info!("Funds released for escrow {}", escrow_id);
@@ -261,17 +256,17 @@ impl EscrowOrchestrator {
         let escrow = db_load_escrow(&self.db, escrow_id).await?;
 
         // Only buyer or vendor can initiate dispute
-        if requester_id != escrow.buyer_id && requester_id != escrow.vendor_id {
+        if requester_id.to_string() != escrow.buyer_id && requester_id.to_string() != escrow.vendor_id {
             return Err(anyhow::anyhow!("Only buyer or vendor can initiate dispute"));
         }
 
         db_update_escrow_status(&self.db, escrow_id, "disputed").await?;
 
         // Notify arbiter
-        self.websocket.notify(
-            escrow.arbiter_id.to_string(),
-            WsEvent::EscrowStatusChanged { escrow_id, new_status: "disputed".to_string() }
-        ).await?;
+        self.websocket.do_send(WsEvent::EscrowStatusChanged {
+            escrow_id,
+            new_status: "disputed".to_string()
+        });
 
         info!("Dispute initiated for escrow {} by user {}: {}", escrow_id, requester_id, reason);
 
@@ -283,7 +278,7 @@ impl EscrowOrchestrator {
         let escrow = db_load_escrow(&self.db, escrow_id).await?;
 
         // Only assigned arbiter can resolve
-        if arbiter_id != escrow.arbiter_id {
+        if arbiter_id.to_string() != escrow.arbiter_id {
             return Err(anyhow::anyhow!("Only assigned arbiter can resolve dispute"));
         }
 

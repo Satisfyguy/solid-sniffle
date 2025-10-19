@@ -21,6 +21,9 @@ pub enum ApiError {
     #[error("Argon2 hashing error: {0}")]
     Argon2(#[from] argon2::Error),
 
+    #[error("Password hashing error: {0}")]
+    PasswordHash(#[from] argon2::password_hash::Error),
+
     #[error("Conflict: {0}")]
     Conflict(String),
 
@@ -42,6 +45,7 @@ impl ResponseError for ApiError {
             ApiError::Blocking(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Anyhow(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Argon2(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::PasswordHash(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ApiError::Conflict(_) => StatusCode::CONFLICT,
             ApiError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }

@@ -3,3 +3,7 @@ pub mod error;
 pub mod handlers;
 pub mod models;
 pub mod schema;
+pub mod services;
+pub mod wallet_manager;
+pub mod websocket;
+pub mod crypto;

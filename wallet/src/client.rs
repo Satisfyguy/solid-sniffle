@@ -55,6 +55,13 @@ impl MoneroClient {
 
     /// Get complete wallet information
     pub async fn get_wallet_info(&self) -> Result<WalletInfo> {
+        // Get address
+        let address = self
+            .rpc_client
+            .get_address()
+            .await
+            .map_err(convert_monero_error)?;
+
         // Get version
         let version = self
             .rpc_client
@@ -89,6 +96,7 @@ impl MoneroClient {
             .map_err(convert_monero_error)?;
 
         Ok(WalletInfo {
+            address,
             version: version.to_string(),
             balance,
             unlocked_balance,
@@ -99,6 +107,14 @@ impl MoneroClient {
             block_height,
             daemon_block_height,
         })
+    }
+
+    /// Get wallet address
+    pub async fn get_address(&self) -> Result<String> {
+        self.rpc_client
+            .get_address()
+            .await
+            .map_err(convert_monero_error)
     }
 
     /// Get multisig manager

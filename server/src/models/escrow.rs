@@ -1,7 +1,6 @@
 //! Escrow model and related database operations
 
 use diesel::prelude::*;
-use uuid::Uuid;
 use chrono::NaiveDateTime;
 use serde::{Serialize, Deserialize};
 use anyhow::{Context, Result};

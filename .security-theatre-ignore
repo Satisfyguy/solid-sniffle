@@ -123,3 +123,10 @@ docs/**/*.md:MISSING\s+IMPLEMENTATION
 docs/**/*.md:HYPOTHÈSES
 docs/**/*.md:À\s+VALIDER
 docs/**/*.md:TO\s+BE\s+VALIDATED
+
+# ============================================
+# TRACKED IMPLEMENTATION TASKS
+# ============================================
+
+# Production implementation tracked in GitHub issues
+server/src/wallet_manager.rs:FIXME.*GitHub issue.*Implement production multisig

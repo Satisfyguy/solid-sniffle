@@ -230,6 +230,54 @@ impl MoneroRpcClient {
         Ok((unlocked_balance, balance))
     }
 
+    /// Get wallet address
+    pub async fn get_address(&self) -> Result<String, MoneroError> {
+        // Acquérir permit pour rate limiting
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
+            .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
+
+        // Acquérir lock pour sérialiser les appels RPC
+        let _guard = self.rpc_lock.lock().await;
+
+        let request = RpcRequest::new("get_address");
+
+        let response = self
+            .client
+            .post(format!("{}/json_rpc", self.url))
+            .json(&request)
+            .send()
+            .await
+            .map_err(|e| {
+                if e.is_connect() {
+                    MoneroError::RpcUnreachable
+                } else {
+                    MoneroError::NetworkError(e.to_string())
+                }
+            })?;
+
+        let rpc_response: RpcResponse<serde_json::Value> = response
+            .json()
+            .await
+            .map_err(|e| MoneroError::InvalidResponse(format!("JSON parse: {}", e)))?;
+
+        if let Some(error) = rpc_response.error {
+            return Err(MoneroError::RpcError(error.message));
+        }
+
+        let result = rpc_response
+            .result
+            .ok_or_else(|| MoneroError::InvalidResponse("Missing result field".to_string()))?;
+
+        let address = result["address"]
+            .as_str()
+            .ok_or_else(|| MoneroError::InvalidResponse("Invalid address format".to_string()))?;
+
+        Ok(address.to_string())
+    }
+
     /// Prépare wallet pour multisig (étape 1/6)
     ///
     /// # Errors

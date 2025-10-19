@@ -144,7 +144,7 @@ pub struct MoneroRpcError {
 }
 
 /// Multisig info for export/import
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct MultisigInfo {
     pub multisig_info: String,
 }
@@ -163,6 +163,7 @@ pub struct WalletStatus {
 /// Complete wallet information
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WalletInfo {
+    pub address: MoneroAddress,
     pub version: String,
     pub balance: Amount,
     pub unlocked_balance: Amount,

@@ -20,9 +20,9 @@ pub fn encrypt_field(plaintext: &str, key: &[u8]) -> Result<Vec<u8>> {
     let cipher = Aes256Gcm::new_from_slice(key).context("Failed to create cipher from key")?;
     let mut nonce_bytes = [0u8; NONCE_SIZE];
     rand::thread_rng().fill_bytes(&mut nonce_bytes);
-    let nonce = Nonce::from(&nonce_bytes);
+    let nonce = Nonce::from_slice(&nonce_bytes);
 
-    let ciphertext = cipher.encrypt(nonce, plaintext.as_bytes())
+    let ciphertext = cipher.encrypt(&nonce, plaintext.as_bytes())
         .map_err(|e| anyhow::anyhow!("Encryption failed: {}", e))?;
 
     // Prepend nonce to ciphertext for storage
@@ -40,10 +40,10 @@ pub fn decrypt_field(ciphertext_with_nonce: &[u8], key: &[u8]) -> Result<String>
     let cipher = Aes256Gcm::new_from_slice(key).context("Failed to create cipher from key")?;
     let mut nonce_array = [0u8; NONCE_SIZE];
     nonce_array.copy_from_slice(&ciphertext_with_nonce[..NONCE_SIZE]);
-    let nonce = Nonce::from(&nonce_array);
+    let nonce = Nonce::from_slice(&nonce_array);
     let ciphertext = &ciphertext_with_nonce[NONCE_SIZE..];
 
-    let plaintext_bytes = cipher.decrypt(nonce, ciphertext)
+    let plaintext_bytes = cipher.decrypt(&nonce, ciphertext)
         .map_err(|e| anyhow::anyhow!("Decryption failed: {}", e))?;
 
     String::from_utf8(plaintext_bytes).context("Failed to convert decrypted bytes to UTF-8")

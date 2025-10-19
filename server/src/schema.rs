@@ -1,13 +1,20 @@
-// @generated manually to match migrations
+// @generated automatically by Diesel CLI.
 
 diesel::table! {
-    users (id) {
+    escrows (id) {
         id -> Text,
-        username -> Text,
-        password_hash -> Text,
-        role -> Text,
+        order_id -> Text,
+        buyer_id -> Text,
+        vendor_id -> Text,
+        arbiter_id -> Text,
+        amount -> BigInt,
+        multisig_address -> Nullable<Text>,
+        status -> Text,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+        buyer_wallet_info -> Nullable<Binary>,
+        vendor_wallet_info -> Nullable<Binary>,
+        arbiter_wallet_info -> Nullable<Binary>,
     }
 }
 
@@ -40,24 +47,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    escrows (id) {
-        id -> Text,
-        order_id -> Text,
-        buyer_id -> Text,
-        vendor_id -> Text,
-        arbiter_id -> Text,
-        amount -> BigInt,
-        multisig_address -> Nullable<Text>,
-        status -> Text,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
-        buyer_wallet_info -> Nullable<Binary>,
-        vendor_wallet_info -> Nullable<Binary>,
-        arbiter_wallet_info -> Nullable<Binary>,
-    }
-}
-
-diesel::table! {
     transactions (id) {
         id -> Text,
         escrow_id -> Text,
@@ -68,17 +57,22 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    users (id) {
+        id -> Text,
+        username -> Text,
+        password_hash -> Text,
+        role -> Text,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        wallet_address -> Nullable<Text>,
+        wallet_id -> Nullable<Text>,
+    }
+}
+
+diesel::joinable!(escrows -> orders (order_id));
 diesel::joinable!(listings -> users (vendor_id));
 diesel::joinable!(orders -> listings (listing_id));
-diesel::joinable!(orders -> users (buyer_id));
-diesel::joinable!(escrows -> orders (order_id));
-diesel::joinable!(escrows -> users (buyer_id));
 diesel::joinable!(transactions -> escrows (escrow_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    users,
-    listings,
-    orders,
-    escrows,
-    transactions,
-);
+diesel::allow_tables_to_appear_in_same_query!(escrows, listings, orders, transactions, users,);

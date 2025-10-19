@@ -1,7 +1,6 @@
 //! User model and related database operations
 
 use diesel::prelude::*;
-use uuid::Uuid;
 use chrono::NaiveDateTime;
 use serde::{Serialize, Deserialize};
 use anyhow::{Context, Result};
@@ -17,6 +16,8 @@ pub struct User {
     pub role: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+    pub wallet_address: Option<String>,
+    pub wallet_id: Option<String>,
 }
 
 #[derive(Insertable)]
@@ -26,6 +27,8 @@ pub struct NewUser {
     pub username: String,
     pub password_hash: String,
     pub role: String,
+    pub wallet_address: Option<String>,
+    pub wallet_id: Option<String>,
 }
 
 impl User {
