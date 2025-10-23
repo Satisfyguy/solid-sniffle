@@ -46,6 +46,99 @@ impl EscrowOrchestrator {
         }
     }
 
+    // ========================================================================
+    // NON-CUSTODIAL: Client Wallet Registration
+    // ========================================================================
+
+    /// Register client's wallet RPC endpoint (NON-CUSTODIAL)
+    ///
+    /// This method allows buyers and vendors to provide their own wallet RPC URLs,
+    /// ensuring the server never has access to their private keys.
+    ///
+    /// # Arguments
+    /// * `user_id` - Authenticated user making the registration
+    /// * `role` - Wallet role (Buyer or Vendor - Arbiter not allowed)
+    /// * `rpc_url` - Client's wallet RPC endpoint
+    /// * `rpc_user` - Optional RPC authentication username
+    /// * `rpc_password` - Optional RPC authentication password
+    ///
+    /// # Returns
+    /// Tuple of (wallet_id, wallet_address) on success
+    ///
+    /// # Errors
+    /// - User not found in database
+    /// - Role mismatch (user's role doesn't match provided role)
+    /// - Wallet RPC connection failed
+    /// - Non-custodial policy violation
+    pub async fn register_client_wallet(
+        &self,
+        user_id: Uuid,
+        role: crate::wallet_manager::WalletRole,
+        rpc_url: String,
+        rpc_user: Option<String>,
+        rpc_password: Option<String>,
+    ) -> Result<(Uuid, String)> {
+        info!(
+            "Registering client wallet RPC: user={}, role={:?}, url={}",
+            user_id, role, rpc_url
+        );
+
+        // 1. Verify user exists and role matches
+        let user_id_str = user_id.to_string();
+        let db_clone = self.db.clone();
+        let user = tokio::task::spawn_blocking(move || {
+            let mut conn = db_clone.get().context("Failed to get DB connection")?;
+            User::find_by_id(&mut conn, user_id_str)
+        })
+        .await
+        .context("Database task panicked")??;
+
+        let expected_role = match role {
+            crate::wallet_manager::WalletRole::Buyer => "buyer",
+            crate::wallet_manager::WalletRole::Vendor => "vendor",
+            _ => {
+                return Err(anyhow::anyhow!(
+                    "Non-custodial policy: Cannot register arbiter wallet via this endpoint"
+                ))
+            }
+        };
+
+        if user.role != expected_role {
+            return Err(anyhow::anyhow!(
+                "Role mismatch: user role is '{}' but trying to register '{}' wallet",
+                user.role,
+                expected_role
+            ));
+        }
+
+        // 2. Register wallet RPC via WalletManager
+        let mut wallet_manager = self.wallet_manager.lock().await;
+        let wallet_id = wallet_manager
+            .register_client_wallet_rpc(role, rpc_url.clone(), rpc_user, rpc_password)
+            .await
+            .context("Failed to register client wallet RPC")?;
+
+        // 3. Get wallet address for response
+        let wallet_instance = wallet_manager
+            .wallets
+            .get(&wallet_id)
+            .ok_or_else(|| anyhow::anyhow!("Wallet instance not found after registration"))?;
+
+        let wallet_address = wallet_instance.address.clone();
+
+        info!(
+            "✅ Client wallet registered: wallet_id={}, address={}, user={}",
+            wallet_id, wallet_address, user_id
+        );
+        info!("🔒 NON-CUSTODIAL: Client controls private keys at {}", rpc_url);
+
+        Ok((wallet_id, wallet_address))
+    }
+
+    // ========================================================================
+    // Escrow Lifecycle
+    // ========================================================================
+
     /// Initialize new escrow (step 1)
     pub async fn init_escrow(
         &self,

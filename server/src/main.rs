@@ -196,6 +196,11 @@ async fn main() -> Result<()> {
                     .service(orders::dispute_order)
                     // Escrow
                     .route("/escrow/{id}", web::get().to(escrow::get_escrow))
+                    // NON-CUSTODIAL: Client wallet registration
+                    .route(
+                        "/escrow/register-wallet-rpc",
+                        web::post().to(escrow::register_wallet_rpc),
+                    )
                     .route(
                         "/escrow/{id}/prepare",
                         web::post().to(escrow::prepare_multisig),

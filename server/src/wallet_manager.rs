@@ -55,10 +55,16 @@ pub enum WalletManagerError {
 
     #[error("Multisig address mismatch: {addresses:?}")]
     AddressMismatch { addresses: Vec<String> },
+
+    #[error("Non-custodial policy violation: Server cannot create {0} wallets. Clients must provide their own wallet RPC URL.")]
+    NonCustodialViolation(String),
+
+    #[error("Invalid RPC URL: {0}")]
+    InvalidRpcUrl(String),
 }
 
 pub struct WalletManager {
-    wallets: HashMap<Uuid, WalletInstance>,
+    pub wallets: HashMap<Uuid, WalletInstance>,
     rpc_configs: Vec<MoneroConfig>,
     next_rpc_index: usize,
 }
@@ -81,10 +87,36 @@ impl WalletManager {
         })
     }
 
+    /// DEPRECATED: Use create_arbiter_wallet_instance() or register_client_wallet_rpc() instead.
+    ///
+    /// This method is kept for backward compatibility but will be removed in future versions.
+    /// Server should ONLY create arbiter wallets to maintain non-custodial architecture.
+    #[deprecated(
+        since = "0.2.7",
+        note = "Use create_arbiter_wallet_instance() for arbiter or register_client_wallet_rpc() for buyer/vendor"
+    )]
     pub async fn create_wallet_instance(
         &mut self,
         role: WalletRole,
     ) -> Result<Uuid, WalletManagerError> {
+        // NON-CUSTODIAL ENFORCEMENT: Server cannot create buyer/vendor wallets
+        match role {
+            WalletRole::Buyer => {
+                return Err(WalletManagerError::NonCustodialViolation(
+                    "Buyer".to_string(),
+                ))
+            }
+            WalletRole::Vendor => {
+                return Err(WalletManagerError::NonCustodialViolation(
+                    "Vendor".to_string(),
+                ))
+            }
+            WalletRole::Arbiter => {
+                // Arbiter is OK - this is the marketplace's wallet
+                info!("Creating arbiter wallet instance (legacy method - use create_arbiter_wallet_instance instead)");
+            }
+        }
+
         let config = self
             .rpc_configs
             .get(self.next_rpc_index)
@@ -96,14 +128,141 @@ impl WalletManager {
 
         let instance = WalletInstance {
             id: Uuid::new_v4(),
-            role,
+            role: role.clone(),
             rpc_client,
             address: wallet_info.address,
             multisig_state: MultisigState::NotStarted,
         };
         let id = instance.id;
         self.wallets.insert(id, instance);
-        info!("Created wallet instance {}", id);
+        info!("Created wallet instance {} (role: {:?})", id, role);
+        Ok(id)
+    }
+
+    /// Create arbiter wallet instance (server-controlled wallet for marketplace arbitration)
+    ///
+    /// This is the ONLY wallet type the server should create directly.
+    /// Buyer and vendor wallets must be provided by clients via register_client_wallet_rpc().
+    ///
+    /// # Returns
+    /// UUID of the created arbiter wallet instance
+    ///
+    /// # Errors
+    /// - NoAvailableRpc - No RPC configs available
+    /// - RpcError - Failed to connect to wallet RPC or get wallet info
+    pub async fn create_arbiter_wallet_instance(&mut self) -> Result<Uuid, WalletManagerError> {
+        let config = self
+            .rpc_configs
+            .get(self.next_rpc_index)
+            .ok_or(WalletManagerError::NoAvailableRpc)?;
+        self.next_rpc_index = (self.next_rpc_index + 1) % self.rpc_configs.len();
+
+        let rpc_client = MoneroClient::new(config.clone())?;
+        let wallet_info = rpc_client.get_wallet_info().await?;
+
+        let wallet_address = wallet_info.address.clone();
+        let instance = WalletInstance {
+            id: Uuid::new_v4(),
+            role: WalletRole::Arbiter,
+            rpc_client,
+            address: wallet_info.address,
+            multisig_state: MultisigState::NotStarted,
+        };
+        let id = instance.id;
+        self.wallets.insert(id, instance);
+        info!("✅ Created arbiter wallet instance: {} (address: {})", id, wallet_address);
+        Ok(id)
+    }
+
+    /// Register a client-controlled wallet RPC endpoint (NON-CUSTODIAL)
+    ///
+    /// This method allows buyers and vendors to provide their own wallet RPC URLs,
+    /// ensuring the server never has access to their private keys.
+    ///
+    /// # Security Requirements
+    /// - Client must run their own monero-wallet-rpc instance
+    /// - Client controls their private keys (never shared with server)
+    /// - RPC URL can be local (client's machine) or via Tor hidden service
+    ///
+    /// # Arguments
+    /// * `role` - Must be Buyer or Vendor (Arbiter not allowed - use create_arbiter_wallet_instance)
+    /// * `rpc_url` - Client's wallet RPC endpoint (e.g., "http://127.0.0.1:18082/json_rpc" or "http://xyz.onion:18082/json_rpc")
+    /// * `rpc_user` - Optional RPC authentication username
+    /// * `rpc_password` - Optional RPC authentication password
+    ///
+    /// # Returns
+    /// UUID of the registered client wallet instance
+    ///
+    /// # Errors
+    /// - NonCustodialViolation - Attempted to register Arbiter wallet (must use create_arbiter_wallet_instance)
+    /// - InvalidRpcUrl - Invalid or unreachable RPC URL
+    /// - RpcError - Failed to connect to client's wallet RPC
+    ///
+    /// # Example
+    /// ```rust
+    /// // Client provides their wallet RPC URL
+    /// let wallet_id = wallet_manager.register_client_wallet_rpc(
+    ///     WalletRole::Buyer,
+    ///     "http://buyer-machine.local:18082/json_rpc".to_string(),
+    ///     Some("buyer_user".to_string()),
+    ///     Some("buyer_password".to_string()),
+    /// ).await?;
+    /// ```
+    pub async fn register_client_wallet_rpc(
+        &mut self,
+        role: WalletRole,
+        rpc_url: String,
+        rpc_user: Option<String>,
+        rpc_password: Option<String>,
+    ) -> Result<Uuid, WalletManagerError> {
+        // NON-CUSTODIAL ENFORCEMENT: Only allow Buyer/Vendor (clients control these)
+        if role == WalletRole::Arbiter {
+            return Err(WalletManagerError::NonCustodialViolation(
+                "Arbiter (use create_arbiter_wallet_instance instead)".to_string(),
+            ));
+        }
+
+        // Validate RPC URL format
+        if !rpc_url.starts_with("http://") && !rpc_url.starts_with("https://") {
+            return Err(WalletManagerError::InvalidRpcUrl(
+                "URL must start with http:// or https://".to_string(),
+            ));
+        }
+
+        // Create config from client-provided details
+        let config = MoneroConfig {
+            rpc_url: rpc_url.clone(),
+            rpc_user,
+            rpc_password,
+            timeout_seconds: 30,
+        };
+
+        // Connect to client's wallet RPC
+        let rpc_client = MoneroClient::new(config)
+            .map_err(|e| WalletManagerError::InvalidRpcUrl(format!("Failed to connect: {}", e)))?;
+
+        // Verify wallet is accessible
+        let wallet_info = rpc_client
+            .get_wallet_info()
+            .await
+            .map_err(|e| WalletManagerError::InvalidRpcUrl(format!("Cannot access wallet: {}", e)))?;
+
+        let instance = WalletInstance {
+            id: Uuid::new_v4(),
+            role: role.clone(),
+            rpc_client,
+            address: wallet_info.address.clone(),
+            multisig_state: MultisigState::NotStarted,
+        };
+        let id = instance.id;
+        self.wallets.insert(id, instance);
+
+        info!(
+            "✅ Registered client wallet: id={}, role={:?}, address={}",
+            id, role, wallet_info.address
+        );
+        info!("🔒 NON-CUSTODIAL: Client controls private keys at {}", rpc_url);
+
         Ok(id)
     }
 

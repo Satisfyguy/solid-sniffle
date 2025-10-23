@@ -9,6 +9,167 @@ use validator::Validate;
 use crate::db::DbPool;
 use crate::services::escrow::EscrowOrchestrator;
 
+// ============================================================================
+// NON-CUSTODIAL: Client Wallet Registration
+// ============================================================================
+
+/// Request body for registering client wallet RPC endpoint
+///
+/// This is the CORE of non-custodial architecture: clients provide their own
+/// wallet RPC URLs, ensuring the server never has access to their private keys.
+#[derive(Debug, Deserialize, Validate)]
+pub struct RegisterWalletRpcRequest {
+    /// Client's wallet RPC URL (e.g., "http://127.0.0.1:18082/json_rpc" or "http://abc123.onion:18082/json_rpc")
+    #[validate(url(message = "Invalid RPC URL format"))]
+    #[validate(length(min = 10, max = 500, message = "RPC URL must be 10-500 characters"))]
+    pub rpc_url: String,
+
+    /// Optional RPC authentication username
+    #[validate(length(max = 100, message = "Username max 100 characters"))]
+    pub rpc_user: Option<String>,
+
+    /// Optional RPC authentication password
+    #[validate(length(max = 100, message = "Password max 100 characters"))]
+    pub rpc_password: Option<String>,
+
+    /// Role for this wallet (buyer or vendor - arbiter not allowed)
+    #[validate(custom = "validate_client_role")]
+    pub role: String,
+}
+
+/// Validate that role is buyer or vendor (not arbiter)
+fn validate_client_role(role: &str) -> Result<(), validator::ValidationError> {
+    match role.to_lowercase().as_str() {
+        "buyer" | "vendor" => Ok(()),
+        "arbiter" => Err(validator::ValidationError::new(
+            "role_not_allowed",
+        )),
+        _ => Err(validator::ValidationError::new("invalid_role")),
+    }
+}
+
+/// Response for successful wallet registration
+#[derive(Debug, Serialize)]
+pub struct RegisterWalletRpcResponse {
+    pub success: bool,
+    pub message: String,
+    pub wallet_id: String,
+    pub wallet_address: String,
+    pub role: String,
+}
+
+/// Register client's wallet RPC endpoint (NON-CUSTODIAL)
+///
+/// # Non-Custodial Architecture
+/// This endpoint allows buyers and vendors to provide their own wallet RPC URLs.
+/// The server connects to these client-controlled wallets but NEVER has access
+/// to private keys, seed phrases, or any sensitive cryptographic material.
+///
+/// # Security Requirements
+/// - Client must run monero-wallet-rpc on their own machine
+/// - Client controls private keys (never shared with server)
+/// - RPC can be accessed via local network or Tor hidden service
+///
+/// # Endpoint
+/// POST /api/escrow/register-wallet-rpc
+///
+/// # Request Body
+/// ```json
+/// {
+///   "rpc_url": "http://127.0.0.1:18082/json_rpc",
+///   "rpc_user": "optional_username",
+///   "rpc_password": "optional_password",
+///   "role": "buyer"  // or "vendor"
+/// }
+/// ```
+///
+/// # Response
+/// ```json
+/// {
+///   "success": true,
+///   "message": "Wallet RPC registered successfully",
+///   "wallet_id": "uuid-of-wallet-instance",
+///   "wallet_address": "monero_address",
+///   "role": "buyer"
+/// }
+/// ```
+pub async fn register_wallet_rpc(
+    escrow_orchestrator: web::Data<EscrowOrchestrator>,
+    session: Session,
+    payload: web::Json<RegisterWalletRpcRequest>,
+) -> impl Responder {
+    // Validate request
+    if let Err(e) = payload.validate() {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": format!("Validation failed: {}", e)
+        }));
+    }
+
+    // Get authenticated user
+    let user_id_str = match session.get::<String>("user_id") {
+        Ok(Some(id)) => id,
+        Ok(None) => {
+            return HttpResponse::Unauthorized().json(serde_json::json!({
+                "error": "Not authenticated"
+            }));
+        }
+        Err(e) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": format!("Session error: {}", e)
+            }));
+        }
+    };
+
+    let user_id = match user_id_str.parse::<Uuid>() {
+        Ok(id) => id,
+        Err(_) => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "Invalid user_id in session"
+            }));
+        }
+    };
+
+    // Parse role
+    let role = match payload.role.to_lowercase().as_str() {
+        "buyer" => crate::wallet_manager::WalletRole::Buyer,
+        "vendor" => crate::wallet_manager::WalletRole::Vendor,
+        _ => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "Invalid role: must be 'buyer' or 'vendor'"
+            }));
+        }
+    };
+
+    // Register client wallet RPC via orchestrator
+    match escrow_orchestrator
+        .register_client_wallet(
+            user_id,
+            role.clone(),
+            payload.rpc_url.clone(),
+            payload.rpc_user.clone(),
+            payload.rpc_password.clone(),
+        )
+        .await
+    {
+        Ok((wallet_id, wallet_address)) => {
+            HttpResponse::Ok().json(RegisterWalletRpcResponse {
+                success: true,
+                message: "✅ Wallet RPC registered successfully. You control your private keys.".to_string(),
+                wallet_id: wallet_id.to_string(),
+                wallet_address,
+                role: payload.role.clone(),
+            })
+        }
+        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": format!("Failed to register wallet RPC: {}", e)
+        })),
+    }
+}
+
+// ============================================================================
+// Multisig Preparation
+// ============================================================================
+
 /// Request body for preparing multisig
 #[derive(Debug, Deserialize, Validate)]
 pub struct PrepareMultisigRequest {
