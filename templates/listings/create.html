@@ -9,7 +9,7 @@
             — CREATE NEW LISTING —
         </h1>
 
-        <form hx-post="/api/listings" hx-target="#listing-result" hx-swap="innerHTML">
+        <form id="create-listing-form">
             <div class="form-group">
                 <label for="title">TITLE</label>
                 <input type="text" id="title" name="title" placeholder="Product title" required minlength="3" maxlength="200">
@@ -42,6 +42,55 @@
         </form>
 
         <div id="listing-result" style="margin-top: 20px;"></div>
+
+        <script>
+        document.getElementById('create-listing-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                price_xmr: parseInt(document.getElementById('price_xmr').value),
+                stock: parseInt(document.getElementById('stock').value)
+            };
+
+            try {
+                const response = await fetch('/api/listings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                const resultDiv = document.getElementById('listing-result');
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div style="padding: 15px; background: rgba(0, 255, 100, 0.1); border: 1px solid rgba(0, 255, 100, 0.3); border-radius: 4px;">
+                            <p style="color: #00ff66; margin: 0;">✓ LISTING CREATED SUCCESSFULLY</p>
+                            <p style="color: #888; margin: 10px 0 0 0; font-size: 12px;">ID: ${result.id}</p>
+                            <a href="/listings/${result.id}" style="color: #00ff66; text-decoration: underline; font-size: 12px;">VIEW LISTING →</a>
+                        </div>
+                    `;
+                    document.getElementById('create-listing-form').reset();
+                } else {
+                    resultDiv.innerHTML = `
+                        <div style="padding: 15px; background: rgba(255, 0, 0, 0.1); border: 1px solid rgba(255, 0, 0, 0.3); border-radius: 4px;">
+                            <p style="color: #ff4444; margin: 0;">✗ ERROR: ${result.error || 'Failed to create listing'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('listing-result').innerHTML = `
+                    <div style="padding: 15px; background: rgba(255, 0, 0, 0.1); border: 1px solid rgba(255, 0, 0, 0.3); border-radius: 4px;">
+                        <p style="color: #ff4444; margin: 0;">✗ NETWORK ERROR: ${error.message}</p>
+                    </div>
+                `;
+            }
+        });
+        </script>
     </div>
 </div>
 {% endblock %}
