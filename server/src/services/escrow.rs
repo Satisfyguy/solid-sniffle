@@ -417,9 +417,17 @@ impl EscrowOrchestrator {
         );
 
         // Create multisig transaction destinations
+        // Validate amount is positive before casting i64 -> u64
+        let amount_u64 = u64::try_from(escrow.amount).map_err(|_| {
+            anyhow::anyhow!(
+                "Invalid escrow amount: {}. Amount must be positive.",
+                escrow.amount
+            )
+        })?;
+
         let destinations = vec![TransferDestination {
             address: vendor_address.clone(),
-            amount: escrow.amount as u64,
+            amount: amount_u64,
         }];
 
         // Use WalletManager to release funds through multisig flow
@@ -506,9 +514,17 @@ impl EscrowOrchestrator {
         );
 
         // Create multisig transaction destinations
+        // Validate amount is positive before casting i64 -> u64
+        let amount_u64 = u64::try_from(escrow.amount).map_err(|_| {
+            anyhow::anyhow!(
+                "Invalid escrow amount: {}. Amount must be positive.",
+                escrow.amount
+            )
+        })?;
+
         let destinations = vec![TransferDestination {
             address: buyer_address.clone(),
-            amount: escrow.amount as u64,
+            amount: amount_u64,
         }];
 
         // Use WalletManager to refund funds through multisig flow

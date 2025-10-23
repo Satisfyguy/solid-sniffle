@@ -98,8 +98,11 @@ pub async fn register_wallet_rpc(
     session: Session,
     payload: web::Json<RegisterWalletRpcRequest>,
 ) -> impl Responder {
+    use tracing::info;
+
     // Validate request
     if let Err(e) = payload.validate() {
+        info!("Wallet RPC registration validation failed: {}", e);
         return HttpResponse::BadRequest().json(serde_json::json!({
             "error": format!("Validation failed: {}", e)
         }));
@@ -109,11 +112,13 @@ pub async fn register_wallet_rpc(
     let user_id_str = match session.get::<String>("user_id") {
         Ok(Some(id)) => id,
         Ok(None) => {
+            info!("Wallet RPC registration rejected: not authenticated");
             return HttpResponse::Unauthorized().json(serde_json::json!({
                 "error": "Not authenticated"
             }));
         }
         Err(e) => {
+            info!("Wallet RPC registration session error: {}", e);
             return HttpResponse::InternalServerError().json(serde_json::json!({
                 "error": format!("Session error: {}", e)
             }));
@@ -123,6 +128,7 @@ pub async fn register_wallet_rpc(
     let user_id = match user_id_str.parse::<Uuid>() {
         Ok(id) => id,
         Err(_) => {
+            info!("Wallet RPC registration invalid user_id in session");
             return HttpResponse::BadRequest().json(serde_json::json!({
                 "error": "Invalid user_id in session"
             }));
@@ -134,11 +140,23 @@ pub async fn register_wallet_rpc(
         "buyer" => crate::wallet_manager::WalletRole::Buyer,
         "vendor" => crate::wallet_manager::WalletRole::Vendor,
         _ => {
+            info!(
+                user_id = %user_id,
+                role = %payload.role,
+                "Wallet RPC registration invalid role"
+            );
             return HttpResponse::BadRequest().json(serde_json::json!({
                 "error": "Invalid role: must be 'buyer' or 'vendor'"
             }));
         }
     };
+
+    info!(
+        user_id = %user_id,
+        role = ?role,
+        rpc_url = %payload.rpc_url,
+        "Registering client wallet RPC (non-custodial)"
+    );
 
     // Register client wallet RPC via orchestrator
     match escrow_orchestrator
@@ -152,6 +170,14 @@ pub async fn register_wallet_rpc(
         .await
     {
         Ok((wallet_id, wallet_address)) => {
+            info!(
+                user_id = %user_id,
+                wallet_id = %wallet_id,
+                role = ?role,
+                wallet_address = %wallet_address[..10],
+                "Client wallet RPC registered successfully (non-custodial)"
+            );
+
             HttpResponse::Ok().json(RegisterWalletRpcResponse {
                 success: true,
                 message: "✅ Wallet RPC registered successfully. You control your private keys.".to_string(),
@@ -160,9 +186,18 @@ pub async fn register_wallet_rpc(
                 role: payload.role.clone(),
             })
         }
-        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
-            "error": format!("Failed to register wallet RPC: {}", e)
-        })),
+        Err(e) => {
+            info!(
+                user_id = %user_id,
+                role = ?role,
+                error = %e,
+                "Failed to register client wallet RPC"
+            );
+
+            HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": format!("Failed to register wallet RPC: {}", e)
+            }))
+        }
     }
 }
 

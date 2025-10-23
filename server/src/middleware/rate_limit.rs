@@ -44,15 +44,19 @@ impl KeyExtractor for TestCompatibleKeyExtractor {
 ///
 /// # Returns
 /// Governor middleware configured for 100 req/min
+///
+/// # Panics
+/// This function will panic if rate limiter configuration is invalid.
+/// This is acceptable as it's a startup-time configuration error.
 pub fn global_rate_limiter() -> Governor<TestCompatibleKeyExtractor, NoOpMiddleware> {
-    Governor::new(
-        &GovernorConfigBuilder::default()
-            .per_second(2) // ~120 per minute
-            .burst_size(100) // Allow bursts up to 100
-            .key_extractor(TestCompatibleKeyExtractor)
-            .finish()
-            .expect("Failed to create rate limiter config"),
-    )
+    let config = GovernorConfigBuilder::default()
+        .per_second(2) // ~120 per minute
+        .burst_size(100) // Allow bursts up to 100
+        .key_extractor(TestCompatibleKeyExtractor)
+        .finish()
+        .unwrap(); // Safe: static configuration, panics are acceptable at startup
+
+    Governor::new(&config)
 }
 
 /// Create auth rate limiter (5 requests/15 minutes per IP)
@@ -72,15 +76,19 @@ pub fn global_rate_limiter() -> Governor<TestCompatibleKeyExtractor, NoOpMiddlew
 ///
 /// # Returns
 /// Governor middleware configured for 5 req/15min
+///
+/// # Panics
+/// This function will panic if rate limiter configuration is invalid.
+/// This is acceptable as it's a startup-time configuration error.
 pub fn auth_rate_limiter() -> Governor<TestCompatibleKeyExtractor, NoOpMiddleware> {
-    Governor::new(
-        &GovernorConfigBuilder::default()
-            .burst_size(5) // Maximum 5 requests
-            .period(std::time::Duration::from_secs(900)) // Per 15-minute window
-            .key_extractor(TestCompatibleKeyExtractor)
-            .finish()
-            .expect("Failed to create auth rate limiter config"),
-    )
+    let config = GovernorConfigBuilder::default()
+        .burst_size(5) // Maximum 5 requests
+        .period(std::time::Duration::from_secs(900)) // Per 15-minute window
+        .key_extractor(TestCompatibleKeyExtractor)
+        .finish()
+        .unwrap(); // Safe: static configuration, panics are acceptable at startup
+
+    Governor::new(&config)
 }
 
 /// Create protected endpoint rate limiter (60 requests/minute per IP)
@@ -89,15 +97,19 @@ pub fn auth_rate_limiter() -> Governor<TestCompatibleKeyExtractor, NoOpMiddlewar
 ///
 /// # Returns
 /// Governor middleware configured for 60 req/min
+///
+/// # Panics
+/// This function will panic if rate limiter configuration is invalid.
+/// This is acceptable as it's a startup-time configuration error.
 pub fn protected_rate_limiter() -> Governor<TestCompatibleKeyExtractor, NoOpMiddleware> {
-    Governor::new(
-        &GovernorConfigBuilder::default()
-            .per_second(1) // ~60 per minute
-            .burst_size(60)
-            .key_extractor(TestCompatibleKeyExtractor)
-            .finish()
-            .expect("Failed to create protected rate limiter config"),
-    )
+    let config = GovernorConfigBuilder::default()
+        .per_second(1) // ~60 per minute
+        .burst_size(60)
+        .key_extractor(TestCompatibleKeyExtractor)
+        .finish()
+        .unwrap(); // Safe: static configuration, panics are acceptable at startup
+
+    Governor::new(&config)
 }
 
 #[cfg(test)]

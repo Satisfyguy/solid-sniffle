@@ -160,6 +160,10 @@ async fn main() -> Result<()> {
             // Reputation frontend routes
             .route("/vendor/{vendor_id}", web::get().to(frontend::vendor_profile))
             .route("/review/submit", web::get().to(frontend::submit_review_form))
+            // Settings frontend routes (non-custodial wallet)
+            .route("/settings", web::get().to(frontend::show_settings))
+            .route("/settings/wallet", web::get().to(frontend::show_wallet_settings))
+            .route("/docs/wallet-setup", web::get().to(frontend::show_wallet_guide))
             // API Routes
             .route("/api/health", web::get().to(health_check))
             // WebSocket route

@@ -583,3 +583,110 @@ pub async fn submit_review_form(
         }
     }
 }
+// ============================================================================
+// Settings Frontend Handlers (Non-Custodial Wallet)
+// ============================================================================
+
+/// GET /settings - Settings page
+pub async fn show_settings(tera: web::Data<Tera>, session: Session) -> impl Responder {
+    // Require authentication
+    if session.get::<String>("username").unwrap_or(None).is_none() {
+        return HttpResponse::Found()
+            .append_header(("Location", "/login"))
+            .finish();
+    }
+
+    let mut ctx = Context::new();
+
+    // Insert session data
+    if let Ok(Some(username)) = session.get::<String>("username") {
+        ctx.insert("username", &username);
+        ctx.insert("logged_in", &true);
+
+        if let Ok(Some(role)) = session.get::<String>("role") {
+            ctx.insert("role", &role);
+        }
+    }
+
+    match tera.render("settings/index.html", &ctx) {
+        Ok(html) => {
+            info!("Rendered settings page");
+            HttpResponse::Ok()
+                .content_type("text/html; charset=utf-8")
+                .body(html)
+        }
+        Err(e) => {
+            error!("Template error rendering settings: {}", e);
+            HttpResponse::InternalServerError().body(format!("Template error: {}", e))
+        }
+    }
+}
+
+/// GET /settings/wallet - Wallet settings page (non-custodial)
+pub async fn show_wallet_settings(tera: web::Data<Tera>, session: Session) -> impl Responder {
+    // Require authentication
+    if session.get::<String>("username").unwrap_or(None).is_none() {
+        return HttpResponse::Found()
+            .append_header(("Location", "/login"))
+            .finish();
+    }
+
+    let mut ctx = Context::new();
+
+    // Insert session data
+    if let Ok(Some(username)) = session.get::<String>("username") {
+        ctx.insert("username", &username);
+        ctx.insert("logged_in", &true);
+
+        if let Ok(Some(role)) = session.get::<String>("role") {
+            ctx.insert("role", &role);
+        }
+    }
+
+    // Add CSRF token
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
+
+    match tera.render("settings/wallet.html", &ctx) {
+        Ok(html) => {
+            info!("Rendered wallet settings page (non-custodial)");
+            HttpResponse::Ok()
+                .content_type("text/html; charset=utf-8")
+                .body(html)
+        }
+        Err(e) => {
+            error!("Template error rendering wallet settings: {}", e);
+            HttpResponse::InternalServerError().body(format!("Template error: {}", e))
+        }
+    }
+}
+
+/// GET /docs/wallet-setup - Wallet setup documentation
+pub async fn show_wallet_guide(tera: web::Data<Tera>, session: Session) -> impl Responder {
+    let mut ctx = Context::new();
+
+    // Insert session data (optional for docs)
+    if let Ok(Some(username)) = session.get::<String>("username") {
+        ctx.insert("username", &username);
+        ctx.insert("logged_in", &true);
+
+        if let Ok(Some(role)) = session.get::<String>("role") {
+            ctx.insert("role", &role);
+        }
+    } else {
+        ctx.insert("logged_in", &false);
+    }
+
+    match tera.render("docs/wallet-setup.html", &ctx) {
+        Ok(html) => {
+            info!("Rendered wallet setup guide");
+            HttpResponse::Ok()
+                .content_type("text/html; charset=utf-8")
+                .body(html)
+        }
+        Err(e) => {
+            error!("Template error rendering wallet guide: {}", e);
+            HttpResponse::InternalServerError().body(format!("Template error: {}", e))
+        }
+    }
+}
