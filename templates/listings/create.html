@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}CREATE LISTING — AMAZAWN{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 700px;">
+    <div class="card">
+        <h1 style="font-size: 18px; font-weight: normal; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px; text-align: center;">
+            — CREATE NEW LISTING —
+        </h1>
+
+        <form hx-post="/api/listings" hx-target="#listing-result" hx-swap="innerHTML">
+            <div class="form-group">
+                <label for="title">TITLE</label>
+                <input type="text" id="title" name="title" placeholder="Product title" required minlength="3" maxlength="200">
+                <small>3-200 CHARACTERS</small>
+            </div>
+
+            <div class="form-group">
+                <label for="description">DESCRIPTION</label>
+                <textarea id="description" name="description" placeholder="Describe your product..." rows="6" required minlength="10" maxlength="5000"></textarea>
+                <small>10-5000 CHARACTERS</small>
+            </div>
+
+            <div class="form-group">
+                <label for="price_xmr">PRICE (ATOMIC UNITS)</label>
+                <input type="number" id="price_xmr" name="price_xmr" placeholder="0" min="1" required>
+                <small>1 XMR = 1,000,000,000,000 ATOMIC UNITS</small>
+            </div>
+
+            <div class="form-group">
+                <label for="stock">STOCK</label>
+                <input type="number" id="stock" name="stock" placeholder="0" min="0" required>
+            </div>
+
+            <div class="form-actions">
+                <a href="/listings" class="btn btn-secondary" style="flex: 1;">CANCEL</a>
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    CREATE LISTING →
+                </button>
+            </div>
+        </form>
+
+        <div id="listing-result" style="margin-top: 20px;"></div>
+    </div>
+</div>
+{% endblock %}

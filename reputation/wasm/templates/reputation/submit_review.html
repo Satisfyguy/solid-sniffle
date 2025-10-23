@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/reputation.css">
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="review-form">
+        <h1 class="text-3xl font-bold mb-6 text-center">Submit Review</h1>
+        
+        <form 
+            hx-post="/api/reviews" 
+            hx-target="#form-result"
+            hx-swap="innerHTML"
+            hx-disabled-elt="button[type='submit']">
+            
+            <!-- Hidden Fields -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="vendor_id" value="{{ vendor_id }}">
+            <input type="hidden" name="tx_id" value="{{ tx_id }}">
+            
+            <!-- Rating Selector -->
+            <div class="form-group">
+                <label class="form-label" for="rating">
+                    Rating <span class="text-red-500">*</span>
+                </label>
+                <div class="rating-selector" id="rating-selector">
+                    <input type="radio" name="rating" id="star5" value="5" required>
+                    <label for="star5">★</label>
+                    
+                    <input type="radio" name="rating" id="star4" value="4">
+                    <label for="star4">★</label>
+                    
+                    <input type="radio" name="rating" id="star3" value="3">
+                    <label for="star3">★</label>
+                    
+                    <input type="radio" name="rating" id="star2" value="2">
+                    <label for="star2">★</label>
+                    
+                    <input type="radio" name="rating" id="star1" value="1">
+                    <label for="star1">★</label>
+                </div>
+                <p class="text-sm text-gray-400 mt-2">Click a star to rate (5 = Excellent, 1 = Poor)</p>
+            </div>
+            
+            <!-- Comment Field -->
+            <div class="form-group">
+                <label class="form-label" for="comment">
+                    Review Comment <span class="text-gray-400">(Optional)</span>
+                </label>
+                <textarea 
+                    class="form-textarea"
+                    id="comment"
+                    name="comment"
+                    maxlength="500"
+                    placeholder="Share your experience with this vendor..."></textarea>
+                <div class="char-counter">
+                    <span id="char-count">0</span> / 500
+                </div>
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary w-full">
+                    Submit Review
+                </button>
+            </div>
+        </form>
+        
+        <!-- Form Result -->
+        <div id="form-result" class="mt-4"></div>
+    </div>
+</div>
+
+<script>
+    // Character counter
+    const comment = document.getElementById('comment');
+    const charCount = document.getElementById('char-count');
+    
+    comment.addEventListener('input', () => {
+        charCount.textContent = comment.value.length;
+    });
+    
+    // Star rating interactivity
+    const ratingInputs = document.querySelectorAll('.rating-selector input');
+    const ratingLabels = document.querySelectorAll('.rating-selector label');
+    
+    ratingInputs.forEach((input, index) => {
+        input.addEventListener('change', () => {
+            // Update visual state
+            ratingLabels.forEach((label, labelIndex) => {
+                if (labelIndex >= index) {
+                    label.style.color = '#fbbf24';
+                } else {
+                    label.style.color = 'rgba(251, 191, 36, 0.3)';
+                }
+            });
+        });
+    });
+    
+    // Handle successful submission
+    document.body.addEventListener('htmx:afterSwap', (event) => {
+        if (event.detail.target.id === 'form-result') {
+            const result = event.detail.target;
+            if (result.textContent.includes('success')) {
+                setTimeout(() => {
+                    window.location.href = '/vendor/{{ vendor_id }}';
+                }, 2000);
+            }
+        }
+    });
+</script>
+{% endblock %}

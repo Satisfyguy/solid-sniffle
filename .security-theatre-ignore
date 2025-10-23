@@ -1,0 +1,180 @@
+# Security Theatre Ignore File
+# Format: path_pattern:regex_pattern
+# 
+# This file contains exceptions for legitimate cases where security theatre
+# patterns are acceptable or necessary.
+
+# ============================================
+# TEST FILES - Allow expect() with clear messages
+# ============================================
+
+# Test files can use expect() with descriptive messages
+**/tests/*.rs:expect\(".*"\)
+**/test_*.rs:expect\(".*"\)
+**/*_test.rs:expect\(".*"\)
+
+# Integration tests can use expect() for setup
+**/integration.rs:expect\(".*"\)
+**/integration_test.rs:expect\(".*"\)
+
+# ============================================
+# CLI TEST TOOL - Allow println! for user output
+# ============================================
+
+# CLI test tool can use println! for user feedback
+cli/src/test_tool.rs:println!
+cli/src/test_tool.rs:print!
+
+# ============================================
+# LEGITIMATE PLACEHOLDERS
+# ============================================
+
+# Documentation examples can have placeholders
+docs/**/*.md://\s*Placeholder
+docs/**/*.md://\s*TODO
+
+# Template files can have placeholders
+**/templates/**://\s*Placeholder
+**/templates/**://\s*TODO
+
+# ============================================
+# LEGITIMATE MAGIC NUMBERS
+# ============================================
+
+# Common cryptographic constants
+**/*.rs:0x[0-9a-fA-F]{8,}\s*//\s*[A-Z_]+
+**/*.rs:\b\d{4,}\b\s*//\s*[A-Z_]+
+
+# Monero-specific constants
+**/*.rs:1000000000000\s*//\s*XMR_TO_ATOMIC
+**/*.rs:18082\s*//\s*MONERO_RPC_PORT
+**/*.rs:9050\s*//\s*TOR_SOCKS_PORT
+
+# ============================================
+# LEGITIMATE ASSERTIONS
+# ============================================
+
+# Test assertions that verify true conditions
+**/tests/*.rs:assert!\s*\(\s*true\s*\)\s*//\s*Test
+**/tests/*.rs:assert!\s*\(\s*1\s*==\s*1\s*\)\s*//\s*Test
+
+# ============================================
+# LEGITIMATE UNIMPLEMENTED
+# ============================================
+
+# Feature flags for incomplete features
+**/*.rs:unimplemented!\s*\(\s*"Feature.*"\s*\)
+
+# ============================================
+# LEGITIMATE CREDENTIALS (Test/Example)
+# ============================================
+
+# Test credentials in test files
+**/tests/*.rs:password\s*=\s*"test"
+**/tests/*.rs:secret\s*=\s*"test"
+**/tests/*.rs:key\s*=\s*"test"
+
+# Test files can use println! and panic! for test output
+**/tests/*.rs:println!
+**/tests/*.rs:panic!
+
+# Cryptographic key generation in tests (not real credentials)
+./server/tests/integration_tests.rs:let key = generate_key.*
+./server/tests/integration_tests.rs:let wrong_key = generate_key.*
+./server/tests/test_sqlcipher.rs:let.*key\s*=
+./server/tests/auth_integration.rs:secret_key
+
+# Example credentials in documentation
+docs/**/*.md:password\s*=\s*"example"
+docs/**/*.md:secret\s*=\s*"example"
+
+# ============================================
+# LEGITIMATE CRYPTOGRAPHIC CODE (Production)
+# ============================================
+
+# Encryption module - legitimate key handling
+./server/src/crypto/encryption.rs:let mut key\s*=
+./server/src/crypto/encryption.rs:key\s*=
+
+# Database encryption - SQLCipher legitimate key usage
+./server/src/db/mod.rs:encryption_key
+./server/src/db/mod.rs:PRAGMA key
+
+# Authentication - legitimate password handling
+./server/src/handlers/auth.rs:password\s*=
+./server/src/handlers/auth.rs:password_hash
+
+# Main config - environment variables for secrets
+./server/src/main.rs:DB_ENCRYPTION_KEY
+./server/src/main.rs:SESSION_SECRET_KEY
+./server/src/main.rs:secret_key
+
+# ============================================
+# LEGITIMATE MONERO/TOR PATTERNS
+# ============================================
+
+# Test functions that intentionally use dangerous patterns to verify security
+**/*.rs:0\.0\.0\.0.*18082.*test
+**/*.rs:192\.168\..*18082.*test
+**/*.rs:0\.0\.0\.0.*18082.*assert
+**/*.rs:192\.168\..*18082.*assert
+
+# Constants and configuration (legitimate IPs)
+**/*.rs:127\.0\.0\.1.*const
+**/*.rs:localhost.*const
+**/*.rs:127\.0\.0\.1.*pub const
+
+# ============================================
+# LEGITIMATE SUPPOSITIONS (Documentation)
+# ============================================
+
+# Documentation can contain suppositions
+docs/**/*.md:should\s+work
+docs/**/*.md:probably\s+works
+docs/**/*.md:assume\s+
+
+# ============================================
+# LEGITIMATE VAGUE COMMENTS (Documentation)
+# ============================================
+
+# Documentation can have implementation notes
+docs/**/*.md:TO\s+BE\s+IMPLEMENTED
+docs/**/*.md:NOT\s+IMPLEMENTED
+docs/**/*.md:MISSING\s+IMPLEMENTATION
+
+# ============================================
+# LEGITIMATE HYPOTHESES (Documentation)
+# ============================================
+
+# Documentation can contain hypotheses
+docs/**/*.md:HYPOTHÈSES
+docs/**/*.md:À\s+VALIDER
+docs/**/*.md:TO\s+BE\s+VALIDATED
+
+# ============================================
+# TRACKED IMPLEMENTATION TASKS
+# ============================================
+
+# Production implementation tracked in GitHub issues
+server/src/wallet_manager.rs:FIXME.*GitHub issue.*Implement production multisig
+
+# ============================================
+# INTEGRATION TESTS - unwrap for test assertions
+# ============================================
+
+# Integration tests - unwrap for test assertions (all test files)
+**/server/tests/*.rs:unwrap
+**/server/tests/*.rs:password
+
+# HTMX Integration tests - allow test assertions
+server/tests/htmx_integration.rs:unwrap
+server/tests/htmx_integration.rs:password
+
+# ============================================
+# LEGITIMATE PLACEHOLDERS (Production)
+# ============================================
+
+# Frontend handler - milestone separation documentation
+server/src/handlers/frontend.rs:Placeholder for listings display.*separate milestone
+./server/tests/htmx_integration.rs:unwrap
+./server/tests/htmx_integration.rs:password

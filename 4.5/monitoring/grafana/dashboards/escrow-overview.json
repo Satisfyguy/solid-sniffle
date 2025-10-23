@@ -1,0 +1,35 @@
+{
+  "dashboard": {
+    "title": "Escrow Overview",
+    "panels": [
+      {
+        "title": "Escrows by State",
+        "targets": [
+          {
+            "expr": "escrow_total"
+          }
+        ],
+        "type": "piechart"
+      },
+      {
+        "title": "State Transitions (last 24h)",
+        "targets": [
+          {
+            "expr": "increase(escrow_state_transitions_total[24h])"
+          }
+        ],
+        "type": "heatmap"
+      },
+      {
+        "title": "Stuck Escrows (pending > 1h)",
+        "targets": [
+          {
+            "expr": "sum(escrow_total{state=\"pending\"} AND (time() - escrow_last_update_timestamp > 3600))"
+          }
+        ],
+        "type": "singlestat",
+        "thresholds": "0,1,5"
+      }
+    ]
+  }
+}

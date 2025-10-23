@@ -1,0 +1,276 @@
+/**
+ * Reputation System Styles
+ *
+ * Production-grade CSS for reputation components
+ * Follows glassmorphism design system
+ */
+
+/* Rating Stars */
+.rating-stars {
+    display: inline-flex;
+    gap: 0.2rem;
+    color: #F59E0B;
+    font-size: 1rem;
+}
+
+.rating-stars.large {
+    font-size: 1.5rem;
+}
+
+.rating-stars .star-filled {
+    color: #F59E0B;
+}
+
+.rating-stars .star-empty {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+/* Reputation Badge (for vendor cards) */
+.reputation-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.reputation-badge .badge-rating {
+    font-weight: 600;
+    color: #F59E0B;
+}
+
+.reputation-badge .badge-count {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Verification Status */
+.verification-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.verification-status.verified {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #86EFAC;
+}
+
+.verification-status.unverified {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #FCA5A5;
+}
+
+.verification-status.pending {
+    background: rgba(249, 115, 22, 0.1);
+    border: 1px solid rgba(249, 115, 22, 0.3);
+    color: #FDBA74;
+}
+
+.verification-status .status-icon {
+    font-size: 1.1rem;
+}
+
+/* IPFS Export Modal */
+.ipfs-export-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.ipfs-export-modal.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.ipfs-export-content {
+    max-width: 500px;
+    width: 90%;
+    padding: 2rem;
+    background: rgba(18, 18, 18, 0.98);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.ipfs-export-content h3 {
+    margin: 0 0 1rem 0;
+    color: #8B5CF6;
+}
+
+.ipfs-hash-display {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 0.85rem;
+    word-break: break-all;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 1rem 0;
+}
+
+.ipfs-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.ipfs-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 8px;
+    color: #8B5CF6;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.ipfs-link:hover {
+    background: rgba(139, 92, 246, 0.2);
+    transform: translateX(4px);
+}
+
+/* Loading States */
+.loading-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.loading-placeholder .spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #8B5CF6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Review Form Enhancements */
+.review-form-success {
+    padding: 1.5rem;
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.review-form-success .success-icon {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+}
+
+.review-form-success h3 {
+    margin: 0 0 0.5rem 0;
+    color: #86EFAC;
+}
+
+.review-form-success p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .vendor-header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .vendor-stats {
+        justify-content: center;
+    }
+
+    .vendor-actions {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .btn-export-ipfs {
+        width: 100%;
+    }
+
+    .filter-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .filter-btn {
+        width: 100%;
+    }
+}
+
+/* Dark Mode Optimizations */
+@media (prefers-color-scheme: dark) {
+    .review-card {
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    .review-card:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+}
+
+/* Accessibility */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Focus visible for keyboard navigation */
+.btn-export-ipfs:focus-visible,
+.filter-btn:focus-visible,
+.review-form button:focus-visible {
+    outline: 2px solid #8B5CF6;
+    outline-offset: 2px;
+}
+
+/* Print Styles */
+@media print {
+    .vendor-actions,
+    .filter-buttons,
+    .btn-export-ipfs {
+        display: none;
+    }
+
+    .review-card {
+        break-inside: avoid;
+    }
+}

@@ -1,0 +1,2 @@
+ALTER TABLE users ADD COLUMN wallet_address VARCHAR(95);
+ALTER TABLE users ADD COLUMN wallet_id VARCHAR(36);

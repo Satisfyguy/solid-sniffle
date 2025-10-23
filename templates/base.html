@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="description" content="⬛ AMAZAWN — DECENTRALIZED MARKETPLACE | 2-OF-3 MULTISIG ESCROW | NON-CUSTODIAL | TOR NETWORK | PRIVACY-FIRST">
+    <title>{% block title %}⬛ AMAZAWN — DECENTRALIZED MARKETPLACE{% endblock %}</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <!-- HTMX for dynamic interactions -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+    <!-- Skip to main content link for keyboard navigation -->
+    <a href="#main-content" class="skip-link">SKIP TO MAIN CONTENT</a>
+
+    {% include "partials/header.html" %}
+
+    <main id="main-content" role="main" aria-label="Main content">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% include "partials/footer.html" %}
+</body>
+</html>

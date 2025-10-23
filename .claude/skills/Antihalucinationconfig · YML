@@ -1,0 +1,601 @@
+# Configuration de la Skill Anti-Hallucination pour Claude Code
+
+## Installation de la Skill
+
+### Option 1: Installation globale
+
+```bash
+# Créer le dossier des skills si nécessaire
+mkdir -p ~/.claude-code/skills
+
+# Copier la skill
+cp SKILL_ANTI_HALLUCINATION.md ~/.claude-code/skills/anti-hallucination.md
+
+# Activer la skill globalement
+claude-code config set skills.anti-hallucination.enabled true
+```
+
+### Option 2: Installation par projet
+
+```bash
+# Dans votre projet
+mkdir .claude-code
+cp SKILL_ANTI_HALLUCINATION.md .claude-code/anti-hallucination.skill.md
+
+# Créer la configuration du projet
+cat > .claude-code/config.yml << EOF
+skills:
+  - ./anti-hallucination.skill.md
+  
+validation:
+  enabled: true
+  level: strict
+EOF
+```
+
+## Fichier de configuration complet
+
+Créez `.claude-code.yml` à la racine de votre projet :
+
+```yaml
+# Configuration Claude Code avec Skill Anti-Hallucination
+version: 1.0
+
+# Skills actives
+skills:
+  - anti-hallucination
+  - code-review  # optionnel
+  - testing      # optionnel
+
+# Configuration de génération
+generation:
+  # Toujours valider avant de générer
+  pre_validate: true
+  
+  # Niveau de créativité (lower = moins d'hallucinations)
+  temperature: 0.3
+  
+  # Nombre de vérifications
+  validation_passes: 2
+  
+  # Mode strict pour les imports
+  strict_imports: true
+
+# Règles anti-hallucination
+anti_hallucination:
+  # Niveau: basic, standard, strict
+  level: strict
+  
+  # Validation automatique
+  auto_validate: true
+  
+  # Correction automatique des problèmes mineurs
+  auto_fix: true
+  
+  # Expliquer les corrections
+  explain_fixes: true
+  
+  # Patterns personnalisés à détecter
+  custom_patterns:
+    - pattern: "console\\.log"
+      severity: warning
+      message: "Utiliser un logger au lieu de console.log"
+      fix: "logger.debug"
+    
+    - pattern: "any\\s*\\["
+      severity: error
+      message: "Type 'any' détecté en TypeScript"
+    
+    - pattern: "TODO:|FIXME:"
+      severity: warning
+      message: "TODO/FIXME non résolu"
+    
+    - pattern: "<[A-Z_]+>"
+      severity: error
+      message: "Placeholder non remplacé"
+
+# Validation par langage
+languages:
+  python:
+    # Style de code
+    style: pep8
+    
+    # Format des docstrings
+    docstring_style: google
+    
+    # Type hints
+    typing: strict
+    
+    # Linter
+    linter: pylint
+    
+    # Imports autorisés
+    allowed_imports:
+      - standard  # Bibliothèque standard Python
+      - common    # pandas, numpy, requests, etc.
+      - project   # Modules du projet
+    
+    # Imports interdits
+    forbidden_imports:
+      - "from X import *"
+      - "import *"
+    
+    # Validation supplémentaire
+    checks:
+      - no_print_statements
+      - require_type_hints
+      - require_docstrings
+      - max_line_length: 100
+      - max_function_length: 50
+      - max_complexity: 10
+
+  javascript:
+    style: standard
+    semicolons: false
+    quotes: single
+    
+    # Framework spécifique
+    framework: null  # ou react, vue, angular
+    
+    # Validation
+    checks:
+      - no_console_log
+      - no_var_keyword
+      - prefer_const
+      - arrow_functions
+    
+    # Imports
+    module_system: esm  # ou commonjs
+    
+  typescript:
+    extends: javascript
+    strict: true
+    
+    # Options TypeScript
+    compiler_options:
+      noImplicitAny: true
+      strictNullChecks: true
+      noUnusedLocals: true
+      noUnusedParameters: true
+    
+    # Interdire 'any'
+    no_any: true
+
+  java:
+    style: google
+    
+    # Version
+    version: 11
+    
+    # Validation
+    checks:
+      - require_javadoc
+      - no_system_out
+      - prefer_logger
+      - null_checks
+
+  go:
+    # Formattage automatique
+    gofmt: true
+    
+    # Validation
+    checks:
+      - handle_errors
+      - no_panic
+      - defer_close
+
+# Tests automatiques
+testing:
+  # Générer des tests automatiquement
+  auto_generate: true
+  
+  # Framework de test par langage
+  frameworks:
+    python: pytest
+    javascript: jest
+    typescript: jest
+    java: junit
+    go: testing
+  
+  # Coverage minimum
+  coverage_threshold: 80
+  
+  # Générer des exemples
+  generate_examples: true
+
+# Rapports
+reporting:
+  # Format des rapports
+  format: markdown  # ou json, html
+  
+  # Fréquence
+  on_commit: true
+  on_push: true
+  
+  # Détail
+  verbose: false
+  
+  # Sauvegarder les rapports
+  save_reports: true
+  report_dir: .claude-code/reports
+
+# Intégration CI/CD
+ci:
+  # GitHub Actions
+  github_actions:
+    enabled: true
+    on: [push, pull_request]
+    
+  # GitLab CI
+  gitlab_ci:
+    enabled: false
+    
+  # Pre-commit hooks
+  pre_commit:
+    enabled: true
+    hooks:
+      - validate_syntax
+      - check_imports
+      - detect_hallucinations
+
+# Comportement des erreurs
+error_handling:
+  # Que faire en cas d'erreur
+  on_syntax_error: fail
+  on_import_error: warn
+  on_hallucination: fail
+  on_complexity_exceeded: warn
+  
+  # Permettre l'override
+  allow_override: true
+  override_comment: "# noqa: hallucination"
+
+# Cache
+cache:
+  enabled: true
+  ttl: 3600  # secondes
+  max_size: 100  # MB
+
+# Logs
+logging:
+  level: info  # debug, info, warn, error
+  file: .claude-code/claude.log
+  max_size: 10  # MB
+  rotate: true
+
+# Métriques
+metrics:
+  enabled: true
+  
+  # Métriques à collecter
+  track:
+    - generation_time
+    - validation_errors
+    - hallucinations_detected
+    - code_quality_score
+    - test_coverage
+  
+  # Envoyer à un service externe (optionnel)
+  export:
+    enabled: false
+    endpoint: null
+
+# Personnalisation par fichier
+file_overrides:
+  "*.test.js":
+    anti_hallucination:
+      level: basic
+  
+  "*.spec.ts":
+    anti_hallucination:
+      level: basic
+  
+  "migrations/*.py":
+    anti_hallucination:
+      enabled: false
+  
+  "vendor/*":
+    anti_hallucination:
+      enabled: false
+
+# Alias de commandes
+aliases:
+  validate: "claude-code validate --skill anti-hallucination"
+  safe-gen: "claude-code generate --skill anti-hallucination --level strict"
+  check: "claude-code analyze --detect-hallucinations"
+  fix: "claude-code fix --auto"
+
+# Hooks personnalisés
+hooks:
+  # Avant la génération
+  pre_generate:
+    - command: "claude-code context analyze"
+      required: true
+  
+  # Après la génération
+  post_generate:
+    - command: "claude-code validate"
+      required: true
+    - command: "claude-code test --generate"
+      required: false
+  
+  # Avant commit
+  pre_commit:
+    - command: "claude-code validate --staged"
+      required: true
+
+# Templates de code sûrs
+templates:
+  # Template pour les fonctions Python
+  python_function: |
+    def {name}({params}) -> {return_type}:
+        """
+        {description}
+        
+        Args:
+            {args_description}
+        
+        Returns:
+            {return_description}
+        
+        Raises:
+            {raises_description}
+        """
+        # Validation des entrées
+        if not {validation_condition}:
+            raise ValueError("{error_message}")
+        
+        try:
+            # Logique principale
+            {logic}
+        except Exception as e:
+            # Gestion d'erreur
+            raise {custom_exception}(f"Erreur: {e}")
+        
+        return {return_value}
+  
+  # Template pour les classes TypeScript
+  typescript_class: |
+    /**
+     * {description}
+     */
+    export class {ClassName} {
+        private readonly {privateFields}: {types};
+        
+        constructor({params}: {paramTypes}) {
+            // Validation
+            if (!{validation}) {
+                throw new Error('{errorMessage}');
+            }
+            
+            this.{field} = {value};
+        }
+        
+        /**
+         * {methodDescription}
+         */
+        public {methodName}({params}: {types}): {returnType} {
+            try {
+                {logic}
+            } catch (error) {
+                throw new {CustomError}(`Method failed: ${error.message}`);
+            }
+        }
+    }
+
+# Messages personnalisés
+messages:
+  validation_start: "🔍 Validation du code en cours..."
+  validation_success: "✅ Code validé sans erreurs!"
+  validation_failure: "❌ Erreurs détectées dans le code"
+  hallucination_detected: "⚠️ Patterns d'hallucination détectés"
+  fix_applied: "🔧 Correction automatique appliquée"
+  test_generated: "🧪 Tests générés avec succès"
+
+# Environnements
+environments:
+  development:
+    anti_hallucination:
+      level: standard
+      auto_fix: true
+  
+  staging:
+    anti_hallucination:
+      level: strict
+      auto_fix: false
+  
+  production:
+    anti_hallucination:
+      level: strict
+      auto_fix: false
+      fail_on_warning: true
+```
+
+## Commandes CLI
+
+Avec cette configuration, vous pouvez utiliser :
+
+```bash
+# Initialiser la skill dans un projet
+claude-code init --skill anti-hallucination
+
+# Générer du code avec validation stricte
+claude-code generate "API REST pour gestion d'utilisateurs" \
+  --skill anti-hallucination \
+  --level strict
+
+# Valider un fichier existant
+claude-code validate app.py --skill anti-hallucination
+
+# Corriger automatiquement les problèmes
+claude-code fix app.py --auto
+
+# Analyser la complexité
+claude-code analyze --complexity --hallucinations
+
+# Générer des tests
+claude-code test generate app.py
+
+# Rapport de qualité complet
+claude-code report --format html --output quality-report.html
+
+# Surveiller en temps réel
+claude-code watch --validate-on-save
+
+# Mode interactif avec validation continue
+claude-code interactive --safe-mode
+```
+
+## Scripts d'intégration
+
+### Pre-commit Hook
+
+Créez `.git/hooks/pre-commit` :
+
+```bash
+#!/bin/bash
+# Pre-commit hook avec validation anti-hallucination
+
+echo "🔍 Validation anti-hallucination..."
+
+# Récupérer les fichiers modifiés
+files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(py|js|ts|java|go)$')
+
+if [ -z "$files" ]; then
+    exit 0
+fi
+
+# Valider chaque fichier
+for file in $files; do
+    echo "Checking $file..."
+    
+    # Utiliser la skill anti-hallucination
+    if ! claude-code validate "$file" --skill anti-hallucination --quiet; then
+        echo "❌ Validation échouée pour $file"
+        echo "Lancez 'claude-code fix $file' pour corriger automatiquement"
+        exit 1
+    fi
+done
+
+echo "✅ Tous les fichiers sont valides!"
+exit 0
+```
+
+### GitHub Action
+
+Créez `.github/workflows/anti-hallucination.yml` :
+
+```yaml
+name: Anti-Hallucination Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Claude Code
+      run: |
+        # Installer Claude Code CLI
+        npm install -g @anthropic/claude-code-cli
+        
+        # Installer la skill
+        claude-code skill install anti-hallucination
+    
+    - name: Validate Code
+      run: |
+        claude-code validate . \
+          --skill anti-hallucination \
+          --level strict \
+          --format json \
+          --output validation-report.json
+    
+    - name: Upload Report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: validation-report
+        path: validation-report.json
+    
+    - name: Comment PR
+      if: failure() && github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('validation-report.json', 'utf8'));
+          
+          let comment = '## ❌ Validation Anti-Hallucination\n\n';
+          comment += `Erreurs détectées: ${report.errors.length}\n\n`;
+          
+          for (const error of report.errors.slice(0, 10)) {
+            comment += `- **${error.file}:${error.line}** - ${error.message}\n`;
+          }
+          
+          github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: comment
+          });
+```
+
+## Variables d'environnement
+
+```bash
+# Activer le mode strict globalement
+export CLAUDE_CODE_ANTI_HALLUCINATION=strict
+
+# Activer les corrections automatiques
+export CLAUDE_CODE_AUTO_FIX=true
+
+# Niveau de log
+export CLAUDE_CODE_LOG_LEVEL=debug
+
+# Désactiver le cache
+export CLAUDE_CODE_CACHE_DISABLED=true
+
+# Timeout pour la validation
+export CLAUDE_CODE_VALIDATION_TIMEOUT=30
+```
+
+## Intégration IDE
+
+### VS Code
+
+Ajoutez dans `.vscode/settings.json` :
+
+```json
+{
+  "claude-code.skills": ["anti-hallucination"],
+  "claude-code.validation.onSave": true,
+  "claude-code.validation.level": "strict",
+  "claude-code.autoFix.enabled": true,
+  "claude-code.showInlineHints": true
+}
+```
+
+### JetBrains
+
+Ajoutez dans `.idea/claude-code.xml` :
+
+```xml
+<component name="ClaudeCodeSettings">
+  <option name="skills">
+    <list>
+      <option value="anti-hallucination" />
+    </list>
+  </option>
+  <option name="validationLevel" value="STRICT" />
+  <option name="autoFix" value="true" />
+</component>
+```
+
+Cette configuration complète permet d'intégrer parfaitement la skill anti-hallucination dans votre workflow Claude Code !

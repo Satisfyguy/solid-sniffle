@@ -1,0 +1,54 @@
+[package]
+name = "reputation-wasm"
+version = "0.1.0"
+edition = "2021"
+authors = ["Monero Marketplace Team"]
+description = "WebAssembly module for client-side reputation verification"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Local dependencies
+reputation-common = { path = "../common" }
+
+# WASM bindings
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+web-sys = { version = "0.3", features = ["console"] }
+serde-wasm-bindgen = "0.6"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Cryptography (WASM-compatible)
+ed25519-dalek = { version = "2.1", default-features = false, features = ["rand_core"] }
+sha2 = { version = "0.10", default-features = false }
+base64 = "0.22"
+
+# Time handling
+chrono = { version = "0.4", features = ["serde", "wasmbind"] }
+
+# Error handling (no std for WASM)
+thiserror = "2.0"
+
+# Console logging for debugging
+console_error_panic_hook = "0.1"
+wasm-logger = "0.2"
+
+# Getrandom for WASM
+getrandom = { version = "0.2", features = ["js"] }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+
+[profile.release]
+# Optimize for small WASM binary size
+opt-level = "z"     # Optimize for size
+lto = true          # Link-time optimization
+codegen-units = 1   # Better optimization
+strip = true        # Strip symbols
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false    # Disabled due to bulk memory incompatibility

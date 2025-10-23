@@ -1,0 +1,369 @@
+name: check-security-theatre
+description: |
+  Détecte automatiquement le "security theatre" dans le code Rust.
+  Analyse les patterns dangereux avec niveaux de sévérité, métriques,
+  et support des fichiers modifiés Git uniquement.
+
+parameters:
+  - name: scan_path
+    type: string
+    description: Chemin du répertoire à scanner (par défaut le répertoire courant)
+    required: false
+    default: "."
+
+  - name: verbose
+    type: boolean
+    description: Afficher tous les détails des problèmes détectés
+    required: false
+    default: false
+
+  - name: git_staged_only
+    type: boolean
+    description: Scanner uniquement les fichiers staged dans Git
+    required: false
+    default: false
+
+  - name: min_severity
+    type: string
+    description: Niveau minimum de sévérité (CRITICAL, HIGH, MEDIUM, LOW, INFO)
+    required: false
+    default: "INFO"
+
+command: |
+  #!/bin/bash
+
+  # --- Couleurs ---
+  RED='\033[0;31m'
+  GREEN='\033[0;32m'
+  YELLOW='\033[0;33m'
+  CYAN='\033[0;36m'
+  GRAY='\033[0;90m'
+  MAGENTA='\033[0;35m'
+  BLUE='\033[0;34m'
+  NC='\033[0m'
+
+  # --- Paramètres ---
+  VERBOSE={{verbose}}
+  SCAN_PATH="{{scan_path}}"
+  GIT_STAGED_ONLY={{git_staged_only}}
+  MIN_SEVERITY="{{min_severity}}"
+  IGNORE_FILE=".security-theatre-ignore"
+
+  # --- Définition des niveaux de sévérité ---
+  declare -A SEVERITY_LEVEL
+  SEVERITY_LEVEL["CRITICAL"]=5
+  SEVERITY_LEVEL["HIGH"]=4
+  SEVERITY_LEVEL["MEDIUM"]=3
+  SEVERITY_LEVEL["LOW"]=2
+  SEVERITY_LEVEL["INFO"]=1
+
+  MIN_LEVEL=${SEVERITY_LEVEL[$MIN_SEVERITY]:-1}
+
+  # --- Définition des motifs de détection avec sévérité ---
+  declare -A PATTERNS
+  declare -A SEVERITY
+  declare -A CONTEXT_EXCEPTIONS
+
+  # CRITICAL - Bloquant absolu
+  PATTERNS["Credentials hardcodés"]='\b(password|secret|private_key|api_key|token)\s*=\s*"[^"]{8,}"'
+  SEVERITY["Credentials hardcodés"]="CRITICAL"
+
+  PATTERNS["Unsafe sans justification"]='unsafe\s*\{[^}]{0,50}\}(?!.*//.*SAFETY:)'
+  SEVERITY["Unsafe sans justification"]="CRITICAL"
+
+  # HIGH - Très dangereux
+  PATTERNS["Patterns interdits"]='\b(unwrap|expect\s*\(\s*""\s*\))\s*\('
+  SEVERITY["Patterns interdits"]="HIGH"
+  CONTEXT_EXCEPTIONS["Patterns interdits"]='#\[cfg\(test\)\]|fn test_|//.*test|examples?/'
+
+  PATTERNS["Code mort"]='unimplemented!|todo!(?!.*//.*TODO)|panic!\s*\(\s*"'
+  SEVERITY["Code mort"]="HIGH"
+  CONTEXT_EXCEPTIONS["Code mort"]='#\[cfg\(test\)\]|fn test_|examples?/'
+
+  # MEDIUM - Problématique
+  PATTERNS["Debug code"]='\b(println!|print!|eprintln!|eprint!|dbg!)\s*\('
+  SEVERITY["Debug code"]="MEDIUM"
+  CONTEXT_EXCEPTIONS["Debug code"]='fn main|examples?/|#\[cfg\(debug_assertions\)\]'
+
+  PATTERNS["Magic numbers"]='(?<![a-zA-Z0-9_])(0x[0-9a-fA-F]{6,}|(?<!\d)[1-9]\d{3,}(?!\d))(?![a-zA-Z0-9_])'
+  SEVERITY["Magic numbers"]="MEDIUM"
+  CONTEXT_EXCEPTIONS["Magic numbers"]='const|static|#\[test\]|fn test_'
+
+  # LOW - Code smell
+  PATTERNS["Placeholders TODO"]='//\s*(TODO|FIXME|XXX|HACK)\b'
+  SEVERITY["Placeholders TODO"]="LOW"
+
+  PATTERNS["Tests désactivés"]='#\[ignore\]|#\[cfg\(never\)\]'
+  SEVERITY["Tests désactivés"]="LOW"
+
+  # INFO - Suggestions
+  PATTERNS["Suppositions"]='//.*\b(should work|might work|probably|assume|hope|guess|think.*works?|believe.*works?)\b'
+  SEVERITY["Suppositions"]="INFO"
+
+  PATTERNS["Placeholders temporaires"]='//\s*(TEMP|Temporary|FIX THIS|REMOVE THIS|PLACEHOLDER)\b'
+  SEVERITY["Placeholders temporaires"]="INFO"
+
+  # --- Fonction couleur par sévérité ---
+  get_severity_color() {
+      case $1 in
+          CRITICAL) echo "$RED";;
+          HIGH) echo "$MAGENTA";;
+          MEDIUM) echo "$YELLOW";;
+          LOW) echo "$CYAN";;
+          INFO) echo "$BLUE";;
+          *) echo "$GRAY";;
+      esac
+  }
+
+  # --- Initialisation ---
+  echo -e "${CYAN}╔═══════════════════════════════════════╗${NC}"
+  echo -e "${CYAN}║  Security Theatre Detection v2.0     ║${NC}"
+  echo -e "${CYAN}╚═══════════════════════════════════════╝${NC}"
+  echo
+
+  declare -A issues_by_category
+  declare -A issues_by_severity
+  all_issues=()
+  total_issues=0
+  total_lines=0
+
+  # --- Chargement des exceptions ---
+  exceptions=()
+  if [ -f "$IGNORE_FILE" ]; then
+      while IFS= read -r line || [[ -n "$line" ]]; do
+          if [[ ! "$line" =~ ^\s*# ]] && [[ -n "$line" ]]; then
+              exceptions+=("$line")
+          fi
+      done < "$IGNORE_FILE"
+      if [ "$VERBOSE" = true ]; then
+          echo -e "${YELLOW}📋 Loaded ${#exceptions[@]} exceptions from $IGNORE_FILE${NC}"
+      fi
+  fi
+
+  # --- Fonction de vérification des exceptions ---
+  is_ignored() {
+      local file_path=$1
+      local line_content=$2
+
+      for exc in "${exceptions[@]}"; do
+          if [[ "$exc" =~ (.+):(.+) ]]; then
+              local file_pattern="${BASH_REMATCH[1]}"
+              local line_pattern="${BASH_REMATCH[2]}"
+
+              if [[ "$file_path" =~ $file_pattern ]]; then
+                  if [[ "$line_content" =~ $line_pattern ]]; then
+                      return 0
+                  fi
+              fi
+          fi
+      done
+      return 1
+  }
+
+  # --- Fonction de vérification du contexte ---
+  is_context_exception() {
+      local category=$1
+      local file=$2
+      local line_num=$3
+      
+      if [ -z "${CONTEXT_EXCEPTIONS[$category]}" ]; then
+          return 1
+      fi
+      
+      local exception_pattern="${CONTEXT_EXCEPTIONS[$category]}"
+      
+      # Check file path
+      if [[ "$file" =~ $exception_pattern ]]; then
+          return 0
+      fi
+      
+      # Check surrounding context (5 lines before)
+      local start=$((line_num - 5))
+      if [ $start -lt 1 ]; then start=1; fi
+      
+      local context=$(sed -n "${start},${line_num}p" "$file" 2>/dev/null || echo "")
+      if [[ "$context" =~ $exception_pattern ]]; then
+          return 0
+      fi
+      
+      return 1
+  }
+
+  # --- Détermination des fichiers à scanner ---
+  if [ "$GIT_STAGED_ONLY" = true ]; then
+      if git rev-parse --git-dir > /dev/null 2>&1; then
+          rust_files=$(git diff --cached --name-only --diff-filter=ACM | grep '\.rs$' || true)
+          if [ -z "$rust_files" ]; then
+              echo -e "${GREEN}✅ No staged Rust files to check${NC}"
+              exit 0
+          fi
+          echo -e "${YELLOW}🔍 Scanning $(echo "$rust_files" | wc -l) staged Rust files...${NC}"
+      else
+          echo -e "${RED}❌ Not a git repository, falling back to full scan${NC}"
+          GIT_STAGED_ONLY=false
+      fi
+  fi
+
+  if [ "$GIT_STAGED_ONLY" = false ]; then
+      rust_files=$(find "$SCAN_PATH" -name "*.rs" -not -path "*/target/*" -not -path "*/.git/*")
+      file_count=$(echo "$rust_files" | wc -l)
+      echo -e "${YELLOW}🔍 Scanning $file_count Rust files...${NC}"
+      
+      # Count total lines
+      total_lines=$(cat $rust_files 2>/dev/null | wc -l)
+  fi
+  echo
+
+  # --- Scan des fichiers ---
+  for category in "${!PATTERNS[@]}"; do
+      category_severity=${SEVERITY[$category]}
+      category_level=${SEVERITY_LEVEL[$category_severity]:-1}
+      
+      # Skip if below minimum severity
+      if [ $category_level -lt $MIN_LEVEL ]; then
+          continue
+      fi
+      
+      pattern_group=${PATTERNS[$category]}
+      
+      if [ "$GIT_STAGED_ONLY" = true ]; then
+          grep_results=$(echo "$rust_files" | xargs grep -n -E "$pattern_group" 2>/dev/null || true)
+      else
+          grep_results=$(grep -r -n -E --include="*.rs" --exclude-dir={target,.git} "$pattern_group" "$SCAN_PATH" 2>/dev/null || true)
+      fi
+
+      if [ -n "$grep_results" ]; then
+          while IFS= read -r line; do
+              if [[ "$line" =~ ([^:]+):([0-9]+):(.*) ]]; then
+                  file="${BASH_REMATCH[1]}"
+                  line_num="${BASH_REMATCH[2]}"
+                  content="${BASH_REMATCH[3]}"
+                  
+                  trimmed_content=$(echo "$content" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+
+                  if ! is_ignored "$file" "$trimmed_content" && ! is_context_exception "$category" "$file" "$line_num"; then
+                      ((total_issues++))
+                      issues_by_category[$category]=$((issues_by_category[$category]+1))
+                      issues_by_severity[$category_severity]=$((issues_by_severity[$category_severity]+1))
+                      all_issues+=("$file:$line_num:$category:$category_severity:$trimmed_content")
+
+                      if [ "$VERBOSE" = true ]; then
+                          color=$(get_severity_color "$category_severity")
+                          echo -e "${color}[$category_severity] $category${NC}"
+                          echo -e "   ${GRAY}${file}:${line_num}${NC}"
+                          echo -e "   ${GRAY}$trimmed_content${NC}"
+                          echo
+                      fi
+                  fi
+              fi
+          done <<< "$grep_results"
+      fi
+  done
+
+  # --- Affichage du rapport ---
+  echo -e "${CYAN}╔═══════════════════════════════════════╗${NC}"
+  echo -e "${CYAN}║     Security Theatre Report          ║${NC}"
+  echo -e "${CYAN}╚═══════════════════════════════════════╝${NC}"
+  echo
+
+  if [ $total_issues -eq 0 ]; then
+      echo -e "${GREEN}✅ No security theatre detected!${NC}"
+      echo -e "${GREEN}   Your code looks clean 🎉${NC}"
+      echo
+      exit 0
+  fi
+
+  echo -e "${RED}⚠️  Security theatre detected: ${BOLD}$total_issues issues${NC}"
+  echo
+
+  # Métriques
+  if [ $total_lines -gt 0 ]; then
+      issue_ratio=$(awk "BEGIN {printf \"%.2f\", ($total_issues / $total_lines) * 100}")
+      echo -e "${CYAN}📊 Metrics:${NC}"
+      echo -e "   Total lines: $total_lines"
+      echo -e "   Issues/100 lines: $issue_ratio"
+      echo
+  fi
+
+  # Rapport par sévérité
+  echo -e "${CYAN}📈 Issues by Severity:${NC}"
+  for sev in CRITICAL HIGH MEDIUM LOW INFO; do
+      count=${issues_by_severity[$sev]:-0}
+      if [ $count -gt 0 ]; then
+          color=$(get_severity_color "$sev")
+          echo -e "  ${color}$sev: $count${NC}"
+      fi
+  done
+  echo
+
+  # Rapport par catégorie
+  echo -e "${CYAN}📋 Issues by Category:${NC}"
+  for category in "${!issues_by_category[@]}"; do
+      count=${issues_by_category[$category]}
+      sev=${SEVERITY[$category]}
+      color=$(get_severity_color "$sev")
+      if [ $count -gt 0 ]; then
+          echo -e "  ${color}[$sev]${NC} $category: $count"
+      fi
+  done
+  echo
+
+  # Top issues (trié par sévérité)
+  echo -e "${RED}🔥 Top Critical Issues:${NC}"
+  issue_count=0
+  for issue in "${all_issues[@]}"; do
+      IFS=':' read -r file line_num category sev content <<< "$issue"
+      if [ "$sev" = "CRITICAL" ] || [ "$sev" = "HIGH" ]; then
+          color=$(get_severity_color "$sev")
+          echo -e "  ${color}[$sev]${NC} ${RED}$file:$line_num${NC} - $category"
+          echo -e "    ${GRAY}$content${NC}"
+          ((issue_count++))
+          if [ $issue_count -ge 10 ]; then
+              break
+          fi
+      fi
+  done
+
+  if [ $issue_count -eq 0 ]; then
+      echo -e "  ${GREEN}No critical issues found${NC}"
+      echo
+      for issue in "${all_issues[@]:0:5}"; do
+          IFS=':' read -r file line_num category sev content <<< "$issue"
+          color=$(get_severity_color "$sev")
+          echo -e "  ${color}[$sev]${NC} ${YELLOW}$file:$line_num${NC} - $category"
+          echo -e "    ${GRAY}$content${NC}"
+      done
+  fi
+  echo
+
+  # Recommandations
+  echo -e "${CYAN}💡 Recommendations:${NC}"
+  if [ ${issues_by_severity[CRITICAL]:-0} -gt 0 ]; then
+      echo -e "  ${RED}🚨 CRITICAL: Fix credentials and unsafe code immediately!${NC}"
+  fi
+  if [ ${issues_by_severity[HIGH]:-0} -gt 0 ]; then
+      echo -e "  ${MAGENTA}⚠️  Replace .unwrap() with proper error handling (Result<T,E>)${NC}"
+  fi
+  if [ ${issues_by_category["Debug code"]:-0} -gt 0 ]; then
+      echo -e "  ${YELLOW}📝 Remove debug prints or use proper logging (tracing/log)${NC}"
+  fi
+  if [ ${issues_by_category["Placeholders TODO"]:-0} -gt 0 ]; then
+      echo -e "  ${CYAN}📌 Address TODO/FIXME comments before commit${NC}"
+  fi
+  echo
+
+  echo -e "${CYAN}🔧 To fix:${NC}"
+  echo -e "  1. Review each issue above"
+  echo -e "  2. Add justified exceptions to ${IGNORE_FILE}"
+  echo -e "     Format: file_path_pattern:line_regex_pattern"
+  echo -e "  3. Run with --verbose to see all issues"
+  echo
+
+  # Exit avec code approprié
+  if [ ${issues_by_severity[CRITICAL]:-0} -gt 0 ] || [ ${issues_by_severity[HIGH]:-0} -gt 0 ]; then
+      echo -e "${RED}❌ BLOCKING: Critical or High severity issues found${NC}"
+      exit 1
+  else
+      echo -e "${YELLOW}⚠️  WARNING: Lower severity issues found${NC}"
+      exit 0
+  fi

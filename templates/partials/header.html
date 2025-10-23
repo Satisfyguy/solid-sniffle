@@ -1,0 +1,29 @@
+<header role="banner">
+    <nav class="nav-container" role="navigation" aria-label="Main navigation">
+        <div class="nav-brand">
+            <a href="/" aria-label="Amazawn Home">
+                <img src="/static/amazawn_logo_v3_white_only.svg" alt="Amazawn Logo" class="logo" style="height: 24px; vertical-align: middle; margin-right: 8px;">
+                AMAZAWN
+            </a>
+        </div>
+
+        <div class="nav-menu" role="menubar">
+            <a href="/" role="menuitem" aria-label="Go to homepage">BROWSE</a>
+            <a href="/listings" role="menuitem" aria-label="Browse all listings">NEW</a>
+
+            {% if logged_in %}
+                {% if role == "vendor" %}
+                    <a href="/listings/new" role="menuitem" aria-label="Create a new listing">SELL</a>
+                {% endif %}
+                <a href="/orders" role="menuitem" aria-label="View my orders">ORDERS</a>
+                <span class="nav-user" aria-label="Current user">{{ username | upper }}</span>
+                <form action="/logout" method="post" style="display: inline;">
+                    <button type="submit" class="btn-link" aria-label="Logout from account">LOGOUT</button>
+                </form>
+            {% else %}
+                <a href="/login" role="menuitem" aria-label="Login to your account">LOGIN</a>
+                <a href="/register" role="menuitem" aria-label="Create a new account" style="background-color: #f5f5f5; color: #0a0a0a; border: 1px solid #f5f5f5;">REGISTER</a>
+            {% endif %}
+        </div>
+    </nav>
+</header>

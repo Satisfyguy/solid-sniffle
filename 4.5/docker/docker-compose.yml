@@ -1,0 +1,341 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Main Application Server
+  # ============================================================================
+  server:
+    build:
+      context: ../../
+      dockerfile: 4.5/docker/Dockerfile
+    container_name: marketplace-server
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=sqlite:///app/data/marketplace.db?mode=rwc
+      - RUST_LOG=info
+      - MONERO_BUYER_RPC_URL=http://monero-wallet-rpc-buyer:18082/json_rpc
+      - MONERO_VENDOR_RPC_URL=http://monero-wallet-rpc-vendor:18083/json_rpc
+      - MONERO_ARBITER_RPC_URL=http://monero-wallet-rpc-arbiter:18084/json_rpc
+    volumes:
+      - ../../data:/app/data
+      - ../../logs:/app/logs
+      - ../security/secrets.enc.yaml:/app/secrets.enc.yaml
+      - ../security/age.key:/app/age.key
+    command: >
+      bash -c "
+        export SOPS_AGE_KEY_FILE=/app/age.key;
+        eval $(sops --decrypt /app/secrets.enc.yaml | grep -E '^(DATABASE_PASSWORD|GRAFANA_ADMIN_PASSWORD|BACKUP_GPG_PASSPHRASE)=' | sed 's/^/export /');
+        /app/server
+      "
+    depends_on:
+      - monero-wallet-rpc-buyer
+      - monero-wallet-rpc-vendor
+      - monero-wallet-rpc-arbiter
+    networks:
+      - marketplace-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # Monero Wallet RPC - Buyer
+  # ============================================================================
+  monero-wallet-rpc-buyer:
+    image: ghcr.io/monerodocs/monero:v0.18.3.1
+    container_name: monero-wallet-rpc-buyer
+    restart: unless-stopped
+    command: >
+      monero-wallet-rpc
+      --testnet
+      --rpc-bind-ip 0.0.0.0
+      --rpc-bind-port 18082
+      --confirm-external-bind
+      --wallet-dir /wallet
+      --log-level 1
+      --disable-rpc-login
+    volumes:
+      - ../../wallets/buyer:/wallet
+    networks:
+      - marketplace-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:18082/json_rpc"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # Monero Wallet RPC - Vendor
+  # ============================================================================
+  monero-wallet-rpc-vendor:
+    image: ghcr.io/monerodocs/monero:v0.18.3.1
+    container_name: monero-wallet-rpc-vendor
+    restart: unless-stopped
+    command: >
+      monero-wallet-rpc
+      --testnet
+      --rpc-bind-ip 0.0.0.0
+      --rpc-bind-port 18083
+      --confirm-external-bind
+      --wallet-dir /wallet
+      --log-level 1
+      --disable-rpc-login
+    volumes:
+      - ../../wallets/vendor:/wallet
+    networks:
+      - marketplace-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:18083/json_rpc"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # Monero Wallet RPC - Arbiter
+  # ============================================================================
+  monero-wallet-rpc-arbiter:
+    image: ghcr.io/monerodocs/monero:v0.18.3.1
+    container_name: monero-wallet-rpc-arbiter
+    restart: unless-stopped
+    command: >
+      monero-wallet-rpc
+      --testnet
+      --rpc-bind-ip 0.0.0.0
+      --rpc-bind-port 18084
+      --confirm-external-bind
+      --wallet-dir /wallet
+      --log-level 1
+      --disable-rpc-login
+    volumes:
+      - ../../wallets/arbiter:/wallet
+    networks:
+      - marketplace-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:18084/json_rpc"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # Prometheus - Metrics Collection
+  # ============================================================================
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: marketplace-prometheus
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    volumes:
+      - ../monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ../monitoring/alerts:/etc/prometheus/alerts
+      - prometheus-data:/prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    networks:
+      - marketplace-network
+
+  # ============================================================================
+  # Grafana - Visualization
+  # ============================================================================
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: marketplace-grafana
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - ../monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ../monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+      - grafana-data:/var/lib/grafana
+    networks:
+      - marketplace-network
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # ============================================================================
+  # Loki - Log Aggregation
+  # ============================================================================
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: marketplace-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ../monitoring/loki-config.yaml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+    networks:
+      - marketplace-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ============================================================================
+  # Promtail - Log Shipper
+  # ============================================================================
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: marketplace-promtail
+    restart: unless-stopped
+    volumes:
+      - ../../logs:/var/log/marketplace
+      - ../monitoring/promtail-config.yaml:/etc/promtail/config.yaml
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - marketplace-network
+    depends_on:
+      - loki
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9080/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ============================================================================
+  # Node Exporter - System Metrics
+  # ============================================================================
+  node_exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: marketplace-node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    command:
+      - '--path.rootfs=/host'
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host:ro,rslave
+    networks:
+      - marketplace-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9100/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  # ============================================================================
+  # Monero Exporter - Wallet Metrics
+  # ============================================================================
+  monero-exporter:
+    build:
+      context: ../monitoring/monero-exporter
+      dockerfile: Dockerfile
+    container_name: marketplace-monero-exporter
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9101:9101"
+    environment:
+      - EXPORTER_PORT=9101
+      - POLL_INTERVAL=30
+      - BUYER_RPC_HOST=monero-wallet-rpc-buyer
+      - BUYER_RPC_PORT=18082
+      - VENDOR_RPC_HOST=monero-wallet-rpc-vendor
+      - VENDOR_RPC_PORT=18083
+      - ARBITER_RPC_HOST=monero-wallet-rpc-arbiter
+      - ARBITER_RPC_PORT=18084
+    networks:
+      - marketplace-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9101/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    # Uncomment when wallet RPC services are available
+    # depends_on:
+    #   - monero-wallet-rpc-buyer
+    #   - monero-wallet-rpc-vendor
+    #   - monero-wallet-rpc-arbiter
+
+  # ============================================================================
+  # Alertmanager - Alert Routing
+  # ============================================================================
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: marketplace-alertmanager
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9093:9093"
+    volumes:
+      - ../monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+    networks:
+      - marketplace-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  marketplace-network:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  loki-data:

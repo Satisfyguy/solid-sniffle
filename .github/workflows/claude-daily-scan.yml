@@ -1,0 +1,251 @@
+name: Claude Daily Security Scan
+
+on:
+  schedule:
+    # Every day at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  daily-security-scan:
+    name: Daily Security Audit with Claude
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install Dependencies
+      run: |
+        pip install anthropic aiohttp
+
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+
+    - name: Install Cargo Tools
+      run: |
+        cargo install cargo-audit || true
+        cargo install cargo-deny || true
+
+    - name: Run Master Security Audit
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      run: |
+        chmod +x scripts/audit-master.sh
+        ./scripts/audit-master.sh --full
+
+    - name: Upload Security Reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: daily-security-reports
+        path: |
+          docs/security-reports/audit-master-*.json
+          docs/security-reports/claude-*.json
+        retention-days: 90
+
+    - name: Parse Security Score
+      id: security-score
+      if: always()
+      run: |
+        # Get latest audit report
+        LATEST_REPORT=$(ls -t docs/security-reports/audit-master-*.json 2>/dev/null | head -1)
+
+        if [ -f "$LATEST_REPORT" ]; then
+          SCORE=$(jq -r '.global_score' "$LATEST_REPORT")
+          FAILED=$(jq -r '.failed' "$LATEST_REPORT")
+
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+          echo "failed=$FAILED" >> $GITHUB_OUTPUT
+
+          echo "📊 Security Score: $SCORE/100"
+          echo "❌ Failed Checks: $FAILED"
+        else
+          echo "⚠️ No report found"
+          echo "score=0" >> $GITHUB_OUTPUT
+          echo "failed=999" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create Issue on Failure
+      if: steps.security-score.outputs.score < 70
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const score = ${{ steps.security-score.outputs.score }};
+          const failed = ${{ steps.security-score.outputs.failed }};
+
+          const title = `🚨 Daily Security Scan Failed - Score: ${score}/100`;
+          const body = `## Daily Security Audit Report
+
+**Date:** ${new Date().toISOString()}
+**Global Security Score:** ${score}/100 ❌
+**Failed Checks:** ${failed}
+
+### 🔴 Action Required
+
+The daily security scan has detected issues that require immediate attention:
+
+- Security score below threshold (< 70)
+- ${failed} checks failed
+
+### 📋 Next Steps
+
+1. Review the [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+2. Download security reports from artifacts
+3. Fix critical and high severity issues
+4. Re-run the security scan
+
+### 📄 Reports
+
+Security reports are available in the workflow artifacts:
+- Master audit report
+- Claude AI analysis reports
+
+---
+*Automated by Claude Daily Security Scan*
+`;
+
+          // Check if similar issue exists
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            labels: ['security', 'automated']
+          });
+
+          const existingIssue = issues.data.find(issue =>
+            issue.title.includes('Daily Security Scan Failed')
+          );
+
+          if (existingIssue) {
+            // Update existing issue
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: existingIssue.number,
+              body: `### Update: ${new Date().toISOString()}\n\n${body}`
+            });
+          } else {
+            // Create new issue
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['security', 'automated', 'priority-high']
+            });
+          }
+
+    - name: Send Slack Notification (Optional)
+      if: always() && env.SLACK_WEBHOOK_URL != ''
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      run: |
+        SCORE="${{ steps.security-score.outputs.score }}"
+        FAILED="${{ steps.security-score.outputs.failed }}"
+
+        if [ "$SCORE" -lt 70 ]; then
+          COLOR="danger"
+          STATUS="FAILED ❌"
+        elif [ "$SCORE" -lt 85 ]; then
+          COLOR="warning"
+          STATUS="WARNING ⚠️"
+        else
+          COLOR="good"
+          STATUS="PASSED ✅"
+        fi
+
+        curl -X POST "$SLACK_WEBHOOK_URL" \
+          -H 'Content-Type: application/json' \
+          -d "{
+            \"attachments\": [{
+              \"color\": \"$COLOR\",
+              \"title\": \"Daily Security Scan - $STATUS\",
+              \"text\": \"Global Security Score: $SCORE/100\",
+              \"fields\": [
+                {\"title\": \"Failed Checks\", \"value\": \"$FAILED\", \"short\": true},
+                {\"title\": \"Repository\", \"value\": \"${{ github.repository }}\", \"short\": true}
+              ],
+              \"footer\": \"Claude AI Security Scanner\",
+              \"ts\": $(date +%s)
+            }]
+          }"
+
+  weekly-deep-analysis:
+    name: Weekly Deep Security Analysis
+    runs-on: ubuntu-latest
+    # Run only on Mondays
+    if: github.event.schedule == '0 2 * * 1' || github.event_name == 'workflow_dispatch'
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Dependencies
+      run: pip install anthropic
+
+    - name: Deep Analysis - All Modules
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      run: |
+        # Analyse approfondie de tous les modules critiques
+        echo "🔍 Running deep analysis on all critical modules..."
+
+        # Server
+        python3 scripts/ai/claude_security_analyzer.py \
+          --dir server/src \
+          --mode deep \
+          --output docs/security-reports/weekly-server-$(date +%Y-%m-%d).json
+
+        # Wallet
+        python3 scripts/ai/claude_security_analyzer.py \
+          --dir wallet/src \
+          --mode deep \
+          --output docs/security-reports/weekly-wallet-$(date +%Y-%m-%d).json
+
+        # Common
+        python3 scripts/ai/claude_security_analyzer.py \
+          --dir common/src \
+          --mode deep \
+          --output docs/security-reports/weekly-common-$(date +%Y-%m-%d).json
+
+    - name: Generate Weekly Report
+      run: |
+        echo "# Weekly Security Analysis Report" > weekly-report.md
+        echo "" >> weekly-report.md
+        echo "**Date:** $(date +%Y-%m-%d)" >> weekly-report.md
+        echo "" >> weekly-report.md
+
+        # Parse reports and generate summary
+        for report in docs/security-reports/weekly-*.json; do
+          if [ -f "$report" ]; then
+            MODULE=$(basename "$report" | cut -d'-' -f2)
+            SCORE=$(jq -r '.reports[0].security_score // 0' "$report")
+
+            echo "## $MODULE" >> weekly-report.md
+            echo "Security Score: **$SCORE/100**" >> weekly-report.md
+            echo "" >> weekly-report.md
+          fi
+        done
+
+    - name: Upload Weekly Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: weekly-security-report
+        path: |
+          weekly-report.md
+          docs/security-reports/weekly-*.json
+        retention-days: 365  # Keep for 1 year

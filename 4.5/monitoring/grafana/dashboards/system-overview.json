@@ -1,0 +1,48 @@
+{
+  "dashboard": {
+    "title": "System Overview",
+    "panels": [
+      {
+        "title": "CPU Usage (%)",
+        "targets": [
+          {
+            "expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Memory Usage (%)",
+        "targets": [
+          {
+            "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100"
+          }
+        ],
+        "type": "graph"
+      },
+      {
+        "title": "Disk Usage",
+        "targets": [
+          {
+            "expr": "(node_filesystem_size_bytes - node_filesystem_avail_bytes) / node_filesystem_size_bytes * 100"
+          }
+        ],
+        "type": "gauge"
+      },
+      {
+        "title": "Network I/O (MB/s)",
+        "targets": [
+          {
+            "expr": "rate(node_network_receive_bytes_total[5m]) / 1024 / 1024",
+            "legendFormat": "RX"
+          },
+          {
+            "expr": "rate(node_network_transmit_bytes_total[5m]) / 1024 / 1024",
+            "legendFormat": "TX"
+          }
+        ],
+        "type": "graph"
+      }
+    ]
+  }
+}

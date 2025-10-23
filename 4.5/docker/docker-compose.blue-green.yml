@@ -1,0 +1,226 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Main Application Server - Blue Environment
+  # ============================================================================
+  server-blue:
+    build:
+      context: ../../
+      dockerfile: 4.5/docker/Dockerfile
+    container_name: marketplace-server-blue
+    restart: unless-stopped
+    volumes:
+      - ../../data:/app/data
+      - ../../logs:/app/logs
+      - ../security/secrets.enc.yaml:/app/secrets.enc.yaml
+      - ../security/age.key:/app/age.key
+    command: >
+      bash -c "
+        export SOPS_AGE_KEY_FILE=/app/age.key;
+        eval $(sops --decrypt /app/secrets.enc.yaml | grep -E '^(DATABASE_PASSWORD|GRAFANA_ADMIN_PASSWORD|BACKUP_GPG_PASSPHRASE)=' | sed 's/^/export /');
+        /app/server
+      "
+    networks:
+      - marketplace-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # Main Application Server - Green Environment
+  # ============================================================================
+  server-green:
+    build:
+      context: ../../
+      dockerfile: 4.5/docker/Dockerfile
+    container_name: marketplace-server-green
+    restart: unless-stopped
+    ports:
+      - "8081:8080" # Mapped to a different host port
+    environment:
+      - DATABASE_URL=sqlite:///app/data/marketplace.db?mode=rwc
+      - RUST_LOG=info
+      - MONERO_BUYER_RPC_URL=http://monero-wallet-rpc-buyer:18082/json_rpc
+      - MONERO_VENDOR_RPC_URL=http://monero-wallet-rpc-vendor:18083/json_rpc
+    volumes:
+      - ../../data:/app/data
+      - ../../logs:/app/logs
+      - ../security/secrets.enc.yaml:/app/secrets.enc.yaml
+      - ../security/age.key:/app/age.key
+    command: >
+      bash -c "
+        export SOPS_AGE_KEY_FILE=/app/age.key;
+        eval $(sops --decrypt /app/secrets.enc.yaml | grep -E '^(DATABASE_PASSWORD|GRAFANA_ADMIN_PASSWORD|BACKUP_GPG_PASSPHRASE)=' | sed 's/^/export /');
+        /app/server
+      "
+    networks:
+      - marketplace-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # Monero Wallet RPC - Buyer (Shared)
+  # ============================================================================
+  monero-wallet-rpc-buyer:
+    image: ghcr.io/monerodocs/monero:v0.18.3.1
+    container_name: monero-wallet-rpc-buyer
+    restart: unless-stopped
+    command: >
+      monero-wallet-rpc
+      --testnet
+      --rpc-bind-ip 0.0.0.0
+      --rpc-bind-port 18082
+      --confirm-external-bind
+      --wallet-dir /wallet
+      --log-level 1
+      --disable-rpc-login
+    volumes:
+      - ../../wallets/buyer:/wallet
+    networks:
+      - marketplace-network
+
+  # ============================================================================
+  # Monero Wallet RPC - Vendor (Shared)
+  # ============================================================================
+  monero-wallet-rpc-vendor:
+    image: ghcr.io/monerodocs/monero:v0.18.3.1
+    container_name: monero-wallet-rpc-vendor
+    restart: unless-stopped
+    command: >
+      monero-wallet-rpc
+      --testnet
+      --rpc-bind-ip 0.0.0.0
+      --rpc-bind-port 18083
+      --confirm-external-bind
+      --wallet-dir /wallet
+      --log-level 1
+      --disable-rpc-login
+    volumes:
+      - ../../wallets/vendor:/wallet
+    networks:
+      - marketplace-network
+
+  # ============================================================================
+  # Monero Wallet RPC - Arbiter (Shared)
+  # ============================================================================
+  monero-wallet-rpc-arbiter:
+    image: ghcr.io/monerodocs/monero:v0.18.3.1
+    container_name: monero-wallet-rpc-arbiter
+    restart: unless-stopped
+    command: >
+      monero-wallet-rpc
+      --testnet
+      --rpc-bind-ip 0.0.0.0
+      --rpc-bind-port 18084
+      --confirm-external-bind
+      --wallet-dir /wallet
+      --log-level 1
+      --disable-rpc-login
+    volumes:
+      - ../../wallets/arbiter:/wallet
+    networks:
+      - marketplace-network
+
+  # ============================================================================
+  # Prometheus - Metrics Collection (Shared)
+  # ============================================================================
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: marketplace-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    volumes:
+      - ../monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ../monitoring/alerts:/etc/prometheus/alerts
+      - prometheus-data:/prometheus
+    networks:
+      - marketplace-network
+
+  # ============================================================================
+  # Grafana - Visualization (Shared)
+  # ============================================================================
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: marketplace-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123_CHANGE_ME
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - ../monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ../monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+      - grafana-data:/var/lib/grafana
+    networks:
+      - marketplace-network
+    depends_on:
+      - prometheus
+
+  # ============================================================================
+  # Loki - Log Aggregation (Shared)
+  # ============================================================================
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: marketplace-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ../monitoring/loki-config.yaml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+    networks:
+      - marketplace-network
+
+  # ============================================================================
+  # Promtail - Log Shipper (Shared)
+  # ============================================================================
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: marketplace-promtail
+    restart: unless-stopped
+    volumes:
+      - ../../logs:/var/log/marketplace
+      - ../monitoring/promtail-config.yaml:/etc/promtail/config.yaml
+    command: -config.file=/etc/promtail/config.yaml
+    networks:
+      - marketplace-network
+    depends_on:
+      - loki
+
+  # ============================================================================
+  # Alertmanager - Alert Routing (Shared)
+  # ============================================================================
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: marketplace-alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ../monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+    networks:
+      - marketplace-network
+
+networks:
+  marketplace-network:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  loki-data:

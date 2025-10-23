@@ -1,0 +1,227 @@
+name: Claude AI Security Review
+
+on:
+  pull_request:
+    paths:
+      - 'server/**/*.rs'
+      - 'wallet/**/*.rs'
+      - 'common/**/*.rs'
+      - 'cli/**/*.rs'
+  workflow_dispatch:
+
+jobs:
+  claude-deep-analysis:
+    name: Claude Sonnet 4.5 - Deep Security Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for git diff
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install Dependencies
+      run: |
+        pip install anthropic aiohttp
+
+    - name: Get Changed Rust Files
+      id: changed-files
+      run: |
+        # Get list of changed .rs files
+        git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep '\.rs$' > changed_files.txt || true
+
+        # Count files
+        FILE_COUNT=$(wc -l < changed_files.txt)
+        echo "count=$FILE_COUNT" >> $GITHUB_OUTPUT
+
+        echo "Changed Rust files:"
+        cat changed_files.txt
+
+    - name: Claude Deep Security Analysis
+      if: steps.changed-files.outputs.count > 0
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      run: |
+        echo "🔍 Running Claude Sonnet 4.5 deep analysis on ${{ steps.changed-files.outputs.count }} files..."
+
+        # Analyze each changed file
+        while IFS= read -r file; do
+          if [ -f "$file" ]; then
+            echo "Analyzing: $file"
+            python3 scripts/ai/claude_security_analyzer.py --file "$file" --mode deep
+          fi
+        done < changed_files.txt
+
+        # Generate combined report
+        python3 scripts/ai/claude_security_analyzer.py --changed-files-only --output claude-report.json
+
+    - name: Upload Security Report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: claude-security-report
+        path: |
+          claude-report.json
+          docs/security-reports/claude-*.json
+        retention-days: 30
+
+    - name: Post Results to PR
+      if: github.event_name == 'pull_request' && steps.changed-files.outputs.count > 0
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+
+          try {
+            const results = JSON.parse(fs.readFileSync('claude-report.json', 'utf8'));
+
+            let comment = '## 🔒 Claude AI Security Analysis (Sonnet 4.5)\n\n';
+            comment += `**Global Security Score: ${results.global_score}/100**\n\n`;
+
+            if (results.reports && results.reports.length > 0) {
+              // Summary table
+              comment += '### 📊 Summary\n\n';
+              comment += '| File | Score | Critical | High | Medium |\n';
+              comment += '|------|-------|----------|------|--------|\n';
+
+              results.reports.forEach(report => {
+                const filename = report.file.split('/').pop();
+                comment += `| ${filename} | ${report.security_score}/100 | ${report.critical_count} | ${report.high_count} | ${report.medium_count} |\n`;
+              });
+
+              comment += '\n';
+
+              // Critical issues
+              let criticalIssues = [];
+              results.reports.forEach(report => {
+                if (report.issues && report.issues.critical) {
+                  report.issues.critical.forEach(issue => {
+                    criticalIssues.push({
+                      file: report.file,
+                      ...issue
+                    });
+                  });
+                }
+              });
+
+              if (criticalIssues.length > 0) {
+                comment += '### 🚨 Critical Issues\n\n';
+                criticalIssues.slice(0, 5).forEach(issue => {
+                  comment += `**${issue.file}:${issue.line}** - ${issue.issue}\n`;
+                  comment += `- Category: \`${issue.category}\`\n`;
+                  comment += `- ${issue.explanation}\n`;
+                  comment += `- **Fix:** \`\`\`rust\n${issue.fix}\n\`\`\`\n\n`;
+                });
+
+                if (criticalIssues.length > 5) {
+                  comment += `_... and ${criticalIssues.length - 5} more critical issues_\n\n`;
+                }
+              } else {
+                comment += '### ✅ No Critical Issues\n\n';
+              }
+
+              // Recommendations
+              if (results.reports[0].best_practices && results.reports[0].best_practices.length > 0) {
+                comment += '### 💡 Best Practices Recommendations\n\n';
+                results.reports[0].best_practices.slice(0, 3).forEach(bp => {
+                  comment += `- ${bp}\n`;
+                });
+                comment += '\n';
+              }
+
+              // Formal verification
+              let needsFormal = [];
+              results.reports.forEach(report => {
+                if (report.formal_verification_needed && report.formal_verification_needed.length > 0) {
+                  needsFormal.push(...report.formal_verification_needed);
+                }
+              });
+
+              if (needsFormal.length > 0) {
+                comment += '### 🔬 Formal Verification Recommended\n\n';
+                comment += 'The following functions should undergo formal verification:\n';
+                needsFormal.forEach(func => {
+                  comment += `- \`${func}\`\n`;
+                });
+                comment += '\n';
+              }
+            }
+
+            comment += '---\n';
+            comment += '_Powered by Claude Sonnet 4.5 - Anthropic AI_\n';
+
+            // Post comment
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+          } catch (e) {
+            console.error('Error posting results:', e);
+
+            // Post error comment
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '⚠️ Claude security analysis completed but could not parse results. Check the workflow logs for details.'
+            });
+          }
+
+    - name: Check Security Score Threshold
+      if: always()
+      run: |
+        if [ -f claude-report.json ]; then
+          SCORE=$(jq -r '.global_score' claude-report.json)
+
+          echo "Global Security Score: $SCORE/100"
+
+          if [ "$SCORE" -lt 70 ]; then
+            echo "❌ Security score too low (threshold: 70)"
+            exit 1
+          else
+            echo "✅ Security score acceptable"
+          fi
+        else
+          echo "⚠️ No report generated"
+        fi
+
+  claude-quick-scan:
+    name: Claude Haiku - Quick Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Dependencies
+      run: pip install anthropic
+
+    - name: Quick Security Scan
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      run: |
+        # Quick scan de tous les modules
+        python3 scripts/ai/claude_quick_scan.py --dir server/src --output quick-scan-server.json
+        python3 scripts/ai/claude_quick_scan.py --dir wallet/src --output quick-scan-wallet.json
+        python3 scripts/ai/claude_quick_scan.py --dir common/src --output quick-scan-common.json
+
+    - name: Upload Quick Scan Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: claude-quick-scan
+        path: quick-scan-*.json
+        retention-days: 7

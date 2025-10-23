@@ -1,0 +1,135 @@
+groups:
+  - name: marketplace_alerts
+    interval: 30s
+    rules:
+      # ========================================================================
+      # High Error Rate
+      # ========================================================================
+      - alert: HighErrorRate
+        expr: |
+          rate(http_requests_total{status=~"5.."}[5m]) /
+          rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "{{ $value | humanizePercentage }} of requests failing on {{ $labels.instance }}"
+
+      # ========================================================================
+      # Service Down
+      # ========================================================================
+      - alert: ServiceDown
+        expr: up{job="marketplace-server"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Marketplace server is down"
+          description: "Server {{ $labels.instance }} has been down for > 2 minutes"
+
+      # ========================================================================
+      # Slow Response Time
+      # ========================================================================
+      - alert: SlowResponseTime
+        expr: |
+          histogram_quantile(0.95,
+            rate(http_request_duration_seconds_bucket[5m])
+          ) > 2.0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow response time (p95 > 2s)"
+          description: "95th percentile response time is {{ $value }}s"
+
+      # ========================================================================
+      # Escrow Stuck in Pending
+      # ========================================================================
+      - alert: EscrowStuckInPending
+        expr: |
+          escrow_total{state="pending"} > 0 AND
+          time() - escrow_last_update_timestamp > 3600
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Escrow stuck in pending state"
+          description: "{{ $value }} escrows pending for > 1 hour"
+
+      # ========================================================================
+      # High Database Lock Contention
+      # ========================================================================
+      - alert: HighDatabaseLockContention
+        expr: rate(db_lock_wait_seconds_total[5m]) > 1.0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database lock contention"
+          description: "Database locks waiting {{ $value }}s/s"
+
+      # ========================================================================
+      # Wallet RPC Unreachable
+      # ========================================================================
+      - alert: WalletRPCUnreachable
+        expr: up{job=~"monero-wallet-.*"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Monero wallet RPC unreachable"
+          description: "Wallet {{ $labels.job }} down for > 5 minutes"
+
+      # ========================================================================
+      # Disk Space Low
+      # ========================================================================
+      - alert: DiskSpaceLow
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/app/data"} /
+           node_filesystem_size_bytes{mountpoint="/app/data"}) < 0.10
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk space critically low"
+          description: "Only {{ $value | humanizePercentage }} space remaining"
+
+      # ========================================================================
+      # Memory Usage High
+      # ========================================================================
+      - alert: MemoryUsageHigh
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.90
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage at {{ $value | humanizePercentage }}"
+
+      # ========================================================================
+      # WebSocket Connections Spike
+      # ========================================================================
+      - alert: WebSocketConnectionsSpike
+        expr: |
+          rate(websocket_connections_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "Unusual WebSocket activity"
+          description: "{{ $value }} new connections/s (possible DoS)"
+
+      # ========================================================================
+      # SSL Certificate Expiring
+      # ========================================================================
+      - alert: SSLCertificateExpiring
+        expr: |
+          ssl_cert_expiry_seconds < (30 * 24 * 3600)
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "Certificate expires in {{ $value | humanizeDuration }}"

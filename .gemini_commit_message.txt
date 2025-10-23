@@ -1,0 +1,39 @@
+feat: Unify scripting environment and setup Diesel ORM
+
+This commit addresses two major tasks:
+
+1.  **Scripting Environment Unification:**
+    *   Migrated all PowerShell (.ps1) scripts to Bash (.sh) equivalents. This includes:
+        *   Core workflow scripts (new-spec, reality-check, pre-commit).
+        *   All security check scripts (check-security-theatre-*, check-monero-tor-*).
+        *   All metrics and dashboard scripts (metrics-*, security-dashboard-*, security-alerts-*).
+        *   Testing and demo scripts (test-*, demo-workflow).
+        *   GitHub Actions validation script (validate-github-workflows).
+    *   Deleted obsolete Windows-specific setup scripts (install-*, setup-mingw, setup-visual-studio, setup-ide, setup-monero, start-testnet).
+    *   Cleaned up redundant documentation files (AUDIT.md, plan.md moved to archive/).
+    *   Updated the .git/hooks/pre-commit hook to call the new pre-commit.sh script.
+    *   The project's scripting environment is now fully Linux/Bash compatible.
+
+2.  **Phase 2 - Database Setup (Milestone 2.3):**
+    *   **Task 2.3.1: Schema Design:** Created `database/schema.sql` with the initial database schema.
+    *   **Task 2.3.2: Diesel Setup & Migrations:**
+        *   Added Diesel, dotenvy, chrono, aes-gcm, rand, base64 dependencies to `server/Cargo.toml`.
+        *   Installed `diesel_cli`.
+        *   Created `.env` with `DATABASE_URL=database.sqlite`.
+        *   Ran `diesel setup` and `diesel migration generate create_initial_schema`.
+        *   Populated `up.sql` with the corrected SQLite-compatible schema and `down.sql` with `DROP TABLE` statements.
+        *   Successfully ran `diesel migration run` to apply the schema.
+    *   **Task 2.3.3: Models & Queries:**
+        *   Created `server/src/db/mod.rs` with the Diesel connection pool.
+        *   Created `server/src/models/user.rs` with `User`, `NewUser`, `UpdateUser` structs and CRUD function stubs.
+        *   Created `server/src/models/mod.rs`.
+        *   Created `server/src/schema.rs` with Diesel table macros.
+        *   Updated `server/src/main.rs` to include `db`, `models`, `schema` modules.
+    *   **Task 2.3.4: Encryption:**
+        *   Created `server/src/crypto/encryption.rs` with `generate_key`, `encrypt_field`, `decrypt_field` functions.
+        *   Created `server/src/crypto/mod.rs`.
+        *   Updated `server/src/main.rs` to include `crypto` module.
+    *   **Task 2.3.5: Integration Tests:**
+        *   Created `server/tests/integration_tests.rs` with basic CRUD and encryption tests.
+
+This commit significantly advances the project towards Phase 2 implementation.
