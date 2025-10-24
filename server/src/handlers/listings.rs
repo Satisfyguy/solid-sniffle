@@ -354,8 +354,9 @@ pub async fn update_listing(
     })
     .await;
 
-    match update_result {
-        Ok(Ok(listing)) => HttpResponse::Ok().json(ListingResponse::from(listing)),
+        Ok(Ok(listing)) => HttpResponse::Ok()
+            .insert_header(("HX-Redirect", format!("/listings/{}", listing.id)))
+            .json(ListingResponse::from(listing)),
         Ok(Err(e)) => {
             if e.to_string().contains("Permission denied") {
                 HttpResponse::Forbidden().json(serde_json::json!({

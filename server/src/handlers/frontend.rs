@@ -105,6 +105,17 @@ pub async fn logout(session: Session) -> impl Responder {
         .finish()
 }
 
+use crate::models::user::User;
+
+#[derive(serde::Serialize)]
+struct ListingForTemplate {
+    id: String,
+    title: String,
+    price_xmr: i64,
+    status: String,
+    vendor_username: String,
+}
+
 /// GET /listings - Listings index page
 pub async fn show_listings(
     tera: web::Data<Tera>,
@@ -149,7 +160,32 @@ pub async fn show_listings(
         }
     };
 
-    ctx.insert("listings", &listings);
+    let mut listings_for_template = Vec::new();
+    for listing in listings {
+        let mut conn2 = match pool.get() {
+            Ok(c) => c,
+            Err(e) => {
+                error!("Database connection error: {}", e);
+                return HttpResponse::InternalServerError().body("Database error");
+            }
+        };
+        let vendor_id = listing.vendor_id.clone();
+        let vendor_result = web::block(move || User::find_by_id(&mut conn2, vendor_id)).await;
+        let vendor_username = match vendor_result {
+            Ok(Ok(v)) => v.username,
+            _ => "Unknown".to_string(),
+        };
+
+        listings_for_template.push(ListingForTemplate {
+            id: listing.id,
+            title: listing.title,
+            price_xmr: listing.price_xmr,
+            status: listing.status,
+            vendor_username,
+        });
+    }
+
+    ctx.insert("listings", &listings_for_template);
 
 
     match tera.render("listings/index.html", &ctx) {
@@ -234,6 +270,9 @@ pub async fn show_listing(
         }
     };
 
+    info!("Rendering listing: {:?}", listing);
+    info!("With vendor: {:?}", vendor);
+
     ctx.insert("listing", &listing);
     ctx.insert("vendor", &vendor);
     ctx.insert("price_display", &listing.price_as_xmr());
@@ -280,6 +319,82 @@ pub async fn show_create_listing(tera: web::Data<Tera>, session: Session) -> imp
             .body(html),
         Err(e) => {
             error!("Template error rendering create listing: {}", e);
+            HttpResponse::InternalServerError().body(format!("Template error: {}", e))
+        }
+    }
+}
+
+/// GET /listings/{id}/edit - Edit listing page (vendor only)
+pub async fn show_edit_listing(
+    tera: web::Data<Tera>,
+    pool: web::Data<DbPool>,
+    session: Session,
+    listing_id: web::Path<String>,
+) -> impl Responder {
+    use crate::models::listing::Listing;
+
+    let mut ctx = Context::new();
+
+    // Check auth and role
+    let user_id = if let Ok(Some(uid)) = session.get::<String>("user_id") {
+        ctx.insert("logged_in", &true);
+        if let Ok(Some(username)) = session.get::<String>("username") {
+            ctx.insert("username", &username);
+        }
+        if let Ok(Some(role)) = session.get::<String>("role") {
+            ctx.insert("role", &role);
+            if role != "vendor" {
+                return HttpResponse::Forbidden().body("Only vendors can edit listings");
+            }
+        }
+        uid
+    } else {
+        return HttpResponse::Found()
+            .append_header(("Location", "/login"))
+            .finish();
+    };
+
+    // Fetch listing from database
+    let mut conn = match pool.get() {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Database connection error: {}", e);
+            return HttpResponse::InternalServerError().body("Database error");
+        }
+    };
+
+    let listing_id_str = listing_id.into_inner();
+    let listing_result = web::block(move || Listing::find_by_id(&mut conn, listing_id_str)).await;
+
+    let listing = match listing_result {
+        Ok(Ok(l)) => l,
+        Ok(Err(e)) => {
+            error!("Listing not found: {}", e);
+            return HttpResponse::NotFound().body("Listing not found");
+        }
+        Err(e) => {
+            error!("Database query error: {}", e);
+            return HttpResponse::InternalServerError().body("Database error");
+        }
+    };
+
+    // Check if authenticated user is the vendor of this listing
+    if listing.vendor_id != user_id {
+        return HttpResponse::Forbidden().body("You can only edit your own listings");
+    }
+
+    ctx.insert("listing", &listing);
+
+    // Add CSRF token for form submission
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
+
+    match tera.render("listings/edit.html", &ctx) {
+        Ok(html) => HttpResponse::Ok()
+            .content_type("text/html; charset=utf-8")
+            .body(html),
+        Err(e) => {
+            error!("Template error rendering edit listing: {}", e);
             HttpResponse::InternalServerError().body(format!("Template error: {}", e))
         }
     }

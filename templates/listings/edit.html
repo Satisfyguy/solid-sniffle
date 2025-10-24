@@ -1,37 +1,37 @@
 {% extends "base.html" %}
 
-{% block title %}CREATE LISTING — AMAZAWN{% endblock %}
+{% block title %}EDIT LISTING — AMAZAWN{% endblock %}
 
 {% block content %}
 <div class="container" style="max-width: 700px;">
     <div class="card">
         <h1 style="font-size: 18px; font-weight: normal; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px; text-align: center;">
-            — CREATE NEW LISTING —
+            — EDIT LISTING —
         </h1>
 
-        <form id="create-listing-form">
+        <form id="edit-listing-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <div class="form-group">
                 <label for="title">TITLE</label>
-                <input type="text" id="title" name="title" placeholder="Product title" required minlength="3" maxlength="200">
+                <input type="text" id="title" name="title" placeholder="Product title" required minlength="3" maxlength="200" value="{{ listing.title }}">
                 <small>3-200 CHARACTERS</small>
             </div>
 
             <div class="form-group">
                 <label for="description">DESCRIPTION</label>
-                <textarea id="description" name="description" placeholder="Describe your product..." rows="6" required minlength="10" maxlength="5000"></textarea>
+                <textarea id="description" name="description" placeholder="Describe your product..." rows="6" required minlength="10" maxlength="5000">{{ listing.description }}</textarea>
                 <small>10-5000 CHARACTERS</small>
             </div>
 
             <div class="form-group">
                 <label for="price_xmr">PRICE (ATOMIC UNITS)</label>
-                <input type="number" id="price_xmr" name="price_xmr" placeholder="0" min="1" required>
+                <input type="number" id="price_xmr" name="price_xmr" placeholder="0" min="1" required value="{{ listing.price_xmr }}">
                 <small>1 XMR = 1,000,000,000,000 ATOMIC UNITS</small>
             </div>
 
             <div class="form-group">
                 <label for="stock">STOCK</label>
-                <input type="number" id="stock" name="stock" placeholder="0" min="0" required>
+                <input type="number" id="stock" name="stock" placeholder="0" min="0" required value="{{ listing.stock }}">
             </div>
 
             <div class="form-group">
@@ -41,9 +41,9 @@
             </div>
 
             <div class="form-actions">
-                <a href="/listings" class="btn btn-secondary" style="flex: 1;">CANCEL</a>
+                <a href="/listings/{{ listing.id }}" class="btn btn-secondary" style="flex: 1;">CANCEL</a>
                 <button type="submit" class="btn btn-primary" style="flex: 1;">
-                    CREATE LISTING →
+                    UPDATE LISTING →
                 </button>
             </div>
         </form>
@@ -54,5 +54,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/js/create-listing.js" defer></script>
+<script src="/static/js/edit-listing.js" defer></script>
 {% endblock %}
