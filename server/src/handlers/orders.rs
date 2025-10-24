@@ -85,7 +85,7 @@ fn get_user_id_from_session(session: &Session) -> Result<String, HttpResponse> {
 /// separately to transition the order to funded status.
 ///
 /// Requires authentication as a buyer.
-#[post("/api/orders")]
+#[post("/orders")]
 pub async fn create_order(
     pool: web::Data<DbPool>,
     session: Session,
@@ -169,7 +169,7 @@ pub async fn create_order(
 /// GET /api/orders - List all orders for the authenticated user
 ///
 /// Returns orders where the user is either the buyer or vendor.
-#[get("/api/orders")]
+#[get("/orders")]
 pub async fn list_orders(pool: web::Data<DbPool>, session: Session) -> impl Responder {
     // Get authenticated user
     let user_id = match get_user_id_from_session(&session) {
@@ -218,7 +218,7 @@ pub async fn list_orders(pool: web::Data<DbPool>, session: Session) -> impl Resp
 /// GET /api/orders/{id} - Get a single order by ID
 ///
 /// Requires authentication. Only buyer or vendor can view the order.
-#[get("/api/orders/{id}")]
+#[get("/orders/{id}")]
 pub async fn get_order(
     pool: web::Data<DbPool>,
     session: Session,
@@ -261,7 +261,7 @@ pub async fn get_order(
 /// PUT /api/orders/{id}/ship - Mark order as shipped
 ///
 /// Requires authentication as the vendor. Order must be in funded status.
-#[put("/api/orders/{id}/ship")]
+#[put("/orders/{id}/ship")]
 pub async fn ship_order(
     pool: web::Data<DbPool>,
     session: Session,
@@ -318,7 +318,7 @@ pub async fn ship_order(
 ///
 /// Requires authentication as the buyer. Order must be in shipped status.
 /// This triggers the escrow release to the vendor.
-#[put("/api/orders/{id}/complete")]
+#[put("/orders/{id}/complete")]
 pub async fn complete_order(
     pool: web::Data<DbPool>,
     escrow_orchestrator: web::Data<Arc<EscrowOrchestrator>>,
@@ -443,7 +443,7 @@ pub async fn complete_order(
 ///
 /// Buyer can cancel in pending or funded status.
 /// If funded, triggers refund via escrow.
-#[put("/api/orders/{id}/cancel")]
+#[put("/orders/{id}/cancel")]
 pub async fn cancel_order(
     pool: web::Data<DbPool>,
     escrow_orchestrator: web::Data<Arc<EscrowOrchestrator>>,
@@ -592,7 +592,7 @@ pub struct DisputeRequest {
 ///
 /// Either buyer or vendor can raise a dispute on funded or shipped orders.
 /// This involves the arbiter to resolve the issue.
-#[put("/api/orders/{id}/dispute")]
+#[put("/orders/{id}/dispute")]
 pub async fn dispute_order(
     pool: web::Data<DbPool>,
     escrow_orchestrator: web::Data<Arc<EscrowOrchestrator>>,

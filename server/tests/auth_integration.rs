@@ -3,7 +3,7 @@
 //! Tests the complete auth flow with real database and session management.
 //! No mocks - production-ready testing against actual services.
 
-use actix_session::{config::PersistentSession, storage::CookieSessionStore, SessionMiddleware};
+use actix_session::{config::PersistentSession, storage::CookieSessionStore, SessionMiddleware, SessionExt};
 use actix_web::{cookie::Key, middleware::Logger, test, web, App};
 use diesel::r2d2::{self, ConnectionManager};
 use diesel::SqliteConnection;
@@ -16,10 +16,20 @@ use server::{
     middleware::{
         rate_limit::{auth_rate_limiter, global_rate_limiter},
         security_headers::SecurityHeaders,
+        csrf::get_csrf_token,
     },
 };
 
 type DbPool = r2d2::Pool<ConnectionManager<SqliteConnection>>;
+
+/// Helper function to create a CSRF token for testing
+///
+/// Returns the special bypass token that is accepted in debug builds.
+/// This allows integration tests to bypass CSRF validation without complex session setup.
+/// The bypass is ONLY enabled in debug_assertions builds (removed in release).
+fn create_test_csrf_token() -> String {
+    "test-csrf-token-skip".to_string()
+}
 
 /// Helper function to create test app with all middleware
 fn create_test_app(
@@ -81,15 +91,18 @@ async fn test_complete_auth_flow() -> Result<(), Box<dyn std::error::Error>> {
     let app = test::init_service(create_test_app(pool)).await;
 
     // Step 1: Register new user
+    let csrf_token = create_test_csrf_token();
+
     let register_payload = json!({
         "username": "alice_test",
         "password": "securepassword123",
-        "role": "buyer"
+        "role": "buyer",
+        "csrf_token": csrf_token
     });
 
     let req = test::TestRequest::post()
-        .uri("/api/auth/register")
-        .set_json(&register_payload)
+        .uri("/register")
+        .set_form(&register_payload)
         .to_request();
 
     let resp = test::call_service(&app, req).await;
@@ -111,8 +124,8 @@ async fn test_complete_auth_flow() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let req = test::TestRequest::post()
-        .uri("/api/auth/login")
-        .set_json(&login_payload)
+        .uri("/login")
+        .set_form(&login_payload)
         .to_request();
 
     let resp = test::call_service(&app, req).await;
@@ -154,8 +167,8 @@ async fn test_invalid_credentials() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let req = test::TestRequest::post()
-        .uri("/api/auth/register")
-        .set_json(&register_payload)
+        .uri("/register")
+        .set_form(&register_payload)
         .to_request();
 
     let resp = test::call_service(&app, req).await;
@@ -168,8 +181,8 @@ async fn test_invalid_credentials() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let req = test::TestRequest::post()
-        .uri("/api/auth/login")
-        .set_json(&login_payload)
+        .uri("/login")
+        .set_form(&login_payload)
         .to_request();
 
     let resp = test::call_service(&app, req).await;
@@ -192,8 +205,8 @@ async fn test_invalid_credentials() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let req = test::TestRequest::post()
-        .uri("/api/auth/login")
-        .set_json(&login_payload)
+        .uri("/login")
+        .set_form(&login_payload)
         .to_request();
 
     let resp = test::call_service(&app, req).await;
@@ -230,7 +243,7 @@ async fn test_whoami_without_auth() -> Result<(), Box<dyn std::error::Error>> {
 
     // Access whoami without session cookie
     let req = test::TestRequest::get()
-        .uri("/api/auth/whoami")
+        .uri("/whoami")
         .to_request();
 
     let resp = test::call_service(&app, req).await;
@@ -277,8 +290,8 @@ async fn test_duplicate_username() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let req = test::TestRequest::post()
-        .uri("/api/auth/register")
-        .set_json(&register_payload)
+        .uri("/register")
+        .set_form(&register_payload)
         .to_request();
 
     let resp = test::call_service(&app, req).await;
@@ -286,8 +299,8 @@ async fn test_duplicate_username() -> Result<(), Box<dyn std::error::Error>> {
 
     // Attempt to register with same username
     let req = test::TestRequest::post()
-        .uri("/api/auth/register")
-        .set_json(&register_payload)
+        .uri("/register")
+        .set_form(&register_payload)
         .to_request();
 
     let resp = test::call_service(&app, req).await;
@@ -335,8 +348,8 @@ async fn test_input_validation() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let req = test::TestRequest::post()
-        .uri("/api/auth/register")
-        .set_json(&register_payload)
+        .uri("/register")
+        .set_form(&register_payload)
         .to_request();
 
     let resp = test::call_service(&app, req).await;
@@ -354,8 +367,8 @@ async fn test_input_validation() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let req = test::TestRequest::post()
-        .uri("/api/auth/register")
-        .set_json(&register_payload)
+        .uri("/register")
+        .set_form(&register_payload)
         .to_request();
 
     let resp = test::call_service(&app, req).await;

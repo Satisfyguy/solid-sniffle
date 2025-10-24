@@ -19,7 +19,7 @@
                     {{ listing.title | upper }}
                 </h1>
                 <div style="display: flex; gap: 20px; font-size: 11px; color: #888; letter-spacing: 1px; text-transform: uppercase;">
-                    <span>VENDOR: {{ listing.vendor_username | upper }}</span>
+                    <span>VENDOR: {{ vendor.username | upper }}</span>
                     <span class="separator">—</span>
                     <span>STOCK: {{ listing.stock }}</span>
                 </div>
@@ -47,7 +47,7 @@
                     <span style="font-size: 28px; font-weight: bold; color: #f5f5f5; letter-spacing: 2px;">
                         {{ listing.price_xmr }}
                     </span>
-                    <span style="font-size: 12px; color: #888; margin-left: 8px;">XMR</span>
+                    <span style="font-size: 12px; color: #888; margin-left: 8px;">piconeros</span>
                 </div>
             </div>
         </div>
@@ -59,7 +59,7 @@
                 — PLACE ORDER
             </h2>
 
-            <form hx-post="/api/orders" hx-target="#order-result" hx-swap="innerHTML">
+            <form id="order-form" data-unit-price="{{ listing.price_xmr }}" hx-post="/api/orders" hx-target="#order-result" hx-swap="innerHTML">
                 <input type="hidden" name="listing_id" value="{{ listing.id }}">
 
                 <div class="form-group">
@@ -81,7 +81,7 @@
                         TOTAL PRICE
                     </span>
                     <div style="font-size: 18px; color: #f5f5f5; margin-top: 5px;">
-                        <span id="total-price">{{ listing.price_xmr }} XMR</span>
+                        <span id="total-price">{{ price_display | round(precision=12) }} XMR</span>
                     </div>
                 </div>
 
@@ -113,21 +113,8 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
 
-<script>
-// Dynamic total price calculation
-document.addEventListener('DOMContentLoaded', function() {
-    const quantityInput = document.getElementById('quantity');
-    const totalPriceSpan = document.getElementById('total-price');
-    const unitPrice = {{ listing.price_xmr | json_encode() | safe }};
-
-    if (quantityInput && totalPriceSpan) {
-        quantityInput.addEventListener('input', function() {
-            const quantity = parseInt(this.value) || 1;
-            const total = (unitPrice * quantity).toFixed(12);
-            totalPriceSpan.textContent = total + ' XMR';
-        });
-    }
-});
-</script>
+{% block scripts %}
+<script src="/static/js/show-listing.js" defer></script>
 {% endblock %}

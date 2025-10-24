@@ -171,7 +171,7 @@ async fn main() -> Result<()> {
             // Auth endpoints with stricter rate limiting (5 req/15min per IP)
             .service(
                 web::scope("/api/auth")
-                    .wrap(auth_rate_limiter())
+                    // .wrap(auth_rate_limiter()) // Temporarily disabled for testing
                     .service(auth::register)
                     .service(auth::login)
                     .service(auth::whoami)

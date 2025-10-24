@@ -21,6 +21,34 @@ This project has **zero tolerance for security theatre**. All code is automatica
 
 **Before generating ANY code**, run: `./scripts/check-security-theatre.sh`
 
+## Quick Audit - Pragmatic Check
+
+**Before pushing code or starting work**, run the pragmatic audit to verify project health:
+
+```bash
+./scripts/audit-pragmatic.sh
+```
+
+This script (128 lines, <5 seconds) checks:
+1. **Database**: schema.rs, marketplace.db, migrations
+2. **Configuration**: .env secrets, git tracking
+3. **Monero**: RPC localhost, multisig implementation
+4. **Tor**: Daemon status, SOCKS port, no public exposure
+5. **Tests**: Unit tests, E2E tests presence
+6. **Security**: No private keys in logs, CSRF protection
+
+**Exit codes:**
+- `0` = All OK (score 100/100)
+- `1` = Critical issues (must fix before continuing)
+- `2` = High warnings (recommended fixes)
+
+**Compared to other audit scripts:**
+- `audit-pragmatic.sh`: **128 lines, <5s, 0 false positives** ✅
+- `swissy.sh`: 9.5K, 2+ min, many false positives
+- `suissemade.sh`: 82K (2164 lines), 5+ min, massive false positives
+
+**Use this as your daily audit**, not the bloated alternatives.
+
 ## Build & Test Commands
 
 ### Development Environment
@@ -62,6 +90,12 @@ cargo check --workspace
 
 # Security alerts
 ./scripts/security-alerts.sh
+```
+
+### Audit & Validation
+```bash
+# Run the full audit script
+./scripts/swissy.sh
 ```
 
 ### Monero Testnet Setup
@@ -299,6 +333,164 @@ use monero_marketplace_common::{
     MAX_MULTISIG_INFO_LEN, // 5000
     MIN_MULTISIG_INFO_LEN, // 100
 };
+```
+
+## Database Migrations & Diesel
+
+**CRITICAL:** Database schema changes require strict adherence to migration workflow to avoid runtime errors.
+
+### Migration Workflow (NEVER SKIP STEPS)
+
+**Every time you modify database schema:**
+
+```bash
+# 1. Generate migration files
+diesel migration generate add_column_name
+
+# 2. Write SQL in both files
+# - up.sql:   ALTER TABLE foo ADD COLUMN bar TEXT DEFAULT 'value';
+# - down.sql: ALTER TABLE foo DROP COLUMN bar;
+
+# 3. Apply migration to database (MOST CRITICAL STEP)
+DATABASE_URL=marketplace.db diesel migration run
+
+# 4. Verify migration was applied
+DATABASE_URL=marketplace.db diesel migration list
+# ALL migrations must show [X] (applied), not [ ] (pending)
+
+# 5. Regenerate Rust schema
+diesel print-schema > server/src/schema.rs
+
+# 6. Update Rust structs to match new schema
+# Add/remove fields from model structs (e.g., Listing, User, Order)
+
+# 7. Recompile
+cargo build --release --package server
+
+# 8. Test before deploying
+./target/release/server
+```
+
+### Common Migration Pitfalls
+
+**❌ PROBLEM #1: Forgetting `diesel migration run`**
+```
+Error: "Failed to retrieve created listing"
+Cause: Rust schema.rs has new column, but database doesn't
+Solution: Run diesel migration run
+```
+
+**❌ PROBLEM #2: Column count mismatch**
+```
+Error: Column count mismatch between NewFoo and Foo
+Cause: Forgot to add new field to insertion struct
+Solution: Add field to both Queryable and Insertable structs
+```
+
+**❌ PROBLEM #3: Running server with old binary**
+```
+Error: Persistent errors after "fixing" code
+Cause: Server process still running old binary
+Solution: Kill ALL server processes, recompile, restart
+```
+
+### Pre-Deploy Checklist
+
+Before starting the server after ANY migration:
+
+```bash
+# ✅ Verify all migrations applied
+diesel migration list | grep -q "\[ \]" && echo "❌ PENDING MIGRATIONS!" || echo "✅ All applied"
+
+# ✅ Check column count matches
+sqlite3 marketplace.db "PRAGMA table_info(listings);" | wc -l
+# Compare to number of fields in server/src/models/listing.rs Listing struct
+
+# ✅ Verify binary is fresh
+stat -c "%y" target/release/server  # Should be recent
+
+# ✅ Kill old servers
+killall -9 server; pkill -9 -f "target/release/server"
+
+# ✅ Start fresh
+./target/release/server > server.log 2>&1 &
+```
+
+### Migration Best Practices
+
+**1. Always use DEFAULT for new columns:**
+```sql
+-- ✅ GOOD: Won't break existing rows
+ALTER TABLE listings ADD COLUMN images_ipfs_cids TEXT DEFAULT '[]';
+
+-- ❌ BAD: Will fail if rows exist
+ALTER TABLE listings ADD COLUMN images_ipfs_cids TEXT NOT NULL;
+```
+
+**2. Test migrations on a copy first:**
+```bash
+cp marketplace.db marketplace_backup.db
+DATABASE_URL=test.db diesel migration run
+# If successful, apply to real DB
+```
+
+**3. Keep NewFoo and Foo structs in sync:**
+```rust
+// Queryable struct (for SELECT)
+#[derive(Queryable, Identifiable)]
+pub struct Listing {
+    pub id: String,
+    // ... all DB columns including new ones
+    pub images_ipfs_cids: Option<String>,  // ✅ Added
+}
+
+// Insertable struct (for INSERT)
+#[derive(Insertable)]
+pub struct NewListing {
+    pub id: String,
+    // ... all required fields
+    // ✅ Include new column if no DEFAULT, or if you want to set it explicitly
+}
+```
+
+### Debugging Migration Issues
+
+**If you see runtime errors after schema changes:**
+
+```bash
+# 1. Check migration status
+DATABASE_URL=marketplace.db diesel migration list
+
+# 2. Check actual DB schema
+sqlite3 marketplace.db ".schema listings"
+
+# 3. Compare to Rust schema
+cat server/src/schema.rs | grep -A 15 "listings (id)"
+
+# 4. Check running binary timestamp
+ps aux | grep "[t]arget/release/server"
+stat -c "%y" target/release/server
+
+# 5. If timestamps don't match, kill and restart
+```
+
+### Emergency Rollback
+
+If a migration breaks production:
+
+```bash
+# Rollback last migration
+DATABASE_URL=marketplace.db diesel migration revert
+
+# Regenerate schema
+diesel print-schema > server/src/schema.rs
+
+# Revert Rust code changes
+git checkout HEAD -- server/src/models/
+
+# Rebuild and restart
+cargo build --release --package server
+killall -9 server && ./target/release/server &
 ```
 
 ## Git Hooks

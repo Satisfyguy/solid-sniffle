@@ -4,6 +4,7 @@
 
 use actix_session::Session;
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
+use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
@@ -100,7 +101,7 @@ fn get_user_id_from_session(session: &Session) -> Result<String, HttpResponse> {
 /// POST /api/listings - Create a new listing
 ///
 /// Requires authentication and vendor role.
-#[post("/api/listings")]
+#[post("/listings")]
 pub async fn create_listing(
     pool: web::Data<DbPool>,
     session: Session,
@@ -128,6 +129,7 @@ pub async fn create_listing(
         price_xmr: req.price_xmr,
         stock: req.stock,
         status: ListingStatus::Active.as_str().to_string(),
+        images_ipfs_cids: Some("[]".to_string()), // Default to empty JSON array
     };
 
     let mut conn = match pool.get() {
@@ -139,16 +141,26 @@ pub async fn create_listing(
         }
     };
 
-    match Listing::create(&mut conn, new_listing) {
-        Ok(listing) => HttpResponse::Created().json(ListingResponse::from(listing)),
-        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+    let listing_result = web::block(move || Listing::create(&mut conn, new_listing)).await;
+
+    match listing_result {
+        Ok(Ok(listing)) => {
+            // Redirect to the listing page after creation (HTMX will follow this)
+            HttpResponse::Created()
+                .insert_header(("HX-Redirect", format!("/listings/{}", listing.id)))
+                .json(ListingResponse::from(listing))
+        }
+        Ok(Err(e)) => HttpResponse::InternalServerError().json(serde_json::json!({
             "error": format!("Failed to create listing: {}", e)
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": format!("Async task failed: {}", e)
         })),
     }
 }
 
 /// GET /api/listings - List all active listings (paginated)
-#[get("/api/listings")]
+#[get("/listings")]
 pub async fn list_listings(
     pool: web::Data<DbPool>,
     query: web::Query<std::collections::HashMap<String, String>>,
@@ -173,20 +185,24 @@ pub async fn list_listings(
         }
     };
 
-    match Listing::list_active(&mut conn, limit, offset) {
-        Ok(listings) => {
-            let responses: Vec<ListingResponse> =
-                listings.into_iter().map(ListingResponse::from).collect();
+    let listings_result = web::block(move || Listing::list_active(&mut conn, limit, offset)).await;
+
+    match listings_result {
+        Ok(Ok(listings)) => {
+            let responses: Vec<ListingResponse> = listings.into_iter().map(ListingResponse::from).collect();
             HttpResponse::Ok().json(responses)
         }
-        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+        Ok(Err(e)) => HttpResponse::InternalServerError().json(serde_json::json!({
             "error": format!("Failed to list listings: {}", e)
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": format!("Async task failed: {}", e)
         })),
     }
 }
 
 /// GET /api/listings/{id} - Get a single listing by ID
-#[get("/api/listings/{id}")]
+#[get("/listings/{id}")]
 pub async fn get_listing(pool: web::Data<DbPool>, id: web::Path<String>) -> impl Responder {
     let mut conn = match pool.get() {
         Ok(conn) => conn,
@@ -197,16 +213,21 @@ pub async fn get_listing(pool: web::Data<DbPool>, id: web::Path<String>) -> impl
         }
     };
 
-    match Listing::find_by_id(&mut conn, id.into_inner()) {
-        Ok(listing) => HttpResponse::Ok().json(ListingResponse::from(listing)),
-        Err(_) => HttpResponse::NotFound().json(serde_json::json!({
+    let listing_result = web::block(move || Listing::find_by_id(&mut conn, id.into_inner())).await;
+
+    match listing_result {
+        Ok(Ok(listing)) => HttpResponse::Ok().json(ListingResponse::from(listing)),
+        Ok(Err(_)) => HttpResponse::NotFound().json(serde_json::json!({
             "error": "Listing not found"
+        })),
+        Err(_) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": "Async task failed"
         })),
     }
 }
 
 /// GET /api/listings/vendor/{vendor_id} - Get all listings by a vendor
-#[get("/api/listings/vendor/{vendor_id}")]
+#[get("/listings/vendor/{vendor_id}")]
 pub async fn get_vendor_listings(
     pool: web::Data<DbPool>,
     vendor_id: web::Path<String>,
@@ -220,26 +241,31 @@ pub async fn get_vendor_listings(
         }
     };
 
-    match Listing::find_by_vendor(&mut conn, vendor_id.into_inner()) {
-        Ok(listings) => {
+    let listings_result = web::block(move || Listing::find_by_vendor(&mut conn, vendor_id.into_inner())).await;
+
+    match listings_result {
+        Ok(Ok(listings)) => {
             let responses: Vec<ListingResponse> =
                 listings.into_iter().map(ListingResponse::from).collect();
             HttpResponse::Ok().json(responses)
         }
-        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+        Ok(Err(e)) => HttpResponse::InternalServerError().json(serde_json::json!({
             "error": format!("Failed to get vendor listings: {}", e)
+        })),
+        Err(_) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": "Async task failed"
         })),
     }
 }
 
 /// GET /api/listings/search?q=query - Search listings by title
-#[get("/api/listings/search")]
+#[get("/listings/search")]
 pub async fn search_listings(
     pool: web::Data<DbPool>,
     query: web::Query<std::collections::HashMap<String, String>>,
 ) -> impl Responder {
     let search_query = match query.get("q") {
-        Some(q) if !q.is_empty() => q,
+        Some(q) if !q.is_empty() => q.clone(),
         _ => {
             return HttpResponse::BadRequest().json(serde_json::json!({
                 "error": "Search query parameter 'q' is required"
@@ -262,14 +288,19 @@ pub async fn search_listings(
         }
     };
 
-    match Listing::search_by_title(&mut conn, search_query, limit) {
-        Ok(listings) => {
-            let responses: Vec<ListingResponse> =
-                listings.into_iter().map(ListingResponse::from).collect();
+    let search_pattern = format!("%{}%", search_query);
+    let listings_result = web::block(move || Listing::search_by_title(&mut conn, &search_pattern, limit)).await;
+
+    match listings_result {
+        Ok(Ok(listings)) => {
+            let responses: Vec<ListingResponse> = listings.into_iter().map(ListingResponse::from).collect();
             HttpResponse::Ok().json(responses)
         }
-        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+        Ok(Err(e)) => HttpResponse::InternalServerError().json(serde_json::json!({
             "error": format!("Search failed: {}", e)
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": format!("Async task failed: {}", e)
         })),
     }
 }
@@ -277,7 +308,7 @@ pub async fn search_listings(
 /// PUT /api/listings/{id} - Update a listing
 ///
 /// Requires authentication. Only the vendor who created the listing can update it.
-#[put("/api/listings/{id}")]
+#[put("/listings/{id}")]
 pub async fn update_listing(
     pool: web::Data<DbPool>,
     session: Session,
@@ -297,34 +328,9 @@ pub async fn update_listing(
         Err(response) => return response,
     };
 
-    let mut conn = match pool.get() {
-        Ok(conn) => conn,
-        Err(_) => {
-            return HttpResponse::InternalServerError().json(serde_json::json!({
-                "error": "Database connection failed"
-            }))
-        }
-    };
-
     let listing_id = id.into_inner();
 
-    // Check listing exists and user owns it
-    let existing_listing = match Listing::find_by_id(&mut conn, listing_id.clone()) {
-        Ok(listing) => listing,
-        Err(_) => {
-            return HttpResponse::NotFound().json(serde_json::json!({
-                "error": "Listing not found"
-            }))
-        }
-    };
-
-    if existing_listing.vendor_id != user_id {
-        return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "You can only update your own listings"
-        }));
-    }
-
-    // Build update
+    // Build update data from request
     let update_data = UpdateListing {
         title: req.title.clone(),
         description: req.description.clone(),
@@ -333,10 +339,36 @@ pub async fn update_listing(
         status: req.status.clone(),
     };
 
-    match Listing::update(&mut conn, listing_id, update_data) {
-        Ok(listing) => HttpResponse::Ok().json(ListingResponse::from(listing)),
-        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
-            "error": format!("Failed to update listing: {}", e)
+            let update_result = web::block(move || {
+                let mut conn = pool.get().with_context(|| "Database connection failed")?;
+            // 1. Find the listing to check ownership
+        let existing_listing = Listing::find_by_id(&mut conn, listing_id.clone())?;
+
+        // 2. Check if the authenticated user is the vendor
+        if existing_listing.vendor_id != user_id {
+            return Err(anyhow::anyhow!("Permission denied"));
+        }
+
+        // 3. Perform the update
+        Listing::update(&mut conn, listing_id, update_data)
+    })
+    .await;
+
+    match update_result {
+        Ok(Ok(listing)) => HttpResponse::Ok().json(ListingResponse::from(listing)),
+        Ok(Err(e)) => {
+            if e.to_string().contains("Permission denied") {
+                HttpResponse::Forbidden().json(serde_json::json!({
+                    "error": "You can only update your own listings"
+                }))
+            } else {
+                HttpResponse::InternalServerError().json(serde_json::json!({
+                    "error": format!("Failed to update listing: {}", e)
+                }))
+            }
+        }
+        Err(_) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": "An unexpected async task error occurred"
         })),
     }
 }
@@ -344,7 +376,7 @@ pub async fn update_listing(
 /// DELETE /api/listings/{id} - Delete a listing (soft delete)
 ///
 /// Requires authentication. Only the vendor who created the listing can delete it.
-#[delete("/api/listings/{id}")]
+#[delete("/listings/{id}")]
 pub async fn delete_listing(
     pool: web::Data<DbPool>,
     session: Session,
@@ -356,37 +388,39 @@ pub async fn delete_listing(
         Err(response) => return response,
     };
 
-    let mut conn = match pool.get() {
-        Ok(conn) => conn,
-        Err(_) => {
-            return HttpResponse::InternalServerError().json(serde_json::json!({
-                "error": "Database connection failed"
-            }))
-        }
-    };
-
     let listing_id = id.into_inner();
 
-    // Check listing exists and user owns it
-    let existing_listing = match Listing::find_by_id(&mut conn, listing_id.clone()) {
-        Ok(listing) => listing,
-        Err(_) => {
-            return HttpResponse::NotFound().json(serde_json::json!({
-                "error": "Listing not found"
-            }))
+    let delete_result = web::block(move || {
+        let mut conn = pool.get().with_context(|| "Database connection failed")?;
+
+        // 1. Find the listing to check ownership
+        let existing_listing = Listing::find_by_id(&mut conn, listing_id.clone())?;
+
+        // 2. Check if the authenticated user is the vendor
+        if existing_listing.vendor_id != user_id {
+            return Err(anyhow::anyhow!("Permission denied"));
         }
-    };
 
-    if existing_listing.vendor_id != user_id {
-        return HttpResponse::Forbidden().json(serde_json::json!({
-            "error": "You can only delete your own listings"
-        }));
-    }
+        // 3. Perform the delete (soft delete)
+        Listing::delete(&mut conn, listing_id)
+    })
+    .await;
 
-    match Listing::delete(&mut conn, listing_id) {
-        Ok(_) => HttpResponse::NoContent().finish(),
-        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
-            "error": format!("Failed to delete listing: {}", e)
+    match delete_result {
+        Ok(Ok(_)) => HttpResponse::NoContent().finish(),
+        Ok(Err(e)) => {
+            if e.to_string().contains("Permission denied") {
+                HttpResponse::Forbidden().json(serde_json::json!({
+                    "error": "You can only delete your own listings"
+                }))
+            } else {
+                HttpResponse::InternalServerError().json(serde_json::json!({
+                    "error": format!("Failed to delete listing: {}", e)
+                }))
+            }
+        }
+        Err(_) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": "An unexpected async task error occurred"
         })),
     }
 }

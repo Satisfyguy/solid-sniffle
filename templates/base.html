@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="/static/css/main.css">
     <!-- HTMX for dynamic interactions (local - Tor-safe, no CDN) -->
     <script src="/static/js/htmx.min.js"></script>
+    <!-- HTMX JSON encoding extension for API requests -->
+    <script src="/static/js/json-enc.js"></script>
     {% block head_extra %}{% endblock %}
 </head>
 <body>
@@ -23,5 +25,7 @@
     </main>
 
     {% include "partials/footer.html" %}
+
+    {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -9,7 +9,8 @@
             — CREATE NEW LISTING —
         </h1>
 
-        <form hx-post="/api/listings" hx-target="#listing-result" hx-swap="innerHTML">
+        <form id="create-listing-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <div class="form-group">
                 <label for="title">TITLE</label>
                 <input type="text" id="title" name="title" placeholder="Product title" required minlength="3" maxlength="200">
@@ -44,4 +45,8 @@
         <div id="listing-result" style="margin-top: 20px;"></div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/create-listing.js" defer></script>
 {% endblock %}

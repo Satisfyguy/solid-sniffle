@@ -63,7 +63,7 @@ pub struct RegisterRequest {
 #[post("/register")]
 pub async fn register(
     pool: web::Data<DbPool>,
-    req: web::Json<RegisterRequest>,
+    req: web::Form<RegisterRequest>,
     http_req: HttpRequest,
     session: Session,
 ) -> Result<HttpResponse, ApiError> {
@@ -199,7 +199,7 @@ impl From<User> for UserResponse {
 pub async fn login(
     pool: web::Data<DbPool>,
     session: Session,
-    req: web::Json<LoginRequest>,
+    req: web::Form<LoginRequest>,
     http_req: HttpRequest,
 ) -> Result<HttpResponse, ApiError> {
     let is_htmx = is_htmx_request(&http_req);

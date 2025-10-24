@@ -63,6 +63,8 @@ pub struct Listing {
     pub status: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+    /// IPFS CIDs for product images stored as JSON array: ["Qm...", "Qm..."]
+    pub images_ipfs_cids: Option<String>,
 }
 
 /// New listing for insertion
@@ -76,6 +78,7 @@ pub struct NewListing {
     pub price_xmr: i64,
     pub stock: i32,
     pub status: String,
+    pub images_ipfs_cids: Option<String>,
 }
 
 /// Listing update data
@@ -101,13 +104,15 @@ impl Listing {
     ///
     /// The created listing with timestamps populated by the database
     pub fn create(conn: &mut SqliteConnection, new_listing: NewListing) -> Result<Listing> {
+        let listing_id = new_listing.id.clone();
+
         diesel::insert_into(listings::table)
             .values(&new_listing)
             .execute(conn)
             .context("Failed to insert listing")?;
 
         listings::table
-            .filter(listings::id.eq(new_listing.id))
+            .find(listing_id)
             .first(conn)
             .context("Failed to retrieve created listing")
     }
@@ -361,6 +366,7 @@ mod tests {
             status: "active".to_string(),
             created_at: chrono::Utc::now().naive_utc(),
             updated_at: chrono::Utc::now().naive_utc(),
+            images_ipfs_cids: None,
         };
 
         assert_eq!(listing.price_as_xmr(), 1.5);

@@ -108,9 +108,10 @@ pub async fn logout(session: Session) -> impl Responder {
 /// GET /listings - Listings index page
 pub async fn show_listings(
     tera: web::Data<Tera>,
-    _pool: web::Data<DbPool>,
+    pool: web::Data<DbPool>,
     session: Session,
 ) -> impl Responder {
+    use crate::models::listing::Listing;
     let mut ctx = Context::new();
 
     // Check auth
@@ -125,8 +126,31 @@ pub async fn show_listings(
         ctx.insert("logged_in", &false);
     }
 
-    // Empty listings vector - listings functionality implemented in Milestone 2.1
-    ctx.insert("listings", &Vec::<String>::new());
+    // Fetch listings from database
+    let mut conn = match pool.get() {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Database connection error: {}", e);
+            return HttpResponse::InternalServerError().body("Database error");
+        }
+    };
+
+    let listings_result = web::block(move || Listing::list_active(&mut conn, 20, 0)).await;
+
+    let listings = match listings_result {
+        Ok(Ok(l)) => l,
+        Ok(Err(e)) => {
+            error!("Error fetching listings: {}", e);
+            Vec::new()
+        }
+        Err(e) => {
+            error!("Database query error: {}", e);
+            Vec::new()
+        }
+    };
+
+    ctx.insert("listings", &listings);
+
 
     match tera.render("listings/index.html", &ctx) {
         Ok(html) => HttpResponse::Ok()
@@ -147,6 +171,7 @@ pub async fn show_listing(
     listing_id: web::Path<String>,
 ) -> impl Responder {
     use crate::models::listing::Listing;
+    use crate::models::user::User;
 
     let mut ctx = Context::new();
 
@@ -191,7 +216,27 @@ pub async fn show_listing(
         }
     };
 
+    // Fetch vendor information
+    let mut conn2 = match pool.get() {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Database connection error: {}", e);
+            return HttpResponse::InternalServerError().body("Database error");
+        }
+    };
+    let vendor_id_str = listing.vendor_id.clone();
+    let vendor_result = web::block(move || User::find_by_id(&mut conn2, vendor_id_str)).await;
+    let vendor = match vendor_result {
+        Ok(Ok(v)) => v,
+        _ => {
+            error!("Failed to fetch vendor for listing {}", listing.id);
+            return HttpResponse::InternalServerError().body("Could not load vendor data");
+        }
+    };
+
     ctx.insert("listing", &listing);
+    ctx.insert("vendor", &vendor);
+    ctx.insert("price_display", &listing.price_as_xmr());
 
     match tera.render("listings/show.html", &ctx) {
         Ok(html) => HttpResponse::Ok()
@@ -224,6 +269,10 @@ pub async fn show_create_listing(tera: web::Data<Tera>, session: Session) -> imp
         ctx.insert("logged_in", &true);
         ctx.insert("role", &"vendor");
     }
+
+    // Add CSRF token for form submission
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
 
     match tera.render("listings/create.html", &ctx) {
         Ok(html) => HttpResponse::Ok()

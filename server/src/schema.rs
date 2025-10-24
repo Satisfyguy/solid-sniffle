@@ -30,6 +30,7 @@ diesel::table! {
         status -> Text,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+        images_ipfs_cids -> Nullable<Text>,
     }
 }
 
@@ -92,4 +93,11 @@ diesel::joinable!(listings -> users (vendor_id));
 diesel::joinable!(orders -> listings (listing_id));
 diesel::joinable!(transactions -> escrows (escrow_id));
 
-diesel::allow_tables_to_appear_in_same_query!(escrows, listings, orders, reviews, transactions, users,);
+diesel::allow_tables_to_appear_in_same_query!(
+    escrows,
+    listings,
+    orders,
+    reviews,
+    transactions,
+    users,
+);

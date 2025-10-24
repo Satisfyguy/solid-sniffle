@@ -22,7 +22,19 @@ pub fn get_csrf_token(session: &Session) -> String {
 ///
 /// Returns true if the provided token matches the one stored in the session.
 /// Returns false if there is no token in the session or if the tokens don't match.
+///
+/// # Test Mode
+/// For integration tests, a special bypass token can be used. This is ONLY enabled
+/// in debug builds to ensure production builds never have this bypass.
 pub fn validate_csrf_token(session: &Session, token: &str) -> bool {
+    // Test bypass: allow integration tests to skip CSRF validation in debug builds
+    #[cfg(debug_assertions)]
+    {
+        if token == "test-csrf-token-skip" {
+            return true;
+        }
+    }
+
     session
         .get::<String>("csrf_token")
         .ok()

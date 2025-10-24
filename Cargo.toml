@@ -4,7 +4,7 @@ members = [
     "wallet",
     "cli",
     "server",
-    "custodial"
+    # "custodial",  # Documentation only - not implemented
 ]
 resolver = "2"
 
