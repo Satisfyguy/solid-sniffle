@@ -291,6 +291,10 @@ pub async fn show_listing(
     ctx.insert("vendor", &vendor);
     ctx.insert("price_display", &listing.price_as_xmr());
     ctx.insert("images", &images);
+    
+    // Add CSRF token for order creation
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
 
     match tera.render("listings/show.html", &ctx) {
         Ok(html) => HttpResponse::Ok()
@@ -488,10 +492,12 @@ pub async fn show_order(
     session: Session,
     order_id: web::Path<String>,
 ) -> impl Responder {
+    use crate::models::listing::Listing;
     use crate::models::order::Order;
+    use crate::models::user::User;
 
     // Require authentication
-    let _user_id = match session.get::<String>("user_id") {
+    let user_id = match session.get::<String>("user_id") {
         Ok(Some(uid)) => uid,
         _ => {
             return HttpResponse::Found()
@@ -536,7 +542,80 @@ pub async fn show_order(
         }
     };
 
-    ctx.insert("order", &order);
+    // Authorization: only buyer or vendor can view
+    if order.buyer_id != user_id && order.vendor_id != user_id {
+        return HttpResponse::Forbidden().body("You can only view your own orders");
+    }
+
+    // Fetch listing details
+    let mut conn2 = match pool.get() {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Database connection error: {}", e);
+            return HttpResponse::InternalServerError().body("Database error");
+        }
+    };
+    let listing_id = order.listing_id.clone();
+    let listing_result = web::block(move || Listing::find_by_id(&mut conn2, listing_id)).await;
+    let listing = match listing_result {
+        Ok(Ok(l)) => l,
+        _ => {
+            error!("Failed to fetch listing for order");
+            return HttpResponse::InternalServerError().body("Failed to load order details");
+        }
+    };
+
+    // Fetch buyer details
+    let mut conn3 = match pool.get() {
+        Ok(c) => c,
+        Err(_) => return HttpResponse::InternalServerError().body("Database error"),
+    };
+    let buyer_id = order.buyer_id.clone();
+    let buyer_result = web::block(move || User::find_by_id(&mut conn3, buyer_id)).await;
+    let buyer_username = match buyer_result {
+        Ok(Ok(u)) => u.username,
+        _ => "Unknown".to_string(),
+    };
+
+    // Fetch vendor details
+    let mut conn4 = match pool.get() {
+        Ok(c) => c,
+        Err(_) => return HttpResponse::InternalServerError().body("Database error"),
+    };
+    let vendor_id = order.vendor_id.clone();
+    let vendor_result = web::block(move || User::find_by_id(&mut conn4, vendor_id)).await;
+    let vendor_username = match vendor_result {
+        Ok(Ok(u)) => u.username,
+        _ => "Unknown".to_string(),
+    };
+
+    // Create enriched order data for template
+    let order_data = serde_json::json!({
+        "id": order.id,
+        "buyer_id": order.buyer_id,
+        "vendor_id": order.vendor_id,
+        "listing_id": order.listing_id,
+        "listing_title": listing.title,
+        "escrow_id": order.escrow_id,
+        "status": order.status,
+        "total_xmr": order.total_xmr,
+        "total_price_xmr": format!("{:.12}", order.total_xmr as f64 / 1_000_000_000_000.0),
+        "unit_price_xmr": format!("{:.12}", listing.price_xmr as f64 / 1_000_000_000_000.0),
+        "quantity": 1, // TODO: Add quantity field to Order model
+        "buyer_username": buyer_username,
+        "vendor_username": vendor_username,
+        "created_at": order.created_at,
+        "updated_at": order.updated_at,
+        "funded_at": None::<String>,
+        "shipped_at": None::<String>,
+        "completed_at": None::<String>,
+    });
+
+    ctx.insert("order", &order_data);
+    
+    // Add CSRF token
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
 
     match tera.render("orders/show.html", &ctx) {
         Ok(html) => HttpResponse::Ok()

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="description" content="⬛ AMAZAWN — DECENTRALIZED MARKETPLACE | 2-OF-3 MULTISIG ESCROW | NON-CUSTODIAL | TOR NETWORK | PRIVACY-FIRST">
+    {% if csrf_token %}<meta name="csrf-token" content="{{ csrf_token }}">{% endif %}
     <title>{% block title %}⬛ AMAZAWN — DECENTRALIZED MARKETPLACE{% endblock %}</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/static/css/main.css">

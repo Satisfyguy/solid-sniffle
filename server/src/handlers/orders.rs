@@ -3,13 +3,15 @@
 //! REST API endpoints for managing purchase orders in the escrow marketplace.
 
 use actix_session::Session;
-use actix_web::{get, post, put, web, HttpResponse, Responder};
+use actix_web::{get, post, put, web, HttpRequest, HttpResponse, Responder};
+use diesel::Connection;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
 use validator::Validate;
 
 use crate::db::DbPool;
+use crate::middleware::csrf::validate_csrf_token;
 use crate::models::listing::Listing;
 use crate::models::order::{NewOrder, Order, OrderStatus};
 use crate::models::user::User;
@@ -89,8 +91,22 @@ fn get_user_id_from_session(session: &Session) -> Result<String, HttpResponse> {
 pub async fn create_order(
     pool: web::Data<DbPool>,
     session: Session,
+    http_req: HttpRequest,
     req: web::Json<CreateOrderRequest>,
 ) -> impl Responder {
+    // SECURITY: Validate CSRF token
+    let csrf_token = http_req
+        .headers()
+        .get("X-CSRF-Token")
+        .and_then(|h| h.to_str().ok())
+        .unwrap_or("");
+
+    if !validate_csrf_token(&session, csrf_token) {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Invalid or missing CSRF token"
+        }));
+    }
+
     // Validate input
     if let Err(e) = req.validate() {
         return HttpResponse::BadRequest().json(serde_json::json!({
@@ -103,6 +119,22 @@ pub async fn create_order(
         Ok(id) => id,
         Err(response) => return response,
     };
+
+    // SECURITY: Verify user has buyer role
+    let user_role = match session.get::<String>("role") {
+        Ok(Some(role)) => role,
+        _ => {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": "Buyer role required to create orders"
+            }))
+        }
+    };
+
+    if user_role != "buyer" {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Only buyers can create orders"
+        }));
+    }
 
     let mut conn = match pool.get() {
         Ok(conn) => conn,
@@ -144,25 +176,74 @@ pub async fn create_order(
         }));
     }
 
-    // Calculate total (price_xmr is already in atomic units)
-    let total_xmr = listing.price_xmr * req.quantity as i64;
-
-    // Create order
-    let new_order = NewOrder {
-        id: Uuid::new_v4().to_string(),
-        buyer_id,
-        vendor_id: listing.vendor_id.clone(),
-        listing_id: req.listing_id.clone(),
-        escrow_id: None, // Set when escrow is created
-        status: OrderStatus::Pending.as_str().to_string(),
-        total_xmr,
+    // SECURITY: Calculate total with overflow protection
+    // price_xmr is in atomic units (piconeros)
+    let total_xmr = match listing.price_xmr.checked_mul(req.quantity as i64) {
+        Some(total) => total,
+        None => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "Order total exceeds maximum value (integer overflow)"
+            }))
+        }
     };
 
-    match Order::create(&mut conn, new_order) {
-        Ok(order) => HttpResponse::Created().json(OrderResponse::from(order)),
-        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
-            "error": format!("Failed to create order: {}", e)
-        })),
+    // SECURITY: Validate total is positive and reasonable
+    if total_xmr <= 0 {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Invalid order total"
+        }));
+    }
+
+    // SECURITY: Check maximum order value (e.g., 10,000 XMR = 10^16 piconeros)
+    const MAX_ORDER_VALUE: i64 = 10_000_000_000_000_000; // 10,000 XMR
+    if total_xmr > MAX_ORDER_VALUE {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Order total exceeds maximum allowed value"
+        }));
+    }
+
+    // SECURITY: Use database transaction to atomically create order and reserve stock
+    // This prevents race conditions where multiple buyers could order the same stock
+    let order_result = conn.transaction::<Order, diesel::result::Error, _>(|conn| {
+        // First, decrease stock atomically
+        // This will fail if stock is insufficient (race condition protection)
+        Listing::decrease_stock(conn, req.listing_id.clone(), req.quantity)
+            .map_err(|e| {
+                tracing::error!("Failed to decrease stock: {}", e);
+                diesel::result::Error::RollbackTransaction
+            })?;
+
+        // Then create the order
+        let new_order = NewOrder {
+            id: Uuid::new_v4().to_string(),
+            buyer_id: buyer_id.clone(),
+            vendor_id: listing.vendor_id.clone(),
+            listing_id: req.listing_id.clone(),
+            escrow_id: None, // Set when escrow is created
+            status: OrderStatus::Pending.as_str().to_string(),
+            total_xmr,
+        };
+
+        Order::create(conn, new_order).map_err(|e| {
+            tracing::error!("Failed to create order: {}", e);
+            diesel::result::Error::RollbackTransaction
+        })
+    });
+
+    match order_result {
+        Ok(order) => {
+            tracing::info!(
+                "Order created successfully: id={}, buyer={}, vendor={}, total={} piconeros",
+                order.id, order.buyer_id, order.vendor_id, order.total_xmr
+            );
+            HttpResponse::Created().json(OrderResponse::from(order))
+        }
+        Err(e) => {
+            tracing::error!("Transaction failed: {:?}", e);
+            HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Failed to create order. Stock may have been exhausted."
+            }))
+        }
     }
 }
 

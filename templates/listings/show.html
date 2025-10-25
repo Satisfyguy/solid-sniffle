@@ -80,7 +80,7 @@
                 — PLACE ORDER
             </h2>
 
-            <form id="order-form" data-unit-price="{{ listing.price_xmr }}" hx-post="/api/orders" hx-target="#order-result" hx-swap="innerHTML">
+            <form id="order-form" data-unit-price="{{ listing.price_xmr }}">
                 <input type="hidden" name="listing_id" value="{{ listing.id }}">
 
                 <div class="form-group">
