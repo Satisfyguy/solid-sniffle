@@ -34,11 +34,29 @@ async fn ws_route(
     req: HttpRequest,
     stream: web::Payload,
     srv: web::Data<Addr<WebSocketServer>>,
+    session: actix_session::Session,
 ) -> Result<HttpResponse, Error> {
+    // Get authenticated user ID from session
+    let user_id = match session.get::<String>("user_id") {
+        Ok(Some(uid)) => match Uuid::parse_str(&uid) {
+            Ok(uuid) => uuid,
+            Err(_) => {
+                tracing::error!("Invalid user_id UUID in session: {}", uid);
+                return Ok(HttpResponse::Unauthorized().body("Invalid session"));
+            }
+        },
+        _ => {
+            tracing::warn!("WebSocket connection attempted without authentication");
+            return Ok(HttpResponse::Unauthorized().body("Authentication required"));
+        }
+    };
+
+    tracing::info!("WebSocket connection established for user: {}", user_id);
+
     ws::start(
         WebSocketSession {
             id: Uuid::new_v4(),
-            user_id: Uuid::new_v4(), // This should be authenticated user
+            user_id,
             hb: std::time::Instant::now(),
             server: srv.get_ref().clone(),
         },
@@ -91,7 +109,54 @@ async fn main() -> Result<()> {
         MoneroConfig::default(),
     ])?));
 
-    // 7. Initialize Escrow Orchestrator
+    // 7. Ensure system arbiter exists
+    {
+        use argon2::{
+            password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
+            Argon2,
+        };
+        use server::models::user::{NewUser, User};
+        
+        let mut conn = pool.get().context("Failed to get DB connection")?;
+        let arbiter_exists = web::block(move || {
+            use diesel::prelude::*;
+            use server::schema::users::dsl::*;
+            users.filter(role.eq("arbiter")).first::<User>(&mut conn).optional()
+        })
+        .await
+        .context("Failed to check for arbiter")??;
+        
+        if arbiter_exists.is_none() {
+            info!("No arbiter found, creating system arbiter...");
+            let password = "arbiter_system_2024";
+            let salt = SaltString::generate(&mut OsRng);
+            let argon2 = Argon2::default();
+            let password_hash = argon2
+                .hash_password(password.as_bytes(), &salt)
+                .context("Failed to hash password")?
+                .to_string();
+            
+            let mut conn = pool.get().context("Failed to get DB connection")?;
+            let new_arbiter = NewUser {
+                id: Uuid::new_v4().to_string(),
+                username: "arbiter_system".to_string(),
+                password_hash,
+                wallet_address: None,
+                wallet_id: None,
+                role: "arbiter".to_string(),
+            };
+            
+            web::block(move || User::create(&mut conn, new_arbiter))
+                .await
+                .context("Failed to create arbiter")??;
+            
+            info!("✅ System arbiter created successfully (username: arbiter_system, password: arbiter_system_2024)");
+        } else {
+            info!("System arbiter already exists");
+        }
+    }
+
+    // 8. Initialize Escrow Orchestrator
     let escrow_orchestrator = Arc::new(EscrowOrchestrator::new(
         wallet_manager.clone(),
         pool.clone(),
@@ -197,8 +262,10 @@ async fn main() -> Result<()> {
                     .service(listings::remove_listing_image)
                     // Orders
                     .service(orders::create_order)
+                    .service(orders::get_pending_count)
                     .service(orders::list_orders)
                     .service(orders::get_order)
+                    .service(orders::init_escrow)
                     .service(orders::ship_order)
                     .service(orders::complete_order)
                     .service(orders::cancel_order)

@@ -425,7 +425,9 @@ pub async fn show_orders(
     pool: web::Data<DbPool>,
     session: Session,
 ) -> impl Responder {
+    use crate::models::listing::Listing;
     use crate::models::order::Order;
+    use crate::models::user::User;
 
     // Require authentication
     let user_id = match session.get::<String>("user_id") {
@@ -440,14 +442,19 @@ pub async fn show_orders(
     let mut ctx = Context::new();
 
     // Insert session data
-    if let Ok(Some(username)) = session.get::<String>("username") {
+    let user_role = if let Ok(Some(username)) = session.get::<String>("username") {
         ctx.insert("username", &username);
         ctx.insert("logged_in", &true);
 
         if let Ok(Some(role)) = session.get::<String>("role") {
             ctx.insert("role", &role);
+            Some(role)
+        } else {
+            None
         }
-    }
+    } else {
+        None
+    };
 
     // Fetch orders from database
     let mut conn = match pool.get() {
@@ -458,7 +465,8 @@ pub async fn show_orders(
         }
     };
 
-    let orders_result = web::block(move || Order::find_by_user(&mut conn, user_id)).await;
+    let user_id_clone = user_id.clone();
+    let orders_result = web::block(move || Order::find_by_user(&mut conn, user_id_clone)).await;
 
     let orders = match orders_result {
         Ok(Ok(o)) => o,
@@ -472,7 +480,69 @@ pub async fn show_orders(
         }
     };
 
-    ctx.insert("orders", &orders);
+    // Enrich orders with listing and user data
+    let mut enriched_orders = Vec::new();
+    let mut pending_count = 0;
+
+    for order in orders {
+        // Fetch listing
+        let mut conn2 = match pool.get() {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+        let listing_id = order.listing_id.clone();
+        let listing = match web::block(move || Listing::find_by_id(&mut conn2, listing_id)).await {
+            Ok(Ok(l)) => l,
+            _ => continue,
+        };
+
+        // Fetch other party (buyer or vendor)
+        let mut conn3 = match pool.get() {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+        let other_user_id = if order.buyer_id == user_id {
+            order.vendor_id.clone()
+        } else {
+            order.buyer_id.clone()
+        };
+        let other_username = match web::block(move || User::find_by_id(&mut conn3, other_user_id)).await {
+            Ok(Ok(u)) => u.username,
+            _ => "Unknown".to_string(),
+        };
+
+        // Count pending orders for vendor
+        if user_role.as_deref() == Some("vendor") && order.vendor_id == user_id && order.status == "pending" {
+            pending_count += 1;
+        }
+
+        // Get first image
+        let first_image = listing.images_ipfs_cids
+            .as_ref()
+            .and_then(|json| serde_json::from_str::<Vec<String>>(json).ok())
+            .and_then(|images| images.into_iter().next());
+
+        enriched_orders.push(serde_json::json!({
+            "id": order.id,
+            "buyer_id": order.buyer_id,
+            "vendor_id": order.vendor_id,
+            "listing_id": order.listing_id,
+            "listing_title": listing.title,
+            "first_image_cid": first_image,
+            "status": order.status,
+            "total_xmr": order.total_xmr,
+            "total_price_xmr": format!("{:.12}", order.total_xmr as f64 / 1_000_000_000_000.0),
+            "unit_price_xmr": format!("{:.12}", listing.price_xmr as f64 / 1_000_000_000_000.0),
+            "quantity": 1,
+            "buyer_username": if order.buyer_id == user_id { "You".to_string() } else { other_username.clone() },
+            "vendor_username": if order.vendor_id == user_id { "You".to_string() } else { other_username },
+            "created_at": order.created_at,
+        }));
+    }
+
+    ctx.insert("orders", &enriched_orders);
+    ctx.insert("pending_count", &pending_count);
+    ctx.insert("csrf_token", &get_csrf_token(&session));
 
     match tera.render("orders/index.html", &ctx) {
         Ok(html) => HttpResponse::Ok()

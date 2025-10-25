@@ -27,6 +27,11 @@
 
     {% include "partials/footer.html" %}
 
+    <!-- WebSocket Notifications (only for authenticated users) -->
+    {% if logged_in %}
+    <script src="/static/js/notifications.js"></script>
+    {% endif %}
+
     {% block scripts %}{% endblock %}
 </body>
 </html>

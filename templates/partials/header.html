@@ -15,7 +15,10 @@
                 {% if role == "vendor" %}
                     <a href="/listings/new" role="menuitem" aria-label="Create a new listing">SELL</a>
                 {% endif %}
-                <a href="/orders" role="menuitem" aria-label="View my orders">ORDERS</a>
+                <a href="/orders" role="menuitem" aria-label="View my orders" style="position: relative;">
+                    ORDERS
+                    <span id="orders-badge" class="notification-badge" style="display: none;"></span>
+                </a>
                 <span class="nav-user" aria-label="Current user">{{ username | upper }}</span>
                 <form action="/logout" method="post" style="display: inline;">
                     <button type="submit" class="btn-link" aria-label="Logout from account">LOGOUT</button>

@@ -2,11 +2,11 @@
 //!
 //! REST API endpoints for managing purchase orders in the escrow marketplace.
 
+use actix::Addr;
 use actix_session::Session;
 use actix_web::{get, post, put, web, HttpRequest, HttpResponse, Responder};
 use diesel::Connection;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use uuid::Uuid;
 use validator::Validate;
 
@@ -16,6 +16,7 @@ use crate::models::listing::Listing;
 use crate::models::order::{NewOrder, Order, OrderStatus};
 use crate::models::user::User;
 use crate::services::escrow::EscrowOrchestrator;
+use crate::websocket::{NotifyUser, WebSocketServer, WsEvent};
 
 /// Request body for creating a new order
 #[derive(Debug, Deserialize, Validate)]
@@ -93,6 +94,7 @@ pub async fn create_order(
     session: Session,
     http_req: HttpRequest,
     req: web::Json<CreateOrderRequest>,
+    websocket: web::Data<Addr<WebSocketServer>>,
 ) -> impl Responder {
     // SECURITY: Validate CSRF token
     let csrf_token = http_req
@@ -236,6 +238,38 @@ pub async fn create_order(
                 "Order created successfully: id={}, buyer={}, vendor={}, total={} piconeros",
                 order.id, order.buyer_id, order.vendor_id, order.total_xmr
             );
+            
+            // Send WebSocket notification to vendor
+            let vendor_uuid = match Uuid::parse_str(&order.vendor_id) {
+                Ok(uuid) => uuid,
+                Err(_) => {
+                    tracing::error!("Invalid vendor UUID: {}", order.vendor_id);
+                    return HttpResponse::InternalServerError().json(serde_json::json!({
+                        "error": "Internal error"
+                    }));
+                }
+            };
+            
+            let order_uuid = match Uuid::parse_str(&order.id) {
+                Ok(uuid) => uuid,
+                Err(_) => {
+                    tracing::error!("Invalid order UUID: {}", order.id);
+                    return HttpResponse::InternalServerError().json(serde_json::json!({
+                        "error": "Internal error"
+                    }));
+                }
+            };
+            
+            websocket.do_send(NotifyUser {
+                user_id: vendor_uuid,
+                event: WsEvent::OrderStatusChanged {
+                    order_id: order_uuid,
+                    new_status: "pending".to_string(),
+                },
+            });
+            
+            tracing::info!("Sent order notification to vendor {}", vendor_uuid);
+            
             HttpResponse::Created().json(OrderResponse::from(order))
         }
         Err(e) => {
@@ -244,6 +278,53 @@ pub async fn create_order(
                 "error": "Failed to create order. Stock may have been exhausted."
             }))
         }
+    }
+}
+
+/// GET /api/orders/pending-count - Get count of pending orders for vendor
+#[get("/orders/pending-count")]
+pub async fn get_pending_count(pool: web::Data<DbPool>, session: Session) -> impl Responder {
+    // Get authenticated user
+    let user_id = match get_user_id_from_session(&session) {
+        Ok(id) => id,
+        Err(response) => return response,
+    };
+
+    // Check if user is vendor
+    let user_role = match session.get::<String>("role") {
+        Ok(Some(role)) => role,
+        _ => return HttpResponse::Ok().json(serde_json::json!({ "count": 0 })),
+    };
+
+    if user_role != "vendor" {
+        return HttpResponse::Ok().json(serde_json::json!({ "count": 0 }));
+    }
+
+    let mut conn = match pool.get() {
+        Ok(conn) => conn,
+        Err(_) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Database connection failed"
+            }))
+        }
+    };
+
+    // Count pending orders where user is vendor
+    let count_result = web::block(move || {
+        use crate::schema::orders::dsl::*;
+        use diesel::prelude::*;
+        
+        orders
+            .filter(vendor_id.eq(user_id))
+            .filter(status.eq("pending"))
+            .count()
+            .get_result::<i64>(&mut conn)
+    })
+    .await;
+
+    match count_result {
+        Ok(Ok(count)) => HttpResponse::Ok().json(serde_json::json!({ "count": count })),
+        _ => HttpResponse::Ok().json(serde_json::json!({ "count": 0 })),
     }
 }
 
@@ -402,7 +483,7 @@ pub async fn ship_order(
 #[put("/orders/{id}/complete")]
 pub async fn complete_order(
     pool: web::Data<DbPool>,
-    escrow_orchestrator: web::Data<Arc<EscrowOrchestrator>>,
+    escrow_orchestrator: web::Data<EscrowOrchestrator>,
     session: Session,
     id: web::Path<String>,
 ) -> impl Responder {
@@ -520,6 +601,140 @@ pub async fn complete_order(
     }
 }
 
+/// POST /api/orders/{id}/init-escrow - Initialize escrow for an order
+///
+/// Buyer initializes the escrow multisig and gets the payment address.
+#[post("/orders/{id}/init-escrow")]
+pub async fn init_escrow(
+    pool: web::Data<DbPool>,
+    escrow_orchestrator: web::Data<EscrowOrchestrator>,
+    session: Session,
+    http_req: HttpRequest,
+    id: web::Path<String>,
+) -> impl Responder {
+    // SECURITY: Validate CSRF token
+    let csrf_token = http_req
+        .headers()
+        .get("X-CSRF-Token")
+        .and_then(|h| h.to_str().ok())
+        .unwrap_or("");
+
+    if !validate_csrf_token(&session, csrf_token) {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Invalid or missing CSRF token"
+        }));
+    }
+
+    // Get authenticated user (buyer)
+    let user_id = match get_user_id_from_session(&session) {
+        Ok(id) => id,
+        Err(response) => return response,
+    };
+
+    let mut conn = match pool.get() {
+        Ok(conn) => conn,
+        Err(_) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Database connection failed"
+            }))
+        }
+    };
+
+    let order_id_str = id.into_inner();
+    let order = match Order::find_by_id(&mut conn, order_id_str.clone()) {
+        Ok(order) => order,
+        Err(_) => {
+            return HttpResponse::NotFound().json(serde_json::json!({
+                "error": "Order not found"
+            }))
+        }
+    };
+
+    // Authorization: only buyer can initialize escrow
+    if order.buyer_id != user_id {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Only the buyer can initialize escrow"
+        }));
+    }
+
+    // Validate order is in pending status
+    if order.status != "pending" {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": format!("Cannot initialize escrow for order in status: {}", order.status)
+        }));
+    }
+
+    // Check if escrow already exists
+    if order.escrow_id.is_some() {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Escrow already initialized for this order"
+        }));
+    }
+
+    // Parse UUIDs
+    let order_uuid = match Uuid::parse_str(&order.id) {
+        Ok(uuid) => uuid,
+        Err(_) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Invalid order ID format"
+            }))
+        }
+    };
+
+    let buyer_uuid = match Uuid::parse_str(&order.buyer_id) {
+        Ok(uuid) => uuid,
+        Err(_) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Invalid buyer ID format"
+            }))
+        }
+    };
+
+    let vendor_uuid = match Uuid::parse_str(&order.vendor_id) {
+        Ok(uuid) => uuid,
+        Err(_) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Invalid vendor ID format"
+            }))
+        }
+    };
+
+    // Initialize escrow
+    match escrow_orchestrator
+        .init_escrow(order_uuid, buyer_uuid, vendor_uuid, order.total_xmr)
+        .await
+    {
+        Ok(escrow) => {
+            // Update order with escrow_id
+            match Order::set_escrow(&mut conn, order_id_str, escrow.id.clone()) {
+                Ok(_) => {
+                    tracing::info!("Escrow initialized for order {}: escrow_id={}", order.id, escrow.id);
+                    
+                    HttpResponse::Ok().json(serde_json::json!({
+                        "escrow_id": escrow.id,
+                        "escrow_address": escrow.multisig_address.unwrap_or_else(|| "Pending".to_string()),
+                        "amount": order.total_xmr,
+                        "amount_xmr": format!("{:.12}", order.total_xmr as f64 / 1_000_000_000_000.0),
+                        "status": escrow.status
+                    }))
+                }
+                Err(e) => {
+                    tracing::error!("Failed to update order with escrow_id: {}", e);
+                    HttpResponse::InternalServerError().json(serde_json::json!({
+                        "error": "Escrow created but failed to link to order"
+                    }))
+                }
+            }
+        }
+        Err(e) => {
+            tracing::error!("Failed to initialize escrow: {}", e);
+            HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": format!("Failed to initialize escrow: {}", e)
+            }))
+        }
+    }
+}
+
 /// PUT /api/orders/{id}/cancel - Cancel an order
 ///
 /// Buyer can cancel in pending or funded status.
@@ -527,7 +742,7 @@ pub async fn complete_order(
 #[put("/orders/{id}/cancel")]
 pub async fn cancel_order(
     pool: web::Data<DbPool>,
-    escrow_orchestrator: web::Data<Arc<EscrowOrchestrator>>,
+    escrow_orchestrator: web::Data<EscrowOrchestrator>,
     session: Session,
     id: web::Path<String>,
 ) -> impl Responder {
@@ -676,7 +891,7 @@ pub struct DisputeRequest {
 #[put("/orders/{id}/dispute")]
 pub async fn dispute_order(
     pool: web::Data<DbPool>,
-    escrow_orchestrator: web::Data<Arc<EscrowOrchestrator>>,
+    escrow_orchestrator: web::Data<EscrowOrchestrator>,
     session: Session,
     id: web::Path<String>,
     req: web::Json<DisputeRequest>,
