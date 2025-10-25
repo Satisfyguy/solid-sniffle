@@ -160,7 +160,7 @@ pub async fn export_to_ipfs(
     let file_size = json_bytes.len();
 
     // 10. Upload to IPFS
-    let ipfs_hash = match ipfs.add(json_bytes).await {
+    let ipfs_hash = match ipfs.add(json_bytes, "reputation.json", "application/json").await {
         Ok(hash) => hash,
         Err(e) => {
             tracing::error!(

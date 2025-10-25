@@ -11,7 +11,7 @@ use monero_marketplace_common::types::MoneroConfig;
 use server::db::create_pool;
 use server::handlers::{auth, escrow, frontend, listings, orders, reputation, reputation_ipfs};
 use server::middleware::{
-    rate_limit::{auth_rate_limiter, global_rate_limiter, protected_rate_limiter},
+    rate_limit::{global_rate_limiter, protected_rate_limiter},
     security_headers::SecurityHeaders,
 };
 use server::services::escrow::EscrowOrchestrator;
@@ -191,6 +191,9 @@ async fn main() -> Result<()> {
                     .service(listings::search_listings)
                     .service(listings::update_listing)
                     .service(listings::delete_listing)
+                    .service(listings::upload_listing_images)
+                    .service(listings::get_listing_image)
+                    .service(listings::remove_listing_image)
                     // Orders
                     .service(orders::create_order)
                     .service(orders::list_orders)

@@ -273,9 +273,16 @@ pub async fn show_listing(
     info!("Rendering listing: {:?}", listing);
     info!("With vendor: {:?}", vendor);
 
+    // Parse images from JSON string
+    let images: Vec<String> = listing.images_ipfs_cids
+        .as_ref()
+        .and_then(|json| serde_json::from_str(json).ok())
+        .unwrap_or_default();
+
     ctx.insert("listing", &listing);
     ctx.insert("vendor", &vendor);
     ctx.insert("price_display", &listing.price_as_xmr());
+    ctx.insert("images", &images);
 
     match tera.render("listings/show.html", &ctx) {
         Ok(html) => HttpResponse::Ok()

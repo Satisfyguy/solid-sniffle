@@ -36,7 +36,7 @@
 
             <div class="form-group">
                 <label for="images">PRODUCT IMAGES</label>
-                <input type="file" id="images" name="images" accept="image/*" multiple>
+                <div id="image-upload-container" data-listing-id="{{ listing.id }}"></div>
                 <small>UPLOAD ONE OR MORE IMAGES (JPEG, PNG, GIF)</small>
             </div>
 
@@ -55,4 +55,5 @@
 
 {% block scripts %}
 <script src="/static/js/edit-listing.js" defer></script>
+<script src="/static/js/upload-images.js" defer></script>
 {% endblock %}

@@ -103,7 +103,7 @@ where
                 actix_web::http::header::HeaderName::from_static("content-security-policy"),
                 actix_web::http::header::HeaderValue::from_static(
                     "default-src 'self'; \
-                     script-src 'self' https://unpkg.com 'sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC'; \
+                     script-src 'self' https://unpkg.com 'sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC' 'sha256-N2pfIAEnpE2vmu77Xjadv5PP2CdREj1pDSq5RXaRbBs='; \
                      style-src 'self' 'unsafe-inline'; \
                      img-src 'self' data:; \
                      font-src 'self'; \

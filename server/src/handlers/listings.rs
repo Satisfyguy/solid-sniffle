@@ -2,15 +2,21 @@
 //!
 //! REST API endpoints for managing product listings on the marketplace.
 
+use actix_multipart::Multipart;
 use actix_session::Session;
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use anyhow::Context;
+use diesel::prelude::*;
+use futures_util::TryStreamExt;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
+use infer;
 
 use crate::db::DbPool;
+use crate::ipfs::client::IpfsClient;
 use crate::models::listing::{Listing, ListingStatus, NewListing, UpdateListing};
+use crate::schema::listings;
 
 /// Request body for creating a new listing
 #[derive(Debug, Deserialize, Validate)]
@@ -63,10 +69,17 @@ pub struct ListingResponse {
     pub status: String,
     pub created_at: String,
     pub updated_at: String,
+    pub images: Vec<String>, // IPFS CIDs for images
 }
 
 impl From<Listing> for ListingResponse {
     fn from(listing: Listing) -> Self {
+        // Parse images from JSON string
+        let images = listing.images_ipfs_cids
+            .as_ref()
+            .and_then(|json| serde_json::from_str::<Vec<String>>(json).ok())
+            .unwrap_or_default();
+
         Self {
             id: listing.id.clone(),
             vendor_id: listing.vendor_id.clone(),
@@ -78,6 +91,7 @@ impl From<Listing> for ListingResponse {
             status: listing.status.clone(),
             created_at: listing.created_at.to_string(),
             updated_at: listing.updated_at.to_string(),
+            images,
         }
     }
 }
@@ -97,6 +111,95 @@ fn get_user_id_from_session(session: &Session) -> Result<String, HttpResponse> {
             }))
         })
 }
+
+/// Upload images to IPFS and return CIDs
+///
+/// # Arguments
+/// * `multipart` - Multipart form data containing image files
+/// * `ipfs_client` - IPFS client instance
+///
+/// # Returns
+/// Vector of IPFS CIDs for uploaded images
+async fn upload_images_to_ipfs(
+    mut multipart: Multipart,
+    ipfs_client: &IpfsClient,
+) -> Result<Vec<String>, HttpResponse> {
+    let mut image_cids = Vec::new();
+    let mut image_count = 0;
+    const MAX_IMAGES: usize = 10;
+    const MAX_FILE_SIZE: usize = 5 * 1024 * 1024; // 5MB per image
+
+    while let Some(item) = multipart.try_next().await.map_err(|e| {
+        tracing::error!("Multipart parsing error: {}", e);
+        HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Invalid multipart data"
+        }))
+    })? {
+        if image_count >= MAX_IMAGES {
+            return Err(HttpResponse::BadRequest().json(serde_json::json!({
+                "error": format!("Maximum {} images allowed", MAX_IMAGES)
+            })));
+        }
+
+        let field = item;
+        if field.name() == "images" {
+            let mut data = Vec::new();
+            let mut stream = field;
+
+            while let Some(chunk) = stream.try_next().await.map_err(|e| {
+                tracing::error!("Stream reading error: {}", e);
+                HttpResponse::InternalServerError().json(serde_json::json!({
+                    "error": "Failed to read file data"
+                }))
+            })? {
+                data.extend_from_slice(&chunk);
+                
+                // Check file size limit
+                if data.len() > MAX_FILE_SIZE {
+                    return Err(HttpResponse::BadRequest().json(serde_json::json!({
+                        "error": format!("File too large. Maximum size: {}MB", MAX_FILE_SIZE / 1024 / 1024)
+                    })));
+                }
+            }
+
+            if !data.is_empty() {
+                // Determine mime type and generate a filename
+                let kind = infer::get(&data).ok_or_else(|| {
+                    HttpResponse::BadRequest().json(serde_json::json!({
+                        "error": "Failed to determine image type"
+                    }))
+                })?;
+                
+                if !["image/jpeg", "image/png", "image/gif"].contains(&kind.mime_type()) {
+                    return Err(HttpResponse::BadRequest().json(serde_json::json!({
+                        "error": "Invalid image format. Only JPEG, PNG, and GIF are supported"
+                    })));
+                }
+
+                let file_name = format!("{}.{}", Uuid::new_v4(), kind.extension());
+
+                // Upload to IPFS
+                match ipfs_client.add(data, &file_name, kind.mime_type()).await {
+                    Ok(cid) => {
+                        tracing::info!("Image uploaded to IPFS: {}", cid);
+                        image_cids.push(cid);
+                        image_count += 1;
+                    }
+                    Err(e) => {
+                        tracing::error!("IPFS upload failed: {}", e);
+                        return Err(HttpResponse::InternalServerError().json(serde_json::json!({
+                            "error": "Failed to upload image to IPFS"
+                        })));
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(image_cids)
+}
+
+
 
 /// POST /api/listings - Create a new listing
 ///
@@ -153,6 +256,216 @@ pub async fn create_listing(
         Ok(Err(e)) => HttpResponse::InternalServerError().json(serde_json::json!({
             "error": format!("Failed to create listing: {}", e)
         })),
+        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": format!("Async task failed: {}", e)
+        })),
+    }
+}
+
+/// POST /api/listings/{id}/images - Upload images for a listing
+///
+/// Requires authentication. Only the vendor who created the listing can upload images.
+#[post("/listings/{id}/images")]
+pub async fn upload_listing_images(
+    pool: web::Data<DbPool>,
+    session: Session,
+    id: web::Path<String>,
+    multipart: Multipart,
+    ipfs_client: web::Data<IpfsClient>,
+) -> impl Responder {
+    // Get authenticated user
+    let user_id = match get_user_id_from_session(&session) {
+        Ok(id) => id,
+        Err(response) => return response,
+    };
+
+    let listing_id = id.into_inner();
+
+
+
+    // Check listing ownership
+    let mut conn = match pool.get() {
+        Ok(conn) => conn,
+        Err(_) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Database connection failed"
+            }))
+        }
+    };
+
+    let listing_id_clone = listing_id.clone();
+    let existing_listing = match web::block(move || Listing::find_by_id(&mut conn, listing_id_clone)).await {
+        Ok(Ok(listing)) => listing,
+        Ok(Err(_)) => {
+            return HttpResponse::NotFound().json(serde_json::json!({
+                "error": "Listing not found"
+            }))
+        }
+        Err(_) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Database error"
+            }))
+        }
+    };
+
+    // Check ownership
+    if existing_listing.vendor_id != user_id {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "You can only upload images to your own listings"
+        }));
+    }
+
+    // Upload images to IPFS
+    let image_cids = match upload_images_to_ipfs(multipart, &ipfs_client).await {
+        Ok(cids) => cids,
+        Err(response) => return response,
+    };
+
+    // Update listing with new images
+    let existing_images: Vec<String> = existing_listing.images_ipfs_cids
+        .as_ref()
+        .and_then(|json| serde_json::from_str(json).ok())
+        .unwrap_or_default();
+
+    let mut updated_images = existing_images;
+    updated_images.extend(image_cids);
+
+    let images_json = serde_json::to_string(&updated_images).unwrap_or_else(|_| "[]".to_string());
+
+    let update_result = web::block(move || {
+        let mut conn = pool.get().with_context(|| "Database connection failed")?;
+        diesel::update(listings::table.filter(listings::id.eq(listing_id)))
+            .set(listings::images_ipfs_cids.eq(images_json))
+            .execute(&mut conn)
+            .context("Failed to update listing images")?;
+        Ok::<(), anyhow::Error>(())
+    }).await;
+
+    match update_result {
+        Ok(Ok(_)) => {
+            HttpResponse::Ok().json(serde_json::json!({
+                "message": "Images uploaded successfully",
+                "image_count": updated_images.len()
+            }))
+        }
+        Ok(Err(e)) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": format!("Failed to update listing: {}", e)
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": format!("Async task failed: {}", e)
+        })),
+    }
+}
+
+/// GET /api/listings/{id}/images/{cid} - Get image from IPFS
+///
+/// Serves images from IPFS through the server to avoid CORS issues.
+#[get("/listings/{id}/images/{cid}")]
+pub async fn get_listing_image(
+    path: web::Path<(String, String)>,
+    ipfs_client: web::Data<IpfsClient>,
+) -> impl Responder {
+    let (_listing_id, image_cid) = path.into_inner();
+
+
+
+    // Download image from IPFS
+    match ipfs_client.cat(&image_cid).await {
+        Ok(image_data) => {
+            // Determine content type based on image data
+            let content_type = if image_data.len() >= 4 {
+                if image_data.starts_with(&[0xFF, 0xD8, 0xFF]) {
+                    "image/jpeg"
+                } else if image_data.starts_with(&[0x89, 0x50, 0x4E, 0x47]) {
+                    "image/png"
+                } else if image_data.starts_with(&[0x47, 0x49, 0x46, 0x38]) {
+                    "image/gif"
+                } else {
+                    "application/octet-stream"
+                }
+            } else {
+                "application/octet-stream"
+            };
+
+            HttpResponse::Ok()
+                .content_type(content_type)
+                .body(image_data)
+        }
+        Err(e) => {
+            tracing::error!("Failed to retrieve image from IPFS: {:?}", e);
+            HttpResponse::NotFound().json(serde_json::json!({
+                "error": "Image not found"
+            }))
+        }
+    }
+}
+
+/// DELETE /api/listings/{id}/images/{cid} - Remove an image from a listing
+///
+/// Requires authentication. Only the vendor who created the listing can remove images.
+#[delete("/listings/{id}/images/{cid}")]
+pub async fn remove_listing_image(
+    pool: web::Data<DbPool>,
+    session: Session,
+    path: web::Path<(String, String)>,
+) -> impl Responder {
+    // Get authenticated user
+    let user_id = match get_user_id_from_session(&session) {
+        Ok(id) => id,
+        Err(response) => return response,
+    };
+
+    let (listing_id, image_cid) = path.into_inner();
+
+    // Check listing ownership and remove image
+    let remove_result = web::block(move || {
+        let mut conn = pool.get().with_context(|| "Database connection failed")?;
+
+        // 1. Find the listing to check ownership
+        let existing_listing = Listing::find_by_id(&mut conn, listing_id.clone())?;
+
+        // 2. Check if the authenticated user is the vendor
+        if existing_listing.vendor_id != user_id {
+            return Err(anyhow::anyhow!("Permission denied"));
+        }
+
+        // 3. Parse existing images
+        let mut existing_images: Vec<String> = existing_listing.images_ipfs_cids
+            .as_ref()
+            .and_then(|json| serde_json::from_str(json).ok())
+            .unwrap_or_default();
+
+        // 4. Remove the specified image CID
+        existing_images.retain(|cid| cid != &image_cid);
+
+        // 5. Update the listing with the new image list
+        let images_json = serde_json::to_string(&existing_images).unwrap_or_else(|_| "[]".to_string());
+        
+        diesel::update(listings::table.filter(listings::id.eq(listing_id)))
+            .set(listings::images_ipfs_cids.eq(images_json))
+            .execute(&mut conn)
+            .context("Failed to update listing images")?;
+
+        Ok::<(), anyhow::Error>(())
+    }).await;
+
+    match remove_result {
+        Ok(Ok(_)) => {
+            HttpResponse::Ok().json(serde_json::json!({
+                "message": "Image removed successfully"
+            }))
+        }
+        Ok(Err(e)) => {
+            if e.to_string().contains("Permission denied") {
+                HttpResponse::Forbidden().json(serde_json::json!({
+                    "error": "You can only remove images from your own listings"
+                }))
+            } else {
+                HttpResponse::InternalServerError().json(serde_json::json!({
+                    "error": format!("Failed to remove image: {}", e)
+                }))
+            }
+        }
         Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
             "error": format!("Async task failed: {}", e)
         })),

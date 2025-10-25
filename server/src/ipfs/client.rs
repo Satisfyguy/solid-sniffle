@@ -71,20 +71,13 @@ impl IpfsClient {
 
         // SECURITY: Route all IPFS traffic through Tor in production
         // For development, set IPFS_USE_TOR=false to disable Tor proxy
-        let use_tor = std::env::var("IPFS_USE_TOR")
-            .unwrap_or_else(|_| "false".to_string())
-            .parse::<bool>()
-            .unwrap_or(false);
-
-        if use_tor {
+        if api_url.starts_with("http://127.0.0.1") || api_url.starts_with("http://localhost") {
+            tracing::info!("IPFS: Connecting directly to local IPFS node (Tor proxy bypassed for local connection)");
+        } else {
             tracing::info!("IPFS: Configuring Tor SOCKS5 proxy (127.0.0.1:9050)");
             let proxy = Proxy::all("socks5://127.0.0.1:9050")
                 .context("Failed to configure Tor SOCKS5 proxy for IPFS")?;
             client_builder = client_builder.proxy(proxy);
-        } else {
-            tracing::warn!(
-                "IPFS: Tor proxy DISABLED - Direct connections (NOT FOR PRODUCTION)"
-            );
         }
 
         let client = client_builder
@@ -104,7 +97,7 @@ impl IpfsClient {
     pub fn new_local() -> Result<Self> {
         Self::new(
             "http://127.0.0.1:5001/api/v0".to_string(),
-            "http://127.0.0.1:8080/ipfs".to_string(),
+            "http://127.0.0.1:8081/ipfs".to_string(),
         )
     }
 
@@ -166,13 +159,13 @@ impl IpfsClient {
     /// - Uses multipart/form-data encoding
     /// - Automatically retries on transient failures (up to MAX_RETRIES)
     /// - Connection pooling for efficiency
-    pub async fn add(&self, data: Vec<u8>) -> Result<String> {
+    pub async fn add(&self, data: Vec<u8>, file_name: &str, mime_type: &str) -> Result<String> {
         let mut attempt = 0;
 
         loop {
             attempt += 1;
 
-            match self.add_internal(&data).await {
+            match self.add_internal(&data, file_name, mime_type).await {
                 Ok(hash) => {
                     tracing::info!(
                         hash = %hash,
@@ -205,12 +198,12 @@ impl IpfsClient {
     }
 
     /// Internal implementation of IPFS add (single attempt)
-    async fn add_internal(&self, data: &[u8]) -> Result<String> {
+    async fn add_internal(&self, data: &[u8], file_name: &str, mime_type: &str) -> Result<String> {
         let form = multipart::Form::new().part(
             "file",
             multipart::Part::bytes(data.to_vec())
-                .file_name("reputation.json")
-                .mime_str("application/json")
+                .file_name(file_name.to_string())
+                .mime_str(mime_type)
                 .context("Failed to set MIME type")?,
         );
 
