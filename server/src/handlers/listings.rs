@@ -350,14 +350,15 @@ pub async fn update_listing(
         }
 
         // 3. Perform the update
-        Listing::update(&mut conn, listing_id, update_data)
-    })
-    .await;
+            Listing::update(&mut conn, listing_id, update_data)
+        })
+        .await;
 
-        Ok(Ok(listing)) => HttpResponse::Ok()
-            .insert_header(("HX-Redirect", format!("/listings/{}", listing.id)))
-            .json(ListingResponse::from(listing)),
-        Ok(Err(e)) => {
+        match update_result {
+            Ok(Ok(listing)) => HttpResponse::Ok()
+                .insert_header(("HX-Redirect", format!("/listings/{}", listing.id)))
+                .json(ListingResponse::from(listing)),
+            Ok(Err(e)) => {
             if e.to_string().contains("Permission denied") {
                 HttpResponse::Forbidden().json(serde_json::json!({
                     "error": "You can only update your own listings"
