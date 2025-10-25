@@ -185,6 +185,7 @@ async fn main() -> Result<()> {
                     .wrap(protected_rate_limiter())
                     // Listings
                     .service(listings::create_listing)
+                    .service(listings::create_listing_with_images)
                     .service(listings::list_listings)
                     .service(listings::get_listing)
                     .service(listings::get_vendor_listings)

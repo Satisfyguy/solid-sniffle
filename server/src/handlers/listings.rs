@@ -201,7 +201,7 @@ async fn upload_images_to_ipfs(
 
 
 
-/// POST /api/listings - Create a new listing
+/// POST /api/listings - Create a new listing (JSON)
 ///
 /// Requires authentication and vendor role.
 #[post("/listings")]
@@ -249,6 +249,168 @@ pub async fn create_listing(
     match listing_result {
         Ok(Ok(listing)) => {
             // Redirect to the listing page after creation (HTMX will follow this)
+            HttpResponse::Created()
+                .insert_header(("HX-Redirect", format!("/listings/{}", listing.id)))
+                .json(ListingResponse::from(listing))
+        }
+        Ok(Err(e)) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": format!("Failed to create listing: {}", e)
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": format!("Async task failed: {}", e)
+        })),
+    }
+}
+
+/// POST /api/listings/with-images - Create a new listing with images (multipart)
+///
+/// Requires authentication and vendor role.
+#[post("/listings/with-images")]
+pub async fn create_listing_with_images(
+    pool: web::Data<DbPool>,
+    session: Session,
+    mut multipart: Multipart,
+    ipfs_client: web::Data<IpfsClient>,
+) -> impl Responder {
+    // Get authenticated user
+    let user_id = match get_user_id_from_session(&session) {
+        Ok(id) => id,
+        Err(response) => return response,
+    };
+
+    // Parse multipart form data
+    let mut title = String::new();
+    let mut description = String::new();
+    let mut price_xmr: i64 = 0;
+    let mut stock: i32 = 0;
+    let mut image_files = Vec::new();
+
+    while let Some(item) = multipart.try_next().await.map_err(|e| {
+        tracing::error!("Multipart parsing error: {}", e);
+        HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Invalid multipart data"
+        }))
+    }).transpose() {
+        match item {
+            Ok(field) => {
+                let field_name = field.name().to_string();
+                
+                if field_name == "images" {
+                    // Collect image data
+                    let mut data = Vec::new();
+                    let mut stream = field;
+                    while let Some(chunk) = stream.try_next().await.map_err(|e| {
+                        tracing::error!("Stream reading error: {}", e);
+                        HttpResponse::InternalServerError().json(serde_json::json!({
+                            "error": "Failed to read file data"
+                        }))
+                    }).transpose() {
+                        if let Ok(chunk) = chunk {
+                            data.extend_from_slice(&chunk);
+                        }
+                    }
+                    if !data.is_empty() {
+                        image_files.push(data);
+                    }
+                } else {
+                    // Parse text fields
+                    let mut stream = field;
+                    let mut data = Vec::new();
+                    while let Some(chunk) = stream.try_next().await.map_err(|_| {
+                        HttpResponse::InternalServerError().json(serde_json::json!({
+                            "error": "Failed to read field data"
+                        }))
+                    }).transpose() {
+                        if let Ok(chunk) = chunk {
+                            data.extend_from_slice(&chunk);
+                        }
+                    }
+                    let value = String::from_utf8_lossy(&data).to_string();
+                    
+                    match field_name.as_str() {
+                        "title" => title = value,
+                        "description" => description = value,
+                        "price_xmr" => price_xmr = value.parse().unwrap_or(0),
+                        "stock" => stock = value.parse().unwrap_or(0),
+                        _ => {}
+                    }
+                }
+            }
+            Err(e) => return e,
+        }
+    }
+
+    // Validate required fields
+    if title.len() < 3 || title.len() > 200 {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Title must be between 3-200 characters"
+        }));
+    }
+    if description.len() < 10 || description.len() > 5000 {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Description must be between 10-5000 characters"
+        }));
+    }
+    if price_xmr < 1 {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Price must be positive"
+        }));
+    }
+
+    // Upload images to IPFS
+    let mut image_cids = Vec::new();
+    for (idx, image_data) in image_files.iter().enumerate() {
+        let kind = match infer::get(image_data) {
+            Some(k) if ["image/jpeg", "image/png", "image/gif"].contains(&k.mime_type()) => k,
+            _ => {
+                return HttpResponse::BadRequest().json(serde_json::json!({
+                    "error": "Invalid image format. Only JPEG, PNG, and GIF are supported"
+                }));
+            }
+        };
+
+        let file_name = format!("{}.{}", Uuid::new_v4(), kind.extension());
+        match ipfs_client.add(image_data.clone(), &file_name, kind.mime_type()).await {
+            Ok(cid) => {
+                tracing::info!("Image {} uploaded to IPFS: {}", idx + 1, cid);
+                image_cids.push(cid);
+            }
+            Err(e) => {
+                tracing::error!("IPFS upload failed: {}", e);
+                return HttpResponse::InternalServerError().json(serde_json::json!({
+                    "error": "Failed to upload image to IPFS"
+                }));
+            }
+        }
+    }
+
+    let images_json = serde_json::to_string(&image_cids).unwrap_or_else(|_| "[]".to_string());
+
+    // Create listing
+    let new_listing = NewListing {
+        id: Uuid::new_v4().to_string(),
+        vendor_id: user_id,
+        title,
+        description,
+        price_xmr,
+        stock,
+        status: ListingStatus::Active.as_str().to_string(),
+        images_ipfs_cids: Some(images_json),
+    };
+
+    let mut conn = match pool.get() {
+        Ok(conn) => conn,
+        Err(_) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Database connection failed"
+            }))
+        }
+    };
+
+    let listing_result = web::block(move || Listing::create(&mut conn, new_listing)).await;
+
+    match listing_result {
+        Ok(Ok(listing)) => {
             HttpResponse::Created()
                 .insert_header(("HX-Redirect", format!("/listings/{}", listing.id)))
                 .json(ListingResponse::from(listing))

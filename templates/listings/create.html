@@ -9,7 +9,7 @@
             — CREATE NEW LISTING —
         </h1>
 
-        <form id="create-listing-form">
+        <form id="create-listing-form" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <div class="form-group">
                 <label for="title">TITLE</label>
@@ -36,8 +36,9 @@
 
             <div class="form-group">
                 <label for="images">PRODUCT IMAGES</label>
-                <div id="image-upload-container" data-listing-id=""></div>
-                <small>UPLOAD ONE OR MORE IMAGES (JPEG, PNG, GIF) - Images will be uploaded after listing creation</small>
+                <input type="file" id="images" name="images" accept="image/jpeg,image/png,image/gif" multiple>
+                <small>UPLOAD ONE OR MORE IMAGES (JPEG, PNG, GIF) - MAX 10 IMAGES, 5MB EACH</small>
+                <div id="image-preview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 10px;"></div>
             </div>
 
             <div class="form-actions">
@@ -55,5 +56,4 @@
 
 {% block scripts %}
 <script src="/static/js/create-listing.js" defer></script>
-<script src="/static/js/upload-images.js" defer></script>
 {% endblock %}

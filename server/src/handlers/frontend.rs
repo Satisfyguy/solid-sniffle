@@ -114,6 +114,7 @@ struct ListingForTemplate {
     price_xmr: i64,
     status: String,
     vendor_username: String,
+    first_image_cid: Option<String>,
 }
 
 /// GET /listings - Listings index page
@@ -176,12 +177,19 @@ pub async fn show_listings(
             _ => "Unknown".to_string(),
         };
 
+        // Parse first image CID from JSON
+        let first_image_cid = listing.images_ipfs_cids
+            .as_ref()
+            .and_then(|json| serde_json::from_str::<Vec<String>>(json).ok())
+            .and_then(|images| images.into_iter().next());
+
         listings_for_template.push(ListingForTemplate {
             id: listing.id,
             title: listing.title,
             price_xmr: listing.price_xmr,
             status: listing.status,
             vendor_username,
+            first_image_cid,
         });
     }
 
