@@ -1,0 +1,392 @@
+{#
+  NEXUS NAVIGATION COMPONENT
+
+  Usage:
+    {% include "partials/nexus/organisms/nav.html" with
+       logo_text="NEXUS"
+       logo_url="/"
+       user_authenticated=true
+       user_name="John Doe"
+    %}
+
+  Parameters:
+    - logo_text (required): Logo/brand text
+    - logo_url (optional): Logo link URL (default: "/")
+    - nav_items (optional): Array of navigation items
+    - user_authenticated (optional): true|false - Is user logged in
+    - user_name (optional): User display name
+    - user_id (optional): User ID for profile link
+    - notifications_count (optional): Number of unread notifications
+    - glassmorphism (optional): true|false - Apply glass effect (default: true)
+    - sticky (optional): true|false - Sticky navigation (default: true)
+    - class (optional): Additional CSS classes
+#}
+
+{% set nav_logo_url = logo_url | default(value="/") %}
+{% set nav_user_authenticated = user_authenticated | default(value=false) %}
+{% set nav_glassmorphism = glassmorphism | default(value=true) %}
+{% set nav_sticky = sticky | default(value=true) %}
+
+{# Default navigation items #}
+{% set nav_items = nav_items | default(value=[
+  {"text": "Browse", "href": "/listings"},
+  {"text": "Categories", "href": "/categories"},
+  {"text": "Vendors", "href": "/vendors"}
+]) %}
+
+{# Build CSS classes #}
+{% set css_classes = "nexus-nav" %}
+{% if nav_glassmorphism %}
+  {% set css_classes = css_classes ~ " nexus-nav-glass" %}
+{% endif %}
+{% if nav_sticky %}
+  {% set css_classes = css_classes ~ " nexus-nav-sticky" %}
+{% endif %}
+{% if class %}
+  {% set css_classes = css_classes ~ " " ~ class %}
+{% endif %}
+
+<nav class="{{ css_classes }}">
+  <div class="nexus-nav-container">
+    {# Logo #}
+    <a href="{{ nav_logo_url }}" class="nexus-nav-logo" hx-boost="true">
+      <span class="nexus-nav-logo-text">{{ logo_text }}</span>
+    </a>
+
+    {# Desktop Navigation #}
+    <div class="nexus-nav-menu">
+      {% for item in nav_items %}
+        <a href="{{ item.href }}" class="nexus-nav-link" hx-boost="true">
+          {{ item.text }}
+        </a>
+      {% endfor %}
+    </div>
+
+    {# User Actions #}
+    <div class="nexus-nav-actions">
+      {% if nav_user_authenticated %}
+        {# Notifications #}
+        <a href="/notifications" class="nexus-nav-icon-btn" aria-label="Notifications" hx-boost="true">
+          <span class="nexus-nav-icon">🔔</span>
+          {% if notifications_count and notifications_count > 0 %}
+            <span class="nexus-nav-badge">{{ notifications_count }}</span>
+          {% endif %}
+        </a>
+
+        {# User Menu #}
+        {% include "partials/nexus/molecules/dropdown-menu.html" with
+           id="user-menu"
+           trigger_icon="👤"
+           trigger_variant="ghost"
+           position="bottom-end"
+           items=[
+             {"text": "Profile", "href": "/profile", "icon": "👤"},
+             {"text": "Orders", "href": "/orders", "icon": "📦"},
+             {"text": "Settings", "href": "/settings", "icon": "⚙️"},
+             {"separator": true},
+             {"text": "Logout", "hx_post": "/api/logout", "variant": "destructive", "icon": "🚪"}
+           ]
+        %}
+      {% else %}
+        {# Login / Register #}
+        {% include "partials/nexus/atoms/button.html" with
+           text="Login"
+           href="/login"
+           variant="ghost"
+           size="sm"
+        %}
+        {% include "partials/nexus/atoms/button.html" with
+           text="Register"
+           href="/register"
+           variant="primary"
+           size="sm"
+        %}
+      {% endif %}
+
+      {# Mobile Menu Toggle #}
+      <button class="nexus-nav-mobile-toggle" aria-label="Toggle menu" onclick="toggleMobileMenu()">
+        <span class="nexus-nav-hamburger"></span>
+      </button>
+    </div>
+  </div>
+
+  {# Mobile Menu #}
+  <div class="nexus-nav-mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="nexus-nav-mobile-links">
+      {% for item in nav_items %}
+        <a href="{{ item.href }}" class="nexus-nav-mobile-link" hx-boost="true">
+          {{ item.text }}
+        </a>
+      {% endfor %}
+
+      {% if not nav_user_authenticated %}
+        <a href="/login" class="nexus-nav-mobile-link" hx-boost="true">Login</a>
+        <a href="/register" class="nexus-nav-mobile-link" hx-boost="true">Register</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<script>
+function toggleMobileMenu() {
+  var menu = document.getElementById('mobile-menu');
+  var isHidden = menu.getAttribute('aria-hidden') === 'true';
+  menu.setAttribute('aria-hidden', isHidden ? 'false' : 'true');
+}
+
+// Close mobile menu when clicking outside
+document.addEventListener('click', function(event) {
+  var menu = document.getElementById('mobile-menu');
+  var toggle = document.querySelector('.nexus-nav-mobile-toggle');
+
+  if (menu && !menu.contains(event.target) && !toggle.contains(event.target)) {
+    menu.setAttribute('aria-hidden', 'true');
+  }
+});
+</script>
+
+<style>
+/* Base Navigation */
+.nexus-nav {
+  background-color: var(--nexus-card);
+  border-bottom: 1px solid var(--nexus-border);
+  z-index: 1000;
+}
+
+/* Sticky Navigation */
+.nexus-nav-sticky {
+  position: sticky;
+  top: 0;
+}
+
+/* Glassmorphism */
+.nexus-nav-glass {
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Navigation Container */
+.nexus-nav-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--nexus-space-4) var(--nexus-space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nexus-space-6);
+}
+
+/* Logo */
+.nexus-nav-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--nexus-fg);
+  font-size: var(--nexus-text-2xl);
+  font-weight: var(--nexus-weight-black);
+  letter-spacing: var(--nexus-tracking-tight);
+  transition: color var(--nexus-transition-base) var(--nexus-ease-out);
+}
+
+.nexus-nav-logo:hover {
+  color: var(--nexus-primary);
+}
+
+.nexus-nav-logo-text {
+  background: linear-gradient(135deg, var(--nexus-primary) 0%, var(--nexus-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Navigation Menu (Desktop) */
+.nexus-nav-menu {
+  display: flex;
+  align-items: center;
+  gap: var(--nexus-space-6);
+  flex: 1;
+}
+
+.nexus-nav-link {
+  font-size: var(--nexus-text-sm);
+  font-weight: var(--nexus-weight-medium);
+  color: var(--nexus-muted-fg);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: var(--nexus-tracking-wide);
+  transition: color var(--nexus-transition-base) var(--nexus-ease-out);
+  position: relative;
+}
+
+.nexus-nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--nexus-primary);
+  transition: width var(--nexus-transition-base) var(--nexus-ease-out);
+}
+
+.nexus-nav-link:hover {
+  color: var(--nexus-primary);
+}
+
+.nexus-nav-link:hover::after {
+  width: 100%;
+}
+
+/* Navigation Actions */
+.nexus-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--nexus-space-3);
+}
+
+/* Icon Button */
+.nexus-nav-icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--nexus-radius-md);
+  transition: background-color var(--nexus-transition-base) var(--nexus-ease-out);
+  text-decoration: none;
+}
+
+.nexus-nav-icon-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nexus-nav-icon {
+  font-size: var(--nexus-text-xl);
+}
+
+/* Badge (notification count) */
+.nexus-nav-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 var(--nexus-space-1);
+  font-size: var(--nexus-text-xs);
+  font-weight: var(--nexus-weight-bold);
+  background-color: var(--nexus-destructive);
+  color: var(--nexus-fg);
+  border-radius: var(--nexus-radius-full);
+  border: 2px solid var(--nexus-card);
+}
+
+/* Mobile Menu Toggle */
+.nexus-nav-mobile-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.nexus-nav-hamburger {
+  position: relative;
+  width: 1.5rem;
+  height: 2px;
+  background-color: var(--nexus-fg);
+  transition: all var(--nexus-transition-base) var(--nexus-ease-out);
+}
+
+.nexus-nav-hamburger::before,
+.nexus-nav-hamburger::after {
+  content: '';
+  position: absolute;
+  width: 1.5rem;
+  height: 2px;
+  background-color: var(--nexus-fg);
+  transition: all var(--nexus-transition-base) var(--nexus-ease-out);
+}
+
+.nexus-nav-hamburger::before {
+  top: -6px;
+}
+
+.nexus-nav-hamburger::after {
+  bottom: -6px;
+}
+
+/* Mobile Menu */
+.nexus-nav-mobile-menu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height var(--nexus-transition-base) var(--nexus-ease-out);
+  background-color: var(--nexus-card);
+  border-bottom: 1px solid var(--nexus-border);
+}
+
+.nexus-nav-mobile-menu[aria-hidden="false"] {
+  max-height: 500px;
+}
+
+.nexus-nav-mobile-links {
+  padding: var(--nexus-space-4) var(--nexus-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--nexus-space-3);
+}
+
+.nexus-nav-mobile-link {
+  font-size: var(--nexus-text-base);
+  font-weight: var(--nexus-weight-medium);
+  color: var(--nexus-fg);
+  text-decoration: none;
+  padding: var(--nexus-space-3);
+  border-radius: var(--nexus-radius-md);
+  transition: all var(--nexus-transition-base) var(--nexus-ease-out);
+}
+
+.nexus-nav-mobile-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--nexus-primary);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .nexus-nav-container {
+    padding: var(--nexus-space-3) var(--nexus-space-4);
+  }
+
+  .nexus-nav-menu {
+    gap: var(--nexus-space-4);
+  }
+}
+
+@media (max-width: 768px) {
+  .nexus-nav-menu {
+    display: none;
+  }
+
+  .nexus-nav-mobile-toggle {
+    display: flex;
+  }
+
+  .nexus-nav-actions > :not(.nexus-nav-mobile-toggle) {
+    display: none;
+  }
+
+  .nexus-nav-container {
+    gap: var(--nexus-space-3);
+  }
+}
+</style>
