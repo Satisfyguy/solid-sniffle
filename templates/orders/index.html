@@ -34,7 +34,10 @@
                 <div class="order-header">
                     <div class="order-info">
                         <h3 class="order-title">Order #{{ order.id | truncate(length=8, end="") }}</h3>
-                        <span class="badge badge-{{ order.status }}">{{ order.status }}</span>
+                        <span class="badge badge-{{ order.status }}">
+                            {% if order.status == "pending" %}⏳{% elif order.status == "funded" %}💰{% elif order.status == "shipped" %}📦{% elif order.status == "completed" %}✅{% elif order.status == "cancelled" %}❌{% elif order.status == "disputed" %}⚠️{% elif order.status == "refunded" %}↩️{% endif %}
+                            {{ order.status | upper }}
+                        </span>
                     </div>
                     <div class="order-meta">
                         <span class="order-date">{{ order.created_at | date(format="%Y-%m-%d %H:%M") }}</span>

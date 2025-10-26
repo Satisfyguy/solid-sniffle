@@ -266,6 +266,10 @@ async fn main() -> Result<()> {
                     .service(orders::list_orders)
                     .service(orders::get_order)
                     .service(orders::init_escrow)
+                    .configure(|cfg| {
+                        #[cfg(debug_assertions)]
+                        cfg.service(orders::dev_simulate_payment);
+                    })
                     .service(orders::ship_order)
                     .service(orders::complete_order)
                     .service(orders::cancel_order)

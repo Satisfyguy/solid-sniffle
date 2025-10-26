@@ -129,9 +129,22 @@ class NotificationManager {
         const title = `${emoji} Order Update`;
         const message = `Order status changed to: ${data.new_status.toUpperCase()}`;
         
-        this.showToast(title, message, 'info', 8000, () => {
-            window.location.href = `/orders/${data.order_id}`;
-        });
+        // Check if we're on the order page or orders list
+        const currentPath = window.location.pathname;
+        const isOnOrderPage = currentPath.includes('/orders/') || currentPath === '/orders';
+        
+        if (isOnOrderPage) {
+            // If on orders page, reload to show updated status
+            this.showToast(title, message + ' - Refreshing...', 'success', 2000);
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            // If on another page, show clickable notification
+            this.showToast(title, message, 'info', 8000, () => {
+                window.location.href = `/orders/${data.order_id}`;
+            });
+        }
         
         // Update badge count for new pending orders
         if (data.new_status === 'pending') {

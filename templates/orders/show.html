@@ -23,7 +23,10 @@
                         <h1>Order #{{ order.id | truncate(length=8, end="") }}</h1>
                         <p class="order-date">Created {{ order.created_at | date(format="%Y-%m-%d %H:%M UTC") }}</p>
                     </div>
-                    <span class="badge badge-{{ order.status }} badge-lg">{{ order.status }}</span>
+                    <span class="badge badge-{{ order.status }} badge-lg">
+                        {% if order.status == "pending" %}⏳{% elif order.status == "funded" %}💰{% elif order.status == "shipped" %}📦{% elif order.status == "completed" %}✅{% elif order.status == "cancelled" %}❌{% elif order.status == "disputed" %}⚠️{% elif order.status == "refunded" %}↩️{% endif %}
+                        {{ order.status | upper }}
+                    </span>
                 </div>
 
                 <!-- Order Details -->
@@ -330,4 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- Fund Escrow Script -->
 <script src="/static/js/fund-escrow.js"></script>
+
+<!-- Order Actions Script -->
+<script src="/static/js/order-actions.js"></script>
 {% endblock %}

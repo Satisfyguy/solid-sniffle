@@ -420,10 +420,10 @@ pub async fn get_order(
     HttpResponse::Ok().json(OrderResponse::from(order))
 }
 
-/// PUT /api/orders/{id}/ship - Mark order as shipped
+/// POST /api/orders/{id}/ship - Mark order as shipped
 ///
 /// Requires authentication as the vendor. Order must be in funded status.
-#[put("/orders/{id}/ship")]
+#[post("/orders/{id}/ship")]
 pub async fn ship_order(
     pool: web::Data<DbPool>,
     session: Session,
@@ -480,7 +480,7 @@ pub async fn ship_order(
 ///
 /// Requires authentication as the buyer. Order must be in shipped status.
 /// This triggers the escrow release to the vendor.
-#[put("/orders/{id}/complete")]
+#[post("/orders/{id}/complete")]
 pub async fn complete_order(
     pool: web::Data<DbPool>,
     escrow_orchestrator: web::Data<EscrowOrchestrator>,
@@ -521,8 +521,14 @@ pub async fn complete_order(
 
     // Validate state transition
     if !order.can_confirm_receipt() {
+        tracing::warn!(
+            "Buyer {} attempted to complete order {} in invalid status: {}",
+            user_id,
+            order_id,
+            order.status
+        );
         return HttpResponse::BadRequest().json(serde_json::json!({
-            "error": format!("Cannot complete order in status: {}", order.status)
+            "error": format!("Cannot complete order in status '{}'. Order must be 'shipped' first.", order.status)
         }));
     }
 
@@ -730,6 +736,145 @@ pub async fn init_escrow(
             tracing::error!("Failed to initialize escrow: {}", e);
             HttpResponse::InternalServerError().json(serde_json::json!({
                 "error": format!("Failed to initialize escrow: {}", e)
+            }))
+        }
+    }
+}
+
+/// POST /api/orders/{id}/dev-simulate-payment - Simulate escrow payment (DEV ONLY)
+///
+/// Development endpoint to simulate payment without real XMR.
+/// Only available in debug builds.
+#[cfg(debug_assertions)]
+#[post("/orders/{id}/dev-simulate-payment")]
+pub async fn dev_simulate_payment(
+    pool: web::Data<DbPool>,
+    session: Session,
+    id: web::Path<String>,
+    websocket: web::Data<Addr<WebSocketServer>>,
+) -> impl Responder {
+    
+    // Get authenticated user
+    let user_id = match get_user_id_from_session(&session) {
+        Ok(id) => id,
+        Err(response) => return response,
+    };
+
+    let mut conn = match pool.get() {
+        Ok(conn) => conn,
+        Err(_) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Database connection failed"
+            }))
+        }
+    };
+
+    let order_id_str = id.into_inner();
+    let order = match Order::find_by_id(&mut conn, order_id_str.clone()) {
+        Ok(order) => order,
+        Err(_) => {
+            return HttpResponse::NotFound().json(serde_json::json!({
+                "error": "Order not found"
+            }))
+        }
+    };
+
+    // Authorization: only buyer can simulate payment
+    if order.buyer_id != user_id {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Only the buyer can simulate payment"
+        }));
+    }
+
+    // Validate order has escrow
+    let escrow_id = match &order.escrow_id {
+        Some(id) => id.clone(),
+        None => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "Order has no escrow. Click 'Fund Escrow' first."
+            }))
+        }
+    };
+
+    let escrow_id_clone = escrow_id.clone();
+    
+    // Update escrow status to funded
+    match web::block(move || {
+        use crate::schema::escrows::dsl::*;
+        use diesel::prelude::*;
+        
+        diesel::update(escrows.filter(id.eq(&escrow_id_clone)))
+            .set(status.eq("funded"))
+            .execute(&mut conn)
+    })
+    .await
+    {
+        Ok(Ok(_)) => {
+            // Update order status to funded
+            let mut conn2 = match pool.get() {
+                Ok(c) => c,
+                Err(_) => {
+                    return HttpResponse::InternalServerError().json(serde_json::json!({
+                        "error": "Database error"
+                    }))
+                }
+            };
+            
+            match Order::update_status(&mut conn2, order_id_str, OrderStatus::Funded) {
+                Ok(_) => {
+                    tracing::info!("DEV: Simulated payment for order {} (escrow {})", order.id, escrow_id);
+                    
+                    // Send WebSocket notification to vendor
+                    let vendor_uuid = match Uuid::parse_str(&order.vendor_id) {
+                        Ok(uuid) => uuid,
+                        Err(_) => {
+                            tracing::error!("Invalid vendor UUID: {}", order.vendor_id);
+                            return HttpResponse::InternalServerError().json(serde_json::json!({
+                                "error": "Internal error"
+                            }));
+                        }
+                    };
+                    
+                    let order_uuid = match Uuid::parse_str(&order.id) {
+                        Ok(uuid) => uuid,
+                        Err(_) => {
+                            tracing::error!("Invalid order UUID: {}", order.id);
+                            return HttpResponse::InternalServerError().json(serde_json::json!({
+                                "error": "Internal error"
+                            }));
+                        }
+                    };
+                    
+                    // Notify vendor that order is now funded
+                    websocket.do_send(NotifyUser {
+                        user_id: vendor_uuid,
+                        event: WsEvent::OrderStatusChanged {
+                            order_id: order_uuid,
+                            new_status: "funded".to_string(),
+                        },
+                    });
+                    
+                    tracing::info!("Sent payment notification to vendor {}", vendor_uuid);
+                    
+                    HttpResponse::Ok().json(serde_json::json!({
+                        "success": true,
+                        "message": "Payment simulated successfully (DEV MODE)",
+                        "order_id": order.id,
+                        "escrow_id": escrow_id,
+                        "new_status": "funded"
+                    }))
+                }
+                Err(e) => {
+                    tracing::error!("Failed to update order status: {}", e);
+                    HttpResponse::InternalServerError().json(serde_json::json!({
+                        "error": format!("Failed to update order: {}", e)
+                    }))
+                }
+            }
+        }
+        _ => {
+            HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Failed to update escrow status"
             }))
         }
     }

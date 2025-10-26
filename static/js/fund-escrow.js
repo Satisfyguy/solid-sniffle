@@ -52,6 +52,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Start monitoring for payment
                 startPaymentMonitoring(orderId, data.escrow_id);
                 
+                // Add DEV simulate payment button
+                addDevSimulateButton(orderId);
+                
             } else {
                 alert('Error: ' + (data.error || 'Failed to initialize escrow'));
                 fundBtn.disabled = false;
@@ -124,6 +127,80 @@ function startPaymentMonitoring(orderId, escrowId) {
             </div>
         `;
     }, 1800000); // 30 minutes
+}
+
+function addDevSimulateButton(orderId) {
+    const paymentStatus = document.getElementById('payment-status');
+    
+    // Add simulate payment button (DEV ONLY)
+    const devButton = document.createElement('button');
+    devButton.textContent = '🧪 Simulate Payment (DEV)';
+    devButton.style.cssText = `
+        width: 100%;
+        margin-top: 15px;
+        padding: 12px;
+        background: #f59e0b;
+        color: #0a0a0a;
+        border: 2px solid #f59e0b;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: all 0.3s;
+    `;
+    
+    devButton.addEventListener('mouseenter', () => {
+        devButton.style.background = '#0a0a0a';
+        devButton.style.color = '#f59e0b';
+    });
+    
+    devButton.addEventListener('mouseleave', () => {
+        devButton.style.background = '#f59e0b';
+        devButton.style.color = '#0a0a0a';
+    });
+    
+    devButton.addEventListener('click', async () => {
+        devButton.disabled = true;
+        devButton.textContent = 'Simulating payment...';
+        
+        try {
+            const response = await fetch(`/api/orders/${orderId}/dev-simulate-payment`, {
+                method: 'POST',
+                credentials: 'same-origin'
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                paymentStatus.innerHTML = `
+                    <div style="padding: 10px; background: #1a3a1a; border: 1px solid #22c55e; border-radius: 4px; text-align: center;">
+                        <p style="font-size: 11px; color: #22c55e;">
+                            ✅ Payment Simulated Successfully!<br>
+                            <span style="font-size: 10px;">Refreshing page...</span>
+                        </p>
+                    </div>
+                `;
+                
+                // Reload page after 2 seconds
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                alert('Error: ' + (data.error || 'Failed to simulate payment'));
+                devButton.disabled = false;
+                devButton.textContent = '🧪 Simulate Payment (DEV)';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Network error: ' + error.message);
+            devButton.disabled = false;
+            devButton.textContent = '🧪 Simulate Payment (DEV)';
+        }
+    });
+    
+    const instructions = document.getElementById('escrow-instructions');
+    instructions.appendChild(devButton);
 }
 
 function copyToClipboard(elementId) {
