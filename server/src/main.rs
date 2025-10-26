@@ -105,10 +105,35 @@ async fn main() -> Result<()> {
     // 5. Initialize WebSocket server actor
     let websocket_server = WebSocketServer::default().start();
 
-    // 6. Initialize Wallet Manager
-    let wallet_manager = Arc::new(Mutex::new(WalletManager::new(vec![
-        MoneroConfig::default(),
-    ])?));
+    // 6. Initialize Wallet Manager with persistence and automatic recovery
+    let encryption_key = db_encryption_key.as_bytes().to_vec();
+    let wallet_manager = {
+        let mut wm = WalletManager::new_with_persistence(
+            vec![MoneroConfig::default()],
+            pool.clone(),
+            encryption_key.clone(),
+        )?;
+
+        // Attempt automatic recovery of active escrows
+        info!("Attempting automatic recovery of active escrows...");
+        match wm.recover_active_escrows().await {
+            Ok(recovered_escrows) => {
+                if recovered_escrows.is_empty() {
+                    info!("No escrows found for recovery");
+                } else {
+                    info!("✅ Successfully recovered {} escrow wallet(s): {:?}",
+                          recovered_escrows.len(), recovered_escrows);
+                }
+            }
+            Err(e) => {
+                // Log error but don't fail startup - recovery is best-effort
+                tracing::error!("⚠️  Escrow recovery encountered errors: {}", e);
+                info!("Server will continue with fresh wallet state");
+            }
+        }
+
+        Arc::new(Mutex::new(wm))
+    };
 
     // 7. Ensure system arbiter exists
     {
@@ -162,7 +187,7 @@ async fn main() -> Result<()> {
         wallet_manager.clone(),
         pool.clone(),
         websocket_server.clone(),
-        vec![], // encryption_key - should be loaded from secure env
+        encryption_key.clone(),
     ));
 
     // 9. Initialize and start Timeout Monitor (background service)
