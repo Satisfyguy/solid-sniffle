@@ -1,8 +1,10 @@
+pub mod airgap_dispute;
 pub mod auth;
 pub mod escrow;
 pub mod frontend;
 pub mod listings;
 pub mod monitoring;
+pub mod multisig_challenge;
 pub mod orders;
 pub mod reputation;
 pub mod reputation_ipfs;

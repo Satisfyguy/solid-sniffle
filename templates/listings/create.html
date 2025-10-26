@@ -1,23 +1,164 @@
 {% extends "base-nexus.html" %}
+{% import "partials/nexus-macros.html" as nx %}
 
-{% block title %}Create Listing — NEXUS{% endblock %}
+{% block title %}CREATE LISTING — NEXUS{% endblock %}
 
 {% block content %}
 
-{# Breadcrumb #}
-<section style="max-width: 1000px; margin: 0 auto; padding: var(--nexus-space-6) var(--nexus-space-6) 0;">
-  {% include "partials/nexus/molecules/breadcrumb.html" %}
-</section>
+{# Breadcrumb Navigation #}
+<nav class="nexus-breadcrumb" aria-label="Breadcrumb" style="max-width: 900px; margin: 0 auto; padding: 1.5rem 1.5rem 0;">
+  <ol class="nexus-breadcrumb-list">
+    <li class="nexus-breadcrumb-item">
+      <a href="/" class="nexus-breadcrumb-link" hx-boost="true">Home</a>
+      <span class="nexus-breadcrumb-separator">/</span>
+    </li>
+    <li class="nexus-breadcrumb-item">
+      <a href="/listings" class="nexus-breadcrumb-link" hx-boost="true">Listings</a>
+      <span class="nexus-breadcrumb-separator">/</span>
+    </li>
+    <li class="nexus-breadcrumb-item nexus-breadcrumb-current" aria-current="page">
+      Create
+    </li>
+  </ol>
+</nav>
 
-{# Main Content #}
-<section style="max-width: 1000px; margin: 0 auto; padding: var(--nexus-space-6);">
-  {% include "partials/nexus/molecules/card.html" %}
+{# Form Container #}
+<div style="max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem;">
+  <div class="nexus-card nexus-card-elevated nexus-card-glass">
+    <div class="nexus-card-header" style="text-align: center; border-bottom: 1px solid var(--nexus-glass-border, rgba(255, 255, 255, 0.1)); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+      <h1 style="font-size: 2rem; font-weight: 700; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">
+        Create New Listing
+      </h1>
+      <p style="margin-top: 0.5rem; color: var(--nexus-muted-fg, #9ca3af); font-size: 0.875rem;">
+        Add a new product to the marketplace
+      </p>
+    </div>
 
-  {# Help Section #}
-  <div style="margin-top: var(--nexus-space-6);">
-    {% include "partials/nexus/molecules/alert.html" %}
+    <div class="nexus-card-content">
+      <form id="create-listing-form" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 2rem;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        {# Title Field #}
+        <div>
+          <label for="title" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+            Title
+          </label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            placeholder="Product title"
+            required
+            minlength="3"
+            maxlength="200"
+            class="nexus-input"
+            style="width: 100%;"
+          >
+          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+            3-200 characters
+          </small>
+        </div>
+
+        {# Description Field #}
+        <div>
+          <label for="description" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+            Description
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            placeholder="Describe your product in detail..."
+            rows="6"
+            required
+            minlength="10"
+            maxlength="5000"
+            class="nexus-textarea"
+            style="width: 100%;"
+          ></textarea>
+          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+            10-5000 characters
+          </small>
+        </div>
+
+        {# Price and Stock Grid #}
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          {# Price Field #}
+          <div>
+            <label for="price_xmr" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+              Price (Atomic Units)
+            </label>
+            <input
+              type="number"
+              id="price_xmr"
+              name="price_xmr"
+              placeholder="0"
+              min="1"
+              required
+              class="nexus-input"
+              style="width: 100%; font-family: monospace;"
+            >
+            <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+              1 XMR = 1,000,000,000,000 atomic units
+            </small>
+          </div>
+
+          {# Stock Field #}
+          <div>
+            <label for="stock" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+              Stock
+            </label>
+            <input
+              type="number"
+              id="stock"
+              name="stock"
+              placeholder="0"
+              min="0"
+              required
+              class="nexus-input"
+              style="width: 100%;"
+            >
+            <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+              Available quantity
+            </small>
+          </div>
+        </div>
+
+        {# Images Field #}
+        <div>
+          <label for="images" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+            Product Images
+          </label>
+          <input
+            type="file"
+            id="images"
+            name="images"
+            accept="image/jpeg,image/png,image/gif"
+            multiple
+            class="nexus-input"
+            style="width: 100%;"
+          >
+          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+            Upload one or more images (JPEG, PNG, GIF) - Max 10 images, 5MB each
+          </small>
+          <div id="image-preview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
+        </div>
+
+        {# Form Actions #}
+        <div style="display: flex; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--nexus-glass-border, rgba(255, 255, 255, 0.1));">
+          <a href="/listings" hx-boost="true" class="nexus-btn nexus-btn-secondary nexus-btn-lg" style="flex: 1;">
+            Cancel
+          </a>
+          <button type="submit" class="nexus-btn nexus-btn-primary nexus-btn-lg" style="flex: 1;">
+            Create Listing →
+          </button>
+        </div>
+      </form>
+
+      {# Response Container #}
+      <div id="listing-result" style="margin-top: 1.5rem;"></div>
+    </div>
   </div>
-</section>
+</div>
 
 {% endblock %}
 

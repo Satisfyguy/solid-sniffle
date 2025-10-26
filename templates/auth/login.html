@@ -1,79 +1,147 @@
 {% extends "base-nexus.html" %}
+{% import "partials/nexus-macros.html" as nx %}
 
-{% block title %}Login — NEXUS{% endblock %}
+{% block title %}LOGIN — NEXUS{% endblock %}
 
 {% block content %}
 
-{# Auth Container - Centered layout #}
-<section style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: var(--nexus-space-6);">
-  <div style="width: 100%; max-width: 500px;">
+{# Animated Background Orbs #}
+<div class="nexus-hero-bg" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;">
+  <div class="nexus-hero-bg-orb nexus-hero-bg-orb-1"></div>
+  <div class="nexus-hero-bg-orb nexus-hero-bg-orb-2"></div>
+  <div class="nexus-hero-bg-orb nexus-hero-bg-orb-3"></div>
+</div>
 
-    {# Logo/Brand #}
-    <div style="text-align: center; margin-bottom: var(--nexus-space-8);">
-      <h1 style="font-size: var(--nexus-text-4xl); font-weight: var(--nexus-weight-black); color: var(--nexus-fg); text-transform: uppercase; letter-spacing: var(--nexus-tracking-tight); margin: 0;">
-        NEXUS
+{# Auth Container #}
+<div style="position: relative; z-index: 1; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+  <div class="nexus-card nexus-card-elevated nexus-card-glass" style="max-width: 480px; width: 100%;">
+    <div class="nexus-card-header" style="text-align: center; border-bottom: 1px solid var(--nexus-glass-border, rgba(255, 255, 255, 0.1)); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+      <h1 style="font-size: 2rem; font-weight: 700; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">
+        LOGIN
       </h1>
-      <p style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg); margin-top: var(--nexus-space-2); text-transform: uppercase; letter-spacing: var(--nexus-tracking-wide);">
-        Secure Privacy-Focused Marketplace
+      <p style="margin-top: 0.5rem; color: var(--nexus-muted-fg, #9ca3af); font-size: 0.875rem;">
+        Access your secure marketplace account
       </p>
     </div>
 
-    {# Login Card #}
-    {% include "partials/nexus/molecules/card.html" %}
+    <div class="nexus-card-content">
+      <form
+        hx-post="/api/auth/login"
+        hx-target="#auth-result"
+        hx-swap="innerHTML"
+        hx-indicator=".htmx-indicator"
+        role="form"
+        aria-label="Login form"
+        style="display: flex; flex-direction: column; gap: 1.5rem;"
+      >
+        <!-- CSRF Token -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" aria-hidden="true">
 
+        <!-- Username Field -->
+        <div>
+          <label for="username" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+            Username
+          </label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            placeholder="Your identifier"
+            required
+            minlength="3"
+            autocomplete="username"
+            aria-label="Enter your username"
+            aria-required="true"
+            class="nexus-input"
+            style="width: 100%;"
+          >
+        </div>
+
+        <!-- Password Field -->
+        <div>
+          <label for="password" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+            Password
+          </label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="••••••••"
+            required
+            minlength="8"
+            autocomplete="current-password"
+            aria-label="Enter your password"
+            aria-required="true"
+            class="nexus-input"
+            style="width: 100%;"
+          >
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="nexus-btn nexus-btn-primary nexus-btn-lg"
+          style="width: 100%; margin-top: 0.5rem;"
+          aria-label="Submit login form"
+        >
+          LOGIN <span class="htmx-indicator" aria-hidden="true" style="margin-left: 0.5rem;">→</span>
+        </button>
+      </form>
+
+      <!-- Response Container -->
+      <div id="auth-result" style="margin-top: 1.5rem;"></div>
+
+      <!-- Register Link -->
+      <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--nexus-glass-border, rgba(255, 255, 255, 0.1)); text-align: center;">
+        <p style="color: var(--nexus-muted-fg, #9ca3af); font-size: 0.875rem; margin: 0;">
+          No account?
+          <a
+            href="/register"
+            hx-boost="true"
+            style="color: var(--nexus-primary, #ff1a5c); text-decoration: none; font-weight: 600; margin-left: 0.25rem; transition: all 0.2s ease;"
+            onmouseover="this.style.textShadow='0 0 10px var(--nexus-primary)'"
+            onmouseout="this.style.textShadow='none'"
+          >
+            Register Here
+          </a>
+        </p>
+      </div>
+    </div>
   </div>
-</section>
+</div>
 
 {% endblock %}
 
 {% block scripts %}
-<style>
-/* HTMX indicator animation */
-.htmx-indicator.htmx-request {
-  display: block !important;
-  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-/* Full width button utility */
-.w-full {
-  width: 100%;
-}
-</style>
-
 <script>
 // Handle HTMX response
 document.body.addEventListener('htmx:afterRequest', function(event) {
-  const authResult = document.getElementById('auth-result');
+  if (event.detail.pathInfo.requestPath === '/api/auth/login') {
+    const resultDiv = document.getElementById('auth-result');
 
-  if (event.detail.successful) {
-    const xhr = event.detail.xhr;
-
-    // Check if response indicates success (e.g., redirect or success message)
-    if (xhr.status === 200) {
-      // Success - show success message and redirect
-      authResult.innerHTML = `
-        <div style="padding: var(--nexus-space-4); background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--nexus-radius-md); color: var(--nexus-success);">
-          ✓ Login successful! Redirecting...
+    if (event.detail.successful) {
+      // Success - redirect will happen automatically
+      resultDiv.innerHTML = `
+        <div class="nexus-alert nexus-alert-success">
+          <div class="nexus-alert-icon">✓</div>
+          <div class="nexus-alert-content">
+            <div class="nexus-alert-title">Login Successful</div>
+            <div class="nexus-alert-message">Redirecting to marketplace...</div>
+          </div>
         </div>
       `;
-
-      // Redirect after short delay
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1000);
+    } else {
+      // Error handling
+      resultDiv.innerHTML = `
+        <div class="nexus-alert nexus-alert-error">
+          <div class="nexus-alert-icon">✕</div>
+          <div class="nexus-alert-content">
+            <div class="nexus-alert-title">Login Failed</div>
+            <div class="nexus-alert-message">Invalid username or password.</div>
+          </div>
+        </div>
+      `;
     }
-  } else {
-    // Error - show error message
-    authResult.innerHTML = `
-      <div style="padding: var(--nexus-space-4); background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--nexus-radius-md); color: var(--nexus-destructive);">
-        ✗ Login failed. Please check your credentials.
-      </div>
-    `;
   }
 });
 </script>

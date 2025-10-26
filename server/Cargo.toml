@@ -47,6 +47,21 @@ reputation-crypto = { path = "../reputation/crypto" }
 ed25519-dalek = "2.1"
 sha2 = "0.10"
 
+# TM-003: Challenge-Response cryptography
+blake2 = "0.10"
+
+# Shamir Secret Sharing for DB key protection (TM-002)
+sharks = "0.5"
+hex = "0.4"
+
+[[bin]]
+name = "split_key"
+path = "src/bin/split_key.rs"
+
+[[bin]]
+name = "reconstruct_key"
+path = "src/bin/reconstruct_key.rs"
+
 [dev-dependencies]
 tokio = { version = "1.35", features = ["macros", "rt-multi-thread"] }
 dotenvy = "0.15"

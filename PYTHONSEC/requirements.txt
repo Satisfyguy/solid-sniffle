@@ -1,0 +1,30 @@
+# Python dependencies for Claude AI Security Automation
+# Monero Marketplace - Ultra Security Automation
+
+# Core AI - Claude API
+anthropic>=0.40.0
+
+# Async HTTP (for Claude API)
+aiohttp>=3.9.0
+
+# CLI utilities
+argparse  # Built-in, but listed for completeness
+
+# JSON manipulation (built-in but good practice to list)
+# json - built-in
+
+# Optional dependencies for advanced features
+
+# Formal Verification (Phase 2)
+z3-solver>=4.12.0  # SMT solver for formal proofs
+
+# Code analysis
+astroid>=3.0.0  # Static analysis
+pylint>=3.0.0  # Code quality
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# Monitoring (Phase 4)
+prometheus-client>=0.19.0

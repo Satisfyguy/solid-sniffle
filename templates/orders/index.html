@@ -3,109 +3,28 @@
 {% block title %}My Orders — NEXUS{% endblock %}
 
 {% block content %}
-
-{# Header Section #}
 <section style="max-width: 1400px; margin: 0 auto; padding: var(--nexus-space-6);">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--nexus-space-8);">
-    <h1 style="font-size: var(--nexus-text-4xl); font-weight: var(--nexus-weight-black); color: var(--nexus-fg); text-transform: uppercase; letter-spacing: var(--nexus-tracking-tight);">
-      My Orders
-    </h1>
-
-    {% include "partials/nexus/atoms/button.html" %}
-  </div>
-
-  {# Filter Tabs #}
-  {% include "partials/nexus/molecules/tabs.html" with
-     id="order-tabs"
-     variant="pills"
-     active="all"
-     tabs=[
-       {"id": "all", "label": "All Orders", "content": ""},
-       {"id": "pending", "label": "Pending", "badge": "⏳"},
-       {"id": "funded", "label": "Funded", "badge": "💰"},
-       {"id": "shipped", "label": "Shipped", "badge": "📦"},
-       {"id": "completed", "label": "Completed", "badge": "✅"},
-       {"id": "disputed", "label": "Disputed", "badge": "⚠️"}
-     ]
-  %}
-
-  {# Orders Grid #}
-  <div id="orders-list" style="display: grid; grid-template-columns: 1fr; gap: var(--nexus-space-4); margin-top: var(--nexus-space-6);">
+  <h1 style="font-size: var(--nexus-text-4xl); font-weight: var(--nexus-weight-black); margin-bottom: var(--nexus-space-8);">My Orders</h1>
+  
+  <div id="orders-list" style="display: grid; gap: var(--nexus-space-4);">
     {% if orders and orders | length > 0 %}
       {% for order in orders %}
-      <a href="/orders/{{ order.id }}" style="text-decoration: none; color: inherit;" hx-boost="true">
-        {% include "partials/nexus/molecules/card.html" with
-           variant="elevated"
-           glassmorphism=true
-           hover_effect="lift"
-           class="order-card"
-           content='
-             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--nexus-space-4);">
-               <div>
-                 <h3 style="font-size: var(--nexus-text-lg); font-weight: var(--nexus-weight-bold); color: var(--nexus-fg); margin: 0 0 var(--nexus-space-2) 0; font-family: var(--nexus-font-mono);">
-                   Order #' ~ order.id ~ '
-                 </h3>
-                 <div style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg);">
-                   ' ~ order.created_at | date(format="%Y-%m-%d %H:%M") ~ '
-                 </div>
-               </div>
-               ' ~ include("partials/nexus/atoms/badge.html", with={"text": order.status, "variant": "status-" ~ order.status}) ~ '
-             </div>
-
-             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--nexus-space-4); padding: var(--nexus-space-4); background: rgba(255, 255, 255, 0.03); border-radius: var(--nexus-radius-md);">
-               <div>
-                 <span style="display: block; font-size: var(--nexus-text-xs); color: var(--nexus-muted-fg); text-transform: uppercase; margin-bottom: var(--nexus-space-1);">Listing</span>
-                 <span style="font-size: var(--nexus-text-sm); color: var(--nexus-fg); font-weight: var(--nexus-weight-medium);">' ~ (order.listing_title | default(value="Unknown")) ~ '</span>
-               </div>
-
-               <div>
-                 <span style="display: block; font-size: var(--nexus-text-xs); color: var(--nexus-muted-fg); text-transform: uppercase; margin-bottom: var(--nexus-space-1);">Total</span>
-                 <span style="font-size: var(--nexus-text-sm); color: var(--nexus-primary); font-weight: var(--nexus-weight-bold); font-family: var(--nexus-font-mono);">' ~ (order.total_xmr / 1000000000000) | round(precision=12) ~ ' XMR</span>
-               </div>
-
-               {% if order.escrow_id %}
-               <div>
-                 <span style="display: block; font-size: var(--nexus-text-xs); color: var(--nexus-muted-fg); text-transform: uppercase; margin-bottom: var(--nexus-space-1);">Escrow</span>
-                 <span style="font-size: var(--nexus-text-sm); color: var(--nexus-fg); font-family: var(--nexus-font-mono);">🔒 ' ~ order.escrow_id[:8] ~ '...</span>
-               </div>
-               {% endif %}
-             </div>
-           '
-        %}
+      <a href="/orders/{{ order.id }}" hx-boost="true" style="display: block; padding: var(--nexus-space-6); background: rgba(255,255,255,0.05); border: 1px solid var(--nexus-border); border-radius: var(--nexus-radius-lg); text-decoration: none; color: inherit;">
+        <div style="display: flex; justify-content: space-between;">
+          <div>
+            <h3 style="font-family: var(--nexus-font-mono); color: var(--nexus-fg);">Order #{{ order.id | truncate(length=8, end="") }}</h3>
+            <p style="color: var(--nexus-muted-fg); font-size: var(--nexus-text-sm);">{{ order.created_at | date(format="%Y-%m-%d") }}</p>
+          </div>
+          <span style="padding: var(--nexus-space-2) var(--nexus-space-4); background: var(--nexus-primary); color: white; border-radius: var(--nexus-radius-full); font-size: var(--nexus-text-sm);">{{ order.status | title }}</span>
+        </div>
       </a>
       {% endfor %}
     {% else %}
-      {# Empty State #}
-      <div style="text-align: center; padding: var(--nexus-space-20);">
-        {% include "partials/nexus/molecules/alert.html" %}
+      <div style="text-align: center; padding: var(--nexus-space-20); color: var(--nexus-muted-fg);">
+        <p>No orders yet</p>
+        <a href="/listings" class="nexus-btn nexus-btn-primary" style="margin-top: var(--nexus-space-4);">Browse Listings</a>
       </div>
     {% endif %}
   </div>
 </section>
-
-{% endblock %}
-
-{% block scripts %}
-<script>
-// Simple tab filtering
-document.addEventListener('DOMContentLoaded', function() {
-  const tabs = document.querySelectorAll('[role="tab"]');
-  const orders = document.querySelectorAll('.order-card');
-
-  tabs.forEach(tab => {
-    tab.addEventListener('click', function() {
-      const filter = this.getAttribute('aria-controls').replace('tab-panel-order-tabs-', '');
-
-      orders.forEach(order => {
-        const status = order.querySelector('[class*="status-"]');
-        if (filter === 'all' || (status && status.textContent.toLowerCase().includes(filter))) {
-          order.parentElement.style.display = 'block';
-        } else {
-          order.parentElement.style.display = 'none';
-        }
-      });
-    });
-  });
-});
-</script>
 {% endblock %}

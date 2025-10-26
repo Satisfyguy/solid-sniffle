@@ -1,116 +1,440 @@
-{% extends "base-nexus.html" %}
+{% extends "base.html" %}
 
-{% block title %}Wallet Settings — NEXUS{% endblock %}
+{% block title %}Wallet Settings - Non-Custodial{% endblock %}
 
 {% block content %}
+<div class="container">
+    <div class="wallet-settings-layout">
+        <!-- Back Navigation -->
+        <div class="back-nav">
+            <a href="/settings" class="btn-link">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Settings
+            </a>
+        </div>
 
-{# Breadcrumb #}
-<section style="max-width: 1400px; margin: 0 auto; padding: var(--nexus-space-6) var(--nexus-space-6) 0;">
-  {% include "partials/nexus/molecules/breadcrumb.html" %}
-</section>
+        <!-- Main Content -->
+        <div class="card wallet-card">
+            <!-- Header -->
+            <div class="card-header">
+                <h1>🔐 Non-Custodial Wallet Setup</h1>
+                <p class="subtitle">YOU control your private keys. The server NEVER has access to your funds.</p>
+            </div>
 
-{# Main Content #}
-<section style="max-width: 1400px; margin: 0 auto; padding: var(--nexus-space-6);">
-  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--nexus-space-8);">
+            <!-- Security Notice -->
+            <div class="alert alert-info">
+                <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                </svg>
+                <div>
+                    <strong>What is non-custodial?</strong>
+                    <p>Unlike centralized exchanges, this marketplace NEVER holds your private keys or controls your funds. You run your own Monero wallet RPC, and only you can sign transactions.</p>
+                </div>
+            </div>
 
-    {# Left Column - Main Form #}
-    <div style="display: flex; flex-direction: column; gap: var(--nexus-space-6);">
+            <!-- Registration Form -->
+            <form id="wallet-rpc-form"
+                  hx-post="/api/escrow/register-wallet-rpc"
+                  hx-target="#wallet-result"
+                  hx-swap="outerHTML"
+                  hx-indicator="#spinner">
 
-      {# Header Card #}
-      {% include "partials/nexus/molecules/card.html" %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
-      {# Security Notice #}
-      {% include "partials/nexus/molecules/alert.html" %}
+                <!-- RPC URL -->
+                <div class="form-group">
+                    <label for="rpc_url">Wallet RPC URL *</label>
+                    <input type="url"
+                           name="rpc_url"
+                           id="rpc_url"
+                           placeholder="http://127.0.0.1:18082/json_rpc"
+                           required
+                           pattern="^http://127\.0\.0\.1:\d+/json_rpc$"
+                           title="Must be http://127.0.0.1:PORT/json_rpc"
+                           aria-describedby="rpc-url-help"
+                           class="form-control">
+                    <small id="rpc-url-help" class="form-text">
+                        Your wallet RPC must be running on <strong>localhost only</strong> (127.0.0.1) for security reasons.
+                    </small>
+                </div>
 
-      {# Registration Form #}
-      {% include "partials/nexus/molecules/card.html" %}
+                <!-- Role Selection -->
+                <div class="form-group">
+                    <label for="role">Your Role *</label>
+                    <select name="role" id="role" required class="form-control" aria-describedby="role-help">
+                        <option value="">-- Select your role --</option>
+                        <option value="buyer">Buyer (I purchase items)</option>
+                        <option value="vendor">Vendor (I sell items)</option>
+                    </select>
+                    <small id="role-help" class="form-text">
+                        Choose "Buyer" if you want to purchase items, or "Vendor" if you want to sell.
+                    </small>
+                </div>
 
-      {# Security Features #}
-      {% include "partials/nexus/molecules/card.html" %}
+                <!-- Optional: RPC Authentication -->
+                <details class="advanced-options">
+                    <summary>Advanced: RPC Authentication (optional)</summary>
+                    <div class="advanced-content">
+                        <div class="form-group">
+                            <label for="rpc_user">RPC Username</label>
+                            <input type="text"
+                                   name="rpc_user"
+                                   id="rpc_user"
+                                   placeholder="Optional"
+                                   class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="rpc_password">RPC Password</label>
+                            <input type="password"
+                                   name="rpc_password"
+                                   id="rpc_password"
+                                   placeholder="Optional"
+                                   class="form-control">
+                        </div>
+                        <p class="help-text">Only needed if you started your wallet RPC with <code>--rpc-login user:pass</code></p>
+                    </details>
+                </details>
 
+                <!-- Submit Button -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        Register Wallet RPC
+                    </button>
+                    <div id="spinner" class="htmx-indicator">
+                        <div class="spinner"></div>
+                        <span>Connecting to wallet...</span>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Result Container -->
+            <div id="wallet-result"></div>
+        </div>
+
+        <!-- Sidebar: Setup Instructions -->
+        <div class="card help-card">
+            <h2>📚 Setup Instructions</h2>
+
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>Install Monero CLI Wallet</h3>
+                    <p>Download from <a href="https://www.getmonero.org/downloads/" target="_blank" rel="noopener">getmonero.org</a></p>
+                    <code>$ tar -xvf monero-linux-*.tar.bz2</code>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Create New Wallet (Testnet)</h3>
+                    <code>$ ./monero-wallet-cli --testnet</code>
+                    <p class="warning">⚠️ BACKUP YOUR SEED PHRASE! Write it down on paper, not digitally.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>Start Wallet RPC</h3>
+                    <code>$ ./monero-wallet-rpc --testnet --rpc-bind-port 18082 --wallet-file ~/wallets/my_wallet --password YOUR_PASSWORD</code>
+                    <p class="note">Leave this running in a terminal window.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <h3>Register Above</h3>
+                    <p>Copy the RPC URL <code>http://127.0.0.1:18082/json_rpc</code> into the form above and submit.</p>
+                </div>
+            </div>
+
+            <a href="/docs/wallet-setup" class="btn-link btn-block">
+                📖 Full Setup Guide →
+            </a>
+        </div>
     </div>
 
-    {# Right Column - Setup Instructions #}
-    <div style="position: sticky; top: var(--nexus-space-6); align-self: start;">
-      {% include "partials/nexus/molecules/card.html" %}
+    <!-- Security Features -->
+    <div class="card security-features">
+        <h2>🛡️ Why Non-Custodial?</h2>
+        <div class="features-grid">
+            <div class="feature">
+                <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <h3>You Control Keys</h3>
+                <p>Your private keys never leave your machine</p>
+            </div>
+            <div class="feature">
+                <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <h3>No Exit Scam</h3>
+                <p>Server can't steal your funds (mathematically impossible)</p>
+            </div>
+            <div class="feature">
+                <svg class="feature-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <h3>2-of-3 Multisig</h3>
+                <p>Protected escrow with neutral arbiter</p>
+            </div>
+        </div>
     </div>
+</div>
 
-  </div>
-</section>
-
-{% endblock %}
-
-{% block scripts %}
 <style>
-/* HTMX indicator animation */
+.wallet-settings-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.wallet-card, .help-card, .security-features {
+    background: rgba(20, 20, 20, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 2rem;
+}
+
+.card-header h1 {
+    margin: 0 0 0.5rem 0;
+    color: #00d9ff;
+}
+
+.card-header .subtitle {
+    color: #9ca3af;
+    margin: 0;
+}
+
+.alert {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+}
+
+.alert-info {
+    background: rgba(0, 217, 255, 0.1);
+    border: 1px solid rgba(0, 217, 255, 0.3);
+}
+
+.alert-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    color: #00d9ff;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #f9fafb;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: rgba(10, 10, 10, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #f9fafb;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #00d9ff;
+    box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+}
+
+.form-control:invalid {
+    border-color: #ef4444;
+}
+
+.form-text {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #9ca3af;
+}
+
+.advanced-options {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: rgba(124, 58, 237, 0.1);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 8px;
+}
+
+.advanced-options summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: #7c3aed;
+}
+
+.advanced-content {
+    margin-top: 1rem;
+}
+
+.form-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #00d9ff, #7c3aed);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 217, 255, 0.3);
+}
+
+.btn-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.htmx-indicator {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    color: #00d9ff;
+}
+
 .htmx-indicator.htmx-request {
-  display: flex !important;
+    display: flex;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(0, 217, 255, 0.3);
+    border-top-color: #00d9ff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+    to { transform: rotate(360deg); }
 }
 
-/* Select field focus state */
-select:focus {
-  outline: none;
-  border-color: var(--nexus-primary) !important;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+.step {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
 
-select:hover {
-  border-color: var(--nexus-muted-fg);
+.step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: #00d9ff;
+    color: #0a0a0a;
+    border-radius: 50%;
+    font-weight: 700;
+    flex-shrink: 0;
 }
 
-/* Full width utility */
-.w-full {
-  width: 100%;
+.step-content h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: #f9fafb;
 }
 
-/* Responsive layout */
+.step-content code {
+    display: block;
+    padding: 0.5rem;
+    background: rgba(10, 10, 10, 0.8);
+    border-radius: 4px;
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+    overflow-x: auto;
+}
+
+.warning {
+    color: #f59e0b;
+    font-weight: 500;
+}
+
+.note {
+    color: #9ca3af;
+    font-size: 0.875rem;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.feature {
+    text-align: center;
+}
+
+.feature-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 1rem;
+    color: #00d9ff;
+}
+
+.feature h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: #f9fafb;
+}
+
+.feature p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #9ca3af;
+}
+
 @media (max-width: 968px) {
-  section > div[style*="grid-template-columns: 2fr 1fr"] {
-    grid-template-columns: 1fr !important;
-  }
+    .wallet-settings-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
-
-<script>
-// Handle HTMX response
-document.body.addEventListener('htmx:afterRequest', function(event) {
-  const walletResult = document.getElementById('wallet-result');
-
-  if (event.detail.successful) {
-    const xhr = event.detail.xhr;
-
-    if (xhr.status === 200) {
-      // Success
-      walletResult.innerHTML = `
-        <div style="padding: var(--nexus-space-4); background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--nexus-radius-md); color: var(--nexus-success); margin-top: var(--nexus-space-4);">
-          ✓ Wallet RPC registered successfully!
-        </div>
-      `;
-    }
-  } else {
-    // Error
-    const xhr = event.detail.xhr;
-    let errorMessage = 'Failed to register wallet RPC. Please check your settings.';
-
-    try {
-      const response = JSON.parse(xhr.responseText);
-      if (response.error) {
-        errorMessage = response.error;
-      }
-    } catch (e) {
-      // Use default message
-    }
-
-    walletResult.innerHTML = `
-      <div style="padding: var(--nexus-space-4); background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--nexus-radius-md); color: var(--nexus-destructive); margin-top: var(--nexus-space-4);">
-        ✗ ${errorMessage}
-      </div>
-    `;
-  }
-});
-</script>
 {% endblock %}

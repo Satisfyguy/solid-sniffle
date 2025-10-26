@@ -9,7 +9,7 @@ use actix_web_actors::ws;
 use anyhow::{Context, Result};
 use monero_marketplace_common::types::MoneroConfig;
 use server::db::create_pool;
-use server::handlers::{auth, escrow, frontend, listings, monitoring, orders, reputation, reputation_ipfs};
+use server::handlers::{auth, escrow, frontend, listings, monitoring, multisig_challenge, orders, reputation, reputation_ipfs};
 use server::middleware::{
     admin_auth::AdminAuth,
     rate_limit::{global_rate_limiter, protected_rate_limiter},
@@ -85,8 +85,13 @@ async fn main() -> Result<()> {
     // 3. Database connection pool with SQLCipher encryption
     let database_url =
         env::var("DATABASE_URL").context("DATABASE_URL must be set in environment")?;
-    let db_encryption_key = env::var("DB_ENCRYPTION_KEY")
-        .context("DB_ENCRYPTION_KEY must be set for SQLCipher encryption")?;
+
+    // TM-002 MITIGATION: Shamir 3-of-5 secret sharing for DB encryption key
+    // If DB_ENCRYPTION_KEY is NOT set in .env → interactive Shamir reconstruction
+    // If DB_ENCRYPTION_KEY IS set in .env → development mode (insecure, warns user)
+    let db_encryption_key = server::crypto::shamir_startup::get_db_encryption_key()
+        .context("Failed to get DB encryption key (Shamir or .env)")?;
+
     let pool = create_pool(&database_url, &db_encryption_key)
         .context("Failed to create database connection pool")?;
 
@@ -364,6 +369,10 @@ async fn main() -> Result<()> {
                         "/escrow/{id}/resolve",
                         web::post().to(escrow::resolve_dispute),
                     )
+                    // TM-003: Challenge-Response multisig validation
+                    .service(multisig_challenge::request_multisig_challenge)
+                    .service(multisig_challenge::submit_multisig_info_with_signature)
+                    .service(multisig_challenge::cleanup_expired_challenges)
                     // Reputation System
                     .route("/reviews", web::post().to(reputation::submit_review))
                     .route(

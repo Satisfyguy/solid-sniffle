@@ -1,109 +1,340 @@
-{% extends "base-nexus.html" %}
+{% extends "base.html" %}
+{% import "partials/nexus-macros.html" as nx %}
 
-{% block title %}Order #{{ order.id }} — NEXUS{% endblock %}
+{% block title %}Order #{{ order.id | truncate(length=8, end="") }} - Monero Marketplace{% endblock %}
 
 {% block content %}
-
-{# Breadcrumb #}
-<section style="max-width: 1400px; margin: 0 auto; padding: var(--nexus-space-6) var(--nexus-space-6) 0;">
-  {% include "partials/nexus/molecules/breadcrumb.html" with
-     items=[
-       {"text": "Home", "href": "/", "icon": "🏠"},
-       {"text": "Orders", "href": "/orders"},
-       {"text": "Order #" ~ order.id}
-     ]
-  %}
-</section>
-
-{# Main Content #}
-<section style="max-width: 1400px; margin: 0 auto; padding: var(--nexus-space-6);">
-  <div style="display: grid; grid-template-columns: 1fr 400px; gap: var(--nexus-space-8);">
-
-    {# Left Column - Order Details & Timeline #}
-    <div style="display: flex; flex-direction: column; gap: var(--nexus-space-6);">
-
-      {# Order Header #}
-      {% include "partials/nexus/molecules/card.html" with
-         variant="elevated"
-         glassmorphism=true
-         content='
-           <div style="display: flex; justify-content: space-between; align-items: start;">
-             <div>
-               <h1 style="font-size: var(--nexus-text-2xl); font-weight: var(--nexus-weight-bold); color: var(--nexus-fg); margin: 0 0 var(--nexus-space-2) 0; font-family: var(--nexus-font-mono);">
-                 Order #' ~ order.id ~ '
-               </h1>
-               <div style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg);">
-                 Created: ' ~ order.created_at | date(format="%Y-%m-%d %H:%M UTC") ~ '
-               </div>
-             </div>
-             ' ~ include("partials/nexus/atoms/badge.html", with={"text": order.status, "variant": "status-" ~ order.status}) ~ '
-           </div>
-         '
-      %}
-
-      {# Order Timeline #}
-      {% if timeline_events %}
-      {% include "partials/nexus/organisms/order-timeline.html" %}
-      {% endif %}
-
-      {# Escrow Visualizer #}
-      {% if order.escrow_id %}
-      {% include "partials/nexus/organisms/escrow-visualizer.html" %}
-      {% endif %}
+<div class="order-detail-container">
+    <!-- Back button -->
+    <div class="back-nav">
+        {{ nx::button(
+            text='<svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg> Back to Orders',
+            href="/orders",
+            variant="ghost",
+            class="btn-link"
+        ) }}
     </div>
 
-    {# Right Column - Order Info & Actions #}
-    <div style="position: sticky; top: var(--nexus-space-6); align-self: start; display: flex; flex-direction: column; gap: var(--nexus-space-6);">
+    <div class="order-detail-layout">
+        <!-- Main Content -->
+        <div class="order-detail-main">
+            <div class="nexus-card nexus-card-elevated nexus-card-glass">
+                <div class="nexus-card-header order-header">
+                    <div>
+                        <h1>Order #{{ order.id | truncate(length=8, end="") }}</h1>
+                        <p class="order-date">Created {{ order.created_at | date(format="%Y-%m-%d %H:%M UTC") }}</p>
+                    </div>
+                    {% if order.status == "pending" %}
+                        {{ nx::badge(text="⏳ PENDING", status=order.status, class="badge-lg") }}
+                    {% elif order.status == "funded" %}
+                        {{ nx::badge(text="💰 FUNDED", status=order.status, class="badge-lg") }}
+                    {% elif order.status == "shipped" %}
+                        {{ nx::badge(text="📦 SHIPPED", status=order.status, class="badge-lg") }}
+                    {% elif order.status == "completed" %}
+                        {{ nx::badge(text="✅ COMPLETED", status=order.status, class="badge-lg") }}
+                    {% elif order.status == "cancelled" %}
+                        {{ nx::badge(text="❌ CANCELLED", status=order.status, class="badge-lg") }}
+                    {% elif order.status == "disputed" %}
+                        {{ nx::badge(text="⚠️ DISPUTED", status=order.status, class="badge-lg") }}
+                    {% elif order.status == "refunded" %}
+                        {{ nx::badge(text="↩️ REFUNDED", status=order.status, class="badge-lg") }}
+                    {% else %}
+                        {{ nx::badge(text=order.status | upper, status=order.status, class="badge-lg") }}
+                    {% endif %}
+                </div>
 
-      {# Order Summary #}
-      {% include "partials/nexus/molecules/card.html" %}
-             <div>
-               <span style="display: block; font-size: var(--nexus-text-xs); color: var(--nexus-muted-fg); text-transform: uppercase; margin-bottom: var(--nexus-space-1);">Escrow ID</span>
-               <code style="font-size: var(--nexus-text-xs); color: var(--nexus-fg); background: var(--nexus-muted); padding: var(--nexus-space-1) var(--nexus-space-2); border-radius: var(--nexus-radius-sm); display: block; word-break: break-all;">
-                 ' ~ order.escrow_id ~ '
-               </code>
-             </div>
-             {% endif %}
-           </div>
-         '
-      %}
+                <div class="nexus-card-content">
+                    <!-- Order Details -->
+                    <div class="section">
+                        <h2>Order Details</h2>
+                        <div class="specs-grid">
+                            <div class="spec-item">
+                                <span class="spec-label">Listing</span>
+                                <span class="spec-value">
+                                    <a href="/listings/{{ order.listing_id }}" class="link">{{ order.listing_title }}</a>
+                                </span>
+                            </div>
 
-      {# Order Actions #}
-      <div style="display: flex; flex-direction: column; gap: var(--nexus-space-3);">
-        {% if order.status == "pending" and role == "buyer" %}
-          {# Fund Escrow Button #}
-          {% include "partials/nexus/atoms/button.html" %}
+                            <div class="spec-item">
+                                <span class="spec-label">Quantity</span>
+                                <span class="spec-value">{{ order.quantity }} units</span>
+                            </div>
 
-        {% elif order.status == "funded" and role == "vendor" %}
-          {# Mark as Shipped Button #}
-          {% include "partials/nexus/atoms/button.html" %}
+                            <div class="spec-item">
+                                <span class="spec-label">Unit Price</span>
+                                <span class="spec-value price">{{ order.unit_price_xmr }} XMR</span>
+                            </div>
 
-        {% elif order.status == "shipped" and role == "buyer" %}
-          {# Confirm Receipt Button #}
-          {% include "partials/nexus/atoms/button.html" %}
-        {% endif %}
+                            <div class="spec-item">
+                                <span class="spec-label">Total Amount</span>
+                                <span class="spec-value price-value">{{ order.total_price_xmr }} XMR</span>
+                            </div>
 
-        {# Dispute Button (if applicable) #}
-        {% if order.status in ["funded", "shipped"] %}
-          {% include "partials/nexus/atoms/button.html" %}
-        {% endif %}
-      </div>
+                            {% if role == "buyer" %}
+                            <div class="spec-item">
+                                <span class="spec-label">Vendor</span>
+                                <span class="spec-value">{{ order.vendor_username }}</span>
+                            </div>
+                            {% elif role == "vendor" %}
+                            <div class="spec-item">
+                                <span class="spec-label">Buyer</span>
+                                <span class="spec-value">{{ order.buyer_username }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if order.escrow_id %}
+                            <div class="spec-item">
+                                <span class="spec-label">Escrow</span>
+                                <span class="spec-value">
+                                    <a href="/escrow/{{ order.escrow_id }}" class="link">View Escrow Details</a>
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Shipping Information (if shipped) -->
+                    {% if order.status == "shipped" or order.status == "completed" %}
+                    <div class="section">
+                        <h2>Shipping Information</h2>
+                        <div class="info-box">
+                            <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                            </svg>
+                            <div>
+                                <p class="info-title">Order Shipped</p>
+                                <p class="info-text">The vendor has marked this order as shipped on {{ order.shipped_at | date(format="%Y-%m-%d %H:%M") }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Order Timeline -->
+                    <div class="section">
+                        <h2>Order Timeline</h2>
+                        <div class="timeline" id="order-timeline">
+                            <!-- Created -->
+                            <div class="timeline-item completed">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <h3 class="timeline-title">Order Created</h3>
+                                    <p class="timeline-time">{{ order.created_at | date(format="%Y-%m-%d %H:%M") }}</p>
+                                    <p class="timeline-desc">Order placed successfully</p>
+                                </div>
+                            </div>
+
+                            <!-- Funded -->
+                            <div class="timeline-item {% if order.status == 'funded' or order.status == 'shipped' or order.status == 'completed' %}completed{% elif order.status == 'pending' %}active{% endif %}">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <h3 class="timeline-title">Escrow Funded</h3>
+                                    {% if order.funded_at %}
+                                    <p class="timeline-time">{{ order.funded_at | date(format="%Y-%m-%d %H:%M") }}</p>
+                                    <p class="timeline-desc">Buyer funded the escrow</p>
+                                    {% else %}
+                                    <p class="timeline-desc">Awaiting buyer to fund escrow</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Shipped -->
+                            <div class="timeline-item {% if order.status == 'shipped' or order.status == 'completed' %}completed{% elif order.status == 'funded' %}active{% endif %}">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <h3 class="timeline-title">Order Shipped</h3>
+                                    {% if order.shipped_at %}
+                                    <p class="timeline-time">{{ order.shipped_at | date(format="%Y-%m-%d %H:%M") }}</p>
+                                    <p class="timeline-desc">Vendor shipped the order</p>
+                                    {% else %}
+                                    <p class="timeline-desc">Awaiting vendor to ship</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Completed -->
+                            <div class="timeline-item {% if order.status == 'completed' %}completed{% elif order.status == 'shipped' %}active{% endif %}">
+                                <div class="timeline-marker"></div>
+                                <div class="timeline-content">
+                                    <h3 class="timeline-title">Order Completed</h3>
+                                    {% if order.completed_at %}
+                                    <p class="timeline-time">{{ order.completed_at | date(format="%Y-%m-%d %H:%M") }}</p>
+                                    <p class="timeline-desc">Buyer confirmed receipt</p>
+                                    {% else %}
+                                    <p class="timeline-desc">Awaiting buyer confirmation</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar: Actions -->
+        <div class="order-detail-sidebar">
+            <div class="nexus-card action-card">
+                <h2>Actions</h2>
+
+                <div id="action-result"></div>
+
+                <div class="action-buttons">
+                    {% if role == "vendor" and order.status == "funded" %}
+                    {{ nx::button(
+                        text='<svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" /></svg> Mark as Shipped',
+                        variant="primary",
+                        size="md",
+                        hx_post="/api/orders/" ~ order.id ~ "/ship",
+                        hx_target="#action-result",
+                        hx_swap="innerHTML",
+                        hx_confirm="Are you sure you want to mark this order as shipped?",
+                        class="btn-block"
+                    ) }}
+                    {% endif %}
+
+                    {% if role == "buyer" and order.status == "shipped" %}
+                    {{ nx::button(
+                        text='<svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Confirm Receipt',
+                        variant="success",
+                        hx_post="/api/orders/" ~ order.id ~ "/complete",
+                        hx_target="#action-result",
+                        hx_swap="innerHTML",
+                        hx_confirm="Confirm you have received the order in good condition?",
+                        class="btn-block"
+                    ) }}
+                    {% endif %}
+
+                    {% if (role == "buyer" or role == "vendor") and (order.status == "funded" or order.status == "shipped") %}
+                    {{ nx::button(
+                        text='<svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg> Open Dispute',
+                        variant="destructive",
+                        hx_post="/api/orders/" ~ order.id ~ "/dispute",
+                        hx_target="#action-result",
+                        hx_swap="innerHTML",
+                        hx_confirm="Are you sure you want to open a dispute for this order?",
+                        class="btn-block"
+                    ) }}
+                    {% endif %}
+
+                    {% if order.status == "pending" and role == "buyer" %}
+                    <!-- Fund Escrow Button -->
+                    <button
+                        id="fund-escrow-btn"
+                        class="btn btn-primary btn-block"
+                        style="margin-bottom: 15px;"
+                    >
+                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        💰 Fund Escrow ({{ order.total_price_xmr }} XMR)
+                    </button>
+
+                    <!-- Escrow Funding Instructions -->
+                    <div id="escrow-instructions" style="display: none; margin-bottom: 15px; padding: 15px; background: #1a1a3a; border: 1px solid #3b82f6; border-radius: 4px;">
+                        <h3 style="font-size: 12px; color: #3b82f6; margin-bottom: 10px; letter-spacing: 1px;">🔒 ESCROW PAYMENT</h3>
+                        <div style="margin-bottom: 10px;">
+                            <p style="font-size: 11px; color: #888; margin-bottom: 5px;">ESCROW ADDRESS:</p>
+                            <div style="background: #0a0a0a; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 10px; word-break: break-all; color: #f5f5f5;">
+                                <span id="escrow-address">Initializing...</span>
+                            </div>
+                            <button id="copy-address-btn" style="margin-top: 5px; font-size: 10px; padding: 4px 8px; background: #2a2a2a; border: 1px solid #3b82f6; color: #3b82f6; cursor: pointer; border-radius: 3px;">
+                                📋 COPY ADDRESS
+                            </button>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <p style="font-size: 11px; color: #888; margin-bottom: 5px;">AMOUNT TO SEND:</p>
+                            <div style="background: #0a0a0a; padding: 10px; border-radius: 4px; font-size: 14px; font-weight: bold; color: #22c55e;">
+                                {{ order.total_price_xmr }} XMR
+                            </div>
+                        </div>
+                        <div style="padding: 10px; background: #1a3a1a; border: 1px solid #22c55e; border-radius: 4px; margin-top: 10px;">
+                            <p style="font-size: 10px; color: #22c55e; line-height: 1.6;">
+                                ✓ Send EXACTLY {{ order.total_price_xmr }} XMR to the escrow address above<br>
+                                ✓ Funds are secured in 2-of-3 multisig<br>
+                                ✓ Released to vendor only after you confirm receipt
+                            </p>
+                        </div>
+                        <div id="payment-status" style="margin-top: 10px;"></div>
+                    </div>
+
+                    {{ nx::button(
+                        text='<svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cancel Order',
+                        variant="secondary",
+                        hx_post="/api/orders/" ~ order.id ~ "/cancel",
+                        hx_target="#action-result",
+                        hx_swap="innerHTML",
+                        hx_confirm="Are you sure you want to cancel this order?",
+                        class="btn-block"
+                    ) }}
+                    {% endif %}
+
+                    {% if order.escrow_id %}
+                    {{ nx::button(
+                        text='<svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg> View Escrow Details',
+                        href="/escrow/" ~ order.escrow_id,
+                        variant="secondary",
+                        class="btn-block"
+                    ) }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Help Card -->
+            <div class="nexus-card info-card">
+                <h2>Need Help?</h2>
+                <p>If you encounter any issues with this order, you can:</p>
+                <ul class="help-list">
+                    {% if role == "buyer" %}
+                    <li>Wait for the vendor to ship</li>
+                    <li>Open a dispute if there's a problem</li>
+                    <li>Contact support for assistance</li>
+                    {% elif role == "vendor" %}
+                    <li>Mark the order as shipped when ready</li>
+                    <li>Open a dispute if there's a problem</li>
+                    <li>Contact support for assistance</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
     </div>
-  </div>
-</section>
+</div>
 
-{% endblock %}
-
-{% block scripts %}
+<!-- WebSocket for live updates -->
 <script>
-// Handle HTMX responses
-document.body.addEventListener('htmx:afterRequest', function(event) {
-  if (event.detail.successful) {
-    // Reload page to show updated status
-    window.location.reload();
-  } else {
-    alert('Action failed. Please try again.');
-  }
+document.addEventListener('DOMContentLoaded', function() {
+    const orderId = '{{ order.id }}';
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(wsProtocol + '//' + window.location.host + '/ws/');
+
+    ws.onopen = function() {
+        console.log('WebSocket connected');
+        ws.send(JSON.stringify({
+            type: 'subscribe',
+            channel: 'order:' + orderId
+        }));
+    };
+
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        if (data.type === 'order_update' && data.order_id === orderId) {
+            location.reload();
+        }
+    };
+
+    ws.onerror = function(error) {
+        console.error('WebSocket error:', error);
+    };
+
+    ws.onclose = function() {
+        console.log('WebSocket disconnected');
+        setTimeout(() => location.reload(), 5000);
+    };
 });
 </script>
+
+<!-- Fund Escrow Script -->
+<script src="/static/js/fund-escrow.js"></script>
+
+<!-- Order Actions Script -->
+<script src="/static/js/order-actions.js"></script>
 {% endblock %}

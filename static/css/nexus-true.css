@@ -1,0 +1,420 @@
+/* ===============================================
+   NEXUS TRUE DESIGN SYSTEM
+   Based on /nexus/src/ React components
+   =============================================== */
+
+/* === KEYFRAMES ANIMATIONS === */
+
+@keyframes jump {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  15% {
+    transform: translateY(-100vh) rotate(15deg) scale(1.2);
+  }
+  50% {
+    transform: translateY(-100vh) rotate(180deg) scale(1.3);
+  }
+  85% {
+    transform: translateY(20px) rotate(350deg) scale(0.9);
+  }
+  92% {
+    transform: translateY(-10px) rotate(360deg) scale(1.05);
+  }
+  96% {
+    transform: translateY(5px) rotate(360deg) scale(0.98);
+  }
+  100% {
+    transform: translateY(0) rotate(360deg) scale(1);
+  }
+}
+
+@keyframes wave {
+  0%, 100% {
+    transform: translateX(0) translateY(0) scale(1);
+  }
+  33% {
+    transform: translateX(-5%) translateY(-5%) scale(1.05);
+  }
+  66% {
+    transform: translateX(5%) translateY(5%) scale(0.95);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(2deg);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* === HERO SECTION === */
+
+.nexus-hero-true {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: hsl(349, 100%, 55%); /* Primary color */
+}
+
+/* Background Pattern with Wave Animation */
+.nexus-hero-pattern {
+  position: absolute;
+  inset: 0;
+  opacity: 0.3;
+  animation: wave 20s ease-in-out infinite;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Animated Grid Lines */
+.nexus-hero-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.1;
+  animation: pulse-slow 4s ease-in-out infinite;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 49px,
+    #000 49px,
+    #000 51px
+  );
+}
+
+/* Floating Geometric Shapes */
+.nexus-floating-shape {
+  position: absolute;
+  border: 4px solid rgba(13, 13, 13, 0.1); /* primary-foreground with opacity */
+  animation: float 6s ease-in-out infinite;
+}
+
+.nexus-floating-shape-1 {
+  top: 5rem;
+  left: 5rem;
+  width: 8rem;
+  height: 8rem;
+}
+
+.nexus-floating-shape-2 {
+  bottom: 10rem;
+  right: 10rem;
+  width: 6rem;
+  height: 6rem;
+  animation-delay: 2s;
+}
+
+.nexus-floating-shape-3 {
+  top: 33%;
+  right: 5rem;
+  width: 4rem;
+  height: 4rem;
+  animation-delay: 4s;
+}
+
+/* Hero Content */
+.nexus-hero-content-true {
+  position: relative;
+  z-index: 10;
+  max-width: 96rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  text-align: center;
+}
+
+.nexus-hero-top-text {
+  margin-bottom: 2rem;
+  color: rgba(13, 13, 13, 0.6); /* primary-foreground with opacity */
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* Animated Letters Container */
+.nexus-hero-title-true {
+  font-size: 12rem; /* 192px */
+  line-height: 1;
+  font-weight: 900; /* font-black */
+  letter-spacing: -0.05em; /* tracking-tighter */
+  color: hsl(0, 0%, 5%); /* primary-foreground */
+  margin-bottom: 2rem;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.nexus-animated-letter {
+  display: inline-block;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  vertical-align: baseline;
+}
+
+.nexus-animated-letter:hover,
+.nexus-animated-letter.jumping {
+  animation: jump 1.5s cubic-bezier(0.6, 0, 0.2, 1.5);
+}
+
+/* Special E with horizontal lines */
+.nexus-letter-e {
+  position: relative;
+  display: inline-block;
+  vertical-align: baseline;
+}
+
+.nexus-letter-e-invisible {
+  visibility: hidden;
+}
+
+.nexus-letter-e-lines {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: flex-start;
+  padding: 0.05em 0;
+}
+
+.nexus-letter-e-line {
+  height: 0.15em;
+  width: 100%;
+  background-color: hsl(0, 0%, 5%);
+}
+
+/* Hero Subtitle */
+.nexus-hero-subtitle-true {
+  font-size: 2.25rem; /* text-4xl */
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  color: hsl(0, 0%, 5%);
+  margin-bottom: 3rem;
+  text-transform: uppercase;
+}
+
+/* Hero Stats */
+.nexus-hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 4rem;
+  color: hsl(0, 0%, 5%);
+}
+
+.nexus-hero-stat {
+  text-align: center;
+}
+
+.nexus-hero-stat-value {
+  font-size: 3rem;
+  font-weight: 900;
+}
+
+.nexus-hero-stat-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
+/* Scroll Indicator */
+.nexus-scroll-indicator {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  color: hsl(0, 0%, 5%);
+  animation: bounce 1s infinite;
+  text-align: center;
+}
+
+.nexus-scroll-text {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.nexus-scroll-line {
+  width: 1px;
+  height: 3rem;
+  background-color: rgba(13, 13, 13, 0.4);
+  margin: 0.5rem auto 0;
+}
+
+/* === NAVIGATION === */
+
+.nexus-nav-true {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  border-bottom: 1px solid hsl(0, 0%, 20%);
+  background-color: rgba(13, 13, 13, 0.8);
+  backdrop-filter: blur(12px);
+}
+
+.nexus-nav-container-true {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nexus-nav-logo-box {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nexus-nav-logo-shield {
+  width: 3rem;
+  height: 3rem;
+  background-color: hsl(349, 100%, 55%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nexus-nav-logo-text-true {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+}
+
+.nexus-nav-menu-true {
+  display: none;
+  align-items: center;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .nexus-nav-menu-true {
+    display: flex;
+  }
+}
+
+.nexus-nav-link-true {
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: hsl(0, 0%, 98%);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.nexus-nav-link-true:hover {
+  color: hsl(349, 100%, 55%);
+}
+
+.nexus-nav-actions-true {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* === STATS BANNER === */
+
+.nexus-stats-banner {
+  padding: 6rem 0;
+  background-color: hsl(349, 100%, 55%);
+}
+
+.nexus-stats-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.nexus-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 3rem;
+  text-align: center;
+  color: hsl(0, 0%, 5%);
+}
+
+@media (min-width: 768px) {
+  .nexus-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.nexus-stat-value-large {
+  font-size: 3.75rem;
+  font-weight: 900;
+  margin-bottom: 0.5rem;
+}
+
+.nexus-stat-label-small {
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
+/* === SECTIONS === */
+
+.nexus-section-title-huge {
+  font-size: 3.75rem;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+}
+
+.nexus-section-subtitle-bold {
+  color: hsl(0, 0%, 65%);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* === RESPONSIVE === */
+
+@media (max-width: 1024px) {
+  .nexus-hero-title-true {
+    font-size: 8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .nexus-hero-title-true {
+    font-size: 4rem;
+  }
+
+  .nexus-hero-subtitle-true {
+    font-size: 1.5rem;
+  }
+
+  .nexus-hero-stats {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .nexus-floating-shape {
+    display: none;
+  }
+}

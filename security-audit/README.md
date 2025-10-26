@@ -20,8 +20,8 @@
 | ID | Finding | Severity | Impact | Status |
 |----|---------|----------|--------|--------|
 | **[TM-001](./findings/CRITICAL/TM-001-arbiter-on-server.md)** | Arbiter wallet on same server as API | 🔴 CRITICAL | Server compromise → arbiter keys → fund theft | ❌ VULNERABLE |
-| **[TM-002](./findings/CRITICAL/TM-002-db-key-in-env.md)** | DB encryption key in plaintext .env file | 🔴 CRITICAL | .env leak → full database decryption | ❌ VULNERABLE |
-| **[TM-003](./findings/CRITICAL/TM-003-multisig-validation.md)** | No cryptographic validation of multisig_info | 🔴 CRITICAL | MITM → malicious multisig address | ❌ VULNERABLE |
+| **[TM-002](./findings/CRITICAL/TM-002-db-key-in-env.md)** | DB encryption key in plaintext .env file | 🔴 CRITICAL | .env leak → full database decryption | ✅ **RESOLVED** |
+| **[TM-003](./findings/CRITICAL/TM-003-no-multisig-binding.md)** | No cryptographic binding between multisig_info and address | 🔴 CRITICAL | Participant submits backdoored keys → 2-of-3 compromised | ✅ **RESOLVED** |
 
 **⚠️ RECOMMENDATION:** Do NOT deploy to mainnet until these 3 CRITICAL risks are mitigated.
 
@@ -29,9 +29,13 @@
 
 | ID | Finding | Severity | Status |
 |----|---------|----------|--------|
-| **[TM-004](./findings/HIGH/TM-004-network-tor-enforcement.md)** | Network layer not enforcing Tor | ⚠️ HIGH | ❌ VULNERABLE |
-| **[TM-005](./findings/HIGH/TM-005-memory-protection.md)** | No memory protection (mlock/zeroize) | ⚠️ HIGH | ❌ VULNERABLE |
-| **[TM-006](./findings/HIGH/TM-006-metadata-leaks.md)** | Metadata leakage in logs/errors | ⚠️ HIGH | ❌ VULNERABLE |
+| **[TM-004](./findings/HIGH/TM-004-weak-network-hardening.md)** | Weak network hardening - insufficient Tor enforcement | 🟠 HIGH | ❌ VULNERABLE |
+
+### Medium Priority Findings (Post-Mainnet)
+
+| ID | Finding | Severity | Status |
+|----|---------|----------|--------|
+| **[TM-005/006](./findings/MEDIUM/TM-005-006-memory-log-leaks.md)** | Memory dumps & log sanitization vulnerabilities | 🟡 MEDIUM | ❌ VULNERABLE |
 
 ---
 
@@ -80,15 +84,22 @@
 
 **Findings:** 3 CRITICAL, 2 HIGH
 
-### Session 2: Network & Memory Security (2-3h)
-**[Full Report](./audit-reports/2025-10-26-session-2-network-memory.md)**
+### Session 2: Network & Memory Security (COMPLETED ✅)
+**Status:** Audit completed on 2025-10-26
 
 **Scope:**
-- Network layer (Tor enforcement, DNS leaks)
-- Memory security (mlock, zeroize, core dumps)
-- Logging (metadata leaks, sensitive data)
+- Network layer (Tor enforcement, DNS leaks, clearnet bypass)
+- Memory security (mlock, zeroize, core dumps, swap)
+- Logging (metadata leaks, sensitive data sanitization)
+- Files analyzed: `server/src/ipfs/client.rs`, `wallet/src/rpc.rs`, `server/src/models/user.rs`, `server/src/services/blockchain_monitor.rs`
 
-**Findings:** 1 CRITICAL, 3 HIGH, 2 MEDIUM
+**Findings:** 1 HIGH, 1 MEDIUM (combined 6 vulnerabilities)
+
+**Key Vulnerabilities Identified:**
+
+1. **TM-004 (HIGH):** Weak RPC localhost validation (`contains()` vs strict IP parsing), IPFS Tor bypass for local connections, inconsistent DNS leak protection (`socks5://` vs `socks5h://`), no runtime Tor health checks
+
+2. **TM-005/006 (MEDIUM):** Memory dumps expose secrets (no zeroization), `#[derive(Debug)]` on sensitive structs, DB encryption key in `/proc/<pid>/environ`, partial address disclosure in logs, escrow ID correlation risk
 
 ### Session 3: Synthesis & Prioritization (2h)
 **[Full Report](./audit-reports/2025-10-26-session-3-synthesis.md)**
@@ -139,10 +150,11 @@ Run these regularly during development to catch regressions.
 
 ### Immediate (Week 1-4) - BLOCKERS
 - [ ] **TM-001:** Implement arbiter air-gap architecture
-- [ ] **TM-002:** Deploy Shamir key splitting (3-of-5)
-- [ ] **TM-003:** Add multisig cryptographic validation
+- [x] **TM-002:** Deploy Shamir key splitting (3-of-5) ✅ **COMPLETED 2025-10-27**
+- [x] **TM-003:** Add multisig cryptographic validation ✅ **COMPLETED 2025-10-27**
 - [ ] **TM-004:** Enforce Tor for ALL network traffic
 
+**Progress:** 2 of 4 complete (50%)
 **Gates:** No mainnet deployment until all 4 complete.
 
 ### Short-term (Week 5-8) - PRE-MAINNET

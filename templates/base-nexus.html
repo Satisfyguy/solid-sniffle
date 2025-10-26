@@ -15,6 +15,9 @@
     <link rel="stylesheet" href="/static/css/nexus-animations.css">
     <link rel="stylesheet" href="/static/css/nexus.css">
 
+    <!-- Extra CSS for specific pages -->
+    {% block extra_css %}{% endblock %}
+
     <!-- HTMX for dynamic interactions (local - Tor-safe, no CDN) -->
     <script src="/static/js/htmx.min.js"></script>
     <!-- HTMX JSON encoding extension for API requests -->

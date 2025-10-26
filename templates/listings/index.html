@@ -1,89 +1,248 @@
 {% extends "base-nexus.html" %}
 
-{% block title %}NEXUS — SECURE MONERO MARKETPLACE{% endblock %}
+{% block title %}NEXUS — Anonymous Marketplace{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/nexus-true.css">
+{% endblock %}
 
 {% block content %}
 
-{# Hero Section #}
-{% include "partials/nexus/organisms/hero.html" %}
+{# TRUE NEXUS HERO - Full Screen with Animated Letters #}
+<section class="nexus-hero-true">
+  {# Background Pattern with Wave Animation #}
+  <div class="nexus-hero-pattern" style="background-image: url('/static/hero-pattern.png');"></div>
 
-{# Search Bar #}
-<section style="max-width: 1400px; margin: 0 auto; padding: var(--nexus-space-12) var(--nexus-space-6);">
-  {% include "partials/nexus/organisms/search-bar.html" %}
-</section>
+  {# Animated Grid Lines #}
+  <div class="nexus-hero-grid"></div>
 
-{# Featured Categories #}
-<section style="max-width: 1400px; margin: 0 auto; padding: 0 var(--nexus-space-6) var(--nexus-space-12);">
-  <h2 style="font-size: var(--nexus-text-3xl); font-weight: var(--nexus-weight-bold); color: var(--nexus-fg); margin-bottom: var(--nexus-space-8); text-align: center; text-transform: uppercase; letter-spacing: var(--nexus-tracking-wide);">
-    Featured Categories
-  </h2>
+  {# Floating Geometric Shapes #}
+  <div class="nexus-floating-shape nexus-floating-shape-1"></div>
+  <div class="nexus-floating-shape nexus-floating-shape-2"></div>
+  <div class="nexus-floating-shape nexus-floating-shape-3"></div>
 
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--nexus-space-6);">
-    {% include "partials/nexus/molecules/category-card.html" %}
+  {# Content #}
+  <div class="nexus-hero-content-true">
+    {# Top Text #}
+    <div class="nexus-hero-top-text">
+      ANONYMOUS • SECURE • DECENTRALIZED
+    </div>
 
-    {% include "partials/nexus/molecules/category-card.html" %}
+    {# Main Title with Interactive Letters #}
+    <h1 class="nexus-hero-title-true">
+      <span class="nexus-animated-letter" onmouseenter="this.classList.add('jumping'); setTimeout(() => this.classList.remove('jumping'), 1500);">N</span>
+      <span class="nexus-animated-letter nexus-letter-e" onmouseenter="this.classList.add('jumping'); setTimeout(() => this.classList.remove('jumping'), 1500);">
+        <span class="nexus-letter-e-invisible">E</span>
+        <span class="nexus-letter-e-lines">
+          <span class="nexus-letter-e-line"></span>
+          <span class="nexus-letter-e-line"></span>
+          <span class="nexus-letter-e-line"></span>
+        </span>
+      </span>
+      <span class="nexus-animated-letter" onmouseenter="this.classList.add('jumping'); setTimeout(() => this.classList.remove('jumping'), 1500);">X</span>
+      <span class="nexus-animated-letter" onmouseenter="this.classList.add('jumping'); setTimeout(() => this.classList.remove('jumping'), 1500);">U</span>
+      <span class="nexus-animated-letter" onmouseenter="this.classList.add('jumping'); setTimeout(() => this.classList.remove('jumping'), 1500);">S</span>
+    </h1>
 
-    {% include "partials/nexus/molecules/category-card.html" %}
+    {# Subtitle #}
+    <p class="nexus-hero-subtitle-true">
+      UNDERGROUND • MARKETPLACE
+    </p>
 
-    {% include "partials/nexus/molecules/category-card.html" %}
+    {# Stats #}
+    <div class="nexus-hero-stats">
+      <div class="nexus-hero-stat">
+        <div class="nexus-hero-stat-value">{{ listings | length | default(value=1337) }}</div>
+        <div class="nexus-hero-stat-label">LISTINGS</div>
+      </div>
+      <div class="nexus-hero-stat">
+        <div class="nexus-hero-stat-value">420</div>
+        <div class="nexus-hero-stat-label">VENDORS</div>
+      </div>
+      <div class="nexus-hero-stat">
+        <div class="nexus-hero-stat-value">100%</div>
+        <div class="nexus-hero-stat-label">ANONYMOUS</div>
+      </div>
+    </div>
+  </div>
 
-    {% include "partials/nexus/molecules/category-card.html" %}
-
-    {% include "partials/nexus/molecules/category-card.html" %}
+  {# Scroll Indicator #}
+  <div class="nexus-scroll-indicator">
+    <div class="nexus-scroll-text">SCROLL</div>
+    <div class="nexus-scroll-line"></div>
   </div>
 </section>
 
-{# Vendor CTA #}
-{% if logged_in and role == "vendor" %}
-<section style="max-width: 1400px; margin: 0 auto; padding: 0 var(--nexus-space-6) var(--nexus-space-8);">
-  {% include "partials/nexus/atoms/button.html" %}
+{# Browse Categories Section #}
+<section id="categories" style="padding: 6rem 0; background: hsl(0, 0%, 5%);">
+  <div style="max-width: 1400px; margin: 0 auto; padding: 0 1.5rem;">
+    <div style="margin-bottom: 4rem; text-align: center;">
+      <h2 class="nexus-section-title-huge">
+        BROWSE CATEGORIES
+      </h2>
+      <p class="nexus-section-subtitle-bold">
+        SECURE • ANONYMOUS • UNTRACEABLE
+      </p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+      <!-- Electronics -->
+      <a href="/categories/electronics" style="text-decoration: none;" hx-boost="true">
+        <div class="nexus-category-card">
+          <div class="nexus-category-card-icon">💻</div>
+          <h3 class="nexus-category-card-title">ELECTRONICS</h3>
+          <p class="nexus-category-card-count">View listings</p>
+        </div>
+      </a>
+
+      <!-- Digital Goods -->
+      <a href="/categories/digital" style="text-decoration: none;" hx-boost="true">
+        <div class="nexus-category-card">
+          <div class="nexus-category-card-icon">📱</div>
+          <h3 class="nexus-category-card-title">DIGITAL GOODS</h3>
+          <p class="nexus-category-card-count">View listings</p>
+        </div>
+      </a>
+
+      <!-- Services -->
+      <a href="/categories/services" style="text-decoration: none;" hx-boost="true">
+        <div class="nexus-category-card">
+          <div class="nexus-category-card-icon">⚙️</div>
+          <h3 class="nexus-category-card-title">SERVICES</h3>
+          <p class="nexus-category-card-count">View listings</p>
+        </div>
+      </a>
+
+      <!-- Art & Collectibles -->
+      <a href="/categories/art" style="text-decoration: none;" hx-boost="true">
+        <div class="nexus-category-card">
+          <div class="nexus-category-card-icon">🎨</div>
+          <h3 class="nexus-category-card-title">ART & COLLECTIBLES</h3>
+          <p class="nexus-category-card-count">View listings</p>
+        </div>
+      </a>
+
+      <!-- Books & Media -->
+      <a href="/categories/books" style="text-decoration: none;" hx-boost="true">
+        <div class="nexus-category-card">
+          <div class="nexus-category-card-icon">📚</div>
+          <h3 class="nexus-category-card-title">BOOKS & MEDIA</h3>
+          <p class="nexus-category-card-count">View listings</p>
+        </div>
+      </a>
+
+      <!-- Other -->
+      <a href="/categories/other" style="text-decoration: none;" hx-boost="true">
+        <div class="nexus-category-card">
+          <div class="nexus-category-card-icon">🎁</div>
+          <h3 class="nexus-category-card-title">OTHER</h3>
+          <p class="nexus-category-card-count">View listings</p>
+        </div>
+      </a>
+    </div>
+  </div>
 </section>
-{% endif %}
 
-{# Featured Listings #}
-<section style="max-width: 1400px; margin: 0 auto; padding: 0 var(--nexus-space-6) var(--nexus-space-12);">
-  <h2 style="font-size: var(--nexus-text-3xl); font-weight: var(--nexus-weight-bold); color: var(--nexus-fg); margin-bottom: var(--nexus-space-8); text-align: center; text-transform: uppercase; letter-spacing: var(--nexus-tracking-wide);">
-    Featured Listings
-  </h2>
+{# Featured Listings Section #}
+<section id="listings" style="padding: 6rem 0; background: hsla(0, 0%, 15%, 0.3);">
+  <div style="max-width: 1400px; margin: 0 auto; padding: 0 1.5rem;">
+    <div style="margin-bottom: 4rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2rem;">
+      <div>
+        <h2 class="nexus-section-title-huge">
+          FEATURED LISTINGS
+        </h2>
+        <p class="nexus-section-subtitle-bold">
+          VERIFIED VENDORS • ESCROW PROTECTED
+        </p>
+      </div>
+      <a href="/listings" class="nexus-btn nexus-btn-primary nexus-btn-lg" hx-boost="true" style="font-weight: 700;">
+        VIEW ALL
+      </a>
+    </div>
 
-  <div id="listings-results" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--nexus-space-6);">
+  <div id="listings-results" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
     {% if listings and listings | length > 0 %}
       {% for listing in listings %}
-        {% include "partials/nexus/molecules/product-card.html" %}
+      <a href="/listings/{{ listing.id }}" style="text-decoration: none; color: inherit;" hx-boost="true">
+        <div class="nexus-card nexus-card-elevated nexus-card-glass nexus-card-hover-lift">
+          {% if listing.images_ipfs_cids %}
+          <div class="nexus-card-image">
+            <img src="/api/listings/{{ listing.id }}/images/{{ listing.images_ipfs_cids | first }}" alt="{{ listing.title }}" loading="lazy">
+          </div>
+          {% endif %}
+
+          <div class="nexus-card-header">
+            <h3 class="nexus-card-title">{{ listing.title }}</h3>
+            <p class="nexus-card-subtitle">{{ listing.vendor_username }}</p>
+          </div>
+
+          <div class="nexus-card-content">
+            <p style="color: var(--nexus-muted-fg, #9ca3af); font-size: 0.875rem; line-height: 1.5; margin-bottom: 1rem;">
+              {{ listing.description | truncate(length=100) }}
+            </p>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="font-size: 0.75rem; color: var(--nexus-muted-fg, #888); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Price</span>
+                <span style="font-size: 1.25rem; font-weight: 700; color: var(--nexus-primary, #3b82f6); font-family: monospace;">
+                  {{ listing.price_xmr }} XMR
+                </span>
+              </div>
+              <div>
+                <span class="nexus-badge nexus-badge-{{ listing.status }}">
+                  {{ listing.status | upper }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
       {% endfor %}
     {% else %}
       {# Empty State #}
-      <div style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--nexus-space-20); text-align: center;">
-        {% include "partials/nexus/molecules/skeleton.html" %}
-
-        <div style="margin-top: var(--nexus-space-8);">
-          {% include "partials/nexus/molecules/alert.html" %}
+      <div style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5rem; text-align: center;">
+        <div class="nexus-alert nexus-alert-info">
+          <div class="nexus-alert-icon">ℹ️</div>
+          <div class="nexus-alert-content">
+            <div class="nexus-alert-title">No listings yet</div>
+            <div class="nexus-alert-message">
+              Be the first to create a listing on the marketplace!
+            </div>
+          </div>
         </div>
 
         {% if logged_in and role == "vendor" %}
-          <div style="margin-top: var(--nexus-space-6);">
-            {% include "partials/nexus/atoms/button.html" %}
-          </div>
+        <a href="/listings/create" class="nexus-btn nexus-btn-primary" style="margin-top: 2rem;">
+          Create Your First Listing
+        </a>
         {% endif %}
       </div>
     {% endif %}
   </div>
+  </div>
 </section>
 
-{# Trust Indicators / Features Section #}
-<section style="max-width: 1400px; margin: 0 auto; padding: var(--nexus-space-12) var(--nexus-space-6);">
-  <h2 style="font-size: var(--nexus-text-3xl); font-weight: var(--nexus-weight-bold); color: var(--nexus-fg); margin-bottom: var(--nexus-space-8); text-align: center; text-transform: uppercase; letter-spacing: var(--nexus-tracking-wide);">
-    Why Choose Nexus?
-  </h2>
-
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--nexus-space-6);">
-    {% include "partials/nexus/molecules/card.html" %}
-
-    {% include "partials/nexus/molecules/card.html" %}
-
-    {% include "partials/nexus/molecules/card.html" %}
-
-    {% include "partials/nexus/molecules/card.html" %}
+{# Stats Banner - TRUE NEXUS STYLE #}
+<section class="nexus-stats-banner">
+  <div class="nexus-stats-container">
+    <div class="nexus-stats-grid">
+      <div>
+        <div class="nexus-stat-value-large">24/7</div>
+        <div class="nexus-stat-label-small">UPTIME</div>
+      </div>
+      <div>
+        <div class="nexus-stat-value-large">0</div>
+        <div class="nexus-stat-label-small">LOGS KEPT</div>
+      </div>
+      <div>
+        <div class="nexus-stat-value-large">256</div>
+        <div class="nexus-stat-label-small">BIT ENCRYPTION</div>
+      </div>
+      <div>
+        <div class="nexus-stat-value-large">∞</div>
+        <div class="nexus-stat-label-small">ANONYMITY</div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -95,5 +254,14 @@
 setInterval(function() {
   // Could use HTMX to refresh stats
 }, 30000);
+
+// Hero letter animations
+document.addEventListener('DOMContentLoaded', function() {
+  const heroTitle = document.querySelector('.nexus-hero-title');
+  if (heroTitle && !heroTitle.dataset.animated) {
+    heroTitle.dataset.animated = 'true';
+    // Add subtle hover effect on letters (optional)
+  }
+});
 </script>
 {% endblock %}
