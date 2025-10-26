@@ -1,57 +1,48 @@
-{% extends "base.html" %}
+{% extends "base-nexus.html" %}
 
-{% block title %}CREATE LISTING — AMAZAWN{% endblock %}
+{% block title %}Create Listing — NEXUS{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 700px;">
-    <div class="card">
-        <h1 style="font-size: 18px; font-weight: normal; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px; text-align: center;">
-            — CREATE NEW LISTING —
-        </h1>
 
-        <form id="create-listing-form" enctype="multipart/form-data">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            <div class="form-group">
-                <label for="title">TITLE</label>
-                <input type="text" id="title" name="title" placeholder="Product title" required minlength="3" maxlength="200">
-                <small>3-200 CHARACTERS</small>
-            </div>
+{# Breadcrumb #}
+<section style="max-width: 1000px; margin: 0 auto; padding: var(--nexus-space-6) var(--nexus-space-6) 0;">
+  {% include "partials/nexus/molecules/breadcrumb.html" with
+     items=[
+       {"text": "Home", "href": "/", "icon": "🏠"},
+       {"text": "Listings", "href": "/listings"},
+       {"text": "Create New Listing"}
+     ]
+  %}
+</section>
 
-            <div class="form-group">
-                <label for="description">DESCRIPTION</label>
-                <textarea id="description" name="description" placeholder="Describe your product..." rows="6" required minlength="10" maxlength="5000"></textarea>
-                <small>10-5000 CHARACTERS</small>
-            </div>
+{# Main Content #}
+<section style="max-width: 1000px; margin: 0 auto; padding: var(--nexus-space-6);">
+  {% include "partials/nexus/molecules/card.html" with
+     title="Create New Listing"
+     variant="elevated"
+     glassmorphism=true
+     content=include("partials/listing-form.html", with={"mode": "create", "csrf_token": csrf_token})
+  %}
 
-            <div class="form-group">
-                <label for="price_xmr">PRICE (ATOMIC UNITS)</label>
-                <input type="number" id="price_xmr" name="price_xmr" placeholder="0" min="1" required>
-                <small>1 XMR = 1,000,000,000,000 ATOMIC UNITS</small>
-            </div>
+  {# Help Section #}
+  <div style="margin-top: var(--nexus-space-6);">
+    {% include "partials/nexus/molecules/alert.html" with
+       title="💡 Tips for a Great Listing"
+       message="
+         <ul style='margin: var(--nexus-space-2) 0; padding-left: var(--nexus-space-5);'>
+           <li>Use clear, descriptive titles</li>
+           <li>Provide detailed descriptions with specifications</li>
+           <li>Upload high-quality images (multiple angles)</li>
+           <li>Set competitive prices</li>
+           <li>Keep stock count updated</li>
+         </ul>
+       "
+       variant="info"
+       dismissible=false
+    %}
+  </div>
+</section>
 
-            <div class="form-group">
-                <label for="stock">STOCK</label>
-                <input type="number" id="stock" name="stock" placeholder="0" min="0" required>
-            </div>
-
-            <div class="form-group">
-                <label for="images">PRODUCT IMAGES</label>
-                <input type="file" id="images" name="images" accept="image/jpeg,image/png,image/gif" multiple>
-                <small>UPLOAD ONE OR MORE IMAGES (JPEG, PNG, GIF) - MAX 10 IMAGES, 5MB EACH</small>
-                <div id="image-preview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 10px;"></div>
-            </div>
-
-            <div class="form-actions">
-                <a href="/listings" class="btn btn-secondary" style="flex: 1;">CANCEL</a>
-                <button type="submit" class="btn btn-primary" style="flex: 1;">
-                    CREATE LISTING →
-                </button>
-            </div>
-        </form>
-
-        <div id="listing-result" style="margin-top: 20px;"></div>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
