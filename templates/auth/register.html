@@ -1,49 +1,200 @@
-{% extends "base.html" %}
+{% extends "base-nexus.html" %}
 
-{% block title %}REGISTER — AMAZAWN{% endblock %}
+{% block title %}Register — NEXUS{% endblock %}
 
 {% block content %}
-<div class="auth-container">
-    <div class="auth-card">
-        <h1>— CREATE ACCOUNT —</h1>
 
-        <form hx-post="/api/auth/register" hx-target="#auth-result" hx-swap="innerHTML" hx-indicator=".htmx-indicator" role="form" aria-label="Registration form">
-            <!-- CSRF Token (required for backend validation) -->
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" aria-hidden="true">
+{# Auth Container - Centered layout #}
+<section style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: var(--nexus-space-6);">
+  <div style="width: 100%; max-width: 500px;">
 
-            <div class="form-group">
-                <label for="username">USERNAME</label>
-                <input type="text" id="username" name="username" placeholder="Choose a username" required minlength="3" maxlength="50" autocomplete="username" aria-label="Choose your username" aria-required="true" aria-describedby="username-help">
-                <small id="username-help">3-50 CHARACTERS</small>
-            </div>
-
-            <div class="form-group">
-                <label for="password">PASSWORD</label>
-                <input type="password" id="password" name="password" placeholder="••••••••" required minlength="8" autocomplete="new-password" aria-label="Choose your password" aria-required="true" aria-describedby="password-help">
-                <small id="password-help">MINIMUM 8 CHARACTERS</small>
-            </div>
-
-            <div class="form-group">
-                <label for="role">ROLE</label>
-                <select id="role" name="role" required aria-label="Select your role" aria-required="true">
-                    <option value="">— SELECT ROLE —</option>
-                    <option value="buyer">BUYER</option>
-                    <option value="vendor">VENDOR</option>
-                </select>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary" style="width: 100%;" aria-label="Submit registration form">
-                    REGISTER <span class="htmx-indicator" aria-hidden="true">→</span>
-                </button>
-            </div>
-        </form>
-
-        <div id="auth-result" style="margin-top: 20px;"></div>
-
-        <p style="margin-top: 30px; text-align: center; color: #888; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;">
-            HAVE AN ACCOUNT? <a href="/login" style="color: #f5f5f5; text-decoration: none; border-bottom: 1px solid #f5f5f5;">LOGIN HERE</a>
-        </p>
+    {# Logo/Brand #}
+    <div style="text-align: center; margin-bottom: var(--nexus-space-8);">
+      <h1 style="font-size: var(--nexus-text-4xl); font-weight: var(--nexus-weight-black); color: var(--nexus-fg); text-transform: uppercase; letter-spacing: var(--nexus-tracking-tight); margin: 0;">
+        NEXUS
+      </h1>
+      <p style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg); margin-top: var(--nexus-space-2); text-transform: uppercase; letter-spacing: var(--nexus-tracking-wide);">
+        Secure Privacy-Focused Marketplace
+      </p>
     </div>
-</div>
+
+    {# Register Card #}
+    {% include "partials/nexus/molecules/card.html" with
+       title="Create Account"
+       variant="elevated"
+       glassmorphism=true
+       content='
+         <form hx-post="/api/auth/register"
+               hx-target="#auth-result"
+               hx-swap="innerHTML"
+               hx-indicator=".htmx-indicator"
+               role="form"
+               aria-label="Registration form"
+               style="display: flex; flex-direction: column; gap: var(--nexus-space-5);">
+
+           <!-- CSRF Token -->
+           <input type="hidden" name="csrf_token" value="' ~ csrf_token ~ '" aria-hidden="true">
+
+           <!-- Username Field -->
+           <div>
+             ' ~ include("partials/nexus/atoms/input.html", with={
+               "id": "username",
+               "name": "username",
+               "label": "Username",
+               "type": "text",
+               "placeholder": "Choose a username",
+               "required": true,
+               "autocomplete": "username",
+               "minlength": 3,
+               "maxlength": 50,
+               "helper_text": "3-50 characters"
+             }) ~ '
+           </div>
+
+           <!-- Password Field -->
+           <div>
+             ' ~ include("partials/nexus/atoms/input.html", with={
+               "id": "password",
+               "name": "password",
+               "label": "Password",
+               "type": "password",
+               "placeholder": "••••••••",
+               "required": true,
+               "autocomplete": "new-password",
+               "minlength": 8,
+               "helper_text": "Minimum 8 characters"
+             }) ~ '
+           </div>
+
+           <!-- Role Selection -->
+           <div>
+             <label for="role" style="display: block; font-size: var(--nexus-text-sm); font-weight: var(--nexus-weight-medium); color: var(--nexus-fg); margin-bottom: var(--nexus-space-2); text-transform: uppercase; letter-spacing: var(--nexus-tracking-wide);">
+               Role
+             </label>
+             <select
+               id="role"
+               name="role"
+               required
+               aria-label="Select your role"
+               aria-required="true"
+               style="width: 100%; padding: var(--nexus-space-3); background: var(--nexus-input-bg); border: 1px solid var(--nexus-border); border-radius: var(--nexus-radius-md); color: var(--nexus-fg); font-size: var(--nexus-text-base); font-family: var(--nexus-font-mono); transition: border-color 0.2s, box-shadow 0.2s;">
+               <option value="">— Select Role —</option>
+               <option value="buyer">Buyer</option>
+               <option value="vendor">Vendor</option>
+             </select>
+             <small style="display: block; font-size: var(--nexus-text-xs); color: var(--nexus-muted-fg); margin-top: var(--nexus-space-1);">
+               Choose your marketplace role
+             </small>
+           </div>
+
+           <!-- Submit Button -->
+           <div style="margin-top: var(--nexus-space-2);">
+             ' ~ include("partials/nexus/atoms/button.html", with={
+               "text": "Register",
+               "type": "submit",
+               "variant": "primary",
+               "size": "lg",
+               "class": "w-full"
+             }) ~ '
+             <span class="htmx-indicator" style="display: none; text-align: center; margin-top: var(--nexus-space-2); color: var(--nexus-muted-fg);">
+               Creating account...
+             </span>
+           </div>
+
+           <!-- Response Container -->
+           <div id="auth-result"></div>
+         </form>
+
+         <!-- Login Link -->
+         <div style="margin-top: var(--nexus-space-6); padding-top: var(--nexus-space-6); border-top: 1px solid var(--nexus-border); text-align: center;">
+           <p style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg);">
+             Have an account?
+             <a href="/login" style="color: var(--nexus-primary); text-decoration: none; font-weight: var(--nexus-weight-semibold); margin-left: var(--nexus-space-2);">
+               Login here →
+             </a>
+           </p>
+         </div>
+       '
+    %}
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<style>
+/* HTMX indicator animation */
+.htmx-indicator.htmx-request {
+  display: block !important;
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Full width button utility */
+.w-full {
+  width: 100%;
+}
+
+/* Select field focus state */
+select:focus {
+  outline: none;
+  border-color: var(--nexus-primary) !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+select:hover {
+  border-color: var(--nexus-muted-fg);
+}
+</style>
+
+<script>
+// Handle HTMX response
+document.body.addEventListener('htmx:afterRequest', function(event) {
+  const authResult = document.getElementById('auth-result');
+
+  if (event.detail.successful) {
+    const xhr = event.detail.xhr;
+
+    // Check if response indicates success
+    if (xhr.status === 200) {
+      // Success - show success message and redirect to login
+      authResult.innerHTML = `
+        <div style="padding: var(--nexus-space-4); background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--nexus-radius-md); color: var(--nexus-success);">
+          ✓ Account created successfully! Redirecting to login...
+        </div>
+      `;
+
+      // Redirect to login after short delay
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1500);
+    }
+  } else {
+    // Error - show error message
+    const xhr = event.detail.xhr;
+    let errorMessage = 'Registration failed. Please try again.';
+
+    // Try to parse error response for specific message
+    try {
+      const response = JSON.parse(xhr.responseText);
+      if (response.error) {
+        errorMessage = response.error;
+      }
+    } catch (e) {
+      // Use default message if parsing fails
+    }
+
+    authResult.innerHTML = `
+      <div style="padding: var(--nexus-space-4); background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--nexus-radius-md); color: var(--nexus-destructive);">
+        ✗ ${errorMessage}
+      </div>
+    `;
+  }
+});
+</script>
 {% endblock %}

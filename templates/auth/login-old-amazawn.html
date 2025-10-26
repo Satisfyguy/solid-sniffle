@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}LOGIN — AMAZAWN{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h1>— LOGIN —</h1>
+
+        <form hx-post="/api/auth/login" hx-target="#auth-result" hx-swap="innerHTML" hx-indicator=".htmx-indicator" role="form" aria-label="Login form">
+            <!-- CSRF Token (required for backend validation) -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" aria-hidden="true">
+
+            <div class="form-group">
+                <label for="username">USERNAME</label>
+                <input type="text" id="username" name="username" placeholder="Your identifier" required minlength="3" autocomplete="username" aria-label="Enter your username" aria-required="true">
+            </div>
+
+            <div class="form-group">
+                <label for="password">PASSWORD</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" required minlength="8" autocomplete="current-password" aria-label="Enter your password" aria-required="true">
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" style="width: 100%;" aria-label="Submit login form">
+                    LOGIN <span class="htmx-indicator" aria-hidden="true">→</span>
+                </button>
+            </div>
+        </form>
+
+        <div id="auth-result" style="margin-top: 20px;"></div>
+
+        <p style="margin-top: 30px; text-align: center; color: #888; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;">
+            NO ACCOUNT? <a href="/register" style="color: #f5f5f5; text-decoration: none; border-bottom: 1px solid #f5f5f5;">REGISTER HERE</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
