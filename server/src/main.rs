@@ -202,10 +202,11 @@ async fn main() -> Result<()> {
         timeout_config.transaction_confirmation_timeout_secs
     );
 
-    let timeout_monitor = Arc::new(TimeoutMonitor::new(
+    let timeout_monitor = Arc::new(TimeoutMonitor::new_with_persistence(
         pool.clone(),
         websocket_server.clone(),
         timeout_config,
+        encryption_key.clone(),
     ));
 
     // Spawn TimeoutMonitor in background

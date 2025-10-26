@@ -14,6 +14,7 @@ use uuid::Uuid;
 use crate::config::TimeoutConfig;
 use crate::db::DbPool;
 use crate::models::escrow::Escrow;
+use crate::repositories::MultisigStateRepository;
 use crate::websocket::{NotifyUser, WebSocketServer, WsEvent};
 
 /// Timeout monitoring service
@@ -25,6 +26,7 @@ pub struct TimeoutMonitor {
     db: DbPool,
     websocket: Addr<WebSocketServer>,
     config: TimeoutConfig,
+    multisig_repo: Option<Arc<MultisigStateRepository>>,
 }
 
 impl TimeoutMonitor {
@@ -43,6 +45,33 @@ impl TimeoutMonitor {
             db,
             websocket,
             config,
+            multisig_repo: None,
+        }
+    }
+
+    /// Create a new TimeoutMonitor with multisig state persistence
+    ///
+    /// # Arguments
+    /// * `db` - Database connection pool
+    /// * `websocket` - WebSocket server for sending notifications
+    /// * `config` - Timeout configuration (deadlines and polling intervals)
+    /// * `encryption_key` - Encryption key for multisig state data
+    pub fn new_with_persistence(
+        db: DbPool,
+        websocket: Addr<WebSocketServer>,
+        config: TimeoutConfig,
+        encryption_key: Vec<u8>,
+    ) -> Self {
+        let multisig_repo = MultisigStateRepository::new(db.clone(), encryption_key);
+        info!(
+            "TimeoutMonitor initialized with persistence and poll_interval={}s",
+            config.poll_interval_secs
+        );
+        Self {
+            db,
+            websocket,
+            config,
+            multisig_repo: Some(Arc::new(multisig_repo)),
         }
     }
 
@@ -51,6 +80,7 @@ impl TimeoutMonitor {
     /// This spawns a background task that periodically checks for:
     /// - Expired escrows (past deadline)
     /// - Escrows approaching expiration (warning notifications)
+    /// - Stuck multisig setups (if persistence enabled)
     ///
     /// The task runs indefinitely until the server shuts down.
     pub async fn start_monitoring(self: Arc<Self>) {
@@ -69,6 +99,13 @@ impl TimeoutMonitor {
             // Check for escrows approaching expiration (send warnings)
             if let Err(e) = self.check_expiring_escrows().await {
                 error!("Error checking expiring escrows: {}", e);
+            }
+
+            // Check for stuck multisig setups (if persistence enabled)
+            if self.multisig_repo.is_some() {
+                if let Err(e) = self.check_stuck_multisig_setups().await {
+                    error!("Error checking stuck multisig setups: {}", e);
+                }
             }
         }
     }
@@ -356,6 +393,93 @@ impl TimeoutMonitor {
             "Sent expiration warning for escrow {}: {}s remaining",
             escrow_id, expires_in_secs
         );
+
+        Ok(())
+    }
+
+    /// Check for stuck multisig setups using persisted state
+    ///
+    /// Identifies escrows where multisig setup has stalled:
+    /// - Last state update > 15 minutes ago
+    /// - Status is "created" (setup not completed)
+    /// - Multisig state exists but setup incomplete
+    ///
+    /// Action: Send stuck setup notification to all parties
+    async fn check_stuck_multisig_setups(&self) -> Result<()> {
+        let repo = self
+            .multisig_repo
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("MultisigStateRepository not initialized"))?;
+
+        // Use repository's built-in method to find stuck escrows (15 minutes = 900 seconds)
+        let stuck_escrow_ids = repo.find_stuck_escrows(900)?;
+
+        if stuck_escrow_ids.is_empty() {
+            return Ok(());
+        }
+
+        info!(
+            "Found {} stuck multisig setup(s)",
+            stuck_escrow_ids.len()
+        );
+
+        for escrow_id_str in stuck_escrow_ids {
+            let escrow_id = escrow_id_str
+                .parse::<Uuid>()
+                .context("Failed to parse escrow_id")?;
+
+            // Load both escrow and snapshot to get phase and timestamp
+            let mut conn = self.db.get().context("Failed to get DB connection")?;
+            let escrow_id_clone = escrow_id_str.clone();
+
+            let escrow_result = tokio::task::spawn_blocking(move || {
+                use diesel::prelude::*;
+                use crate::schema::escrows::dsl::*;
+                escrows.find(escrow_id_clone).first::<Escrow>(&mut conn).optional()
+            })
+            .await
+            .context("Task join error")??;
+
+            if let Some(escrow) = escrow_result {
+                match repo.load_snapshot(&escrow_id_str) {
+                    Ok(Some(snapshot)) => {
+                        let minutes_stuck = (chrono::Utc::now().naive_utc().timestamp()
+                            - escrow.multisig_updated_at as i64) / 60;
+
+                        warn!(
+                            "Stuck multisig setup detected for escrow {}: {} minutes with no progress",
+                            escrow_id, minutes_stuck
+                        );
+
+                        // Send stuck setup notification
+                        self.websocket.do_send(WsEvent::MultisigSetupStuck {
+                            escrow_id,
+                            minutes_stuck: minutes_stuck as u64,
+                            last_step: snapshot.phase.status_description(),
+                            suggested_action: "Check wallet RPC connectivity and retry multisig setup"
+                                .to_string(),
+                        });
+
+                        info!(
+                            "Sent stuck multisig setup notification for escrow {}",
+                            escrow_id
+                        );
+                    }
+                    Ok(None) => {
+                        warn!(
+                            "Stuck escrow {} has no snapshot (should not happen)",
+                            escrow_id
+                        );
+                    }
+                    Err(e) => {
+                        error!(
+                            "Failed to load multisig snapshot for escrow {}: {}",
+                            escrow_id, e
+                        );
+                    }
+                }
+            }
+        }
 
         Ok(())
     }

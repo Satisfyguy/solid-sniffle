@@ -202,6 +202,16 @@ pub enum WsEvent {
         hours_pending: u64,
         suggested_action: String,
     },
+    /// Alert that multisig setup has stalled
+    ///
+    /// Triggered when an escrow in "created" status has had no progress for >15 minutes.
+    /// May indicate wallet RPC connectivity issues or client disconnection.
+    MultisigSetupStuck {
+        escrow_id: Uuid,
+        minutes_stuck: u64,
+        last_step: String,
+        suggested_action: String,
+    },
 }
 
 // --- Handlers ---
