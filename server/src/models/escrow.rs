@@ -24,6 +24,11 @@ pub struct Escrow {
     pub vendor_wallet_info: Option<Vec<u8>>,
     pub arbiter_wallet_info: Option<Vec<u8>>,
     pub transaction_hash: Option<String>,
+    pub expires_at: Option<NaiveDateTime>,
+    pub last_activity_at: NaiveDateTime,
+    pub multisig_phase: String,
+    pub multisig_state_json: Option<String>,
+    pub multisig_updated_at: i32,
 }
 
 #[derive(Insertable)]
@@ -201,5 +206,146 @@ impl Escrow {
                 escrow_id
             ))?;
         Ok(())
+    }
+
+    /// Update last_activity_at timestamp to current time
+    ///
+    /// Should be called whenever there's a significant action on an escrow:
+    /// - Status change
+    /// - Multisig setup step completed
+    /// - Funds deposited
+    /// - Dispute initiated/resolved
+    ///
+    /// This resets the timeout clock for the current status.
+    pub fn update_activity(
+        conn: &mut SqliteConnection,
+        escrow_id: String,
+    ) -> Result<()> {
+        diesel::update(escrows::table.filter(escrows::id.eq(escrow_id.clone())))
+            .set((
+                escrows::last_activity_at.eq(diesel::dsl::now),
+                escrows::updated_at.eq(diesel::dsl::now),
+            ))
+            .execute(conn)
+            .context(format!(
+                "Failed to update last_activity_at for escrow {}",
+                escrow_id
+            ))?;
+        Ok(())
+    }
+
+    /// Update expires_at deadline for the current escrow status
+    ///
+    /// Called after status changes or activity updates to set the new deadline.
+    /// Pass None to clear expiration (for terminal states like completed/refunded).
+    ///
+    /// # Arguments
+    /// * `conn` - Database connection
+    /// * `escrow_id` - Escrow ID to update
+    /// * `new_expires_at` - New expiration timestamp, or None for no expiration
+    pub fn update_expiration(
+        conn: &mut SqliteConnection,
+        escrow_id: String,
+        new_expires_at: Option<NaiveDateTime>,
+    ) -> Result<()> {
+        diesel::update(escrows::table.filter(escrows::id.eq(escrow_id.clone())))
+            .set((
+                escrows::expires_at.eq(new_expires_at),
+                escrows::updated_at.eq(diesel::dsl::now),
+            ))
+            .execute(conn)
+            .context(format!(
+                "Failed to update expires_at for escrow {}",
+                escrow_id
+            ))?;
+        Ok(())
+    }
+
+    /// Check if escrow has expired (deadline passed)
+    ///
+    /// Returns true if expires_at is set and is in the past.
+    /// Returns false if expires_at is None (terminal states) or in the future.
+    pub fn is_expired(&self) -> bool {
+        if let Some(expires_at) = self.expires_at {
+            expires_at < chrono::Utc::now().naive_utc()
+        } else {
+            false
+        }
+    }
+
+    /// Get seconds remaining until expiration
+    ///
+    /// Returns None if expires_at is not set (terminal states).
+    /// Returns Some(0) if already expired.
+    /// Returns Some(n) with seconds remaining otherwise.
+    pub fn seconds_until_expiration(&self) -> Option<i64> {
+        self.expires_at.map(|expires_at| {
+            let now = chrono::Utc::now().naive_utc();
+            let duration = expires_at.signed_duration_since(now);
+            duration.num_seconds().max(0)
+        })
+    }
+
+    /// Check if escrow is approaching expiration (within warning threshold)
+    ///
+    /// # Arguments
+    /// * `warning_threshold_secs` - How many seconds before expiration to warn (default 3600 = 1h)
+    ///
+    /// Returns true if expiration is within the threshold but not yet expired.
+    pub fn is_expiring_soon(&self, warning_threshold_secs: i64) -> bool {
+        if let Some(secs_remaining) = self.seconds_until_expiration() {
+            secs_remaining > 0 && secs_remaining <= warning_threshold_secs
+        } else {
+            false
+        }
+    }
+
+    /// Get all escrows that have expired (past their deadline)
+    ///
+    /// Returns escrows where:
+    /// - expires_at IS NOT NULL
+    /// - expires_at < NOW()
+    /// - status is not a terminal state
+    ///
+    /// Used by TimeoutMonitor to find escrows needing timeout handling.
+    pub fn find_expired(conn: &mut SqliteConnection) -> Result<Vec<Escrow>> {
+        let now = chrono::Utc::now().naive_utc();
+
+        escrows::table
+            .filter(escrows::expires_at.is_not_null())
+            .filter(escrows::expires_at.lt(now))
+            .filter(escrows::status.ne("completed"))
+            .filter(escrows::status.ne("refunded"))
+            .filter(escrows::status.ne("cancelled"))
+            .filter(escrows::status.ne("expired"))
+            .load(conn)
+            .context("Failed to load expired escrows")
+    }
+
+    /// Get all escrows approaching expiration (within warning threshold)
+    ///
+    /// Returns escrows where:
+    /// - expires_at IS NOT NULL
+    /// - expires_at is between NOW() and NOW() + warning_threshold
+    /// - status is not a terminal state
+    ///
+    /// Used by TimeoutMonitor to send warning notifications.
+    pub fn find_expiring_soon(
+        conn: &mut SqliteConnection,
+        warning_threshold_secs: i64,
+    ) -> Result<Vec<Escrow>> {
+        let now = chrono::Utc::now().naive_utc();
+        let warning_time = now + chrono::Duration::seconds(warning_threshold_secs);
+
+        escrows::table
+            .filter(escrows::expires_at.is_not_null())
+            .filter(escrows::expires_at.gt(now))
+            .filter(escrows::expires_at.le(warning_time))
+            .filter(escrows::status.ne("completed"))
+            .filter(escrows::status.ne("refunded"))
+            .filter(escrows::status.ne("cancelled"))
+            .filter(escrows::status.ne("expired"))
+            .load(conn)
+            .context("Failed to load expiring escrows")
     }
 }

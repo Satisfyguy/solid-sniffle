@@ -16,6 +16,11 @@ diesel::table! {
         vendor_wallet_info -> Nullable<Binary>,
         arbiter_wallet_info -> Nullable<Binary>,
         transaction_hash -> Nullable<Text>,
+        expires_at -> Nullable<Timestamp>,
+        last_activity_at -> Timestamp,
+        multisig_phase -> Text,
+        multisig_state_json -> Nullable<Text>,
+        multisig_updated_at -> Integer,
     }
 }
 
@@ -28,9 +33,9 @@ diesel::table! {
         price_xmr -> BigInt,
         stock -> Integer,
         status -> Text,
+        images_ipfs_cids -> Nullable<Text>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
-        images_ipfs_cids -> Nullable<Text>,
     }
 }
 
@@ -81,10 +86,10 @@ diesel::table! {
         username -> Text,
         password_hash -> Text,
         role -> Text,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
         wallet_address -> Nullable<Text>,
         wallet_id -> Nullable<Text>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
