@@ -133,6 +133,21 @@ impl MoneroClient {
     }
 }
 
+/// Convert MoneroError to common Error
+fn convert_monero_error(e: MoneroError) -> Error {
+    match e {
+        MoneroError::RpcUnreachable => Error::MoneroRpc("RPC unreachable".to_string()),
+        MoneroError::AlreadyMultisig => Error::Multisig("Already in multisig mode".to_string()),
+        MoneroError::NotMultisig => Error::Multisig("Not in multisig mode".to_string()),
+        MoneroError::WalletLocked => Error::Wallet("Wallet locked".to_string()),
+        MoneroError::WalletBusy => Error::Wallet("Wallet busy".to_string()),
+        MoneroError::ValidationError(msg) => Error::InvalidInput(msg),
+        MoneroError::InvalidResponse(msg) => Error::MoneroRpc(format!("Invalid response: {}", msg)),
+        MoneroError::NetworkError(msg) => Error::Internal(format!("Network error: {}", msg)),
+        MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -178,19 +193,4 @@ mod tests {
 
     // Note: Integration tests would require a running Monero wallet
     // These would be in tests/integration.rs
-}
-
-/// Convert MoneroError to common Error
-fn convert_monero_error(e: MoneroError) -> Error {
-    match e {
-        MoneroError::RpcUnreachable => Error::MoneroRpc("RPC unreachable".to_string()),
-        MoneroError::AlreadyMultisig => Error::Multisig("Already in multisig mode".to_string()),
-        MoneroError::NotMultisig => Error::Multisig("Not in multisig mode".to_string()),
-        MoneroError::WalletLocked => Error::Wallet("Wallet locked".to_string()),
-        MoneroError::WalletBusy => Error::Wallet("Wallet busy".to_string()),
-        MoneroError::ValidationError(msg) => Error::InvalidInput(msg),
-        MoneroError::InvalidResponse(msg) => Error::MoneroRpc(format!("Invalid response: {}", msg)),
-        MoneroError::NetworkError(msg) => Error::Internal(format!("Network error: {}", msg)),
-        MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
-    }
 }

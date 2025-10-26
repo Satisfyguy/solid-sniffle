@@ -38,7 +38,7 @@ async fn test_complete_transaction_flow() -> Result<()> {
     tracing::info!("Step 0: Creating wallet clients");
     let buyer_client = create_wallet_client("buyer", 18082)?;
     let vendor_client = create_wallet_client("vendor", 18083)?;
-    let arbiter_client = create_wallet_client("arbiter", 18084)?;
+    let _arbiter_client = create_wallet_client("arbiter", 18084)?;
 
     // Verify wallets are multisig
     tracing::info!("Verifying wallets are in multisig mode");

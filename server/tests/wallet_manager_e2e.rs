@@ -1,6 +1,7 @@
 //! End-to-end tests for WalletManager with real Monero RPC
 //!
-//! These tests require running Monero wallet RPC instances.
+//! These tests require running Monero wallet RPC
+#![allow(deprecated)] // Uses old API for E2E testing with real Monero wallets instances.
 //! Run with: cargo test --test wallet_manager_e2e -- --test-threads=1
 //!
 //! Prerequisites:

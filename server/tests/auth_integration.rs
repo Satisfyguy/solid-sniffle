@@ -3,7 +3,7 @@
 //! Tests the complete auth flow with real database and session management.
 //! No mocks - production-ready testing against actual services.
 
-use actix_session::{config::PersistentSession, storage::CookieSessionStore, SessionMiddleware, SessionExt};
+use actix_session::{config::PersistentSession, storage::CookieSessionStore, SessionMiddleware};
 use actix_web::{cookie::Key, middleware::Logger, test, web, App};
 use diesel::r2d2::{self, ConnectionManager};
 use diesel::SqliteConnection;
@@ -16,7 +16,6 @@ use server::{
     middleware::{
         rate_limit::{auth_rate_limiter, global_rate_limiter},
         security_headers::SecurityHeaders,
-        csrf::get_csrf_token,
     },
 };
 

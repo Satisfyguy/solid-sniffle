@@ -288,7 +288,7 @@ pub async fn db_get_vendor_stats(pool: &DbPool, vendor_uuid: Uuid) -> Result<(i6
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    
 
     // Note: Integration tests require a real database
     // See server/tests/reputation_integration.rs for full tests

@@ -46,7 +46,7 @@ pub fn validate_csrf_token(session: &Session, token: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_session::{Session, SessionExt};
+    use actix_session::SessionExt;
     use actix_web::test;
 
     #[actix_web::test]

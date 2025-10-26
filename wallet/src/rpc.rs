@@ -1217,6 +1217,36 @@ impl MoneroRpcClient {
     }
 }
 
+/// Validation stricte multisig_info
+fn validate_multisig_info(info: &str) -> Result<(), MoneroError> {
+    // Doit commencer par MultisigV1
+    if !info.starts_with("MultisigV1") {
+        return Err(MoneroError::InvalidResponse(
+            "Invalid multisig_info prefix".to_string(),
+        ));
+    }
+
+    // Longueur attendue (base64)
+    if info.len() < MIN_MULTISIG_INFO_LEN || info.len() > MAX_MULTISIG_INFO_LEN {
+        return Err(MoneroError::InvalidResponse(format!(
+            "Invalid multisig_info length: {}",
+            info.len()
+        )));
+    }
+
+    // Caractères valides (base64 + prefix)
+    if !info
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '+' || c == '/' || c == '=')
+    {
+        return Err(MoneroError::InvalidResponse(
+            "Invalid characters in multisig_info".to_string(),
+        ));
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1573,34 +1603,4 @@ mod tests {
             MoneroError::ValidationError(_)
         ));
     }
-}
-
-/// Validation stricte multisig_info
-fn validate_multisig_info(info: &str) -> Result<(), MoneroError> {
-    // Doit commencer par MultisigV1
-    if !info.starts_with("MultisigV1") {
-        return Err(MoneroError::InvalidResponse(
-            "Invalid multisig_info prefix".to_string(),
-        ));
-    }
-
-    // Longueur attendue (base64)
-    if info.len() < MIN_MULTISIG_INFO_LEN || info.len() > MAX_MULTISIG_INFO_LEN {
-        return Err(MoneroError::InvalidResponse(format!(
-            "Invalid multisig_info length: {}",
-            info.len()
-        )));
-    }
-
-    // Caractères valides (base64 + prefix)
-    if !info
-        .chars()
-        .all(|c| c.is_alphanumeric() || c == '+' || c == '/' || c == '=')
-    {
-        return Err(MoneroError::InvalidResponse(
-            "Invalid characters in multisig_info".to_string(),
-        ));
-    }
-
-    Ok(())
 }

@@ -178,3 +178,34 @@ server/tests/htmx_integration.rs:password
 server/src/handlers/frontend.rs:Placeholder for listings display.*separate milestone
 ./server/tests/htmx_integration.rs:unwrap
 ./server/tests/htmx_integration.rs:password
+
+# ============================================
+# DEV SYSTEM ACCOUNTS (Documented in PLAN-COMPLET.md)
+# ============================================
+
+# System arbiter - dev/test account (documented publicly)
+./server/src/main.rs:arbiter_system_2024
+./create_arbiter.rs:arbiter_secure_2024
+
+# ============================================
+# STARTUP CONFIGURATION (Safe unwrap)
+# ============================================
+
+# Rate limiter - static config at startup (panic acceptable)
+./server/src/middleware/rate_limit.rs:unwrap.*Safe.*static configuration
+
+# ============================================
+# HONEYPOT HANDLER (Attack detection)
+# ============================================
+
+# Honeypot - intentional crash on invalid input (security feature)
+./server/src/handlers/honeypot.rs:unwrap
+
+# ============================================
+# REPUTATION MODULE TESTS
+# ============================================
+
+# Reputation tests - all unwrap in test context
+./reputation/common/src/types.rs:unwrap
+./reputation/crypto/src/reputation.rs:unwrap
+./reputation/crypto/src/reputation.rs:println!

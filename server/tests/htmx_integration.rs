@@ -82,7 +82,7 @@ async fn test_login_returns_json_without_htmx_header() {
 
     let req = test::TestRequest::post()
         .uri("/api/auth/login")
-        .set_json(&json!({
+        .set_json(json!({
             "username": "testuser",
             "password": "testpassword123"
         }))
@@ -105,7 +105,7 @@ async fn test_login_returns_html_with_htmx_header() {
     let req = test::TestRequest::post()
         .uri("/api/auth/login")
         .insert_header(("HX-Request", "true"))
-        .set_json(&json!({
+        .set_json(json!({
             "username": "testuser",
             "password": "testpassword123"
         }))
@@ -134,7 +134,7 @@ async fn test_register_validation_error_htmx() {
     let req = test::TestRequest::post()
         .uri("/api/auth/register")
         .insert_header(("HX-Request", "true"))
-        .set_json(&json!({
+        .set_json(json!({
             "username": "ab", // Too short (min 3)
             "password": "short", // Too short (min 8)
             "role": "buyer"
@@ -161,7 +161,7 @@ async fn test_register_validation_error_json() {
     let req = test::TestRequest::post()
         .uri("/api/auth/register")
         // No HX-Request header - should return JSON
-        .set_json(&json!({
+        .set_json(json!({
             "username": "ab",
             "password": "short",
             "role": "buyer"
@@ -187,7 +187,7 @@ async fn test_successful_registration_returns_redirect_for_htmx() {
     let req = test::TestRequest::post()
         .uri("/api/auth/register")
         .insert_header(("HX-Request", "true"))
-        .set_json(&json!({
+        .set_json(json!({
             "username": unique_username,
             "password": "securepassword123",
             "role": "buyer"
@@ -205,7 +205,7 @@ async fn test_successful_registration_returns_redirect_for_htmx() {
 
     // Body should be empty for redirect
     let body = test::read_body(resp).await;
-    assert!(body.is_empty() || body.len() == 0);
+    assert!(body.is_empty());
 }
 
 #[actix_web::test]
@@ -218,7 +218,7 @@ async fn test_successful_registration_returns_json_without_htmx() {
     let req = test::TestRequest::post()
         .uri("/api/auth/register")
         // No HX-Request header
-        .set_json(&json!({
+        .set_json(json!({
             "username": unique_username,
             "password": "securepassword123",
             "role": "vendor"
@@ -250,7 +250,7 @@ async fn test_htmx_header_value_must_be_true() {
     let req = test::TestRequest::post()
         .uri("/api/auth/login")
         .insert_header(("HX-Request", "false"))
-        .set_json(&json!({
+        .set_json(json!({
             "username": "testuser",
             "password": "testpassword123"
         }))
@@ -274,7 +274,7 @@ async fn test_login_success_with_htmx_creates_session() {
 
     let register_req = test::TestRequest::post()
         .uri("/api/auth/register")
-        .set_json(&json!({
+        .set_json(json!({
             "username": username,
             "password": password,
             "role": "buyer"
@@ -287,7 +287,7 @@ async fn test_login_success_with_htmx_creates_session() {
     let login_req = test::TestRequest::post()
         .uri("/api/auth/login")
         .insert_header(("HX-Request", "true"))
-        .set_json(&json!({
+        .set_json(json!({
             "username": username,
             "password": password
         }))
