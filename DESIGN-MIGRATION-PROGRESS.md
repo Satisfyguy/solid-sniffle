@@ -1,7 +1,7 @@
 # DESIGN MIGRATION - SUIVI DE PROGRESSION
 
-**Dernière mise à jour:** 2025-10-26 18:50 UTC
-**Statut global:** 🟢 EN COURS - Phase 3 terminée
+**Dernière mise à jour:** 2025-10-26 19:30 UTC
+**Statut global:** 🟢 EN COURS - Phase 4 terminée
 
 ---
 
@@ -11,13 +11,13 @@
 Phase 1: ████████████████████ 100% COMPLETED ✅
 Phase 2: ████████████████████ 100% COMPLETED ✅
 Phase 3: ████████████████████ 100% COMPLETED ✅
-Phase 4: ░░░░░░░░░░░░░░░░░░░░   0% EN ATTENTE
+Phase 4: ████████████████████ 100% COMPLETED ✅
 Phase 5: ░░░░░░░░░░░░░░░░░░░░   0% EN ATTENTE
 Phase 6: ░░░░░░░░░░░░░░░░░░░░   0% EN ATTENTE
 Phase 7: ░░░░░░░░░░░░░░░░░░░░   0% EN ATTENTE
 Phase 8: ░░░░░░░░░░░░░░░░░░░░   0% EN ATTENTE
 
-TOTAL:   ██████░░░░░░░░░░░░░░  37.5% (3/8 phases)
+TOTAL:   ██████████░░░░░░░░░░  50% (4/8 phases)
 ```
 
 ---
@@ -405,15 +405,220 @@ templates/
 
 ---
 
-## 📋 PHASES SUIVANTES
+## ✅ PHASE 4: MIGRATION PAGES FONCTIONNELLES (TERMINÉE)
 
-### Phase 4: Migration Pages Fonctionnelles (EN ATTENTE)
-- [ ] Listing detail page
-- [ ] Create/Edit listing pages
-- [ ] Order pages (list, detail)
-- [ ] Escrow detail page
-- [ ] Auth pages (login, register)
-- [ ] Settings pages
+**Durée:** 2025-10-26 18:50 → 19:30 (40 minutes)
+**Statut:** ✅ COMPLÉTÉE
+
+### Tâches Complétées
+
+#### 4.1 Listings (4 pages) ✅
+- [x] **index.html** - Homepage déjà migrée en Phase 3
+- [x] **show.html** - Listing detail page avec image gallery modal
+  - Two-column layout (product left, order panel right sticky)
+  - Native <dialog> image modal
+  - Real-time price calculation (quantity × price_xmr)
+  - Conditional alerts (login required, out of stock)
+  - Trust indicators sidebar
+  - Vendor actions (edit/delete with HTMX)
+
+- [x] **create.html** - Create listing page
+  - Reuses `listing-form.html` partial
+  - Mode-aware form (create vs edit)
+
+- [x] **edit.html** - Edit listing page
+  - Reuses `listing-form.html` partial
+  - Pre-filled form with existing data
+  - Current images display
+
+- [x] **listing-form.html** (NEW) - Reusable form partial
+  - XMR ⇄ Atomic units converter with real-time calculation
+  - Image upload with preview
+  - Validation for size (5MB max) and count (10 max)
+  - All Nexus input/textarea/button atoms
+
+#### 4.2 Orders (2 pages) ✅
+- [x] **index.html** - Orders list page
+  - Pills-style tabs for filtering (All, Pending, Funded, Shipped, Completed, Disputed)
+  - Order cards in grid layout
+  - Each card shows: order ID, date, status badge, listing title, total XMR, escrow ID
+  - JavaScript tab filtering
+  - Empty state with alert component
+  - hx-boost for navigation
+
+- [x] **show.html** - Order detail page
+  - Two-column layout (timeline left, actions right sticky)
+  - Order header with status badge
+  - Order timeline organism (visual progress)
+  - Escrow visualizer organism (2-of-3 multisig diagram)
+  - Status-specific action buttons:
+    * Pending + buyer → "Fund Escrow" button
+    * Funded + vendor → "Mark as Shipped" button
+    * Shipped + buyer → "Confirm Receipt" button
+    * Funded/Shipped → "Open Dispute" button
+  - HTMX integration with page reload on success
+
+#### 4.3 Auth (2 pages) ✅
+- [x] **login.html** - Login page
+  - Centered layout with NEXUS branding
+  - Form with username/password using input.html atoms
+  - HTMX form submission to `/api/auth/login`
+  - Success/error message handling with inline alerts
+  - Redirect to homepage on success (1s delay)
+  - Link to register page
+
+- [x] **register.html** - Registration page
+  - Centered layout with NEXUS branding
+  - Form with username/password/role fields
+  - Role selection dropdown (Buyer/Vendor)
+  - Helper text for field requirements
+  - HTMX form submission to `/api/auth/register`
+  - Success redirect to login page (1.5s delay)
+  - Error message parsing from JSON response
+  - Link to login page
+
+#### 4.4 Settings (2 pages) ✅
+- [x] **index.html** - Settings menu
+  - Grid layout with 3 setting cards
+  - Cards: Wallet Setup, Account, Security
+  - Each card with icon, title, description, hover arrow
+  - Glassmorphism + lift hover effect
+  - hx-boost navigation
+
+- [x] **wallet.html** - Non-custodial wallet setup
+  - Two-column layout (form left, instructions right sticky)
+  - Header card with security message
+  - Info alert explaining non-custodial concept
+  - Registration form with:
+    * RPC URL field (localhost validation pattern)
+    * Role selection dropdown
+    * Advanced accordion for RPC auth (optional)
+    * Submit button with loading indicator
+  - Success/error handling with styled alerts
+  - 4-step setup instructions sidebar
+  - Security features section (3 cards)
+  - Full responsive design
+
+### Livrables Phase 4
+
+**Fichiers créés/modifiés:**
+```
+templates/
+├── base-nexus.html                        ✅ (déjà créé Phase 3)
+├── listings/
+│   ├── show.html                          ✅ (migré)
+│   ├── show-old-amazawn.html              ✅ (backup)
+│   ├── create.html                        ✅ (migré)
+│   ├── create-old-amazawn.html            ✅ (backup)
+│   ├── edit.html                          ✅ (migré)
+│   └── edit-old-amazawn.html              ✅ (backup)
+├── partials/
+│   └── listing-form.html                  ✅ (nouveau partial)
+├── orders/
+│   ├── index.html                         ✅ (migré)
+│   ├── index-old-amazawn.html             ✅ (backup)
+│   ├── show.html                          ✅ (migré)
+│   └── show-old-amazawn.html              ✅ (backup)
+├── auth/
+│   ├── login.html                         ✅ (migré)
+│   ├── login-old-amazawn.html             ✅ (backup)
+│   ├── register.html                      ✅ (migré)
+│   └── register-old-amazawn.html          ✅ (backup)
+└── settings/
+    ├── index.html                         ✅ (migré)
+    ├── index-old-amazawn.html             ✅ (backup)
+    ├── wallet.html                        ✅ (migré)
+    └── wallet-old-amazawn.html            ✅ (backup)
+```
+
+### Métriques Phase 4
+
+| Métrique | Valeur | Status |
+|----------|--------|--------|
+| Pages migrées | 8 | ✅ |
+| Partials créés | 1 | ✅ |
+| Backups créés | 8 | ✅ |
+| Composants Nexus utilisés | 20+ | ✅ |
+| Lignes de template | ~1500 | ✅ |
+| HTMX endpoints | 8+ | ✅ |
+| JavaScript handlers | 6 | ✅ |
+| Responsive design | 100% | ✅ |
+
+### Composants Nexus Utilisés
+
+**Phase 4 a utilisé:**
+- **Atoms**: input.html, button.html, badge.html
+- **Molecules**: card.html, alert.html, breadcrumb.html, tabs.html
+- **Organisms**: order-timeline.html, escrow-visualizer.html
+
+### Features Techniques Phase 4
+
+**HTMX Integration:**
+- ✅ Form submission avec hx-post
+- ✅ Live search avec hx-get
+- ✅ hx-boost pour navigation SPA-like
+- ✅ hx-indicator pour loading states
+- ✅ hx-target pour partial updates
+- ✅ Event listeners pour success/error handling
+
+**JavaScript Features:**
+- ✅ Real-time XMR ⇄ Atomic conversion
+- ✅ Real-time price calculation
+- ✅ Native <dialog> modal management
+- ✅ Image upload preview with validation
+- ✅ Tab filtering system
+- ✅ HTMX response handling (success/error)
+- ✅ Auto-redirect after form success
+
+**Layout Patterns:**
+- ✅ Two-column layouts with sticky sidebar
+- ✅ Grid layouts with auto-fit
+- ✅ Centered auth layouts
+- ✅ Full-height sections (min-height: 100vh)
+- ✅ Responsive breakpoints (mobile/tablet/desktop)
+
+**Form Features:**
+- ✅ Client-side validation (HTML5)
+- ✅ CSRF token integration
+- ✅ Helper text for field requirements
+- ✅ Pattern validation (e.g., localhost URLs)
+- ✅ Dropdown/select styling
+- ✅ Advanced options with <details> accordion
+- ✅ Loading indicators during submission
+
+### Notes Phase 4
+
+**Performance:**
+- Minimal JavaScript (only for interactivity)
+- CSS-first approach (animations CSS pures)
+- Lazy loading for images
+- Optimized for Tor (léger, pas de CDN)
+- Native HTML5 features (<dialog>, <details>)
+
+**Accessibilité:**
+- ARIA labels sur tous les composants interactifs
+- Navigation clavier complète
+- Focus visible (outline)
+- Semantic HTML5
+- Form labels et helper text
+
+**UX Improvements:**
+- Real-time feedback (price calc, conversions)
+- Clear success/error messages
+- Auto-redirect after form success
+- Status-specific action buttons
+- Visual progress indicators (timeline, escrow)
+- Empty states with helpful messages
+
+**Reusability:**
+- `listing-form.html` partial réutilisé pour create/edit
+- Component composition pattern
+- Mode-aware templates (create vs edit)
+- Consistent styling via Nexus variables
+
+---
+
+## 📋 PHASES SUIVANTES
 
 ### Phase 5: Composants Avancés (EN ATTENTE)
 - [ ] WebSocket notifications UI
@@ -515,6 +720,6 @@ templates/
 
 ---
 
-**Dernière mise à jour:** 2025-10-26 18:50 UTC
+**Dernière mise à jour:** 2025-10-26 19:30 UTC
 **Mis à jour par:** Claude Code
-**Prochaine mise à jour:** Après Phase 4
+**Prochaine mise à jour:** Après Phase 5
