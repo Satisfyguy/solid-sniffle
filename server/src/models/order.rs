@@ -386,4 +386,74 @@ mod tests {
 
         assert_eq!(order.total_as_xmr(), 2.5);
     }
+
+    #[test]
+    fn test_can_confirm_receipt() {
+        // Test shipped order can be confirmed
+        let shipped_order = Order {
+            id: "test".to_string(),
+            buyer_id: "buyer".to_string(),
+            vendor_id: "vendor".to_string(),
+            listing_id: "listing".to_string(),
+            escrow_id: Some("escrow123".to_string()),
+            status: "shipped".to_string(),
+            total_xmr: 1_000_000_000_000,
+            created_at: chrono::Utc::now().naive_utc(),
+            updated_at: chrono::Utc::now().naive_utc(),
+        };
+        assert!(shipped_order.can_confirm_receipt());
+
+        // Test funded order cannot be confirmed
+        let funded_order = Order {
+            status: "funded".to_string(),
+            ..shipped_order.clone()
+        };
+        assert!(!funded_order.can_confirm_receipt());
+
+        // Test pending order cannot be confirmed
+        let pending_order = Order {
+            status: "pending".to_string(),
+            ..shipped_order.clone()
+        };
+        assert!(!pending_order.can_confirm_receipt());
+
+        // Test completed order cannot be confirmed again
+        let completed_order = Order {
+            status: "completed".to_string(),
+            ..shipped_order
+        };
+        assert!(!completed_order.can_confirm_receipt());
+    }
+
+    #[test]
+    fn test_can_mark_shipped() {
+        let funded_order = Order {
+            id: "test".to_string(),
+            buyer_id: "buyer".to_string(),
+            vendor_id: "vendor".to_string(),
+            listing_id: "listing".to_string(),
+            escrow_id: Some("escrow123".to_string()),
+            status: "funded".to_string(),
+            total_xmr: 1_000_000_000_000,
+            created_at: chrono::Utc::now().naive_utc(),
+            updated_at: chrono::Utc::now().naive_utc(),
+        };
+
+        // Only funded orders can be marked as shipped
+        assert!(funded_order.can_mark_shipped());
+
+        // Pending orders cannot be shipped
+        let pending_order = Order {
+            status: "pending".to_string(),
+            ..funded_order.clone()
+        };
+        assert!(!pending_order.can_mark_shipped());
+
+        // Shipped orders cannot be shipped again
+        let shipped_order = Order {
+            status: "shipped".to_string(),
+            ..funded_order
+        };
+        assert!(!shipped_order.can_mark_shipped());
+    }
 }

@@ -519,18 +519,51 @@ pub async fn complete_order(
         }));
     }
 
-    // Validate state transition
-    if !order.can_confirm_receipt() {
+    // Validate state transition - with detailed error logging
+    tracing::info!(
+        "Validating order {} completion: current_status='{}' (raw DB value)",
+        order_id,
+        order.status
+    );
+
+    // Parse status first to get better error messages
+    let current_status = match order.get_status() {
+        Ok(status) => status,
+        Err(e) => {
+            tracing::error!(
+                "Failed to parse order status '{}' for order {}: {}",
+                order.status,
+                order_id,
+                e
+            );
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": format!("Invalid order status in database: '{}'", order.status)
+            }));
+        }
+    };
+
+    tracing::info!(
+        "Parsed order status successfully: {:?}",
+        current_status
+    );
+
+    // Check if order is in 'shipped' status
+    if current_status != OrderStatus::Shipped {
         tracing::warn!(
-            "Buyer {} attempted to complete order {} in invalid status: {}",
+            "Buyer {} attempted to complete order {} in invalid status: {:?} (must be Shipped)",
             user_id,
             order_id,
-            order.status
+            current_status
         );
         return HttpResponse::BadRequest().json(serde_json::json!({
-            "error": format!("Cannot complete order in status '{}'. Order must be 'shipped' first.", order.status)
+            "error": format!("Cannot complete order in status '{}'. Order must be 'shipped' first.", current_status.as_str())
         }));
     }
+
+    tracing::info!(
+        "Order {} status validation passed - proceeding with completion",
+        order_id
+    );
 
     // Validate escrow exists for this order
     let escrow_id_str = match &order.escrow_id {
