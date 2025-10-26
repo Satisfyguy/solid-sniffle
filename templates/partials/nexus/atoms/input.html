@@ -2,14 +2,7 @@
   NEXUS INPUT COMPONENT
 
   Usage:
-    {% include "partials/nexus/atoms/input.html" with
-       name="email"
-       type="email"
-       placeholder="Enter your email"
-       value=""
-       required=true
-       error=""
-    %}
+    {% include "partials/nexus/atoms/input.html" %}
 
   Parameters:
     - name (required): Input name attribute
@@ -36,37 +29,16 @@
 
   Examples:
     Simple text input:
-      {% include "partials/nexus/atoms/input.html" with
-         name="username"
-         placeholder="Username"
-         required=true
-      %}
+      {% include "partials/nexus/atoms/input.html" %}
 
     Input with label:
-      {% include "partials/nexus/atoms/input.html" with
-         name="email"
-         type="email"
-         label="Email Address"
-         required=true
-      %}
+      {% include "partials/nexus/atoms/input.html" %}
 
     Input with error:
-      {% include "partials/nexus/atoms/input.html" with
-         name="password"
-         type="password"
-         label="Password"
-         error="Password must be at least 8 characters"
-      %}
+      {% include "partials/nexus/atoms/input.html" %}
 
     HTMX search input:
-      {% include "partials/nexus/atoms/input.html" with
-         name="search"
-         type="search"
-         placeholder="Search products..."
-         hx_get="/api/listings/search"
-         hx_target="#results"
-         hx_trigger="keyup changed delay:500ms"
-      %}
+      {% include "partials/nexus/atoms/input.html" %}
 #}
 
 {% set input_type = type | default(value="text") %}

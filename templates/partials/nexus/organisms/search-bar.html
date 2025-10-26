@@ -2,10 +2,7 @@
   NEXUS SEARCH BAR COMPONENT
 
   Usage:
-    {% include "partials/nexus/organisms/search-bar.html" with
-       placeholder="Search listings..."
-       action="/search"
-    %}
+    {% include "partials/nexus/organisms/search-bar.html" %}
 
   Parameters:
     - placeholder (optional): Search input placeholder (default: "Search...")
@@ -50,19 +47,7 @@
       autocomplete="off"
     >
     {% if search_filters %}
-      {% include "partials/nexus/molecules/dropdown-menu.html" with
-         id="search-filters"
-         trigger_icon="⚙️"
-         trigger_variant="ghost"
-         position="bottom-end"
-         items=[
-           {"text": "All Categories", "href": "?category=all"},
-           {"separator": true},
-           {"text": "Electronics", "href": "?category=electronics"},
-           {"text": "Books", "href": "?category=books"},
-           {"text": "Clothing", "href": "?category=clothing"}
-         ]
-      %}
+      {% include "partials/nexus/molecules/dropdown-menu.html" %}
     {% endif %}
   </div>
 

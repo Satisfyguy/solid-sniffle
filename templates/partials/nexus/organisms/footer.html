@@ -1,295 +1,60 @@
 {#
   NEXUS FOOTER COMPONENT
 
-  Usage:
-    {% include "partials/nexus/organisms/footer.html" with
-       brand_text="NEXUS"
-       tagline="Secure Privacy-Focused Marketplace"
-    %}
-
-  Parameters:
-    - brand_text (required): Brand/logo text
-    - tagline (optional): Footer tagline
-    - links (optional): Array of footer link sections
-    - show_social (optional): true|false - Show social links (default: false)
-    - glassmorphism (optional): true|false - Apply glass effect (default: true)
-    - class (optional): Additional CSS classes
+  Simple footer with hardcoded links - no parameters needed
 #}
 
-{% set footer_show_social = show_social | default(value=false) %}
-{% set footer_glassmorphism = glassmorphism | default(value=true) %}
-
-{# Default footer links #}
-{% set footer_links = links | default(value=[
-  {
-    "title": "Marketplace",
-    "items": [
-      {"text": "Browse Listings", "href": "/listings"},
-      {"text": "Categories", "href": "/categories"},
-      {"text": "Vendors", "href": "/vendors"}
-    ]
-  },
-  {
-    "title": "Support",
-    "items": [
-      {"text": "FAQ", "href": "/faq"},
-      {"text": "Contact", "href": "/contact"},
-      {"text": "Security", "href": "/security"}
-    ]
-  },
-  {
-    "title": "Legal",
-    "items": [
-      {"text": "Terms of Service", "href": "/terms"},
-      {"text": "Privacy Policy", "href": "/privacy"},
-      {"text": "Acceptable Use", "href": "/acceptable-use"}
-    ]
-  }
-]) %}
-
-{# Build CSS classes #}
-{% set css_classes = "nexus-footer" %}
-{% if footer_glassmorphism %}
-  {% set css_classes = css_classes ~ " nexus-footer-glass" %}
-{% endif %}
-{% if class %}
-  {% set css_classes = css_classes ~ " " ~ class %}
-{% endif %}
-
-<footer class="{{ css_classes }}">
+<footer class="nexus-footer nexus-footer-glass">
   <div class="nexus-footer-container">
-    {# Brand Section #}
-    <div class="nexus-footer-brand">
-      <div class="nexus-footer-brand-text">{{ brand_text }}</div>
-      {% if tagline %}
-        <p class="nexus-footer-tagline">{{ tagline }}</p>
-      {% endif %}
-      <p class="nexus-footer-copyright">
-        © {{ "now" | date(format="%Y") }} {{ brand_text }}. All rights reserved.
-      </p>
-    </div>
-
-    {# Links Sections #}
-    <div class="nexus-footer-links">
-      {% for section in footer_links %}
-        <div class="nexus-footer-section">
-          <h4 class="nexus-footer-section-title">{{ section.title }}</h4>
-          <ul class="nexus-footer-list">
-            {% for item in section.items %}
-              <li class="nexus-footer-list-item">
-                <a href="{{ item.href }}" class="nexus-footer-link" hx-boost="true">
-                  {{ item.text }}
-                </a>
-              </li>
-            {% endfor %}
-          </ul>
-        </div>
-      {% endfor %}
-    </div>
-
-    {# Social Links (if enabled) #}
-    {% if footer_show_social %}
-      <div class="nexus-footer-social">
-        <h4 class="nexus-footer-section-title">Community</h4>
-        <div class="nexus-footer-social-links">
-          <a href="#" class="nexus-footer-social-link" aria-label="Twitter">🐦</a>
-          <a href="#" class="nexus-footer-social-link" aria-label="GitHub">🐙</a>
-          <a href="#" class="nexus-footer-social-link" aria-label="Discord">💬</a>
-        </div>
+    <div class="nexus-footer-grid">
+      {# Brand Column #}
+      <div class="nexus-footer-brand">
+        <h3 class="nexus-footer-logo">NEXUS</h3>
+        <p class="nexus-footer-tagline">
+          Secure Privacy-Focused Marketplace
+        </p>
+        <p style="margin-top: 16px; font-size: 14px; color: var(--nexus-muted-foreground);">
+          Built with Monero & Tor for maximum privacy
+        </p>
       </div>
-    {% endif %}
-  </div>
 
-  {# Bottom Bar #}
-  <div class="nexus-footer-bottom">
-    <div class="nexus-footer-bottom-container">
-      <p class="nexus-footer-bottom-text">
-        Built with privacy in mind • Powered by Monero & Tor
+      {# Marketplace Links #}
+      <div class="nexus-footer-section">
+        <h4 class="nexus-footer-title">Marketplace</h4>
+        <ul class="nexus-footer-links">
+          <li><a href="/listings" hx-boost="true">Browse Listings</a></li>
+          <li><a href="/categories" hx-boost="true">Categories</a></li>
+          <li><a href="/vendors" hx-boost="true">Vendors</a></li>
+        </ul>
+      </div>
+
+      {# Support Links #}
+      <div class="nexus-footer-section">
+        <h4 class="nexus-footer-title">Support</h4>
+        <ul class="nexus-footer-links">
+          <li><a href="/faq" hx-boost="true">FAQ</a></li>
+          <li><a href="/contact" hx-boost="true">Contact</a></li>
+          <li><a href="/security" hx-boost="true">Security</a></li>
+        </ul>
+      </div>
+
+      {# Legal Links #}
+      <div class="nexus-footer-section">
+        <h4 class="nexus-footer-title">Legal</h4>
+        <ul class="nexus-footer-links">
+          <li><a href="/terms" hx-boost="true">Terms of Service</a></li>
+          <li><a href="/privacy" hx-boost="true">Privacy Policy</a></li>
+          <li><a href="/acceptable-use" hx-boost="true">Acceptable Use</a></li>
+        </ul>
+      </div>
+    </div>
+
+    {# Footer Bottom #}
+    <div class="nexus-footer-bottom">
+      <p>&copy; 2025 NEXUS Marketplace. All rights reserved.</p>
+      <p style="font-size: 12px; color: var(--nexus-muted-foreground);">
+        <strong>TESTNET ONLY</strong> - Not for production use
       </p>
     </div>
   </div>
 </footer>
-
-<style>
-/* Base Footer */
-.nexus-footer {
-  background-color: var(--nexus-card);
-  border-top: 1px solid var(--nexus-border);
-  margin-top: auto;
-}
-
-/* Glassmorphism */
-.nexus-footer-glass {
-  background: rgba(10, 10, 10, 0.8);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Footer Container */
-.nexus-footer-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--nexus-space-12) var(--nexus-space-6);
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: var(--nexus-space-12);
-}
-
-/* Brand Section */
-.nexus-footer-brand {
-  display: flex;
-  flex-direction: column;
-  gap: var(--nexus-space-3);
-}
-
-.nexus-footer-brand-text {
-  font-size: var(--nexus-text-2xl);
-  font-weight: var(--nexus-weight-black);
-  letter-spacing: var(--nexus-tracking-tight);
-  background: linear-gradient(135deg, var(--nexus-primary) 0%, var(--nexus-accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.nexus-footer-tagline {
-  font-size: var(--nexus-text-sm);
-  color: var(--nexus-muted-fg);
-  line-height: var(--nexus-leading-relaxed);
-  margin: 0;
-}
-
-.nexus-footer-copyright {
-  font-size: var(--nexus-text-xs);
-  color: var(--nexus-muted-fg);
-  margin: 0;
-}
-
-/* Links Container */
-.nexus-footer-links {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--nexus-space-8);
-}
-
-/* Footer Section */
-.nexus-footer-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--nexus-space-3);
-}
-
-.nexus-footer-section-title {
-  font-size: var(--nexus-text-sm);
-  font-weight: var(--nexus-weight-bold);
-  color: var(--nexus-fg);
-  text-transform: uppercase;
-  letter-spacing: var(--nexus-tracking-wider);
-  margin: 0;
-}
-
-/* Footer List */
-.nexus-footer-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--nexus-space-2);
-}
-
-.nexus-footer-list-item {
-  margin: 0;
-}
-
-.nexus-footer-link {
-  font-size: var(--nexus-text-sm);
-  color: var(--nexus-muted-fg);
-  text-decoration: none;
-  transition: color var(--nexus-transition-base) var(--nexus-ease-out);
-}
-
-.nexus-footer-link:hover {
-  color: var(--nexus-primary);
-}
-
-/* Social Section */
-.nexus-footer-social {
-  display: flex;
-  flex-direction: column;
-  gap: var(--nexus-space-3);
-}
-
-.nexus-footer-social-links {
-  display: flex;
-  gap: var(--nexus-space-3);
-}
-
-.nexus-footer-social-link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  font-size: var(--nexus-text-xl);
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--nexus-border);
-  border-radius: var(--nexus-radius-md);
-  text-decoration: none;
-  transition: all var(--nexus-transition-base) var(--nexus-ease-out);
-}
-
-.nexus-footer-social-link:hover {
-  background-color: var(--nexus-primary);
-  border-color: var(--nexus-primary);
-  transform: translateY(-2px);
-}
-
-/* Bottom Bar */
-.nexus-footer-bottom {
-  border-top: 1px solid var(--nexus-border);
-  background-color: rgba(0, 0, 0, 0.2);
-}
-
-.nexus-footer-bottom-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--nexus-space-4) var(--nexus-space-6);
-  text-align: center;
-}
-
-.nexus-footer-bottom-text {
-  font-size: var(--nexus-text-xs);
-  color: var(--nexus-muted-fg);
-  margin: 0;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-  .nexus-footer-container {
-    grid-template-columns: 1fr;
-    gap: var(--nexus-space-8);
-    padding: var(--nexus-space-10) var(--nexus-space-4);
-  }
-
-  .nexus-footer-links {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .nexus-footer-container {
-    padding: var(--nexus-space-8) var(--nexus-space-3);
-  }
-
-  .nexus-footer-links {
-    grid-template-columns: 1fr;
-    gap: var(--nexus-space-6);
-  }
-
-  .nexus-footer-bottom-container {
-    padding: var(--nexus-space-3);
-  }
-}
-</style>

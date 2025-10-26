@@ -11,12 +11,7 @@
       My Orders
     </h1>
 
-    {% include "partials/nexus/atoms/button.html" with
-       text="Browse Listings"
-       href="/listings"
-       variant="secondary"
-       size="md"
-    %}
+    {% include "partials/nexus/atoms/button.html" %}
   </div>
 
   {# Filter Tabs #}
@@ -82,12 +77,7 @@
     {% else %}
       {# Empty State #}
       <div style="text-align: center; padding: var(--nexus-space-20);">
-        {% include "partials/nexus/molecules/alert.html" with
-           title="No Orders Yet"
-           message="You haven't placed any orders yet. <a href=\"/listings\" style=\"color: var(--nexus-primary); text-decoration: underline;\">Browse listings</a> to get started!"
-           variant="info"
-           icon="📦"
-        %}
+        {% include "partials/nexus/molecules/alert.html" %}
       </div>
     {% endif %}
   </div>

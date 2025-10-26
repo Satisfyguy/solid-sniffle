@@ -29,6 +29,7 @@ pub struct Escrow {
     pub multisig_phase: String,
     pub multisig_state_json: Option<String>,
     pub multisig_updated_at: i32,
+    pub recovery_mode: String,
 }
 
 #[derive(Insertable)]

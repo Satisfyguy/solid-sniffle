@@ -2,13 +2,7 @@
   NEXUS PRODUCT CARD COMPONENT
 
   Usage:
-    {% include "partials/nexus/molecules/product-card.html" with
-       listing_id="abc123"
-       title="Premium Product"
-       price_xmr=1500000000000
-       vendor_name="TrustedVendor"
-       image_url="/static/uploads/product.jpg"
-    %}
+    {% include "partials/nexus/molecules/product-card.html" %}
 
   Parameters:
     - listing_id (required): Listing ID for link
@@ -61,27 +55,18 @@
       {# Featured Badge #}
       {% if product_featured %}
         <div class="nexus-product-card-badge-featured">
-          {% include "partials/nexus/atoms/badge.html" with
-             text="Featured"
-             variant="primary"
-          %}
+          {% include "partials/nexus/atoms/badge.html" %}
         </div>
       {% endif %}
 
       {# Stock Status Badge #}
       {% if product_stock_status == "low_stock" %}
         <div class="nexus-product-card-badge-stock">
-          {% include "partials/nexus/atoms/badge.html" with
-             text="Low Stock"
-             variant="warning"
-          %}
+          {% include "partials/nexus/atoms/badge.html" %}
         </div>
       {% elif product_stock_status == "out_of_stock" %}
         <div class="nexus-product-card-badge-stock">
-          {% include "partials/nexus/atoms/badge.html" with
-             text="Out of Stock"
-             variant="destructive"
-          %}
+          {% include "partials/nexus/atoms/badge.html" %}
         </div>
       {% endif %}
     </div>
@@ -91,11 +76,7 @@
       {# Category (if provided) #}
       {% if category %}
         <div class="nexus-product-card-category">
-          {% include "partials/nexus/atoms/badge.html" with
-             text=category
-             variant="secondary"
-             size="sm"
-          %}
+          {% include "partials/nexus/atoms/badge.html" %}
         </div>
       {% endif %}
 
@@ -142,13 +123,7 @@
 
   {# Quick Action Button #}
   <div class="nexus-product-card-actions">
-    {% include "partials/nexus/atoms/button.html" with
-       text="View Details"
-       variant="outline"
-       size="sm"
-       href="/listing/" ~ listing_id
-       class="nexus-product-card-action-btn"
-    %}
+    {% include "partials/nexus/atoms/button.html" %}
   </div>
 </div>
 

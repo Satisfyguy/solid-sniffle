@@ -1,38 +1,26 @@
 {#
-  NEXUS ALERT COMPONENT
+  NEXUS ALERT COMPONENT - SIMPLIFIED
 
-  Usage:
-    {% include "partials/nexus/molecules/alert.html" with
-       title="Success"
-       message="Operation completed successfully"
-       variant="success"
-    %}
-
-  Parameters:
-    - message (required): Alert message content
+  Expects from context:
+    - message (required): Alert message
     - title (optional): Alert title
     - variant (optional): info|success|warning|error (default: info)
-    - dismissible (optional): true|false - Show close button (default: false)
-    - icon (optional): Custom icon (emoji or HTML)
-    - action_text (optional): Action button text
-    - action_url (optional): Action button URL
-    - action_hx_post (optional): HTMX POST endpoint for action
-    - class (optional): Additional CSS classes
-    - id (optional): Element ID
+    - dismissible (optional): bool (default: false)
 #}
 
 {% set alert_variant = variant | default(value="info") %}
 {% set alert_dismissible = dismissible | default(value=false) %}
 
-{# Default icons for each variant #}
-{% set default_icons = {
-  "info": "ℹ️",
-  "success": "✅",
-  "warning": "⚠️",
-  "error": "❌"
-} %}
-
-{% set alert_icon = icon | default(value=default_icons[alert_variant]) %}
+{# Default icons - using if/elif instead of dictionary #}
+{% if alert_variant == "success" %}
+  {% set alert_icon = "✅" %}
+{% elif alert_variant == "warning" %}
+  {% set alert_icon = "⚠️" %}
+{% elif alert_variant == "error" %}
+  {% set alert_icon = "❌" %}
+{% else %}
+  {% set alert_icon = "ℹ️" %}
+{% endif %}
 
 {# Build CSS classes #}
 {% set css_classes = "nexus-alert nexus-alert-" ~ alert_variant %}
@@ -43,59 +31,21 @@
   {% set css_classes = css_classes ~ " " ~ class %}
 {% endif %}
 
-<div
-  class="{{ css_classes }}"
-  role="alert"
-  {% if id %}id="{{ id }}"{% endif %}
->
+<div class="{{ css_classes }}" role="alert"{% if id %} id="{{ id }}"{% endif %}>
   {# Icon #}
-  {% if alert_icon %}
-    <div class="nexus-alert-icon">
-      {{ alert_icon | safe }}
-    </div>
-  {% endif %}
+  <div class="nexus-alert-icon">{{ alert_icon }}</div>
 
   {# Content #}
   <div class="nexus-alert-content">
-    {# Title #}
     {% if title %}
       <div class="nexus-alert-title">{{ title }}</div>
     {% endif %}
-
-    {# Message #}
     <div class="nexus-alert-message">{{ message | safe }}</div>
-
-    {# Action Button #}
-    {% if action_text %}
-      <div class="nexus-alert-action">
-        {% if action_hx_post %}
-          {% include "partials/nexus/atoms/button.html" with
-             text=action_text
-             variant="outline"
-             size="sm"
-             hx_post=action_hx_post
-          %}
-        {% elif action_url %}
-          {% include "partials/nexus/atoms/button.html" with
-             text=action_text
-             variant="outline"
-             size="sm"
-             href=action_url
-          %}
-        {% endif %}
-      </div>
-    {% endif %}
   </div>
 
   {# Dismiss Button #}
   {% if alert_dismissible %}
-    <button
-      class="nexus-alert-close"
-      aria-label="Close alert"
-      onclick="this.parentElement.style.display='none'"
-    >
-      ✕
-    </button>
+    <button class="nexus-alert-close" aria-label="Close alert" onclick="this.parentElement.style.display='none'">✕</button>
   {% endif %}
 </div>
 
@@ -113,68 +63,40 @@
 }
 
 @keyframes nexus-alert-slide-in {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Variant: Info */
 .nexus-alert-info {
   background-color: rgba(59, 130, 246, 0.1);
   border-color: rgba(59, 130, 246, 0.3);
   color: var(--nexus-fg);
 }
 
-.nexus-alert-info .nexus-alert-icon {
-  color: hsl(217, 91%, 60%);
-}
-
-/* Variant: Success */
 .nexus-alert-success {
   background-color: rgba(34, 197, 94, 0.1);
   border-color: rgba(34, 197, 94, 0.3);
   color: var(--nexus-fg);
 }
 
-.nexus-alert-success .nexus-alert-icon {
-  color: var(--nexus-success);
-}
-
-/* Variant: Warning */
 .nexus-alert-warning {
   background-color: rgba(251, 191, 36, 0.1);
   border-color: rgba(251, 191, 36, 0.3);
   color: var(--nexus-fg);
 }
 
-.nexus-alert-warning .nexus-alert-icon {
-  color: var(--nexus-warning);
-}
-
-/* Variant: Error */
 .nexus-alert-error {
   background-color: rgba(239, 68, 68, 0.1);
   border-color: rgba(239, 68, 68, 0.3);
   color: var(--nexus-fg);
 }
 
-.nexus-alert-error .nexus-alert-icon {
-  color: var(--nexus-destructive);
-}
-
-/* Icon */
 .nexus-alert-icon {
   font-size: var(--nexus-text-xl);
   line-height: 1;
   flex-shrink: 0;
 }
 
-/* Content */
 .nexus-alert-content {
   flex: 1;
   display: flex;
@@ -182,28 +104,18 @@
   gap: var(--nexus-space-2);
 }
 
-/* Title */
 .nexus-alert-title {
   font-size: var(--nexus-text-base);
   font-weight: var(--nexus-weight-bold);
   color: var(--nexus-fg);
-  line-height: var(--nexus-leading-tight);
 }
 
-/* Message */
 .nexus-alert-message {
   font-size: var(--nexus-text-sm);
   color: var(--nexus-fg);
-  line-height: var(--nexus-leading-relaxed);
   opacity: 0.9;
 }
 
-/* Action */
-.nexus-alert-action {
-  margin-top: var(--nexus-space-2);
-}
-
-/* Close Button */
 .nexus-alert-close {
   position: absolute;
   top: var(--nexus-space-3);
@@ -215,7 +127,7 @@
   cursor: pointer;
   padding: var(--nexus-space-1);
   line-height: 1;
-  transition: all var(--nexus-transition-base) var(--nexus-ease-out);
+  transition: all var(--nexus-transition-base);
   border-radius: var(--nexus-radius-sm);
 }
 
@@ -224,29 +136,7 @@
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.nexus-alert-close:focus {
-  outline: 2px solid var(--nexus-ring);
-  outline-offset: 2px;
-}
-
-/* Dismissible padding adjustment */
 .nexus-alert-dismissible {
   padding-right: var(--nexus-space-10);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .nexus-alert {
-    padding: var(--nexus-space-3);
-    gap: var(--nexus-space-2);
-  }
-
-  .nexus-alert-icon {
-    font-size: var(--nexus-text-lg);
-  }
-
-  .nexus-alert-dismissible {
-    padding-right: var(--nexus-space-8);
-  }
 }
 </style>

@@ -45,13 +45,7 @@
 
       {# Product Images #}
       {% if images and images | length > 0 %}
-      {% include "partials/nexus/molecules/card.html" with
-         title="Product Images"
-         variant="elevated"
-         glassmorphism=true
-         content='
-           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--nexus-space-4);">
-             {% for image_cid in images %}
+      {% include "partials/nexus/molecules/card.html" %}
              <div style="position: relative; border-radius: var(--nexus-radius-md); overflow: hidden; background: var(--nexus-muted); cursor: pointer; transition: transform var(--nexus-transition-base) var(--nexus-ease-out);" onclick="openImageModal(\'/api/listings/' ~ listing.id ~ '/images/' ~ image_cid ~ '\')">
                <img
                  src="/api/listings/' ~ listing.id ~ '/images/' ~ image_cid ~ '"
@@ -70,27 +64,12 @@
       {% endif %}
 
       {# Product Description #}
-      {% include "partials/nexus/molecules/card.html" with
-         title="Description"
-         variant="elevated"
-         glassmorphism=true
-         content='
-           <p style="color: var(--nexus-fg); line-height: var(--nexus-leading-relaxed); font-size: var(--nexus-text-base); white-space: pre-wrap;">
-             ' ~ listing.description ~ '
-           </p>
-         '
-      %}
+      {% include "partials/nexus/molecules/card.html" %}
 
       {# Vendor Actions (edit/delete) #}
       {% if logged_in and role == "vendor" and listing.vendor_id == user_id %}
       <div style="display: flex; gap: var(--nexus-space-4);">
-        {% include "partials/nexus/atoms/button.html" with
-           text="Edit Listing"
-           href="/listings/" ~ listing.id ~ "/edit"
-           variant="secondary"
-           size="lg"
-           class="flex-1"
-        %}
+        {% include "partials/nexus/atoms/button.html" %}
 
         <button
           hx-delete="/api/listings/{{ listing.id }}"
@@ -109,21 +88,7 @@
     <div style="position: sticky; top: var(--nexus-space-6); align-self: start;">
 
       {# Price Card #}
-      {% include "partials/nexus/molecules/card.html" with
-         variant="elevated"
-         glassmorphism=true
-         content='
-           <div style="text-align: center; padding: var(--nexus-space-4);">
-             <span style="display: block; font-size: var(--nexus-text-xs); color: var(--nexus-muted-fg); text-transform: uppercase; letter-spacing: var(--nexus-tracking-wider); margin-bottom: var(--nexus-space-2);">
-               Unit Price
-             </span>
-             <div style="font-size: var(--nexus-text-4xl); font-weight: var(--nexus-weight-black); background: linear-gradient(135deg, var(--nexus-primary) 0%, var(--nexus-accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: var(--nexus-space-1);">
-               ' ~ listing.price_xmr ~ '
-             </div>
-             <span style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg);">piconeros</span>
-           </div>
-         '
-      %}
+      {% include "partials/nexus/molecules/card.html" %}
 
       {# Order Form (buyer only) #}
       {% if logged_in and role == "buyer" and listing.status == "active" and listing.stock > 0 %}
@@ -169,51 +134,16 @@
          '
       %}
       {% elif not logged_in %}
-      {% include "partials/nexus/molecules/alert.html" with
-         title="Login Required"
-         message="Please <a href=\"/login\" style=\"color: var(--nexus-primary); text-decoration: underline;\">login</a> to place an order."
-         variant="info"
-      %}
+      {% include "partials/nexus/molecules/alert.html" %}
       {% elif listing.status != "active" %}
-      {% include "partials/nexus/molecules/alert.html" with
-         title="Listing Not Available"
-         message="This listing is currently " ~ listing.status ~ " and cannot be ordered."
-         variant="warning"
-      %}
+      {% include "partials/nexus/molecules/alert.html" %}
       {% elif listing.stock <= 0 %}
-      {% include "partials/nexus/molecules/alert.html" with
-         title="Out of Stock"
-         message="This item is currently out of stock. Check back later."
-         variant="error"
-      %}
+      {% include "partials/nexus/molecules/alert.html" %}
       {% endif %}
 
       {# Trust Indicators #}
       <div style="margin-top: var(--nexus-space-6);">
-        {% include "partials/nexus/molecules/card.html" with
-           title="🔒 Secure Purchase"
-           variant="ghost"
-           content='
-             <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--nexus-space-3);">
-               <li style="display: flex; align-items: start; gap: var(--nexus-space-2);">
-                 <span style="color: var(--nexus-success);">✓</span>
-                 <span style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg);">2-of-3 Multisig Escrow</span>
-               </li>
-               <li style="display: flex; align-items: start; gap: var(--nexus-space-2);">
-                 <span style="color: var(--nexus-success);">✓</span>
-                 <span style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg);">Non-Custodial</span>
-               </li>
-               <li style="display: flex; align-items: start; gap: var(--nexus-space-2);">
-                 <span style="color: var(--nexus-success);">✓</span>
-                 <span style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg);">Monero Privacy</span>
-               </li>
-               <li style="display: flex; align-items: start; gap: var(--nexus-space-2);">
-                 <span style="color: var(--nexus-success);">✓</span>
-                 <span style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg);">Dispute Resolution</span>
-               </li>
-             </ul>
-           '
-        %}
+        {% include "partials/nexus/molecules/card.html" %}
       </div>
     </div>
   </div>

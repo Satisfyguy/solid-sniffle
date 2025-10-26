@@ -6,40 +6,16 @@
 
 {# Breadcrumb #}
 <section style="max-width: 1000px; margin: 0 auto; padding: var(--nexus-space-6) var(--nexus-space-6) 0;">
-  {% include "partials/nexus/molecules/breadcrumb.html" with
-     items=[
-       {"text": "Home", "href": "/", "icon": "🏠"},
-       {"text": "Listings", "href": "/listings"},
-       {"text": "Create New Listing"}
-     ]
-  %}
+  {% include "partials/nexus/molecules/breadcrumb.html" %}
 </section>
 
 {# Main Content #}
 <section style="max-width: 1000px; margin: 0 auto; padding: var(--nexus-space-6);">
-  {% include "partials/nexus/molecules/card.html" with
-     title="Create New Listing"
-     variant="elevated"
-     glassmorphism=true
-     content=include("partials/listing-form.html", with={"mode": "create", "csrf_token": csrf_token})
-  %}
+  {% include "partials/nexus/molecules/card.html" %}
 
   {# Help Section #}
   <div style="margin-top: var(--nexus-space-6);">
-    {% include "partials/nexus/molecules/alert.html" with
-       title="💡 Tips for a Great Listing"
-       message="
-         <ul style='margin: var(--nexus-space-2) 0; padding-left: var(--nexus-space-5);'>
-           <li>Use clear, descriptive titles</li>
-           <li>Provide detailed descriptions with specifications</li>
-           <li>Upload high-quality images (multiple angles)</li>
-           <li>Set competitive prices</li>
-           <li>Keep stock count updated</li>
-         </ul>
-       "
-       variant="info"
-       dismissible=false
-    %}
+    {% include "partials/nexus/molecules/alert.html" %}
   </div>
 </section>
 

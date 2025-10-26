@@ -9,8 +9,9 @@ use actix_web_actors::ws;
 use anyhow::{Context, Result};
 use monero_marketplace_common::types::MoneroConfig;
 use server::db::create_pool;
-use server::handlers::{auth, escrow, frontend, listings, orders, reputation, reputation_ipfs};
+use server::handlers::{auth, escrow, frontend, listings, monitoring, orders, reputation, reputation_ipfs};
 use server::middleware::{
+    admin_auth::AdminAuth,
     rate_limit::{global_rate_limiter, protected_rate_limiter},
     security_headers::SecurityHeaders,
 };
@@ -164,18 +165,43 @@ async fn main() -> Result<()> {
         vec![], // encryption_key - should be loaded from secure env
     ));
 
-    // 8. Initialize Tera template engine
+    // 9. Initialize and start Timeout Monitor (background service)
+    use server::config::TimeoutConfig;
+    use server::services::timeout_monitor::TimeoutMonitor;
+
+    let timeout_config = TimeoutConfig::from_env();
+    info!(
+        "TimeoutConfig loaded: multisig_setup={}s, funding={}s, tx_confirmation={}s",
+        timeout_config.multisig_setup_timeout_secs,
+        timeout_config.funding_timeout_secs,
+        timeout_config.transaction_confirmation_timeout_secs
+    );
+
+    let timeout_monitor = Arc::new(TimeoutMonitor::new(
+        pool.clone(),
+        websocket_server.clone(),
+        timeout_config,
+    ));
+
+    // Spawn TimeoutMonitor in background
+    let timeout_monitor_handle = timeout_monitor.clone();
+    tokio::spawn(async move {
+        timeout_monitor_handle.start_monitoring().await;
+    });
+    info!("TimeoutMonitor background service started");
+
+    // 10. Initialize Tera template engine
     let tera = Tera::new("templates/**/*.html").context("Failed to initialize Tera templates")?;
     info!("Tera template engine initialized");
 
-    // 9. Initialize IPFS client for reputation export
+    // 11. Initialize IPFS client for reputation export
     use server::ipfs::client::IpfsClient;
     let ipfs_client = IpfsClient::new_local().context("Failed to initialize IPFS client")?;
     info!("IPFS client initialized (local node at 127.0.0.1:5001)");
 
     info!("Starting HTTP server on http://127.0.0.1:8080");
 
-    // 9. Start HTTP server
+    // 12. Start HTTP server
     HttpServer::new(move || {
         App::new()
             // Security headers (CSP, X-Frame-Options, etc.)
@@ -312,6 +338,13 @@ async fn main() -> Result<()> {
                         "/reputation/export",
                         web::post().to(reputation_ipfs::export_to_ipfs),
                     ),
+            )
+            // Admin-only endpoints (requires admin role)
+            .service(
+                web::scope("/admin")
+                    .wrap(AdminAuth)
+                    .service(monitoring::get_escrow_health)
+                    .service(monitoring::get_escrow_status),
             )
     })
     .bind(("127.0.0.1", 8080))

@@ -2,13 +2,7 @@
   NEXUS DIALOG COMPONENT (Modal)
 
   Usage:
-    {% include "partials/nexus/molecules/dialog.html" with
-       id="confirm-dialog"
-       title="Confirm Action"
-       content="<p>Are you sure you want to proceed?</p>"
-       confirm_text="Confirm"
-       confirm_hx_post="/api/action"
-    %}
+    {% include "partials/nexus/molecules/dialog.html" %}
 
   Then trigger with:
     <button onclick="document.getElementById('confirm-dialog').showModal()">Open Dialog</button>

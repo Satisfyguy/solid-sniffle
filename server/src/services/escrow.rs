@@ -294,13 +294,13 @@ impl EscrowOrchestrator {
 
         // 1. Prepare multisig for each participant
         let buyer_info = wallet_manager
-            .make_multisig(buyer_wallet_id, vec![])
+            .make_multisig(&escrow_id.to_string(), buyer_wallet_id, vec![])
             .await?;
         let vendor_info = wallet_manager
-            .make_multisig(vendor_wallet_id, vec![])
+            .make_multisig(&escrow_id.to_string(), vendor_wallet_id, vec![])
             .await?;
         let arbiter_info = wallet_manager
-            .make_multisig(arbiter_wallet_id, vec![])
+            .make_multisig(&escrow_id.to_string(), arbiter_wallet_id, vec![])
             .await?;
 
         // 2. Exchange multisig info

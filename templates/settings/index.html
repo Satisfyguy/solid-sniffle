@@ -22,104 +22,17 @@
 
     {# Wallet Settings Card #}
     <a href="/settings/wallet" style="text-decoration: none; color: inherit;" hx-boost="true">
-      {% include "partials/nexus/molecules/card.html" with
-         variant="elevated"
-         glassmorphism=true
-         hover_effect="lift"
-         content='
-           <div style="display: flex; align-items: start; gap: var(--nexus-space-4);">
-             <!-- Icon -->
-             <div style="flex-shrink: 0; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; background: rgba(139, 92, 246, 0.1); border-radius: var(--nexus-radius-lg);">
-               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 32px; height: 32px; color: var(--nexus-primary);">
-                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-               </svg>
-             </div>
-
-             <!-- Content -->
-             <div style="flex: 1;">
-               <h3 style="font-size: var(--nexus-text-xl); font-weight: var(--nexus-weight-bold); color: var(--nexus-fg); margin: 0 0 var(--nexus-space-2) 0;">
-                 Wallet Setup
-               </h3>
-               <p style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg); margin: 0;">
-                 Register your non-custodial wallet RPC URL to control your private keys
-               </p>
-             </div>
-
-             <!-- Arrow -->
-             <div style="flex-shrink: 0; font-size: var(--nexus-text-2xl); color: var(--nexus-primary); opacity: 0; transition: opacity 0.2s;">
-               →
-             </div>
-           </div>
-         '
-      %}
+      {% include "partials/nexus/molecules/card.html" %}
     </a>
 
     {# Account Settings Card #}
     <a href="/settings/account" style="text-decoration: none; color: inherit;" hx-boost="true">
-      {% include "partials/nexus/molecules/card.html" with
-         variant="elevated"
-         glassmorphism=true
-         hover_effect="lift"
-         content='
-           <div style="display: flex; align-items: start; gap: var(--nexus-space-4);">
-             <!-- Icon -->
-             <div style="flex-shrink: 0; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; background: rgba(139, 92, 246, 0.1); border-radius: var(--nexus-radius-lg);">
-               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 32px; height: 32px; color: var(--nexus-primary);">
-                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-               </svg>
-             </div>
-
-             <!-- Content -->
-             <div style="flex: 1;">
-               <h3 style="font-size: var(--nexus-text-xl); font-weight: var(--nexus-weight-bold); color: var(--nexus-fg); margin: 0 0 var(--nexus-space-2) 0;">
-                 Account
-               </h3>
-               <p style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg); margin: 0;">
-                 Manage your profile and marketplace preferences
-               </p>
-             </div>
-
-             <!-- Arrow -->
-             <div style="flex-shrink: 0; font-size: var(--nexus-text-2xl); color: var(--nexus-primary); opacity: 0; transition: opacity 0.2s;">
-               →
-             </div>
-           </div>
-         '
-      %}
+      {% include "partials/nexus/molecules/card.html" %}
     </a>
 
     {# Security Settings Card #}
     <a href="/settings/security" style="text-decoration: none; color: inherit;" hx-boost="true">
-      {% include "partials/nexus/molecules/card.html" with
-         variant="elevated"
-         glassmorphism=true
-         hover_effect="lift"
-         content='
-           <div style="display: flex; align-items: start; gap: var(--nexus-space-4);">
-             <!-- Icon -->
-             <div style="flex-shrink: 0; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; background: rgba(139, 92, 246, 0.1); border-radius: var(--nexus-radius-lg);">
-               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 32px; height: 32px; color: var(--nexus-primary);">
-                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-               </svg>
-             </div>
-
-             <!-- Content -->
-             <div style="flex: 1;">
-               <h3 style="font-size: var(--nexus-text-xl); font-weight: var(--nexus-weight-bold); color: var(--nexus-fg); margin: 0 0 var(--nexus-space-2) 0;">
-                 Security
-               </h3>
-               <p style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg); margin: 0;">
-                 Password, 2FA, and advanced security settings
-               </p>
-             </div>
-
-             <!-- Arrow -->
-             <div style="flex-shrink: 0; font-size: var(--nexus-text-2xl); color: var(--nexus-primary); opacity: 0; transition: opacity 0.2s;">
-               →
-             </div>
-           </div>
-         '
-      %}
+      {% include "partials/nexus/molecules/card.html" %}
     </a>
 
   </div>

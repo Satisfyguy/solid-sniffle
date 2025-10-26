@@ -4,3 +4,4 @@ pub mod multisig_state;
 pub mod order;
 pub mod transaction;
 pub mod user;
+pub mod wallet_rpc_config;

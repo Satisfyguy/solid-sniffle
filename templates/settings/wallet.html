@@ -6,12 +6,7 @@
 
 {# Breadcrumb #}
 <section style="max-width: 1400px; margin: 0 auto; padding: var(--nexus-space-6) var(--nexus-space-6) 0;">
-  {% include "partials/nexus/molecules/breadcrumb.html" with
-     items=[
-       {"text": "Settings", "href": "/settings"},
-       {"text": "Wallet Setup"}
-     ]
-  %}
+  {% include "partials/nexus/molecules/breadcrumb.html" %}
 </section>
 
 {# Main Content #}
@@ -22,260 +17,22 @@
     <div style="display: flex; flex-direction: column; gap: var(--nexus-space-6);">
 
       {# Header Card #}
-      {% include "partials/nexus/molecules/card.html" with
-         variant="elevated"
-         glassmorphism=true
-         content='
-           <div style="text-align: center; padding: var(--nexus-space-4);">
-             <h1 style="font-size: var(--nexus-text-3xl); font-weight: var(--nexus-weight-black); color: var(--nexus-fg); margin: 0 0 var(--nexus-space-3) 0; text-transform: uppercase;">
-               🔐 Non-Custodial Wallet Setup
-             </h1>
-             <p style="font-size: var(--nexus-text-base); color: var(--nexus-muted-fg); margin: 0;">
-               YOU control your private keys. The server NEVER has access to your funds.
-             </p>
-           </div>
-         '
-      %}
+      {% include "partials/nexus/molecules/card.html" %}
 
       {# Security Notice #}
-      {% include "partials/nexus/molecules/alert.html" with
-         variant="info"
-         icon="ℹ️"
-         title="What is non-custodial?"
-         message="Unlike centralized exchanges, this marketplace NEVER holds your private keys or controls your funds. You run your own Monero wallet RPC, and only you can sign transactions."
-      %}
+      {% include "partials/nexus/molecules/alert.html" %}
 
       {# Registration Form #}
-      {% include "partials/nexus/molecules/card.html" with
-         title="Register Your Wallet RPC"
-         variant="elevated"
-         glassmorphism=true
-         content='
-           <form id="wallet-rpc-form"
-                 hx-post="/api/escrow/register-wallet-rpc"
-                 hx-target="#wallet-result"
-                 hx-swap="outerHTML"
-                 hx-indicator="#spinner"
-                 style="display: flex; flex-direction: column; gap: var(--nexus-space-5);">
-
-             <input type="hidden" name="csrf_token" value="' ~ csrf_token ~ '">
-
-             <!-- RPC URL Field -->
-             <div>
-               ' ~ include("partials/nexus/atoms/input.html", with={
-                 "id": "rpc_url",
-                 "name": "rpc_url",
-                 "label": "Wallet RPC URL",
-                 "type": "url",
-                 "placeholder": "http://127.0.0.1:18082/json_rpc",
-                 "required": true,
-                 "pattern": "^http://127\\.0\\.0\\.1:\\d+/json_rpc$",
-                 "helper_text": "Must be http://127.0.0.1:PORT/json_rpc (localhost only for security)"
-               }) ~ '
-             </div>
-
-             <!-- Role Selection -->
-             <div>
-               <label for="role" style="display: block; font-size: var(--nexus-text-sm); font-weight: var(--nexus-weight-medium); color: var(--nexus-fg); margin-bottom: var(--nexus-space-2); text-transform: uppercase; letter-spacing: var(--nexus-tracking-wide);">
-                 Your Role
-               </label>
-               <select
-                 id="role"
-                 name="role"
-                 required
-                 aria-label="Select your role"
-                 style="width: 100%; padding: var(--nexus-space-3); background: var(--nexus-input-bg); border: 1px solid var(--nexus-border); border-radius: var(--nexus-radius-md); color: var(--nexus-fg); font-size: var(--nexus-text-base); font-family: var(--nexus-font-mono); transition: border-color 0.2s, box-shadow 0.2s;">
-                 <option value="">-- Select your role --</option>
-                 <option value="buyer">Buyer (I purchase items)</option>
-                 <option value="vendor">Vendor (I sell items)</option>
-               </select>
-               <small style="display: block; font-size: var(--nexus-text-xs); color: var(--nexus-muted-fg); margin-top: var(--nexus-space-1);">
-                 Choose \"Buyer\" if you want to purchase items, or \"Vendor\" if you want to sell
-               </small>
-             </div>
-
-             <!-- Advanced Options -->
-             <details style="padding: var(--nexus-space-4); background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: var(--nexus-radius-md);">
-               <summary style="cursor: pointer; font-weight: var(--nexus-weight-semibold); color: var(--nexus-primary); margin-bottom: var(--nexus-space-3);">
-                 Advanced: RPC Authentication (optional)
-               </summary>
-               <div style="display: flex; flex-direction: column; gap: var(--nexus-space-4); margin-top: var(--nexus-space-4);">
-                 ' ~ include("partials/nexus/atoms/input.html", with={
-                   "id": "rpc_user",
-                   "name": "rpc_user",
-                   "label": "RPC Username",
-                   "type": "text",
-                   "placeholder": "Optional"
-                 }) ~ '
-                 ' ~ include("partials/nexus/atoms/input.html", with={
-                   "id": "rpc_password",
-                   "name": "rpc_password",
-                   "label": "RPC Password",
-                   "type": "password",
-                   "placeholder": "Optional"
-                 }) ~ '
-                 <p style="font-size: var(--nexus-text-xs); color: var(--nexus-muted-fg); margin: 0;">
-                   Only needed if you started your wallet RPC with <code style="background: var(--nexus-muted); padding: var(--nexus-space-1); border-radius: var(--nexus-radius-sm);">--rpc-login user:pass</code>
-                 </p>
-               </div>
-             </details>
-
-             <!-- Submit Button -->
-             <div style="display: flex; align-items: center; gap: var(--nexus-space-4);">
-               ' ~ include("partials/nexus/atoms/button.html", with={
-                 "text": "Register Wallet RPC",
-                 "type": "submit",
-                 "variant": "primary",
-                 "size": "lg"
-               }) ~ '
-               <div id="spinner" class="htmx-indicator" style="display: none; align-items: center; gap: var(--nexus-space-2); color: var(--nexus-primary);">
-                 <div style="width: 20px; height: 20px; border: 2px solid rgba(139, 92, 246, 0.3); border-top-color: var(--nexus-primary); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                 <span>Connecting...</span>
-               </div>
-             </div>
-
-             <!-- Result Container -->
-             <div id="wallet-result"></div>
-           </form>
-         '
-      %}
+      {% include "partials/nexus/molecules/card.html" %}
 
       {# Security Features #}
-      {% include "partials/nexus/molecules/card.html" with
-         title="🛡️ Why Non-Custodial?"
-         variant="elevated"
-         glassmorphism=true
-         content='
-           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--nexus-space-6);">
-             <div style="text-align: center;">
-               <div style="width: 56px; height: 56px; margin: 0 auto var(--nexus-space-3) auto; display: flex; align-items: center; justify-content: center; background: rgba(139, 92, 246, 0.1); border-radius: var(--nexus-radius-lg);">
-                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 32px; height: 32px; color: var(--nexus-primary);">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                 </svg>
-               </div>
-               <h3 style="font-size: var(--nexus-text-base); font-weight: var(--nexus-weight-bold); color: var(--nexus-fg); margin: 0 0 var(--nexus-space-2) 0;">
-                 You Control Keys
-               </h3>
-               <p style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg); margin: 0;">
-                 Your private keys never leave your machine
-               </p>
-             </div>
-
-             <div style="text-align: center;">
-               <div style="width: 56px; height: 56px; margin: 0 auto var(--nexus-space-3) auto; display: flex; align-items: center; justify-content: center; background: rgba(139, 92, 246, 0.1); border-radius: var(--nexus-radius-lg);">
-                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 32px; height: 32px; color: var(--nexus-primary);">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-                 </svg>
-               </div>
-               <h3 style="font-size: var(--nexus-text-base); font-weight: var(--nexus-weight-bold); color: var(--nexus-fg); margin: 0 0 var(--nexus-space-2) 0;">
-                 No Exit Scam
-               </h3>
-               <p style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg); margin: 0;">
-                 Server can\'t steal your funds (mathematically impossible)
-               </p>
-             </div>
-
-             <div style="text-align: center;">
-               <div style="width: 56px; height: 56px; margin: 0 auto var(--nexus-space-3) auto; display: flex; align-items: center; justify-content: center; background: rgba(139, 92, 246, 0.1); border-radius: var(--nexus-radius-lg);">
-                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 32px; height: 32px; color: var(--nexus-primary);">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                 </svg>
-               </div>
-               <h3 style="font-size: var(--nexus-text-base); font-weight: var(--nexus-weight-bold); color: var(--nexus-fg); margin: 0 0 var(--nexus-space-2) 0;">
-                 2-of-3 Multisig
-               </h3>
-               <p style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg); margin: 0;">
-                 Protected escrow with neutral arbiter
-               </p>
-             </div>
-           </div>
-         '
-      %}
+      {% include "partials/nexus/molecules/card.html" %}
 
     </div>
 
     {# Right Column - Setup Instructions #}
     <div style="position: sticky; top: var(--nexus-space-6); align-self: start;">
-      {% include "partials/nexus/molecules/card.html" with
-         title="📚 Setup Instructions"
-         variant="elevated"
-         glassmorphism=true
-         content='
-           <!-- Step 1 -->
-           <div style="display: flex; gap: var(--nexus-space-3); margin-bottom: var(--nexus-space-5);">
-             <div style="flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--nexus-primary); color: var(--nexus-bg); border-radius: 50%; font-weight: var(--nexus-weight-bold); font-family: var(--nexus-font-mono);">
-               1
-             </div>
-             <div>
-               <h3 style="font-size: var(--nexus-text-sm); font-weight: var(--nexus-weight-bold); color: var(--nexus-fg); margin: 0 0 var(--nexus-space-2) 0;">
-                 Install Monero CLI Wallet
-               </h3>
-               <p style="font-size: var(--nexus-text-xs); color: var(--nexus-muted-fg); margin: 0 0 var(--nexus-space-2) 0;">
-                 Download from <a href="https://www.getmonero.org/downloads/" target="_blank" rel="noopener" style="color: var(--nexus-primary); text-decoration: underline;">getmonero.org</a>
-               </p>
-               <code style="display: block; padding: var(--nexus-space-2); background: var(--nexus-muted); border-radius: var(--nexus-radius-sm); font-size: var(--nexus-text-xs); overflow-x: auto;">$ tar -xvf monero-linux-*.tar.bz2</code>
-             </div>
-           </div>
-
-           <!-- Step 2 -->
-           <div style="display: flex; gap: var(--nexus-space-3); margin-bottom: var(--nexus-space-5);">
-             <div style="flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--nexus-primary); color: var(--nexus-bg); border-radius: 50%; font-weight: var(--nexus-weight-bold); font-family: var(--nexus-font-mono);">
-               2
-             </div>
-             <div>
-               <h3 style="font-size: var(--nexus-text-sm); font-weight: var(--nexus-weight-bold); color: var(--nexus-fg); margin: 0 0 var(--nexus-space-2) 0;">
-                 Create New Wallet (Testnet)
-               </h3>
-               <code style="display: block; padding: var(--nexus-space-2); background: var(--nexus-muted); border-radius: var(--nexus-radius-sm); font-size: var(--nexus-text-xs); overflow-x: auto; margin-bottom: var(--nexus-space-2);">$ ./monero-wallet-cli --testnet</code>
-               <p style="font-size: var(--nexus-text-xs); color: var(--nexus-warning); font-weight: var(--nexus-weight-semibold); margin: 0;">
-                 ⚠️ BACKUP YOUR SEED PHRASE! Write it down on paper, not digitally.
-               </p>
-             </div>
-           </div>
-
-           <!-- Step 3 -->
-           <div style="display: flex; gap: var(--nexus-space-3); margin-bottom: var(--nexus-space-5);">
-             <div style="flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--nexus-primary); color: var(--nexus-bg); border-radius: 50%; font-weight: var(--nexus-weight-bold); font-family: var(--nexus-font-mono);">
-               3
-             </div>
-             <div>
-               <h3 style="font-size: var(--nexus-text-sm); font-weight: var(--nexus-weight-bold); color: var(--nexus-fg); margin: 0 0 var(--nexus-space-2) 0;">
-                 Start Wallet RPC
-               </h3>
-               <code style="display: block; padding: var(--nexus-space-2); background: var(--nexus-muted); border-radius: var(--nexus-radius-sm); font-size: var(--nexus-text-xs); overflow-x: auto; margin-bottom: var(--nexus-space-2);">$ ./monero-wallet-rpc --testnet --rpc-bind-port 18082 --wallet-file ~/wallets/my_wallet --password YOUR_PASSWORD</code>
-               <p style="font-size: var(--nexus-text-xs); color: var(--nexus-muted-fg); margin: 0;">
-                 Leave this running in a terminal window.
-               </p>
-             </div>
-           </div>
-
-           <!-- Step 4 -->
-           <div style="display: flex; gap: var(--nexus-space-3);">
-             <div style="flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--nexus-primary); color: var(--nexus-bg); border-radius: 50%; font-weight: var(--nexus-weight-bold); font-family: var(--nexus-font-mono);">
-               4
-             </div>
-             <div>
-               <h3 style="font-size: var(--nexus-text-sm); font-weight: var(--nexus-weight-bold); color: var(--nexus-fg); margin: 0 0 var(--nexus-space-2) 0;">
-                 Register Above
-               </h3>
-               <p style="font-size: var(--nexus-text-xs); color: var(--nexus-muted-fg); margin: 0;">
-                 Copy the RPC URL <code style="background: var(--nexus-muted); padding: var(--nexus-space-1); border-radius: var(--nexus-radius-sm);">http://127.0.0.1:18082/json_rpc</code> into the form and submit.
-               </p>
-             </div>
-           </div>
-
-           <!-- Documentation Link -->
-           <div style="margin-top: var(--nexus-space-6); padding-top: var(--nexus-space-6); border-top: 1px solid var(--nexus-border);">
-             ' ~ include("partials/nexus/atoms/button.html", with={
-               "text": "📖 Full Setup Guide →",
-               "href": "/docs/wallet-setup",
-               "variant": "secondary",
-               "size": "sm",
-               "class": "w-full"
-             }) ~ '
-           </div>
-         '
-      %}
+      {% include "partials/nexus/molecules/card.html" %}
     </div>
 
   </div>

@@ -61,10 +61,10 @@ pub struct Listing {
     pub price_xmr: i64,
     pub stock: i32,
     pub status: String,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
     /// IPFS CIDs for product images stored as JSON array: ["Qm...", "Qm..."]
     pub images_ipfs_cids: Option<String>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 /// New listing for insertion

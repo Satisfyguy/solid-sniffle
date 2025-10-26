@@ -2,25 +2,10 @@
   NEXUS CARD COMPONENT
 
   Usage:
-    {% include "partials/nexus/molecules/card.html" with
-       title="Card Title"
-       content="Card content goes here"
-    %}
+    {% include "partials/nexus/molecules/card.html" %}
 
   Full example with all features:
-    {% include "partials/nexus/molecules/card.html" with
-       title="Premium Product"
-       subtitle="Limited Edition"
-       content="<p>This is the main content area</p>"
-       footer="<button>Action</button>"
-       variant="elevated"
-       glassmorphism=true
-       hover_effect="lift"
-       image_url="/static/images/product.jpg"
-       badge_text="New"
-       badge_variant="primary"
-       class="custom-class"
-    %}
+    {% include "partials/nexus/molecules/card.html" %}
 
   Parameters:
     - title (optional): Card title text
@@ -57,10 +42,7 @@
   {# Badge (top-right corner) #}
   {% if badge_text %}
     <div class="nexus-card-badge">
-      {% include "partials/nexus/atoms/badge.html" with
-         text=badge_text
-         variant=badge_variant | default(value="primary")
-      %}
+      {% include "partials/nexus/atoms/badge.html" %}
     </div>
   {% endif %}
 

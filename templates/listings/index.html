@@ -5,32 +5,11 @@
 {% block content %}
 
 {# Hero Section #}
-{% include "partials/nexus/organisms/hero.html" with
-   title="NEXUS"
-   subtitle="Secure Privacy-Focused Marketplace"
-   description="2-of-3 Multisig Escrow • Non-Custodial • Monero Only • Tor Network"
-   cta_primary_text="Browse Listings"
-   cta_primary_url="/listings"
-   cta_secondary_text="How It Works"
-   cta_secondary_url="/faq"
-   animated=true
-   show_stats=true
-   stats=[
-     {"label": "Active Listings", "value": listings | length | default(value=0), "icon": "📦"},
-     {"label": "Escrow Transactions", "value": "42", "icon": "🔒"},
-     {"label": "Happy Users", "value": "127", "icon": "😊"}
-   ]
-%}
+{% include "partials/nexus/organisms/hero.html" %}
 
 {# Search Bar #}
 <section style="max-width: 1400px; margin: 0 auto; padding: var(--nexus-space-12) var(--nexus-space-6);">
-  {% include "partials/nexus/organisms/search-bar.html" with
-     placeholder="Search listings..."
-     action="/api/listings/search"
-     hx_get="/api/listings/search"
-     hx_target="#listings-results"
-     filters=true
-  %}
+  {% include "partials/nexus/organisms/search-bar.html" %}
 </section>
 
 {# Featured Categories #}
@@ -40,66 +19,24 @@
   </h2>
 
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--nexus-space-6);">
-    {% include "partials/nexus/molecules/category-card.html" with
-       category_name="Electronics"
-       category_slug="electronics"
-       listing_count=24
-       icon="⚡"
-       description="High-tech devices and gadgets"
-       featured=true
-    %}
+    {% include "partials/nexus/molecules/category-card.html" %}
 
-    {% include "partials/nexus/molecules/category-card.html" with
-       category_name="Resources"
-       category_slug="resources"
-       listing_count=18
-       icon="📚"
-       description="Digital resources and guides"
-    %}
+    {% include "partials/nexus/molecules/category-card.html" %}
 
-    {% include "partials/nexus/molecules/category-card.html" with
-       category_name="Services"
-       category_slug="services"
-       listing_count=32
-       icon="💼"
-       description="Professional services"
-    %}
+    {% include "partials/nexus/molecules/category-card.html" %}
 
-    {% include "partials/nexus/molecules/category-card.html" with
-       category_name="Collectibles"
-       category_slug="collectibles"
-       listing_count=15
-       icon="🎨"
-       description="Rare and unique items"
-    %}
+    {% include "partials/nexus/molecules/category-card.html" %}
 
-    {% include "partials/nexus/molecules/category-card.html" with
-       category_name="Digital Art"
-       category_slug="digital-art"
-       listing_count=27
-       icon="🖼️"
-       description="NFTs and digital artwork"
-    %}
+    {% include "partials/nexus/molecules/category-card.html" %}
 
-    {% include "partials/nexus/molecules/category-card.html" with
-       category_name="Other"
-       category_slug="other"
-       listing_count=9
-       icon="•••"
-       description="Miscellaneous items"
-    %}
+    {% include "partials/nexus/molecules/category-card.html" %}
   </div>
 </section>
 
 {# Vendor CTA #}
 {% if logged_in and role == "vendor" %}
 <section style="max-width: 1400px; margin: 0 auto; padding: 0 var(--nexus-space-6) var(--nexus-space-8);">
-  {% include "partials/nexus/atoms/button.html" with
-     text="+ Create New Listing"
-     href="/listings/new"
-     variant="primary"
-     size="lg"
-  %}
+  {% include "partials/nexus/atoms/button.html" %}
 </section>
 {% endif %}
 
@@ -112,46 +49,20 @@
   <div id="listings-results" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--nexus-space-6);">
     {% if listings and listings | length > 0 %}
       {% for listing in listings %}
-        {% include "partials/nexus/molecules/product-card.html" with
-           listing_id=listing.id
-           title=listing.title
-           price_xmr=listing.price_xmr
-           vendor_name=listing.vendor_name | default(value="Anonymous")
-           vendor_id=listing.vendor_id
-           image_url=listing.first_image_cid
-           category=listing.category
-           rating=4
-           review_count=12
-           stock_status="in_stock"
-           featured=loop.index <= 3
-           glassmorphism=true
-        %}
+        {% include "partials/nexus/molecules/product-card.html" %}
       {% endfor %}
     {% else %}
       {# Empty State #}
       <div style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--nexus-space-20); text-align: center;">
-        {% include "partials/nexus/molecules/skeleton.html" with
-           variant="card"
-           class="empty-state-skeleton"
-        %}
+        {% include "partials/nexus/molecules/skeleton.html" %}
 
         <div style="margin-top: var(--nexus-space-8);">
-          {% include "partials/nexus/molecules/alert.html" with
-             title="No Listings Available"
-             message="There are no listings available at the moment. Check back soon or create the first one!"
-             variant="info"
-             dismissible=false
-          %}
+          {% include "partials/nexus/molecules/alert.html" %}
         </div>
 
         {% if logged_in and role == "vendor" %}
           <div style="margin-top: var(--nexus-space-6);">
-            {% include "partials/nexus/atoms/button.html" with
-               text="Create the First Listing"
-               href="/listings/new"
-               variant="primary"
-               size="lg"
-            %}
+            {% include "partials/nexus/atoms/button.html" %}
           </div>
         {% endif %}
       </div>
@@ -166,37 +77,13 @@
   </h2>
 
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--nexus-space-6);">
-    {% include "partials/nexus/molecules/card.html" with
-       title="🔒 2-of-3 Multisig Escrow"
-       content="<p>Your funds are protected by Monero's advanced 2-of-3 multisig escrow. No single party can access the funds without consensus.</p>"
-       variant="elevated"
-       glassmorphism=true
-       hover_effect="lift"
-    %}
+    {% include "partials/nexus/molecules/card.html" %}
 
-    {% include "partials/nexus/molecules/card.html" with
-       title="👻 Complete Privacy"
-       content="<p>All transactions use Monero (XMR) for untraceable, private payments. Your financial privacy is guaranteed.</p>"
-       variant="elevated"
-       glassmorphism=true
-       hover_effect="lift"
-    %}
+    {% include "partials/nexus/molecules/card.html" %}
 
-    {% include "partials/nexus/molecules/card.html" with
-       title="🕵️ Tor Network"
-       content="<p>Access the marketplace through Tor for complete anonymity. Your identity and location remain private.</p>"
-       variant="elevated"
-       glassmorphism=true
-       hover_effect="lift"
-    %}
+    {% include "partials/nexus/molecules/card.html" %}
 
-    {% include "partials/nexus/molecules/card.html" with
-       title="⚖️ Fair Dispute Resolution"
-       content="<p>Neutral arbiters help resolve disputes fairly. The 2-of-3 multisig ensures consensus-based outcomes.</p>"
-       variant="elevated"
-       glassmorphism=true
-       hover_effect="lift"
-    %}
+    {% include "partials/nexus/molecules/card.html" %}
   </div>
 </section>
 

@@ -7,9 +7,14 @@ use monero_marketplace_common::{
 };
 use monero_marketplace_wallet::MoneroClient;
 use std::collections::HashMap;
+use std::sync::Arc;
 use thiserror::Error;
-use tracing::info;
+use tracing::{info, error, debug, warn};
 use uuid::Uuid;
+
+use crate::db::DbPool;
+use crate::repositories::MultisigStateRepository;
+use crate::models::multisig_state::{MultisigPhase, MultisigSnapshot};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum WalletRole {
@@ -67,6 +72,9 @@ pub struct WalletManager {
     pub wallets: HashMap<Uuid, WalletInstance>,
     rpc_configs: Vec<MoneroConfig>,
     next_rpc_index: usize,
+    // Multisig state persistence (Option for backward compatibility)
+    multisig_repo: Option<Arc<MultisigStateRepository>>,
+    db_pool: Option<DbPool>,
 }
 
 impl WalletManager {
@@ -84,6 +92,57 @@ impl WalletManager {
             wallets: HashMap::new(),
             rpc_configs: configs,
             next_rpc_index: 0,
+            multisig_repo: None,
+            db_pool: None,
+        })
+    }
+
+    /// Create WalletManager with multisig state persistence enabled
+    ///
+    /// This constructor enables automatic persistence of multisig wallet states
+    /// to the database, allowing recovery after server restarts.
+    ///
+    /// # Arguments
+    /// * `configs` - Monero RPC endpoint configurations
+    /// * `db_pool` - Database connection pool
+    /// * `encryption_key` - 32-byte key for AES-256-GCM field encryption
+    ///
+    /// # Returns
+    /// WalletManager instance with persistence enabled
+    ///
+    /// # Example
+    /// ```ignore
+    /// let encryption_key = env::var("MULTISIG_ENCRYPTION_KEY")?.into_bytes();
+    /// let wallet_manager = WalletManager::new_with_persistence(
+    ///     rpc_configs,
+    ///     db_pool.clone(),
+    ///     encryption_key,
+    /// )?;
+    /// ```
+    pub fn new_with_persistence(
+        configs: Vec<MoneroConfig>,
+        db_pool: DbPool,
+        encryption_key: Vec<u8>,
+    ) -> Result<Self> {
+        if configs.is_empty() {
+            return Err(anyhow::anyhow!(
+                "At least one Monero RPC config is required"
+            ));
+        }
+
+        let multisig_repo = MultisigStateRepository::new(db_pool.clone(), encryption_key);
+
+        info!(
+            "WalletManager initialized with {} RPC endpoints and persistence enabled",
+            configs.len()
+        );
+
+        Ok(Self {
+            wallets: HashMap::new(),
+            rpc_configs: configs,
+            next_rpc_index: 0,
+            multisig_repo: Some(Arc::new(multisig_repo)),
+            db_pool: Some(db_pool),
         })
     }
 
@@ -266,8 +325,68 @@ impl WalletManager {
         Ok(id)
     }
 
+    // ========== MULTISIG STATE PERSISTENCE HELPERS ==========
+
+    /// Helper: Persist multisig state to database
+    ///
+    /// Called after each successful multisig transition to ensure state is saved.
+    /// If persistence is not enabled (multisig_repo is None), this is a no-op.
+    ///
+    /// # Arguments
+    /// * `escrow_id` - Escrow identifier
+    /// * `phase` - New multisig phase to persist
+    ///
+    /// # Returns
+    /// Ok(()) on success, Err if persistence fails
+    ///
+    /// # Errors
+    /// Returns WalletManagerError if repository save fails
+    async fn persist_multisig_state(
+        &self,
+        escrow_id: &str,
+        phase: MultisigPhase,
+    ) -> Result<(), WalletManagerError> {
+        // Skip if persistence not enabled
+        let Some(ref repo) = self.multisig_repo else {
+            debug!("Multisig persistence not enabled, skipping save for escrow {}", escrow_id);
+            return Ok(());
+        };
+
+        // Build snapshot with current wallet states
+        let mut wallet_ids = HashMap::new();
+        let mut rpc_urls = HashMap::new();
+
+        for (uuid, instance) in &self.wallets {
+            let role_str = match instance.role {
+                WalletRole::Buyer => "buyer",
+                WalletRole::Vendor => "vendor",
+                WalletRole::Arbiter => "arbiter",
+            };
+            wallet_ids.insert(role_str.to_string(), *uuid);
+            // TODO: Store actual RPC URL when available from MoneroClient
+            rpc_urls.insert(role_str.to_string(), "localhost:18082".to_string());
+        }
+
+        let snapshot = MultisigSnapshot::new(phase.clone(), wallet_ids, rpc_urls);
+
+        // Persist to database
+        repo.save_phase(escrow_id, &phase, &snapshot)
+            .map_err(|e| {
+                error!(escrow_id, error = %e, "Failed to persist multisig state");
+                WalletManagerError::RpcError(CommonError::MoneroRpc(
+                    format!("Persistence failed: {}", e),
+                ))
+            })?;
+
+        debug!(escrow_id, phase = ?phase, "✅ Multisig state persisted");
+        Ok(())
+    }
+
+    // ========== PUBLIC MULTISIG METHODS ==========
+
     pub async fn make_multisig(
         &mut self,
+        escrow_id: &str,
         wallet_id: Uuid,
         _participants: Vec<String>,
     ) -> Result<MultisigInfo, WalletManagerError> {
@@ -278,6 +397,14 @@ impl WalletManager {
 
         let info = wallet.rpc_client.multisig().prepare_multisig().await?;
         wallet.multisig_state = MultisigState::PreparedInfo(info.clone());
+
+        // Persist state: Preparing phase
+        let phase = MultisigPhase::Preparing {
+            completed: vec![wallet_id.to_string()],
+        };
+        self.persist_multisig_state(escrow_id, phase).await?;
+
+        info!(escrow_id, wallet_id = %wallet_id, "Multisig preparation completed and persisted");
         Ok(info)
     }
 
@@ -286,7 +413,9 @@ impl WalletManager {
         escrow_id: Uuid,
         info_from_all: Vec<MultisigInfo>,
     ) -> Result<(), WalletManagerError> {
+        let escrow_id_str = escrow_id.to_string();
         info!("Exchanging multisig info for escrow {}", escrow_id);
+
         // This is a simplified implementation. A real one would be more complex.
         for wallet in self.wallets.values_mut() {
             let other_infos = info_from_all
@@ -300,9 +429,22 @@ impl WalletManager {
                 .make_multisig(2, other_infos)
                 .await?;
             wallet.multisig_state = MultisigState::Ready {
-                address: result.address,
+                address: result.address.clone(),
             };
         }
+
+        // Persist state: Exchanging phase (round 1)
+        let mut infos_map = HashMap::new();
+        for (idx, info) in info_from_all.iter().enumerate() {
+            infos_map.insert(format!("participant_{}", idx), info.multisig_info.clone());
+        }
+        let phase = MultisigPhase::Exchanging {
+            round: 1,
+            infos: infos_map,
+        };
+        self.persist_multisig_state(&escrow_id_str, phase).await?;
+
+        info!(escrow_id = %escrow_id, "Multisig info exchange completed and persisted");
         Ok(())
     }
 
@@ -310,7 +452,9 @@ impl WalletManager {
         &mut self,
         escrow_id: Uuid,
     ) -> Result<String, WalletManagerError> {
+        let escrow_id_str = escrow_id.to_string();
         info!("Finalizing multisig for escrow {}", escrow_id);
+
         let mut addresses = std::collections::HashSet::new();
         for wallet in self.wallets.values() {
             if let MultisigState::Ready { address } = &wallet.multisig_state {
@@ -324,13 +468,23 @@ impl WalletManager {
             });
         }
 
-        addresses
+        let multisig_address = addresses
             .into_iter()
             .next()
             .ok_or(WalletManagerError::InvalidState {
                 expected: "at least one wallet in Ready state".to_string(),
                 actual: "none".to_string(),
-            })
+            })?;
+
+        // Persist state: Ready phase
+        let phase = MultisigPhase::Ready {
+            address: multisig_address.clone(),
+            finalized_at: chrono::Utc::now().timestamp(),
+        };
+        self.persist_multisig_state(&escrow_id_str, phase).await?;
+
+        info!(escrow_id = %escrow_id, address = %multisig_address, "Multisig finalized and persisted");
+        Ok(multisig_address)
     }
 
     /// Release funds from escrow to vendor (requires 2-of-3 signatures)
@@ -674,6 +828,186 @@ impl WalletManager {
             amount: transfer.amount,
             block_height: Some(transfer.block_height),
         })
+    }
+
+    /// Recover active escrows from database after server restart
+    ///
+    /// Queries the repository for all active escrows and reconstructs
+    /// WalletInstance objects in memory. Uses Log + Continue policy
+    /// so individual escrow failures don't prevent server startup.
+    ///
+    /// # Returns
+    /// Vec of successfully recovered escrow IDs
+    ///
+    /// # Errors
+    /// Only fatal errors that prevent any recovery. Individual escrow
+    /// failures are logged but don't cause method to fail.
+    pub async fn recover_active_escrows(&mut self) -> Result<Vec<String>, WalletManagerError> {
+        // Skip if persistence not enabled
+        let Some(ref repo) = self.multisig_repo else {
+            debug!("Multisig persistence not enabled, skipping recovery");
+            return Ok(vec![]);
+        };
+
+        info!("Starting multisig wallet recovery from database");
+
+        // Query all active escrows
+        let snapshots = repo
+            .find_active_escrows()
+            .map_err(|e| {
+                error!(error = %e, "Failed to query active escrows from database");
+                WalletManagerError::RpcError(CommonError::MoneroRpc(
+                    format!("Recovery query failed: {}", e),
+                ))
+            })?;
+
+        if snapshots.is_empty() {
+            info!("No active escrows found to recover");
+            return Ok(vec![]);
+        }
+
+        info!("Found {} active escrows to recover", snapshots.len());
+
+        let mut recovered_escrow_ids = Vec::new();
+
+        // Recover each escrow (Log + Continue policy)
+        for (escrow_id, snapshot) in &snapshots {
+            match self.recover_single_escrow(escrow_id, snapshot).await {
+                Ok(_) => {
+                    info!(escrow_id, "✅ Escrow recovered successfully");
+                    recovered_escrow_ids.push(escrow_id.clone());
+                }
+                Err(e) => {
+                    // Log but don't fail - continue with other escrows
+                    warn!(
+                        escrow_id,
+                        error = %e,
+                        "Failed to recover escrow, skipping (Log + Continue policy)"
+                    );
+                }
+            }
+        }
+
+        info!(
+            "Recovery complete: {}/{} escrows recovered successfully",
+            recovered_escrow_ids.len(),
+            snapshots.len()
+        );
+
+        Ok(recovered_escrow_ids)
+    }
+
+    /// Recover a single escrow from snapshot
+    ///
+    /// Helper method for recover_active_escrows(). Reconstructs wallet
+    /// instances for buyer/vendor/arbiter based on persisted state.
+    ///
+    /// # Arguments
+    /// * `escrow_id` - Escrow identifier
+    /// * `snapshot` - Persisted multisig snapshot
+    ///
+    /// # Returns
+    /// Ok(()) if all wallets reconstructed successfully
+    ///
+    /// # Errors
+    /// Returns error if wallet reconstruction fails (missing RPC URL, connection failed, etc.)
+    async fn recover_single_escrow(
+        &mut self,
+        escrow_id: &str,
+        snapshot: &MultisigSnapshot,
+    ) -> Result<(), WalletManagerError> {
+        debug!(escrow_id, phase = ?snapshot.phase, "Recovering escrow");
+
+        // Reconstruct wallet instances for each role
+        for (role_str, wallet_uuid) in &snapshot.wallet_ids {
+            let role = match role_str.as_str() {
+                "buyer" => WalletRole::Buyer,
+                "vendor" => WalletRole::Vendor,
+                "arbiter" => WalletRole::Arbiter,
+                _ => {
+                    warn!(escrow_id, role = role_str, "Unknown role, skipping");
+                    continue;
+                }
+            };
+
+            // Get RPC URL from snapshot
+            let rpc_url = snapshot
+                .rpc_urls
+                .get(role_str)
+                .ok_or_else(|| {
+                    WalletManagerError::InvalidState {
+                        expected: format!("RPC URL for {}", role_str),
+                        actual: "not found in snapshot".to_string(),
+                    }
+                })?;
+
+            // Reconstruct MoneroClient connection
+            let config = MoneroConfig {
+                rpc_url: format!("http://{}/json_rpc", rpc_url),
+                rpc_user: None, // TODO: Store auth in snapshot if needed
+                rpc_password: None,
+                timeout_seconds: 30,
+            };
+
+            let rpc_client = MoneroClient::new(config)
+                .map_err(|e| {
+                    WalletManagerError::RpcError(CommonError::MoneroRpc(
+                        format!("Failed to reconnect to {} wallet RPC: {}", role_str, e),
+                    ))
+                })?;
+
+            // Get current wallet address
+            let wallet_info = rpc_client
+                .get_wallet_info()
+                .await
+                .map_err(|e| {
+                    WalletManagerError::RpcError(CommonError::MoneroRpc(
+                        format!("Failed to get wallet info during recovery: {}", e),
+                    ))
+                })?;
+
+            // Determine multisig state from phase
+            let multisig_state = match &snapshot.phase {
+                MultisigPhase::NotStarted => MultisigState::NotStarted,
+                MultisigPhase::Preparing { .. } => MultisigState::NotStarted,
+                MultisigPhase::Exchanging { round, .. } => MultisigState::InfoExchanged {
+                    round: *round,
+                    participants: vec![], // TODO: Reconstruct from snapshot if needed
+                },
+                MultisigPhase::Ready { address, .. } => MultisigState::Ready {
+                    address: address.clone(),
+                },
+                MultisigPhase::Failed { .. } => {
+                    warn!(escrow_id, "Escrow in Failed state, not recovering");
+                    return Err(WalletManagerError::InvalidState {
+                        expected: "Active phase".to_string(),
+                        actual: "Failed".to_string(),
+                    });
+                }
+            };
+
+            // Reconstruct WalletInstance
+            let instance = WalletInstance {
+                id: *wallet_uuid,
+                role: role.clone(),
+                rpc_client,
+                address: wallet_info.address.clone(),
+                multisig_state,
+            };
+
+            // Insert into in-memory wallet map
+            self.wallets.insert(*wallet_uuid, instance);
+
+            debug!(
+                escrow_id,
+                role = ?role,
+                wallet_id = %wallet_uuid,
+                address = %wallet_info.address,
+                "Wallet instance reconstructed"
+            );
+        }
+
+        Ok(())
     }
 }
 

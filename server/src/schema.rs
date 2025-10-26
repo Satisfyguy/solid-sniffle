@@ -21,6 +21,7 @@ diesel::table! {
         multisig_phase -> Text,
         multisig_state_json -> Nullable<Text>,
         multisig_updated_at -> Integer,
+        recovery_mode -> Text,
     }
 }
 
@@ -93,10 +94,26 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    wallet_rpc_configs (wallet_id) {
+        wallet_id -> Nullable<Text>,
+        escrow_id -> Text,
+        role -> Text,
+        rpc_url_encrypted -> Binary,
+        rpc_user_encrypted -> Nullable<Binary>,
+        rpc_password_encrypted -> Nullable<Binary>,
+        created_at -> Integer,
+        last_connected_at -> Nullable<Integer>,
+        connection_attempts -> Integer,
+        last_error -> Nullable<Text>,
+    }
+}
+
 diesel::joinable!(escrows -> orders (order_id));
 diesel::joinable!(listings -> users (vendor_id));
 diesel::joinable!(orders -> listings (listing_id));
 diesel::joinable!(transactions -> escrows (escrow_id));
+diesel::joinable!(wallet_rpc_configs -> escrows (escrow_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     escrows,
@@ -105,4 +122,5 @@ diesel::allow_tables_to_appear_in_same_query!(
     reviews,
     transactions,
     users,
+    wallet_rpc_configs,
 );

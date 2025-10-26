@@ -2,11 +2,7 @@
   NEXUS TOAST COMPONENT (Notification)
 
   Usage:
-    {% include "partials/nexus/molecules/toast.html" with
-       message="Successfully saved changes"
-       variant="success"
-       duration=3000
-    %}
+    {% include "partials/nexus/molecules/toast.html" %}
 
   Parameters:
     - message (required): Toast message content
@@ -26,14 +22,19 @@
 {% set toast_dismissible = dismissible | default(value=true) %}
 
 {# Default icons for each variant #}
-{% set default_icons = {
-  "info": "ℹ️",
-  "success": "✅",
-  "warning": "⚠️",
-  "error": "❌"
-} %}
+{% if type == "success" %}
+  {% set icon = "check-circle" %}
+{% elif type == "error" %}
+  {% set icon = "x-circle" %}
+{% elif type == "warning" %}
+  {% set icon = "alert-triangle" %}
+{% elif type == "info" %}
+  {% set icon = "info" %}
+{% else %}
+  {% set icon = "bell" %}
+{% endif %}
 
-{% set toast_icon = icon | default(value=default_icons[toast_variant]) %}
+
 
 {# Generate unique ID if not provided #}
 {% set toast_id = id | default(value="toast-" ~ range(end=10000) | random) %}

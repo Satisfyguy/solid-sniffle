@@ -1,12 +1,9 @@
 {#
-  NEXUS BADGE COMPONENT
+  NEXUS BADGE COMPONENT (MACRO)
 
   Usage:
-    {% include "partials/nexus/atoms/badge.html" with
-       text="NEW"
-       variant="primary"
-       class=""
-    %}
+    {% import "partials/nexus/atoms/badge.html" as badge_component %}
+    {{ badge_component::badge(text="NEW", variant="primary") }}
 
   Parameters:
     - text (required): Badge text content
@@ -17,33 +14,25 @@
 
   Examples:
     Status badge:
-      {% include "partials/nexus/atoms/badge.html" with text="Active" variant="success" %}
+      {{ badge_component::badge(text="Active", variant="success") }}
 
     Order status:
-      {% include "partials/nexus/atoms/badge.html" with text="Shipped" status="shipped" %}
+      {{ badge_component::badge(text="Shipped", status="shipped") }}
 
     Outlined badge:
-      {% include "partials/nexus/atoms/badge.html" with text="Beta" variant="outline" %}
+      {{ badge_component::badge(text="Beta", variant="outline") }}
 #}
 
-{% set badge_variant = variant | default(value="default") %}
+{% macro badge(text, variant="default", status="", class="", id="") %}
+  {%- if status -%}
+    {%- set css_classes = "nexus-badge nexus-badge-" ~ status -%}
+  {%- else -%}
+    {%- set css_classes = "nexus-badge nexus-badge-" ~ variant -%}
+  {%- endif -%}
 
-{# Build CSS classes #}
-{% if status %}
-  {# Use status-specific badge style #}
-  {% set css_classes = "nexus-badge nexus-badge-" ~ status %}
-{% else %}
-  {# Use variant style #}
-  {% set css_classes = "nexus-badge nexus-badge-" ~ badge_variant %}
-{% endif %}
+  {%- if class -%}
+    {%- set css_classes = css_classes ~ " " ~ class -%}
+  {%- endif -%}
 
-{% if class %}
-  {% set css_classes = css_classes ~ " " ~ class %}
-{% endif %}
-
-<span
-  class="{{ css_classes }}"
-  {% if id %}id="{{ id }}"{% endif %}
->
-  {{ text }}
-</span>
+  <span class="{{ css_classes }}"{% if id %} id="{{ id }}"{% endif %}>{{ text }}</span>
+{%- endmacro badge %}

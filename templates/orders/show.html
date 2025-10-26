@@ -43,23 +43,12 @@
 
       {# Order Timeline #}
       {% if timeline_events %}
-      {% include "partials/nexus/organisms/order-timeline.html" with
-         order_id=order.id
-         current_status=order.status
-         events=timeline_events
-      %}
+      {% include "partials/nexus/organisms/order-timeline.html" %}
       {% endif %}
 
       {# Escrow Visualizer #}
       {% if order.escrow_id %}
-      {% include "partials/nexus/organisms/escrow-visualizer.html" with
-         escrow_id=order.escrow_id
-         buyer_name="You"
-         vendor_name=vendor.username | default(value="Vendor")
-         arbiter_name="System Arbiter"
-         status=order.status
-         amount_xmr=order.total_xmr
-      %}
+      {% include "partials/nexus/organisms/escrow-visualizer.html" %}
       {% endif %}
     </div>
 
@@ -67,27 +56,7 @@
     <div style="position: sticky; top: var(--nexus-space-6); align-self: start; display: flex; flex-direction: column; gap: var(--nexus-space-6);">
 
       {# Order Summary #}
-      {% include "partials/nexus/molecules/card.html" with
-         title="Order Summary"
-         variant="elevated"
-         glassmorphism=true
-         content='
-           <div style="display: flex; flex-direction: column; gap: var(--nexus-space-4);">
-             <div>
-               <span style="display: block; font-size: var(--nexus-text-xs); color: var(--nexus-muted-fg); text-transform: uppercase; margin-bottom: var(--nexus-space-1);">Listing</span>
-               <a href="/listings/' ~ order.listing_id ~ '" style="font-size: var(--nexus-text-sm); color: var(--nexus-primary); text-decoration: none; font-weight: var(--nexus-weight-medium);">
-                 ' ~ (order.listing_title | default(value="View Listing")) ~ ' →
-               </a>
-             </div>
-
-             <div>
-               <span style="display: block; font-size: var(--nexus-text-xs); color: var(--nexus-muted-fg); text-transform: uppercase; margin-bottom: var(--nexus-space-1);">Total Amount</span>
-               <div style="font-size: var(--nexus-text-2xl); font-weight: var(--nexus-weight-black); background: linear-gradient(135deg, var(--nexus-primary) 0%, var(--nexus-accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-family: var(--nexus-font-mono);">
-                 ' ~ (order.total_xmr / 1000000000000) | round(precision=12) ~ ' XMR
-               </div>
-             </div>
-
-             {% if order.escrow_id %}
+      {% include "partials/nexus/molecules/card.html" %}
              <div>
                <span style="display: block; font-size: var(--nexus-text-xs); color: var(--nexus-muted-fg); text-transform: uppercase; margin-bottom: var(--nexus-space-1);">Escrow ID</span>
                <code style="font-size: var(--nexus-text-xs); color: var(--nexus-fg); background: var(--nexus-muted); padding: var(--nexus-space-1) var(--nexus-space-2); border-radius: var(--nexus-radius-sm); display: block; word-break: break-all;">
@@ -103,44 +72,20 @@
       <div style="display: flex; flex-direction: column; gap: var(--nexus-space-3);">
         {% if order.status == "pending" and role == "buyer" %}
           {# Fund Escrow Button #}
-          {% include "partials/nexus/atoms/button.html" with
-             text="Fund Escrow"
-             variant="primary"
-             size="lg"
-             hx_post="/api/orders/" ~ order.id ~ "/fund"
-             class="w-full"
-          %}
+          {% include "partials/nexus/atoms/button.html" %}
 
         {% elif order.status == "funded" and role == "vendor" %}
           {# Mark as Shipped Button #}
-          {% include "partials/nexus/atoms/button.html" with
-             text="Mark as Shipped"
-             variant="primary"
-             size="lg"
-             hx_post="/api/orders/" ~ order.id ~ "/ship"
-             class="w-full"
-          %}
+          {% include "partials/nexus/atoms/button.html" %}
 
         {% elif order.status == "shipped" and role == "buyer" %}
           {# Confirm Receipt Button #}
-          {% include "partials/nexus/atoms/button.html" with
-             text="Confirm Receipt"
-             variant="primary"
-             size="lg"
-             hx_post="/api/orders/" ~ order.id ~ "/complete"
-             class="w-full"
-          %}
+          {% include "partials/nexus/atoms/button.html" %}
         {% endif %}
 
         {# Dispute Button (if applicable) #}
         {% if order.status in ["funded", "shipped"] %}
-          {% include "partials/nexus/atoms/button.html" with
-             text="Open Dispute"
-             variant="destructive"
-             size="md"
-             hx_post="/api/orders/" ~ order.id ~ "/dispute"
-             class="w-full"
-          %}
+          {% include "partials/nexus/atoms/button.html" %}
         {% endif %}
       </div>
     </div>

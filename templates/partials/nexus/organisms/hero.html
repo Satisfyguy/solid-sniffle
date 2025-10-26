@@ -2,12 +2,7 @@
   NEXUS HERO COMPONENT
 
   Usage:
-    {% include "partials/nexus/organisms/hero.html" with
-       title="NEXUS"
-       subtitle="Secure Monero Marketplace"
-       cta_primary_text="Browse Listings"
-       cta_primary_url="/listings"
-    %}
+    {% include "partials/nexus/organisms/hero.html" %}
 
   Parameters:
     - title (required): Main hero title
@@ -53,7 +48,7 @@
         {% if hero_animated %}
           {# Animated letters #}
           {% for char in title %}
-            <span class="nexus-hero-letter" style="--i: {{ loop.index0 }}">{{ char if char != ' ' else '&nbsp;' | safe }}</span>
+            <span class="nexus-hero-letter" style="--i: {{ loop.index0 }}">{% if char != ' ' %}{{char | safe }}{% else %}{{'&nbsp;' | safe }}{% endif %}</span>
           {% endfor %}
         {% else %}
           {{ title }}
@@ -75,21 +70,11 @@
     {% if cta_primary_text or cta_secondary_text %}
       <div class="nexus-hero-cta">
         {% if cta_primary_text %}
-          {% include "partials/nexus/atoms/button.html" with
-             text=cta_primary_text
-             href=cta_primary_url
-             variant="primary"
-             size="lg"
-          %}
+          {% include "partials/nexus/atoms/button.html" %}
         {% endif %}
 
         {% if cta_secondary_text %}
-          {% include "partials/nexus/atoms/button.html" with
-             text=cta_secondary_text
-             href=cta_secondary_url
-             variant="outline"
-             size="lg"
-          %}
+          {% include "partials/nexus/atoms/button.html" %}
         {% endif %}
       </div>
     {% endif %}
@@ -98,7 +83,7 @@
   {# Stats Banner #}
   {% if hero_show_stats and stats %}
     <div class="nexus-hero-stats">
-      {% include "partials/nexus/organisms/stats-banner.html" with stats=stats %}
+      {% include "partials/nexus/organisms/stats-banner.html" %}
     </div>
   {% endif %}
 </section>

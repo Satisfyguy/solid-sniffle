@@ -1,19 +1,9 @@
 {#
-  NEXUS BUTTON COMPONENT
+  NEXUS BUTTON COMPONENT (MACRO)
 
   Usage:
-    {% include "partials/nexus/atoms/button.html" with
-       text="Click me"
-       variant="primary"
-       size="md"
-       type="button"
-       disabled=false
-       href=""
-       hx_get=""
-       hx_post=""
-       hx_target=""
-       class=""
-    %}
+    {% import "partials/nexus/atoms/button.html" as btn %}
+    {{ btn::button(text="Click me", variant="primary") }}
 
   Parameters:
     - text (required): Button text content
@@ -35,72 +25,46 @@
 
   Examples:
     Primary button:
-      {% include "partials/nexus/atoms/button.html" with text="Save" variant="primary" %}
+      {{ btn::button(text="Save", variant="primary") }}
 
     Link button:
-      {% include "partials/nexus/atoms/button.html" with text="Go Home" href="/" variant="outline" %}
+      {{ btn::button(text="Go Home", href="/", variant="outline") }}
 
     HTMX button:
-      {% include "partials/nexus/atoms/button.html" with
-         text="Load More"
-         hx_get="/api/listings"
-         hx_target="#listings"
-         variant="ghost"
-      %}
+      {{ btn::button(text="Load More", hx_get="/api/listings", hx_target="#listings", variant="ghost") }}
 #}
 
-{% set btn_variant = variant | default(value="primary") %}
-{% set btn_size = size | default(value="md") %}
-{% set btn_type = type | default(value="button") %}
-{% set btn_disabled = disabled | default(value=false) %}
+{% macro button(text, variant="primary", size="md", type="button", disabled=false, href="", hx_get="", hx_post="", hx_put="", hx_delete="", hx_target="", hx_swap="", hx_indicator="", class="", id="", aria_label="") %}
+  {%- set css_classes = "nexus-btn nexus-btn-" ~ variant ~ " nexus-btn-" ~ size -%}
+  {%- if class -%}
+    {%- set css_classes = css_classes ~ " " ~ class -%}
+  {%- endif -%}
 
-{# Build CSS classes #}
-{% set css_classes = "nexus-btn nexus-btn-" ~ btn_variant ~ " nexus-btn-" ~ btn_size %}
-{% if class %}
-  {% set css_classes = css_classes ~ " " ~ class %}
-{% endif %}
-
-{# Render as link if href provided #}
-{% if href %}
-  <a
-    href="{{ href }}"
-    class="{{ css_classes }}"
-    {% if id %}id="{{ id }}"{% endif %}
-    {% if aria_label %}aria-label="{{ aria_label }}"{% endif %}
-    {% if btn_disabled %}
-      aria-disabled="true"
-      tabindex="-1"
-      style="pointer-events: none; opacity: 0.5;"
-    {% endif %}
-    {# HTMX attributes #}
-    {% if hx_get %}hx-get="{{ hx_get }}"{% endif %}
-    {% if hx_post %}hx-post="{{ hx_post }}"{% endif %}
-    {% if hx_put %}hx-put="{{ hx_put }}"{% endif %}
-    {% if hx_delete %}hx-delete="{{ hx_delete }}"{% endif %}
-    {% if hx_target %}hx-target="{{ hx_target }}"{% endif %}
-    {% if hx_swap %}hx-swap="{{ hx_swap }}"{% endif %}
-    {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
-  >
-    {{ text }}
-  </a>
-
-{# Render as button otherwise #}
-{% else %}
-  <button
-    type="{{ btn_type }}"
-    class="{{ css_classes }}"
-    {% if id %}id="{{ id }}"{% endif %}
-    {% if aria_label %}aria-label="{{ aria_label }}"{% endif %}
-    {% if btn_disabled %}disabled{% endif %}
-    {# HTMX attributes #}
-    {% if hx_get %}hx-get="{{ hx_get }}"{% endif %}
-    {% if hx_post %}hx-post="{{ hx_post }}"{% endif %}
-    {% if hx_put %}hx-put="{{ hx_put }}"{% endif %}
-    {% if hx_delete %}hx-delete="{{ hx_delete }}"{% endif %}
-    {% if hx_target %}hx-target="{{ hx_target }}"{% endif %}
-    {% if hx_swap %}hx-swap="{{ hx_swap }}"{% endif %}
-    {% if hx_indicator %}hx-indicator="{{ hx_indicator }}"{% endif %}
-  >
-    {{ text }}
-  </button>
-{% endif %}
+  {%- if href -%}
+    <a href="{{ href }}" class="{{ css_classes }}"
+      {%- if id %} id="{{ id }}"{% endif -%}
+      {%- if aria_label %} aria-label="{{ aria_label }}"{% endif -%}
+      {%- if disabled %} aria-disabled="true" tabindex="-1" style="pointer-events: none; opacity: 0.5;"{% endif -%}
+      {%- if hx_get %} hx-get="{{ hx_get }}"{% endif -%}
+      {%- if hx_post %} hx-post="{{ hx_post }}"{% endif -%}
+      {%- if hx_put %} hx-put="{{ hx_put }}"{% endif -%}
+      {%- if hx_delete %} hx-delete="{{ hx_delete }}"{% endif -%}
+      {%- if hx_target %} hx-target="{{ hx_target }}"{% endif -%}
+      {%- if hx_swap %} hx-swap="{{ hx_swap }}"{% endif -%}
+      {%- if hx_indicator %} hx-indicator="{{ hx_indicator }}"{% endif -%}
+    >{{ text }}</a>
+  {%- else -%}
+    <button type="{{ type }}" class="{{ css_classes }}"
+      {%- if id %} id="{{ id }}"{% endif -%}
+      {%- if aria_label %} aria-label="{{ aria_label }}"{% endif -%}
+      {%- if disabled %} disabled{% endif -%}
+      {%- if hx_get %} hx-get="{{ hx_get }}"{% endif -%}
+      {%- if hx_post %} hx-post="{{ hx_post }}"{% endif -%}
+      {%- if hx_put %} hx-put="{{ hx_put }}"{% endif -%}
+      {%- if hx_delete %} hx-delete="{{ hx_delete }}"{% endif -%}
+      {%- if hx_target %} hx-target="{{ hx_target }}"{% endif -%}
+      {%- if hx_swap %} hx-swap="{{ hx_swap }}"{% endif -%}
+      {%- if hx_indicator %} hx-indicator="{{ hx_indicator }}"{% endif -%}
+    >{{ text }}</button>
+  {%- endif -%}
+{%- endmacro button %}

@@ -154,6 +154,54 @@ pub enum WsEvent {
         buyer_id: Uuid,
         vendor_id: Uuid,
     },
+    /// Warning that an escrow is approaching expiration
+    ///
+    /// Triggered when an escrow is within the warning threshold (default 1h) of its deadline.
+    /// Parties should complete required actions or the escrow will be auto-cancelled/refunded.
+    EscrowExpiring {
+        escrow_id: Uuid,
+        status: String,
+        expires_in_secs: u64,
+        action_required: String,
+    },
+    /// Notification that an escrow has expired
+    ///
+    /// Triggered when an escrow exceeds its timeout for the current status.
+    /// The escrow status has been updated to "expired" or "cancelled".
+    EscrowExpired {
+        escrow_id: Uuid,
+        previous_status: String,
+        reason: String,
+    },
+    /// Notification that an escrow was automatically cancelled due to timeout
+    ///
+    /// Occurs when setup/funding takes too long. No funds were lost as
+    /// multisig was not funded or transaction did not complete.
+    EscrowAutoCancelled {
+        escrow_id: Uuid,
+        reason: String,
+        cancelled_at_status: String,
+    },
+    /// Notification that a dispute has been escalated due to timeout
+    ///
+    /// Occurs when an arbiter does not resolve a dispute within the timeout period.
+    /// Admin intervention is now required, or automatic refund has been triggered.
+    DisputeEscalated {
+        escrow_id: Uuid,
+        arbiter_id: Uuid,
+        days_in_dispute: u64,
+        action_taken: String,
+    },
+    /// Alert that a transaction appears stuck (high confirmation timeout)
+    ///
+    /// Triggered when a "releasing" or "refunding" transaction has not confirmed
+    /// within the expected timeframe. May indicate blockchain congestion or other issues.
+    TransactionStuck {
+        escrow_id: Uuid,
+        tx_hash: String,
+        hours_pending: u64,
+        suggested_action: String,
+    },
 }
 
 // --- Handlers ---

@@ -2,15 +2,7 @@
   NEXUS ORDER TIMELINE COMPONENT
 
   Usage:
-    {% include "partials/nexus/organisms/order-timeline.html" with
-       order_id="abc123"
-       current_status="shipped"
-       events=[
-         {"status": "pending", "timestamp": "2025-01-15T10:00:00Z", "description": "Order created"},
-         {"status": "funded", "timestamp": "2025-01-15T10:30:00Z", "description": "Escrow funded"},
-         {"status": "shipped", "timestamp": "2025-01-16T14:00:00Z", "description": "Package shipped"}
-       ]
-    %}
+    {% include "partials/nexus/organisms/order-timeline.html" %}
 
   Parameters:
     - order_id (required): Order ID
@@ -38,10 +30,7 @@
     <h3 class="nexus-timeline-title">Order Timeline</h3>
     <div class="nexus-timeline-order-id">
       Order #{{ order_id }}
-      {% include "partials/nexus/atoms/badge.html" with
-         text=current_status | capitalize
-         variant="status-" ~ current_status
-      %}
+      {% include "partials/nexus/atoms/badge.html" %}
     </div>
   </div>
 

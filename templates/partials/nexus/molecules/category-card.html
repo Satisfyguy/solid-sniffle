@@ -2,12 +2,7 @@
   NEXUS CATEGORY CARD COMPONENT
 
   Usage:
-    {% include "partials/nexus/molecules/category-card.html" with
-       category_name="Electronics"
-       category_slug="electronics"
-       listing_count=142
-       icon="💻"
-    %}
+    {% include "partials/nexus/molecules/category-card.html" %}
 
   Parameters:
     - category_name (required): Category display name
@@ -70,10 +65,7 @@
     {# Featured Badge #}
     {% if category_featured %}
       <div class="nexus-category-card-featured-badge">
-        {% include "partials/nexus/atoms/badge.html" with
-           text="Featured"
-           variant="primary"
-        %}
+        {% include "partials/nexus/atoms/badge.html" %}
       </div>
     {% endif %}
   </div>

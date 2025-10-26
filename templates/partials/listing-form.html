@@ -2,11 +2,7 @@
   LISTING FORM PARTIAL
 
   Usage:
-    {% include "partials/listing-form.html" with
-       mode="create"
-       listing=listing
-       csrf_token=csrf_token
-    %}
+    {% include "partials/listing-form.html" %}
 
   Parameters:
     - mode: "create" or "edit"
@@ -18,46 +14,13 @@
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
   {# Title Field #}
-  {% include "partials/nexus/atoms/input.html" with
-     label="Title"
-     type="text"
-     id="title"
-     name="title"
-     placeholder="Product title"
-     value=listing.title if mode == "edit" else ""
-     required=true
-     minlength="3"
-     maxlength="200"
-     help_text="3-200 characters"
-  %}
+  {% include "partials/nexus/atoms/input.html" %}
 
   {# Description Field #}
-  {% include "partials/nexus/atoms/textarea.html" with
-     label="Description"
-     id="description"
-     name="description"
-     placeholder="Describe your product in detail..."
-     value=listing.description if mode == "edit" else ""
-     rows="8"
-     required=true
-     minlength="10"
-     maxlength="5000"
-     help_text="10-5000 characters"
-     show_count=true
-  %}
+  {% include "partials/nexus/atoms/textarea.html" %}
 
   {# Price Field #}
-  {% include "partials/nexus/atoms/input.html" with
-     label="Price (Atomic Units)"
-     type="number"
-     id="price_xmr"
-     name="price_xmr"
-     placeholder="0"
-     value=listing.price_xmr if mode == "edit" else ""
-     min="1"
-     required=true
-     help_text="1 XMR = 1,000,000,000,000 atomic units (piconeros)"
-  %}
+  {% include "partials/nexus/atoms/input.html" %}
 
   {# XMR Converter Helper #}
   <div style="margin-bottom: var(--nexus-space-6); padding: var(--nexus-space-4); background: rgba(0, 180, 216, 0.1); border: 1px solid rgba(0, 180, 216, 0.3); border-radius: var(--nexus-radius-md);">
@@ -92,24 +55,11 @@
   </div>
 
   {# Stock Field #}
-  {% include "partials/nexus/atoms/input.html" with
-     label="Stock"
-     type="number"
-     id="stock"
-     name="stock"
-     placeholder="0"
-     value=listing.stock if mode == "edit" else ""
-     min="0"
-     required=true
-     help_text="Available quantity"
-  %}
+  {% include "partials/nexus/atoms/input.html" %}
 
   {# Images Field #}
   <div style="margin-bottom: var(--nexus-space-6);">
-    {% include "partials/nexus/atoms/label.html" with
-       for="images"
-       text="Product Images"
-    %}
+    {% include "partials/nexus/atoms/label.html" %}
     <input
       type="file"
       id="images"
@@ -148,21 +98,9 @@
 
   {# Form Actions #}
   <div style="display: flex; gap: var(--nexus-space-4); margin-top: var(--nexus-space-8);">
-    {% include "partials/nexus/atoms/button.html" with
-       text="Cancel"
-       href="/listings"
-       variant="ghost"
-       size="lg"
-       class="flex-1"
-    %}
+    {% include "partials/nexus/atoms/button.html" %}
 
-    {% include "partials/nexus/atoms/button.html" with
-       text=("Update Listing →" if mode == "edit" else "Create Listing →")
-       type="submit"
-       variant="primary"
-       size="lg"
-       class="flex-1"
-    %}
+    {% include "partials/nexus/atoms/button.html" %}
   </div>
 </form>
 

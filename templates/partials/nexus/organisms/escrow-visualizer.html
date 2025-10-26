@@ -4,14 +4,7 @@
   Displays 2-of-3 multisig escrow status for orders
 
   Usage:
-    {% include "partials/nexus/organisms/escrow-visualizer.html" with
-       escrow_id="escrow123"
-       buyer_name="Alice"
-       vendor_name="Bob"
-       arbiter_name="Judge"
-       status="funded"
-       amount_xmr=1500000000000
-    %}
+    {% include "partials/nexus/organisms/escrow-visualizer.html" %}
 
   Parameters:
     - escrow_id (required): Escrow ID
@@ -40,10 +33,7 @@
       <h3 class="nexus-escrow-title">2-of-3 Multisig Escrow</h3>
       <span class="nexus-escrow-id">{{ escrow_id }}</span>
     </div>
-    {% include "partials/nexus/atoms/badge.html" with
-       text=status | capitalize
-       variant="status-" ~ status
-    %}
+    {% include "partials/nexus/atoms/badge.html" %}
   </div>
 
   {# Amount #}

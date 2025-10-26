@@ -6,24 +6,12 @@
 
 {# Breadcrumb #}
 <section style="max-width: 1000px; margin: 0 auto; padding: var(--nexus-space-6) var(--nexus-space-6) 0;">
-  {% include "partials/nexus/molecules/breadcrumb.html" with
-     items=[
-       {"text": "Home", "href": "/", "icon": "🏠"},
-       {"text": "Listings", "href": "/listings"},
-       {"text": listing.title, "href": "/listings/" ~ listing.id},
-       {"text": "Edit"}
-     ]
-  %}
+  {% include "partials/nexus/molecules/breadcrumb.html" %}
 </section>
 
 {# Main Content #}
 <section style="max-width: 1000px; margin: 0 auto; padding: var(--nexus-space-6);">
-  {% include "partials/nexus/molecules/card.html" with
-     title="Edit Listing: " ~ listing.title
-     variant="elevated"
-     glassmorphism=true
-     content=include("partials/listing-form.html", with={"mode": "edit", "listing": listing, "images": images, "csrf_token": csrf_token})
-  %}
+  {% include "partials/nexus/molecules/card.html" %}
 </section>
 
 {% endblock %}

@@ -14,10 +14,10 @@ pub struct User {
     pub username: String,
     pub password_hash: String,
     pub role: String,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
     pub wallet_address: Option<String>,
     pub wallet_id: Option<String>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 #[derive(Clone, Insertable)]
