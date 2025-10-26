@@ -112,9 +112,18 @@ impl EscrowOrchestrator {
         }
 
         // 2. Register wallet RPC via WalletManager
+        // TODO: This should be called with actual escrow_id when wallet is registered for specific escrow
+        // For now, using temporary escrow_id and manual recovery mode
         let mut wallet_manager = self.wallet_manager.lock().await;
         let wallet_id = wallet_manager
-            .register_client_wallet_rpc(role, rpc_url.clone(), rpc_user, rpc_password)
+            .register_client_wallet_rpc(
+                "temp-escrow-needs-refactor",  // TODO: Pass actual escrow_id
+                role,
+                rpc_url.clone(),
+                rpc_user,
+                rpc_password,
+                "manual",  // Default to manual recovery for now
+            )
             .await
             .context("Failed to register client wallet RPC")?;
 

@@ -75,6 +75,8 @@ pub struct WalletManager {
     // Multisig state persistence (Option for backward compatibility)
     multisig_repo: Option<Arc<MultisigStateRepository>>,
     db_pool: Option<DbPool>,
+    // Encryption key for RPC config persistence (same as multisig_repo)
+    encryption_key: Option<Vec<u8>>,
 }
 
 impl WalletManager {
@@ -94,6 +96,7 @@ impl WalletManager {
             next_rpc_index: 0,
             multisig_repo: None,
             db_pool: None,
+            encryption_key: None,
         })
     }
 
@@ -130,7 +133,7 @@ impl WalletManager {
             ));
         }
 
-        let multisig_repo = MultisigStateRepository::new(db_pool.clone(), encryption_key);
+        let multisig_repo = MultisigStateRepository::new(db_pool.clone(), encryption_key.clone());
 
         info!(
             "WalletManager initialized with {} RPC endpoints and persistence enabled",
@@ -142,7 +145,8 @@ impl WalletManager {
             rpc_configs: configs,
             next_rpc_index: 0,
             multisig_repo: Some(Arc::new(multisig_repo)),
-            db_pool: Some(db_pool),
+            db_pool: Some(db_pool.clone()),
+            encryption_key: Some(encryption_key),
         })
     }
 
@@ -269,10 +273,12 @@ impl WalletManager {
     /// ```
     pub async fn register_client_wallet_rpc(
         &mut self,
+        escrow_id: &str,
         role: WalletRole,
         rpc_url: String,
         rpc_user: Option<String>,
         rpc_password: Option<String>,
+        recovery_mode: &str,
     ) -> Result<Uuid, WalletManagerError> {
         // NON-CUSTODIAL ENFORCEMENT: Only allow Buyer/Vendor (clients control these)
         if role == WalletRole::Arbiter {
@@ -287,6 +293,10 @@ impl WalletManager {
                 "URL must start with http:// or https://".to_string(),
             ));
         }
+
+        // Clone credentials for later persistence use
+        let rpc_user_clone = rpc_user.clone();
+        let rpc_password_clone = rpc_password.clone();
 
         // Create config from client-provided details
         let config = MoneroConfig {
@@ -306,23 +316,67 @@ impl WalletManager {
             .await
             .map_err(|e| WalletManagerError::InvalidRpcUrl(format!("Cannot access wallet: {}", e)))?;
 
+        let wallet_id = Uuid::new_v4();
+
         let instance = WalletInstance {
-            id: Uuid::new_v4(),
+            id: wallet_id,
             role: role.clone(),
             rpc_client,
             address: wallet_info.address.clone(),
             multisig_state: MultisigState::NotStarted,
         };
-        let id = instance.id;
-        self.wallets.insert(id, instance);
+        self.wallets.insert(wallet_id, instance);
+
+        // Persist RPC config if recovery_mode is 'automatic'
+        if recovery_mode == "automatic" {
+            if let (Some(ref pool), Some(ref key)) = (&self.db_pool, &self.encryption_key) {
+                use crate::models::wallet_rpc_config::WalletRpcConfig;
+
+                let mut conn = pool.get()
+                    .map_err(|e| WalletManagerError::RpcError(CommonError::MoneroRpc(
+                        format!("Failed to get DB connection: {}", e)
+                    )))?;
+
+                let role_str = match role {
+                    WalletRole::Buyer => "buyer",
+                    WalletRole::Vendor => "vendor",
+                    WalletRole::Arbiter => "arbiter",
+                };
+
+                WalletRpcConfig::save(
+                    &mut conn,
+                    &wallet_id.to_string(),
+                    escrow_id,
+                    role_str,
+                    &rpc_url,
+                    rpc_user_clone.as_deref(),
+                    rpc_password_clone.as_deref(),
+                    key,
+                ).map_err(|e| {
+                    error!(escrow_id, error = %e, "Failed to persist RPC config");
+                    WalletManagerError::RpcError(CommonError::MoneroRpc(
+                        format!("Failed to persist RPC config: {}", e)
+                    ))
+                })?;
+
+                info!(
+                    "✅ RPC config persisted for automatic recovery: escrow={}, wallet_id={}",
+                    escrow_id, wallet_id
+                );
+            } else {
+                warn!(
+                    "Recovery mode is 'automatic' but persistence not enabled (no db_pool or encryption_key)"
+                );
+            }
+        }
 
         info!(
             "✅ Registered client wallet: id={}, role={:?}, address={}",
-            id, role, wallet_info.address
+            wallet_id, role, wallet_info.address
         );
         info!("🔒 NON-CUSTODIAL: Client controls private keys at {}", rpc_url);
 
-        Ok(id)
+        Ok(wallet_id)
     }
 
     // ========== MULTISIG STATE PERSISTENCE HELPERS ==========
@@ -918,51 +972,100 @@ impl WalletManager {
     ) -> Result<(), WalletManagerError> {
         debug!(escrow_id, phase = ?snapshot.phase, "Recovering escrow");
 
-        // Reconstruct wallet instances for each role
-        for (role_str, wallet_uuid) in &snapshot.wallet_ids {
-            let role = match role_str.as_str() {
+        // Load RPC configs from database
+        let rpc_configs = if let (Some(ref pool), Some(ref key)) = (&self.db_pool, &self.encryption_key) {
+            use crate::models::wallet_rpc_config::WalletRpcConfig;
+
+            let mut conn = pool.get()
+                .map_err(|e| WalletManagerError::RpcError(CommonError::MoneroRpc(
+                    format!("Failed to get DB connection during recovery: {}", e)
+                )))?;
+
+            WalletRpcConfig::find_by_escrow(&mut conn, escrow_id)
+                .map_err(|e| {
+                    warn!(escrow_id, error = %e, "Failed to load RPC configs from DB");
+                    WalletManagerError::RpcError(CommonError::MoneroRpc(
+                        format!("Failed to load RPC configs: {}", e)
+                    ))
+                })?
+        } else {
+            warn!(escrow_id, "Cannot recover: persistence not enabled (no db_pool or encryption_key)");
+            return Err(WalletManagerError::InvalidState {
+                expected: "Persistence enabled for recovery".to_string(),
+                actual: "No db_pool or encryption_key".to_string(),
+            });
+        };
+
+        if rpc_configs.is_empty() {
+            warn!(escrow_id, "No RPC configs found in database for this escrow");
+            return Err(WalletManagerError::InvalidState {
+                expected: "At least one RPC config".to_string(),
+                actual: "No RPC configs in database".to_string(),
+            });
+        }
+
+        // Reconstruct wallet instances from RPC configs
+        for rpc_config in rpc_configs {
+            let wallet_uuid = uuid::Uuid::parse_str(&rpc_config.wallet_id.clone().unwrap_or_default())
+                .map_err(|e| WalletManagerError::InvalidState {
+                    expected: "Valid wallet UUID".to_string(),
+                    actual: format!("Invalid UUID: {}", e),
+                })?;
+
+            let role = match rpc_config.role.as_str() {
                 "buyer" => WalletRole::Buyer,
                 "vendor" => WalletRole::Vendor,
                 "arbiter" => WalletRole::Arbiter,
                 _ => {
-                    warn!(escrow_id, role = role_str, "Unknown role, skipping");
+                    warn!(escrow_id, role = %rpc_config.role, "Unknown role, skipping");
                     continue;
                 }
             };
 
-            // Get RPC URL from snapshot
-            let rpc_url = snapshot
-                .rpc_urls
-                .get(role_str)
-                .ok_or_else(|| {
-                    WalletManagerError::InvalidState {
-                        expected: format!("RPC URL for {}", role_str),
-                        actual: "not found in snapshot".to_string(),
-                    }
+            // Decrypt RPC credentials
+            let encryption_key = self.encryption_key.as_ref().unwrap();
+            let rpc_url = rpc_config.decrypt_url(encryption_key)
+                .map_err(|e| {
+                    error!(escrow_id, wallet_id = %wallet_uuid, error = %e, "Failed to decrypt RPC URL");
+                    WalletManagerError::RpcError(CommonError::MoneroRpc(
+                        format!("Decryption failed: {}", e)
+                    ))
                 })?;
 
-            // Reconstruct MoneroClient connection
+            let rpc_user = rpc_config.decrypt_user(encryption_key)
+                .map_err(|e| WalletManagerError::RpcError(CommonError::MoneroRpc(
+                    format!("Failed to decrypt RPC user: {}", e)
+                )))?;
+
+            let rpc_password = rpc_config.decrypt_password(encryption_key)
+                .map_err(|e| WalletManagerError::RpcError(CommonError::MoneroRpc(
+                    format!("Failed to decrypt RPC password: {}", e)
+                )))?;
+
+            // Reconnect to wallet RPC
             let config = MoneroConfig {
-                rpc_url: format!("http://{}/json_rpc", rpc_url),
-                rpc_user: None, // TODO: Store auth in snapshot if needed
-                rpc_password: None,
+                rpc_url: rpc_url.clone(),
+                rpc_user,
+                rpc_password,
                 timeout_seconds: 30,
             };
 
             let rpc_client = MoneroClient::new(config)
                 .map_err(|e| {
+                    error!(escrow_id, wallet_id = %wallet_uuid, role = ?role, error = %e, "Failed to reconnect to wallet RPC");
                     WalletManagerError::RpcError(CommonError::MoneroRpc(
-                        format!("Failed to reconnect to {} wallet RPC: {}", role_str, e),
+                        format!("Failed to reconnect to {} wallet RPC: {}", rpc_config.role, e),
                     ))
                 })?;
 
-            // Get current wallet address
+            // Verify wallet is accessible
             let wallet_info = rpc_client
                 .get_wallet_info()
                 .await
                 .map_err(|e| {
+                    error!(escrow_id, wallet_id = %wallet_uuid, error = %e, "Failed to get wallet info during recovery");
                     WalletManagerError::RpcError(CommonError::MoneroRpc(
-                        format!("Failed to get wallet info during recovery: {}", e),
+                        format!("Failed to get wallet info: {}", e),
                     ))
                 })?;
 
@@ -972,7 +1075,7 @@ impl WalletManager {
                 MultisigPhase::Preparing { .. } => MultisigState::NotStarted,
                 MultisigPhase::Exchanging { round, .. } => MultisigState::InfoExchanged {
                     round: *round,
-                    participants: vec![], // TODO: Reconstruct from snapshot if needed
+                    participants: vec![],
                 },
                 MultisigPhase::Ready { address, .. } => MultisigState::Ready {
                     address: address.clone(),
@@ -988,7 +1091,7 @@ impl WalletManager {
 
             // Reconstruct WalletInstance
             let instance = WalletInstance {
-                id: *wallet_uuid,
+                id: wallet_uuid,
                 role: role.clone(),
                 rpc_client,
                 address: wallet_info.address.clone(),
@@ -996,14 +1099,23 @@ impl WalletManager {
             };
 
             // Insert into in-memory wallet map
-            self.wallets.insert(*wallet_uuid, instance);
+            self.wallets.insert(wallet_uuid, instance);
 
-            debug!(
+            // Update last_connected_at timestamp
+            if let Some(ref pool) = self.db_pool {
+                use crate::models::wallet_rpc_config::WalletRpcConfig;
+                let mut conn = pool.get().ok();
+                if let Some(mut c) = conn {
+                    let _ = WalletRpcConfig::update_last_connected(&mut c, &wallet_uuid.to_string());
+                }
+            }
+
+            info!(
                 escrow_id,
                 role = ?role,
                 wallet_id = %wallet_uuid,
                 address = %wallet_info.address,
-                "Wallet instance reconstructed"
+                "✅ Wallet instance recovered and reconnected"
             );
         }
 
