@@ -123,6 +123,20 @@ async fn main() -> Result<()> {
                 } else {
                     info!("✅ Successfully recovered {} escrow wallet(s): {:?}",
                           recovered_escrows.len(), recovered_escrows);
+
+                    // Emit MultisigRecovered WebSocket events for each recovered escrow
+                    for escrow_id_str in &recovered_escrows {
+                        if let Ok(escrow_id) = Uuid::parse_str(escrow_id_str) {
+                            use server::websocket::WsEvent;
+                            websocket_server.do_send(WsEvent::MultisigRecovered {
+                                escrow_id,
+                                recovered_wallets: vec!["buyer".to_string(), "vendor".to_string(), "arbiter".to_string()],
+                                phase: "Recovered from persistence".to_string(),
+                                recovered_at: chrono::Utc::now().timestamp(),
+                            });
+                            info!("Sent MultisigRecovered event for escrow {}", escrow_id);
+                        }
+                    }
                 }
             }
             Err(e) => {

@@ -212,6 +212,26 @@ pub enum WsEvent {
         last_step: String,
         suggested_action: String,
     },
+    /// Alert that multisig setup has failed permanently
+    ///
+    /// Triggered when MultisigStateRepository marks an escrow as failed.
+    /// Indicates unrecoverable error requiring manual intervention or escrow cancellation.
+    MultisigSetupFailed {
+        escrow_id: Uuid,
+        reason: String,
+        failed_at_step: String,
+        can_retry: bool,
+    },
+    /// Notification that wallet recovery was successful
+    ///
+    /// Triggered after server restart when WalletManager successfully recovers
+    /// an escrow's wallet state from persisted RPC configs and multisig snapshots.
+    MultisigRecovered {
+        escrow_id: Uuid,
+        recovered_wallets: Vec<String>, // ["buyer", "vendor", "arbiter"]
+        phase: String,
+        recovered_at: i64, // Unix timestamp
+    },
 }
 
 // --- Handlers ---
