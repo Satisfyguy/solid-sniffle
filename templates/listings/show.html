@@ -1,175 +1,279 @@
-{% extends "base.html" %}
+{% extends "base-nexus.html" %}
 
-{% block title %}{{ listing.title | upper }} — AMAZAWN{% endblock %}
+{% block title %}{{ listing.title }} — NEXUS{% endblock %}
 
 {% block content %}
-<div class="container">
-    <!-- Back button -->
-    <div style="margin-bottom: 40px;">
-        <a href="/listings" style="color: #888; text-decoration: none; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;">
-            ← BACK TO LISTINGS
-        </a>
+
+{# Breadcrumb Navigation #}
+<section style="max-width: 1400px; margin: 0 auto; padding: var(--nexus-space-6) var(--nexus-space-6) 0;">
+  {% include "partials/nexus/molecules/breadcrumb.html" with
+     items=[
+       {"text": "Home", "href": "/", "icon": "🏠"},
+       {"text": "Listings", "href": "/listings"},
+       {"text": listing.title}
+     ]
+  %}
+</section>
+
+{# Main Content #}
+<section style="max-width: 1400px; margin: 0 auto; padding: var(--nexus-space-6);">
+  <div style="display: grid; grid-template-columns: 1fr 400px; gap: var(--nexus-space-8);">
+
+    {# Left Column - Product Details #}
+    <div style="display: flex; flex-direction: column; gap: var(--nexus-space-6);">
+
+      {# Product Header Card #}
+      {% include "partials/nexus/molecules/card.html" with
+         variant="elevated"
+         glassmorphism=true
+         content='
+           <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: var(--nexus-space-4);">
+             <div>
+               <h1 style="font-size: var(--nexus-text-3xl); font-weight: var(--nexus-weight-bold); color: var(--nexus-fg); margin: 0 0 var(--nexus-space-2) 0; text-transform: uppercase; letter-spacing: var(--nexus-tracking-wide);">
+                 ' ~ listing.title ~ '
+               </h1>
+               <div style="display: flex; gap: var(--nexus-space-3); font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg);">
+                 <span>👤 Vendor: <strong>' ~ vendor.username ~ '</strong></span>
+                 <span>•</span>
+                 <span>📦 Stock: <strong>' ~ listing.stock ~ '</strong></span>
+               </div>
+             </div>
+             ' ~ include("partials/nexus/atoms/badge.html", with={"text": listing.status, "variant": "status-" ~ listing.status}) ~ '
+           </div>
+         '
+      %}
+
+      {# Product Images #}
+      {% if images and images | length > 0 %}
+      {% include "partials/nexus/molecules/card.html" with
+         title="Product Images"
+         variant="elevated"
+         glassmorphism=true
+         content='
+           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--nexus-space-4);">
+             {% for image_cid in images %}
+             <div style="position: relative; border-radius: var(--nexus-radius-md); overflow: hidden; background: var(--nexus-muted); cursor: pointer; transition: transform var(--nexus-transition-base) var(--nexus-ease-out);" onclick="openImageModal(\'/api/listings/' ~ listing.id ~ '/images/' ~ image_cid ~ '\')">
+               <img
+                 src="/api/listings/' ~ listing.id ~ '/images/' ~ image_cid ~ '"
+                 alt="Product image"
+                 style="width: 100%; height: 200px; object-fit: cover;"
+                 loading="lazy"
+               >
+               <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: var(--nexus-space-2); background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); font-size: var(--nexus-text-xs); color: var(--nexus-fg); text-align: center;">
+                 Click to enlarge
+               </div>
+             </div>
+             {% endfor %}
+           </div>
+         '
+      %}
+      {% endif %}
+
+      {# Product Description #}
+      {% include "partials/nexus/molecules/card.html" with
+         title="Description"
+         variant="elevated"
+         glassmorphism=true
+         content='
+           <p style="color: var(--nexus-fg); line-height: var(--nexus-leading-relaxed); font-size: var(--nexus-text-base); white-space: pre-wrap;">
+             ' ~ listing.description ~ '
+           </p>
+         '
+      %}
+
+      {# Vendor Actions (edit/delete) #}
+      {% if logged_in and role == "vendor" and listing.vendor_id == user_id %}
+      <div style="display: flex; gap: var(--nexus-space-4);">
+        {% include "partials/nexus/atoms/button.html" with
+           text="Edit Listing"
+           href="/listings/" ~ listing.id ~ "/edit"
+           variant="secondary"
+           size="lg"
+           class="flex-1"
+        %}
+
+        <button
+          hx-delete="/api/listings/{{ listing.id }}"
+          hx-confirm="Are you sure you want to delete this listing? This cannot be undone."
+          hx-target="body"
+          class="nexus-btn nexus-btn-destructive nexus-btn-lg"
+          style="flex: 1;"
+        >
+          Delete Listing
+        </button>
+      </div>
+      {% endif %}
     </div>
 
-    <div class="card" style="max-width: 1000px; margin: 0 auto;">
-        <!-- Listing header -->
-        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 30px; border-bottom: 1px solid #2a2a2a; padding-bottom: 20px;">
-            <div>
-                <h1 style="font-size: 24px; font-weight: normal; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">
-                    {{ listing.title | upper }}
-                </h1>
-                <div style="display: flex; gap: 20px; font-size: 11px; color: #888; letter-spacing: 1px; text-transform: uppercase;">
-                    <span>VENDOR: {{ vendor.username | upper }}</span>
-                    <span class="separator">—</span>
-                    <span>STOCK: {{ listing.stock }}</span>
-                </div>
-            </div>
-            <span class="status-badge status-{{ listing.status }}">{{ listing.status | upper }}</span>
-        </div>
+    {# Right Column - Order Panel #}
+    <div style="position: sticky; top: var(--nexus-space-6); align-self: start;">
 
-        <!-- Images -->
-        {% if images %}
-        <div style="margin-bottom: 40px;">
-            <h2 style="font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #aaa; margin-bottom: 15px;">
-                — PRODUCT IMAGES
-            </h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
-                {% for image_cid in images %}
-                <div style="border: 1px solid #2a2a2a; border-radius: 8px; overflow: hidden; background: #1a1a1a;">
-                    <img 
-                        src="/api/listings/{{ listing.id }}/images/{{ image_cid }}" 
-                        alt="Product image"
-                        style="width: 100%; height: 200px; object-fit: cover; cursor: pointer;"
-                        onclick="openImageModal(this.src)"
-                    >
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
+      {# Price Card #}
+      {% include "partials/nexus/molecules/card.html" with
+         variant="elevated"
+         glassmorphism=true
+         content='
+           <div style="text-align: center; padding: var(--nexus-space-4);">
+             <span style="display: block; font-size: var(--nexus-text-xs); color: var(--nexus-muted-fg); text-transform: uppercase; letter-spacing: var(--nexus-tracking-wider); margin-bottom: var(--nexus-space-2);">
+               Unit Price
+             </span>
+             <div style="font-size: var(--nexus-text-4xl); font-weight: var(--nexus-weight-black); background: linear-gradient(135deg, var(--nexus-primary) 0%, var(--nexus-accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: var(--nexus-space-1);">
+               ' ~ listing.price_xmr ~ '
+             </div>
+             <span style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg);">piconeros</span>
+           </div>
+         '
+      %}
 
-        <!-- Description -->
-        <div style="margin-bottom: 40px;">
-            <h2 style="font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #aaa; margin-bottom: 15px;">
-                — DESCRIPTION
-            </h2>
-            <p style="color: #f5f5f5; line-height: 1.8; font-size: 13px;">
-                {{ listing.description }}
-            </p>
-        </div>
+      {# Order Form (buyer only) #}
+      {% if logged_in and role == "buyer" and listing.status == "active" and listing.stock > 0 %}
+      {% include "partials/nexus/molecules/card.html" with
+         title="Place Order"
+         variant="elevated"
+         glassmorphism=true
+         content='
+           <form id="order-form" data-unit-price="' ~ listing.price_xmr ~ '" style="display: flex; flex-direction: column; gap: var(--nexus-space-4);">
+             <input type="hidden" name="listing_id" value="' ~ listing.id ~ '">
 
-        <!-- Price -->
-        <div style="margin-bottom: 40px; padding: 20px; border: 1px solid #2a2a2a; background-color: #1a1a1a;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <span style="display: block; font-size: 10px; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px;">
-                        UNIT PRICE
-                    </span>
-                    <span style="font-size: 28px; font-weight: bold; color: #f5f5f5; letter-spacing: 2px;">
-                        {{ listing.price_xmr }}
-                    </span>
-                    <span style="font-size: 12px; color: #888; margin-left: 8px;">piconeros</span>
-                </div>
-            </div>
-        </div>
+             ' ~ include("partials/nexus/atoms/input.html", with={
+               "label": "Quantity",
+               "type": "number",
+               "id": "quantity",
+               "name": "quantity",
+               "min": "1",
+               "max": listing.stock,
+               "value": "1",
+               "required": true,
+               "help_text": "Available: " ~ listing.stock ~ " units"
+             }) ~ '
 
-        <!-- Order form (buyer only) -->
-        {% if logged_in and role == "buyer" and listing.status == "active" and listing.stock > 0 %}
-        <div style="border-top: 1px solid #2a2a2a; padding-top: 40px; margin-top: 40px;">
-            <h2 style="font-size: 14px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px;">
-                — PLACE ORDER
-            </h2>
+             <div style="padding: var(--nexus-space-4); background: rgba(255, 26, 92, 0.1); border: 1px solid var(--nexus-primary); border-radius: var(--nexus-radius-md);">
+               <span style="display: block; font-size: var(--nexus-text-xs); color: var(--nexus-muted-fg); text-transform: uppercase; margin-bottom: var(--nexus-space-2);">
+                 Total Price
+               </span>
+               <div id="total-price" style="font-size: var(--nexus-text-2xl); font-weight: var(--nexus-weight-bold); color: var(--nexus-primary);">
+                 ' ~ (listing.price_xmr / 1000000000000) | round(precision=12) ~ ' XMR
+               </div>
+             </div>
 
-            <form id="order-form" data-unit-price="{{ listing.price_xmr }}">
-                <input type="hidden" name="listing_id" value="{{ listing.id }}">
+             ' ~ include("partials/nexus/atoms/button.html", with={
+               "text": "Create Escrow Order →",
+               "type": "submit",
+               "variant": "primary",
+               "size": "lg",
+               "class": "w-full"
+             }) ~ '
+           </form>
 
-                <div class="form-group">
-                    <label for="quantity">QUANTITY</label>
-                    <input
-                        type="number"
-                        id="quantity"
-                        name="quantity"
-                        min="1"
-                        max="{{ listing.stock }}"
-                        value="1"
-                        required
-                    >
-                    <small>AVAILABLE: {{ listing.stock }} UNITS</small>
-                </div>
+           <div id="order-result" style="margin-top: var(--nexus-space-4);"></div>
+         '
+      %}
+      {% elif not logged_in %}
+      {% include "partials/nexus/molecules/alert.html" with
+         title="Login Required"
+         message="Please <a href=\"/login\" style=\"color: var(--nexus-primary); text-decoration: underline;\">login</a> to place an order."
+         variant="info"
+      %}
+      {% elif listing.status != "active" %}
+      {% include "partials/nexus/molecules/alert.html" with
+         title="Listing Not Available"
+         message="This listing is currently " ~ listing.status ~ " and cannot be ordered."
+         variant="warning"
+      %}
+      {% elif listing.stock <= 0 %}
+      {% include "partials/nexus/molecules/alert.html" with
+         title="Out of Stock"
+         message="This item is currently out of stock. Check back later."
+         variant="error"
+      %}
+      {% endif %}
 
-                <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #2a2a2a; background-color: #1a1a1a;">
-                    <span style="font-size: 10px; color: #888; letter-spacing: 1px; text-transform: uppercase;">
-                        TOTAL PRICE
-                    </span>
-                    <div style="font-size: 18px; color: #f5f5f5; margin-top: 5px;">
-                        <span id="total-price">{{ price_display | round(precision=12) }} XMR</span>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary" style="width: 100%;">
-                    CREATE ESCROW ORDER →
-                </button>
-            </form>
-
-            <div id="order-result" style="margin-top: 20px;"></div>
-        </div>
-        {% endif %}
-
-        <!-- Vendor actions -->
-        {% if logged_in and role == "vendor" and listing.vendor_id == user_id %}
-        <div style="border-top: 1px solid #2a2a2a; padding-top: 40px; margin-top: 40px; display: flex; gap: 15px;">
-            <a href="/listings/{{ listing.id }}/edit" class="btn btn-secondary" style="flex: 1;">
-                EDIT LISTING
-            </a>
-            <button
-                hx-delete="/api/listings/{{ listing.id }}"
-                hx-confirm="DELETE THIS LISTING? THIS CANNOT BE UNDONE."
-                hx-target="body"
-                class="btn btn-danger"
-                style="flex: 1;"
-            >
-                DELETE
-            </button>
-        </div>
-        {% endif %}
+      {# Trust Indicators #}
+      <div style="margin-top: var(--nexus-space-6);">
+        {% include "partials/nexus/molecules/card.html" with
+           title="🔒 Secure Purchase"
+           variant="ghost"
+           content='
+             <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--nexus-space-3);">
+               <li style="display: flex; align-items: start; gap: var(--nexus-space-2);">
+                 <span style="color: var(--nexus-success);">✓</span>
+                 <span style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg);">2-of-3 Multisig Escrow</span>
+               </li>
+               <li style="display: flex; align-items: start; gap: var(--nexus-space-2);">
+                 <span style="color: var(--nexus-success);">✓</span>
+                 <span style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg);">Non-Custodial</span>
+               </li>
+               <li style="display: flex; align-items: start; gap: var(--nexus-space-2);">
+                 <span style="color: var(--nexus-success);">✓</span>
+                 <span style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg);">Monero Privacy</span>
+               </li>
+               <li style="display: flex; align-items: start; gap: var(--nexus-space-2);">
+                 <span style="color: var(--nexus-success);">✓</span>
+                 <span style="font-size: var(--nexus-text-sm); color: var(--nexus-muted-fg);">Dispute Resolution</span>
+               </li>
+             </ul>
+           '
+        %}
+      </div>
     </div>
-</div>
+  </div>
+</section>
+
 {% endblock %}
 
 {% block scripts %}
 <script src="/static/js/show-listing.js" defer></script>
 <script>
-// Image modal functionality
+// Image modal functionality using native <dialog>
 function openImageModal(src) {
-    const modal = document.createElement('div');
+  // Create dialog if it doesn't exist
+  let modal = document.getElementById('image-modal');
+  if (!modal) {
+    modal = document.createElement('dialog');
+    modal.id = 'image-modal';
     modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.9);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        cursor: pointer;
+      max-width: 90vw;
+      max-height: 90vh;
+      border: none;
+      background: transparent;
+      padding: 0;
     `;
-    
-    const img = document.createElement('img');
-    img.src = src;
-    img.style.cssText = `
-        max-width: 90%;
-        max-height: 90%;
-        object-fit: contain;
+    modal.innerHTML = `
+      <div style="position: relative;">
+        <img id="modal-image" style="max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: var(--nexus-radius-lg);">
+        <button onclick="document.getElementById('image-modal').close()" style="position: absolute; top: var(--nexus-space-2); right: var(--nexus-space-2); background: rgba(0,0,0,0.8); color: white; border: none; width: 2.5rem; height: 2.5rem; border-radius: var(--nexus-radius-full); cursor: pointer; font-size: var(--nexus-text-xl);">✕</button>
+      </div>
     `;
-    
-    modal.appendChild(img);
     document.body.appendChild(modal);
-    
-    modal.addEventListener('click', () => {
-        document.body.removeChild(modal);
+
+    // Close on backdrop click
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        modal.close();
+      }
     });
+  }
+
+  document.getElementById('modal-image').src = src;
+  modal.showModal();
 }
+
+// Update total price when quantity changes
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('order-form');
+  if (form) {
+    const quantityInput = document.getElementById('quantity');
+    const totalPriceEl = document.getElementById('total-price');
+    const unitPrice = parseFloat(form.dataset.unitPrice);
+
+    if (quantityInput && totalPriceEl) {
+      quantityInput.addEventListener('input', function() {
+        const quantity = parseInt(this.value) || 1;
+        const total = (unitPrice * quantity) / 1000000000000;
+        totalPriceEl.textContent = total.toFixed(12) + ' XMR';
+      });
+    }
+  }
+});
 </script>
 {% endblock %}
