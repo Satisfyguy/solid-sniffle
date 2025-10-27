@@ -5,27 +5,108 @@
 
 /* === KEYFRAMES ANIMATIONS === */
 
+/* JUMP ANIMATION - Ultra-realistic physics with squash & stretch */
 @keyframes jump {
+  /* ANTICIPATION - Squash down before jumping (Disney principle) */
   0% {
-    transform: translateY(0) rotate(0deg) scale(1);
+    transform: translateY(0) rotate(0deg) scale(1, 1);
+    filter: blur(0px);
   }
-  15% {
-    transform: translateY(-100vh) rotate(15deg) scale(1.2);
+
+  /* Squash down (preparing to jump) */
+  5% {
+    transform: translateY(8px) rotate(0deg) scale(1.15, 0.85);
+    filter: blur(0px);
   }
-  50% {
-    transform: translateY(-100vh) rotate(180deg) scale(1.3);
+
+  /* START JUMP - Stretch up as letter launches (elastic easing) */
+  10% {
+    transform: translateY(-20px) rotate(5deg) scale(0.9, 1.2);
+    filter: blur(0.5px);
   }
-  85% {
-    transform: translateY(20px) rotate(350deg) scale(0.9);
+
+  /* ASCENT - Fast acceleration upward with rotation */
+  20% {
+    transform: translateY(-60vh) rotate(90deg) scale(0.95, 1.1);
+    filter: blur(1px);
   }
-  92% {
-    transform: translateY(-10px) rotate(360deg) scale(1.05);
+
+  /* PEAK - Slow down at top (ease-out) */
+  35% {
+    transform: translateY(-105vh) rotate(180deg) scale(1.05, 0.98);
+    filter: blur(1.5px);
   }
-  96% {
-    transform: translateY(5px) rotate(360deg) scale(0.98);
+
+  /* Hang time at peak */
+  45% {
+    transform: translateY(-105vh) rotate(225deg) scale(1.1, 0.95);
+    filter: blur(1px);
   }
+
+  /* START FALL - Begin descent (ease-in, gravity) */
+  55% {
+    transform: translateY(-95vh) rotate(270deg) scale(1, 1);
+    filter: blur(1px);
+  }
+
+  /* DESCENT - Accelerating downward (gravity increases) */
+  70% {
+    transform: translateY(-30vh) rotate(330deg) scale(0.98, 1.08);
+    filter: blur(1.5px);
+  }
+
+  /* Fast fall */
+  82% {
+    transform: translateY(0) rotate(355deg) scale(1, 1.1);
+    filter: blur(2px);
+  }
+
+  /* IMPACT - First bounce (big squash) */
+  86% {
+    transform: translateY(0) rotate(360deg) scale(1.25, 0.7);
+    filter: blur(0px);
+  }
+
+  /* BOUNCE 1 - Medium height */
+  90% {
+    transform: translateY(-35px) rotate(360deg) scale(0.92, 1.12);
+    filter: blur(0.5px);
+  }
+
+  /* Land from bounce 1 */
+  93% {
+    transform: translateY(0) rotate(360deg) scale(1.15, 0.82);
+    filter: blur(0px);
+  }
+
+  /* BOUNCE 2 - Small height */
+  95.5% {
+    transform: translateY(-12px) rotate(360deg) scale(0.96, 1.06);
+    filter: blur(0px);
+  }
+
+  /* Land from bounce 2 */
+  97% {
+    transform: translateY(0) rotate(360deg) scale(1.08, 0.9);
+    filter: blur(0px);
+  }
+
+  /* BOUNCE 3 - Tiny settle */
+  98.5% {
+    transform: translateY(-4px) rotate(360deg) scale(0.98, 1.03);
+    filter: blur(0px);
+  }
+
+  /* SETTLE - Return to normal with slight overshoot */
+  99.5% {
+    transform: translateY(0) rotate(360deg) scale(1.02, 0.98);
+    filter: blur(0px);
+  }
+
+  /* FINAL - Perfect rest */
   100% {
-    transform: translateY(0) rotate(360deg) scale(1);
+    transform: translateY(0) rotate(360deg) scale(1, 1);
+    filter: blur(0px);
   }
 }
 
@@ -163,13 +244,63 @@
 .nexus-animated-letter {
   display: inline-block;
   cursor: pointer;
-  transition: all 0.3s ease;
   vertical-align: baseline;
+  position: relative;
+  transition: filter 0.3s ease;
+
+  /* Performance optimizations */
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
 }
 
-.nexus-animated-letter:hover,
+/* Subtle hover effect (before click/touch) */
+.nexus-animated-letter:hover {
+  filter: drop-shadow(0 0 8px rgba(255, 26, 92, 0.6));
+}
+
+/* Main jump animation with realistic easing */
 .nexus-animated-letter.jumping {
-  animation: jump 1.5s cubic-bezier(0.6, 0, 0.2, 1.5);
+  animation: jump 2.2s ease-out forwards;
+  animation-timing-function: linear; /* We control easing in keyframes */
+}
+
+/* Optional: Shadow under letter during jump */
+.nexus-animated-letter::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0%;
+  height: 4px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.4) 0%, transparent 70%);
+  border-radius: 50%;
+  opacity: 0;
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+/* Shadow appears when letter is in air */
+.nexus-animated-letter.jumping::after {
+  width: 120%;
+  opacity: 1;
+  animation: shadowPulse 2.2s ease-out forwards;
+}
+
+/* Shadow shrinks/grows based on height */
+@keyframes shadowPulse {
+  0%, 5% { width: 100%; opacity: 0.6; }
+  10% { width: 90%; opacity: 0.5; }
+  35%, 45% { width: 40%; opacity: 0.15; } /* High in air */
+  70% { width: 60%; opacity: 0.3; }
+  82% { width: 100%; opacity: 0.6; }
+  86% { width: 130%; opacity: 0.8; } /* Impact */
+  90% { width: 80%; opacity: 0.5; }
+  95% { width: 100%; opacity: 0.6; }
+  100% { width: 100%; opacity: 0.6; }
 }
 
 /* Special E with horizontal lines */
@@ -414,6 +545,158 @@
     gap: 2rem;
   }
 
+  .nexus-floating-shape {
+    display: none;
+  }
+}
+
+/* === ACCESSIBILITY - PREFERS REDUCED MOTION === */
+
+/**
+ * For users with motion sensitivity, we disable/simplify animations
+ * This is CRITICAL for accessibility compliance (WCAG 2.1 Level AA)
+ */
+@media (prefers-reduced-motion: reduce) {
+  /* Disable all animations except simple fades */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Letters: Simple scale instead of full jump */
+  .nexus-animated-letter.jumping {
+    animation: none !important;
+    transform: scale(1.15) !important;
+    transition: transform 0.2s ease-out !important;
+  }
+
+  /* Remove blur effects */
+  .nexus-animated-letter {
+    filter: none !important;
+  }
+
+  /* Disable shadow animation */
+  .nexus-animated-letter::after {
+    display: none !important;
+  }
+
+  /* Disable floating shapes */
+  .nexus-floating-shape {
+    animation: none !important;
+    opacity: 0.05 !important;
+  }
+
+  /* Disable background wave */
+  .nexus-hero-pattern {
+    animation: none !important;
+  }
+
+  /* Disable grid pulse */
+  .nexus-hero-grid {
+    animation: none !important;
+    opacity: 0.05 !important;
+  }
+
+  /* Disable scroll bounce */
+  .nexus-scroll-indicator {
+    animation: none !important;
+  }
+}
+
+/* === PERFORMANCE OPTIMIZATIONS === */
+
+/**
+ * Force GPU acceleration on critical animated elements
+ */
+.nexus-animated-letter,
+.nexus-floating-shape,
+.nexus-hero-pattern {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/**
+ * Optimize paint performance
+ */
+.nexus-animated-letter.jumping {
+  contain: layout style paint;
+}
+
+/* === PRINT STYLES === */
+
+/**
+ * Optimize for printing (remove animations, backgrounds)
+ */
+@media print {
+  .nexus-animated-letter {
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .nexus-animated-letter::after {
+    display: none !important;
+  }
+
+  .nexus-hero-pattern,
+  .nexus-hero-grid,
+  .nexus-floating-shape {
+    display: none !important;
+  }
+
+  .nexus-hero-true {
+    background: white !important;
+    color: black !important;
+    min-height: auto !important;
+    page-break-after: always;
+  }
+
+  .nexus-hero-title-true {
+    color: black !important;
+  }
+}
+
+/* === FOCUS STYLES (Keyboard Navigation) === */
+
+/**
+ * Ensure keyboard users can see focus state
+ */
+.nexus-animated-letter:focus {
+  outline: 3px solid hsl(349, 100%, 55%);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.nexus-animated-letter:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.nexus-animated-letter:focus-visible {
+  outline: 3px solid hsl(349, 100%, 55%);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 6px rgba(255, 26, 92, 0.2);
+}
+
+/* === HIGH CONTRAST MODE === */
+
+/**
+ * Support for Windows High Contrast Mode
+ */
+@media (prefers-contrast: high) {
+  .nexus-animated-letter {
+    border: 2px solid transparent;
+  }
+
+  .nexus-animated-letter:hover,
+  .nexus-animated-letter:focus {
+    border-color: currentColor;
+  }
+
+  .nexus-hero-pattern,
+  .nexus-hero-grid,
   .nexus-floating-shape {
     display: none;
   }
