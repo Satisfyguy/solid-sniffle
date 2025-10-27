@@ -1,15 +1,7 @@
-{#
-  NEXUS NAVIGATION - Design Premium avec Auth
-
-  Expects from Rust context:
-    - logged_in: bool
-    - user_name: Option<String>
-    - csrf_token: String
-#}
-
+{# NEXUS NAVIGATION - Design du dossier NEXUS avec Auth #}
 <nav class="nexus-nav-true">
   <div class="nexus-nav-container-true">
-    <!-- Logo avec Shield -->
+    <!-- Logo -->
     <a href="/" class="nexus-nav-logo-true" hx-boost="true">
       <div class="nexus-logo-shield-true">🛡️</div>
       <h1 class="nexus-logo-text-true">NEXUS</h1>
@@ -18,6 +10,7 @@
     <!-- Navigation Menu -->
     <div class="nexus-nav-menu-true">
       <a href="/" class="nexus-nav-link-true">HOME</a>
+      <a href="#categories" class="nexus-nav-link-true">CATEGORIES</a>
       <a href="/listings" class="nexus-nav-link-true" hx-boost="true">LISTINGS</a>
       <a href="/vendors" class="nexus-nav-link-true" hx-boost="true">VENDORS</a>
     </div>
@@ -27,52 +20,38 @@
       <button class="nexus-btn-search-true" aria-label="Search">🔍</button>
 
       {% if logged_in %}
-        {# User connecté - Menu Dropdown #}
+        {# User connecté - Dropdown menu #}
         <div class="nexus-user-menu-true">
-          <button class="nexus-btn-user-true" aria-label="User menu">
+          <button class="nexus-btn-connect-true nexus-btn-user-true">
             <span>👤</span>
-            {{ user_name | default(value="User") | upper }}
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
+            {{ user_name | default(value=username) | upper }}
           </button>
-
           <div class="nexus-user-dropdown-true">
             <a href="/orders" class="nexus-dropdown-item-true" hx-boost="true">
-              📦 My Orders
+              📦 MY ORDERS
             </a>
             <a href="/settings" class="nexus-dropdown-item-true" hx-boost="true">
-              ⚙️ Settings
+              ⚙️ SETTINGS
             </a>
             <hr style="border: none; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 0.5rem 0;">
             <form action="/logout" method="POST" style="margin: 0;">
               <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
               <button type="submit" class="nexus-dropdown-item-true nexus-logout-btn-true">
-                🚪 Logout
+                🚪 LOGOUT
               </button>
             </form>
           </div>
         </div>
       {% else %}
-        {# Guest User - LOGIN & SIGN UP #}
-        <div class="nexus-auth-btns-true">
+        {# User non connecté - LOGIN et SIGN UP séparés #}
+        <div class="nexus-auth-buttons-true">
           <a href="/login" class="nexus-btn-login-true" hx-boost="true">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-              <polyline points="10 17 15 12 10 7"></polyline>
-              <line x1="15" y1="12" x2="3" y2="12"></line>
-            </svg>
+            <span>👤</span>
             LOGIN
           </a>
-          <a href="/register" class="nexus-btn-signup-true" hx-boost="true">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <line x1="19" y1="8" x2="19" y2="14"></line>
-              <line x1="22" y1="11" x2="16" y2="11"></line>
-            </svg>
+          <a href="/register" class="nexus-btn-connect-true" hx-boost="true">
+            <span>➕</span>
             SIGN UP
-            <span class="nexus-signup-glow"></span>
           </a>
         </div>
       {% endif %}
@@ -89,9 +68,8 @@
   right: 0;
   z-index: 50;
   border-bottom: 1px solid hsl(0, 0%, 20%);
-  background: rgba(13, 6, 8, 0.85);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  background: rgba(13, 6, 8, 0.8);
+  backdrop-filter: blur(12px);
 }
 
 .nexus-nav-container-true {
@@ -109,113 +87,80 @@
   gap: 1rem;
   text-decoration: none;
   color: inherit;
-  transition: transform 0.3s ease;
-}
-
-.nexus-nav-logo-true:hover {
-  transform: translateY(-2px);
 }
 
 .nexus-logo-shield-true {
   width: 3rem;
   height: 3rem;
-  background: linear-gradient(135deg, hsl(349, 100%, 55%) 0%, hsl(349, 100%, 45%) 100%);
+  background: hsl(349, 100%, 55%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  box-shadow: 0 0 20px rgba(255, 26, 92, 0.4);
-  transition: all 0.3s ease;
-}
-
-.nexus-nav-logo-true:hover .nexus-logo-shield-true {
-  box-shadow: 0 0 30px rgba(255, 26, 92, 0.6);
-  transform: scale(1.05);
 }
 
 .nexus-logo-text-true {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 900;
   letter-spacing: -0.05em;
   text-transform: uppercase;
   color: hsl(0, 0%, 98%);
-  margin: 0;
-  text-shadow: 0 0 20px rgba(255, 26, 92, 0.3);
 }
 
 .nexus-nav-menu-true {
   display: flex;
   align-items: center;
-  gap: 2.5rem;
+  gap: 2rem;
 }
 
 .nexus-nav-link-true {
   font-size: 0.875rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: hsl(0, 0%, 90%);
+  color: hsl(0, 0%, 98%);
   text-decoration: none;
-  transition: all 0.3s ease;
-  letter-spacing: 0.05em;
-  position: relative;
-}
-
-.nexus-nav-link-true::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: hsl(349, 100%, 55%);
-  transition: width 0.3s ease;
+  transition: color 0.3s ease;
 }
 
 .nexus-nav-link-true:hover {
-  color: hsl(349, 100%, 65%);
-}
-
-.nexus-nav-link-true:hover::after {
-  width: 100%;
+  color: hsl(349, 100%, 55%);
 }
 
 .nexus-nav-actions-true {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .nexus-btn-search-true {
   background: none;
   border: none;
-  color: hsl(0, 0%, 90%);
+  color: hsl(0, 0%, 98%);
   padding: 0.5rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: color 0.3s ease;
   font-size: 1.25rem;
 }
 
 .nexus-btn-search-true:hover {
   color: hsl(349, 100%, 55%);
-  transform: scale(1.1);
 }
 
 /* ========== AUTH BUTTONS ========== */
-.nexus-auth-btns-true {
+.nexus-auth-buttons-true {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .nexus-btn-login-true {
   background: transparent;
   color: hsl(0, 0%, 98%);
-  border: 2px solid hsl(0, 0%, 30%);
+  border: 1px solid hsl(0, 0%, 40%);
   padding: 0.5rem 1.5rem;
   font-weight: 700;
   font-size: 0.875rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -225,56 +170,12 @@
 }
 
 .nexus-btn-login-true:hover {
-  border-color: hsl(0, 0%, 60%);
-  color: hsl(0, 0%, 100%);
+  border-color: hsl(349, 100%, 55%);
+  color: hsl(349, 100%, 55%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
 }
 
-.nexus-btn-signup-true {
-  background: linear-gradient(135deg, hsl(349, 100%, 55%) 0%, hsl(349, 100%, 45%) 100%);
-  color: hsl(0, 0%, 5%);
-  padding: 0.5rem 1.5rem;
-  border: none;
-  font-weight: 700;
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 0 20px rgba(255, 26, 92, 0.4);
-}
-
-.nexus-btn-signup-true:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 30px rgba(255, 26, 92, 0.6);
-}
-
-.nexus-signup-glow {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transform: translateX(-100%);
-  animation: nexus-shine 3s infinite;
-}
-
-@keyframes nexus-shine {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-/* ========== USER MENU ========== */
-.nexus-user-menu-true {
-  position: relative;
-}
-
-.nexus-btn-user-true {
+.nexus-btn-connect-true {
   background: hsl(349, 100%, 55%);
   color: hsl(0, 0%, 5%);
   padding: 0.5rem 1.5rem;
@@ -287,13 +188,21 @@
   align-items: center;
   gap: 0.5rem;
   transition: all 0.3s ease;
-  box-shadow: 0 0 20px rgba(255, 26, 92, 0.4);
+  text-decoration: none;
 }
 
-.nexus-btn-user-true:hover {
+.nexus-btn-connect-true:hover {
   background: hsl(349, 100%, 60%);
   transform: translateY(-2px);
-  box-shadow: 0 0 30px rgba(255, 26, 92, 0.6);
+}
+
+/* ========== USER MENU DROPDOWN ========== */
+.nexus-user-menu-true {
+  position: relative;
+}
+
+.nexus-btn-user-true {
+  cursor: pointer;
 }
 
 .nexus-user-dropdown-true {
@@ -301,16 +210,16 @@
   top: calc(100% + 0.5rem);
   right: 0;
   background: rgba(13, 6, 8, 0.95);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(12px);
   border: 1px solid hsl(0, 0%, 20%);
-  border-radius: 8px;
+  border-radius: 4px;
   padding: 0.5rem 0;
-  min-width: 200px;
+  min-width: 180px;
   opacity: 0;
   visibility: hidden;
   transform: translateY(-10px);
   transition: all 0.3s ease;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 .nexus-user-menu-true:hover .nexus-user-dropdown-true {
@@ -321,14 +230,13 @@
 
 .nexus-dropdown-item-true {
   display: block;
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1rem;
   color: hsl(0, 0%, 90%);
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   cursor: pointer;
   border: none;
   background: none;
@@ -338,31 +246,24 @@
 
 .nexus-dropdown-item-true:hover {
   background: rgba(255, 26, 92, 0.1);
-  color: hsl(349, 100%, 65%);
-  padding-left: 1.5rem;
+  color: hsl(349, 100%, 55%);
 }
 
 .nexus-logout-btn-true {
-  color: hsl(349, 100%, 65%);
+  color: hsl(349, 100%, 55%);
 }
 
-.nexus-logout-btn-true:hover {
-  color: hsl(349, 100%, 75%);
-}
-
-/* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
   .nexus-nav-menu-true {
     display: none;
   }
 
-  .nexus-auth-btns-true {
-    flex-direction: column;
+  .nexus-auth-buttons-true {
     gap: 0.5rem;
   }
 
   .nexus-btn-login-true,
-  .nexus-btn-signup-true {
+  .nexus-btn-connect-true {
     padding: 0.4rem 1rem;
     font-size: 0.75rem;
   }
