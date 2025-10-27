@@ -29,6 +29,7 @@ pub mod ipfs;
 pub mod logging;
 pub mod middleware;
 pub mod models;
+pub mod monitoring;
 pub mod repositories;
 pub mod schema;
 pub mod services;
