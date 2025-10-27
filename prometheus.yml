@@ -1,0 +1,38 @@
+# Prometheus configuration for Monero Marketplace monitoring
+#
+# Installation:
+# 1. Install Prometheus: sudo apt install prometheus
+# 2. Copy this file: sudo cp prometheus.yml /etc/prometheus/prometheus.yml
+# 3. Restart Prometheus: sudo systemctl restart prometheus
+# 4. Access dashboard: http://localhost:9090
+
+global:
+  scrape_interval: 15s  # Scrape targets every 15 seconds
+  evaluation_interval: 15s  # Evaluate rules every 15 seconds
+  external_labels:
+    monitor: 'monero-marketplace'
+    environment: 'testnet'
+
+# Alertmanager configuration (optional - for production)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['localhost:9093']
+
+# Scrape configurations
+scrape_configs:
+  # Monero Marketplace server metrics
+  - job_name: 'marketplace-server'
+    static_configs:
+      - targets: ['localhost:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+# Alert rules (optional - uncomment for production)
+# rule_files:
+#   - 'alerts.yml'
