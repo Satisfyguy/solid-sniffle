@@ -1,0 +1,663 @@
+{% extends "base-nexus.html" %}
+
+{% block title %}Escrow #{{ escrow.id | truncate(length=8, end="") }} - NEXUS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/nexus-true.css">
+<style>
+/* === ESCROW DETAIL - NEXUS DESIGN === */
+
+.nexus-escrow-container {
+  max-width: 1400px;
+  margin: 2rem auto;
+  padding: 0 var(--nexus-space-4);
+}
+
+.nexus-escrow-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--nexus-space-6);
+  padding: var(--nexus-space-6);
+  background: rgba(13, 13, 13, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid hsl(0, 0%, 15%);
+  border-radius: var(--nexus-radius-lg);
+  box-shadow: var(--nexus-shadow-lg);
+}
+
+.nexus-escrow-title-group h1 {
+  margin: 0 0 var(--nexus-space-2) 0;
+  font-size: var(--nexus-text-3xl);
+  font-weight: var(--nexus-weight-black);
+  color: var(--nexus-primary);
+  text-shadow: 0 0 20px rgba(255, 26, 92, 0.5);
+  letter-spacing: var(--nexus-tracking-tight);
+}
+
+.nexus-escrow-subtitle {
+  margin: 0;
+  font-size: var(--nexus-text-base);
+  color: var(--nexus-muted-fg);
+  font-weight: var(--nexus-weight-medium);
+}
+
+.nexus-status-badge {
+  padding: var(--nexus-space-2) var(--nexus-space-4);
+  border-radius: var(--nexus-radius-full);
+  font-size: var(--nexus-text-sm);
+  font-weight: var(--nexus-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--nexus-tracking-wide);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.nexus-status-created {
+  background: rgba(124, 58, 237, 0.2);
+  color: hsl(270, 60%, 65%);
+  border: 1px solid hsl(270, 60%, 50%);
+  box-shadow: 0 0 15px rgba(124, 58, 237, 0.3);
+}
+
+.nexus-status-funded {
+  background: rgba(0, 217, 255, 0.2);
+  color: hsl(190, 100%, 55%);
+  border: 1px solid hsl(190, 100%, 50%);
+  box-shadow: 0 0 15px rgba(0, 217, 255, 0.3);
+}
+
+.nexus-status-releasing, .nexus-status-refunding {
+  background: rgba(251, 191, 36, 0.2);
+  color: hsl(45, 100%, 60%);
+  border: 1px solid hsl(45, 100%, 50%);
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
+}
+
+.nexus-status-completed {
+  background: rgba(34, 197, 94, 0.2);
+  color: hsl(145, 65%, 55%);
+  border: 1px solid hsl(145, 65%, 45%);
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+}
+
+.nexus-status-disputed {
+  background: rgba(239, 68, 68, 0.2);
+  color: hsl(0, 85%, 60%);
+  border: 1px solid hsl(0, 85%, 50%);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.nexus-escrow-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--nexus-space-6);
+  margin-bottom: var(--nexus-space-6);
+}
+
+.nexus-glass-card {
+  background: rgba(13, 13, 13, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid hsl(0, 0%, 15%);
+  border-radius: var(--nexus-radius-lg);
+  padding: var(--nexus-space-6);
+  box-shadow: var(--nexus-shadow-lg);
+  transition: all var(--nexus-transition-base);
+}
+
+.nexus-glass-card:hover {
+  border-color: hsl(0, 0%, 20%);
+  box-shadow: var(--nexus-shadow-2xl);
+}
+
+.nexus-amount-display {
+  text-align: center;
+  padding: var(--nexus-space-8);
+  background: linear-gradient(135deg, rgba(255, 26, 92, 0.1), rgba(124, 58, 237, 0.1));
+  border-radius: var(--nexus-radius-lg);
+  margin-bottom: var(--nexus-space-6);
+}
+
+.nexus-amount-label {
+  display: block;
+  font-size: var(--nexus-text-sm);
+  color: var(--nexus-muted-fg);
+  margin-bottom: var(--nexus-space-2);
+  text-transform: uppercase;
+  letter-spacing: var(--nexus-tracking-wide);
+}
+
+.nexus-amount-value {
+  display: block;
+  font-size: var(--nexus-text-4xl);
+  font-weight: var(--nexus-weight-black);
+  color: var(--nexus-primary);
+  text-shadow: 0 0 30px rgba(255, 26, 92, 0.6);
+  margin-bottom: var(--nexus-space-2);
+}
+
+.nexus-amount-atomic {
+  display: block;
+  font-size: var(--nexus-text-xs);
+  color: var(--nexus-muted-fg);
+  font-family: var(--nexus-font-mono);
+}
+
+/* === TIMELINE VISUALIZATION === */
+
+.nexus-timeline {
+  position: relative;
+  padding-left: var(--nexus-space-12);
+}
+
+.nexus-timeline::before {
+  content: '';
+  position: absolute;
+  left: 28px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, hsl(0, 0%, 20%) 0%, hsl(0, 0%, 10%) 100%);
+}
+
+.nexus-timeline-step {
+  position: relative;
+  padding-bottom: var(--nexus-space-8);
+}
+
+.nexus-timeline-step:last-child {
+  padding-bottom: 0;
+}
+
+.nexus-timeline-marker {
+  position: absolute;
+  left: -44px;
+  top: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(13, 13, 13, 0.95);
+  border: 2px solid hsl(0, 0%, 20%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--nexus-weight-bold);
+  color: var(--nexus-muted-fg);
+  z-index: 2;
+}
+
+.nexus-timeline-step.completed .nexus-timeline-marker {
+  background: linear-gradient(135deg, rgba(255, 26, 92, 0.2), rgba(124, 58, 237, 0.2));
+  border-color: var(--nexus-primary);
+  color: var(--nexus-primary);
+  box-shadow: 0 0 20px rgba(255, 26, 92, 0.4);
+}
+
+.nexus-timeline-step.active .nexus-timeline-marker {
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(124, 58, 237, 0.2));
+  border-color: hsl(190, 100%, 50%);
+  color: hsl(190, 100%, 50%);
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.4);
+  animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 217, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(0, 217, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 217, 255, 0);
+  }
+}
+
+.nexus-timeline-content h3 {
+  margin: 0 0 var(--nexus-space-2) 0;
+  font-size: var(--nexus-text-lg);
+  font-weight: var(--nexus-weight-bold);
+  color: var(--nexus-fg);
+}
+
+.nexus-timeline-desc {
+  margin: 0 0 var(--nexus-space-2) 0;
+  color: var(--nexus-muted-fg);
+  font-size: var(--nexus-text-sm);
+}
+
+.nexus-timeline-time {
+  font-size: var(--nexus-text-xs);
+  color: var(--nexus-muted-fg);
+  font-family: var(--nexus-font-mono);
+}
+
+.nexus-address-box {
+  margin-top: var(--nexus-space-3);
+  padding: var(--nexus-space-3);
+  background: rgba(10, 10, 10, 0.8);
+  border-radius: var(--nexus-radius-md);
+  border: 1px solid hsl(0, 0%, 15%);
+}
+
+.nexus-address-label {
+  display: block;
+  font-size: var(--nexus-text-xs);
+  color: var(--nexus-muted-fg);
+  margin-bottom: var(--nexus-space-2);
+  text-transform: uppercase;
+  letter-spacing: var(--nexus-tracking-wide);
+}
+
+.nexus-monero-address {
+  display: block;
+  font-family: var(--nexus-font-mono);
+  font-size: var(--nexus-text-xs);
+  color: hsl(190, 100%, 50%);
+  word-break: break-all;
+}
+
+/* === PARTICIPANTS === */
+
+.nexus-participants {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--nexus-space-4);
+  margin-top: var(--nexus-space-6);
+}
+
+.nexus-participant {
+  text-align: center;
+  padding: var(--nexus-space-4);
+  background: rgba(10, 10, 10, 0.6);
+  border-radius: var(--nexus-radius-md);
+  border: 1px solid hsl(0, 0%, 15%);
+  transition: all var(--nexus-transition-base);
+}
+
+.nexus-participant:hover {
+  border-color: var(--nexus-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(255, 26, 92, 0.2);
+}
+
+.nexus-participant-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto var(--nexus-space-3);
+  padding: var(--nexus-space-3);
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255, 26, 92, 0.2), rgba(124, 58, 237, 0.2));
+}
+
+.nexus-participant-icon svg {
+  width: 100%;
+  height: 100%;
+  color: var(--nexus-primary);
+}
+
+.nexus-participant h3 {
+  margin: 0 0 var(--nexus-space-1) 0;
+  font-size: var(--nexus-text-sm);
+  font-weight: var(--nexus-weight-bold);
+  color: var(--nexus-fg);
+  text-transform: uppercase;
+  letter-spacing: var(--nexus-tracking-wide);
+}
+
+.nexus-participant p {
+  margin: 0;
+  font-size: var(--nexus-text-sm);
+  color: var(--nexus-muted-fg);
+}
+
+/* === ACTIONS === */
+
+.nexus-actions-grid {
+  display: grid;
+  gap: var(--nexus-space-3);
+  margin-top: var(--nexus-space-6);
+}
+
+@media (max-width: 1024px) {
+  .nexus-escrow-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nexus-participants {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="nexus-escrow-container">
+  <!-- Header -->
+  <div class="nexus-escrow-header">
+    <div class="nexus-escrow-title-group">
+      <h1>ESCROW #{{ escrow.id | truncate(length=8, end="") }}</h1>
+      <p class="nexus-escrow-subtitle">2-of-3 Multisig Protection</p>
+    </div>
+    <span class="nexus-status-badge nexus-status-{{ escrow.status }}">
+      {{ escrow.status }}
+    </span>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="nexus-escrow-grid">
+    <!-- Left Column: Timeline -->
+    <div class="nexus-glass-card">
+      <!-- Amount Display -->
+      <div class="nexus-amount-display">
+        <span class="nexus-amount-label">Escrow Amount</span>
+        <span class="nexus-amount-value">{{ escrow.amount_xmr }} XMR</span>
+        <span class="nexus-amount-atomic">{{ escrow.amount_atomic }} atomic units</span>
+      </div>
+
+      <h2 style="margin: 0 0 var(--nexus-space-6) 0; color: var(--nexus-fg); font-size: var(--nexus-text-xl);">Escrow Process</h2>
+
+      <!-- Timeline -->
+      <div class="nexus-timeline">
+        <!-- Step 1: Created -->
+        <div class="nexus-timeline-step {% if escrow.status != 'created' %}completed{% else %}active{% endif %}">
+          <div class="nexus-timeline-marker">
+            {% if escrow.status != 'created' %}
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            {% else %}
+              1
+            {% endif %}
+          </div>
+          <div class="nexus-timeline-content">
+            <h3>Escrow Initiated</h3>
+            <p class="nexus-timeline-desc">Multisig wallet created (Buyer, Vendor, Arbiter)</p>
+            <span class="nexus-timeline-time">{{ escrow.created_at | date(format="%Y-%m-%d %H:%M UTC") }}</span>
+          </div>
+        </div>
+
+        <!-- Step 2: Multisig Setup -->
+        <div class="nexus-timeline-step {% if escrow.multisig_address %}completed{% elif escrow.status == 'created' %}active{% endif %}">
+          <div class="nexus-timeline-marker">
+            {% if escrow.multisig_address %}
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            {% else %}
+              2
+            {% endif %}
+          </div>
+          <div class="nexus-timeline-content">
+            <h3>Multisig Setup Complete</h3>
+            <p class="nexus-timeline-desc">All parties exchanged multisig info</p>
+            {% if escrow.multisig_address %}
+              <div class="nexus-address-box">
+                <span class="nexus-address-label">Multisig Address:</span>
+                <code class="nexus-monero-address">{{ escrow.multisig_address }}</code>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Step 3: Funded -->
+        <div class="nexus-timeline-step {% if escrow.status == 'funded' or escrow.status == 'releasing' or escrow.status == 'refunding' or escrow.status == 'completed' %}completed{% elif escrow.multisig_address and escrow.status == 'created' %}active{% endif %}">
+          <div class="nexus-timeline-marker">
+            {% if escrow.status == 'funded' or escrow.status == 'releasing' or escrow.status == 'refunding' or escrow.status == 'completed' %}
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            {% else %}
+              3
+            {% endif %}
+          </div>
+          <div class="nexus-timeline-content">
+            <h3>Escrow Funded</h3>
+            <p class="nexus-timeline-desc">Buyer deposited {{ escrow.amount_xmr }} XMR</p>
+            {% if escrow.transaction_hash %}
+              <div class="nexus-address-box">
+                <span class="nexus-address-label">TX Hash:</span>
+                <code class="nexus-monero-address">{{ escrow.transaction_hash }}</code>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Step 4: Resolution -->
+        <div class="nexus-timeline-step {% if escrow.status == 'completed' %}completed{% elif escrow.status == 'releasing' or escrow.status == 'refunding' %}active{% endif %}">
+          <div class="nexus-timeline-marker">
+            {% if escrow.status == 'completed' %}
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            {% else %}
+              4
+            {% endif %}
+          </div>
+          <div class="nexus-timeline-content">
+            {% if escrow.status == 'completed' %}
+              <h3>Funds Released</h3>
+              <p class="nexus-timeline-desc">Transaction confirmed on blockchain</p>
+            {% elif escrow.status == 'releasing' %}
+              <h3>Releasing to Vendor</h3>
+              <p class="nexus-timeline-desc">2-of-3 signatures: Buyer + Arbiter</p>
+            {% elif escrow.status == 'refunding' %}
+              <h3>Refunding to Buyer</h3>
+              <p class="nexus-timeline-desc">2-of-3 signatures: Vendor + Arbiter</p>
+            {% else %}
+              <h3>Awaiting Resolution</h3>
+              <p class="nexus-timeline-desc">Pending buyer confirmation or dispute</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Participants -->
+      <h2 style="margin: var(--nexus-space-6) 0 var(--nexus-space-4) 0; color: var(--nexus-fg); font-size: var(--nexus-text-xl);">Participants</h2>
+      <div class="nexus-participants">
+        <div class="nexus-participant">
+          <div class="nexus-participant-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+          </div>
+          <h3>Buyer</h3>
+          <p>{{ escrow.buyer_id | truncate(length=8, end="...") }}</p>
+        </div>
+
+        <div class="nexus-participant">
+          <div class="nexus-participant-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <h3>Vendor</h3>
+          <p>{{ escrow.vendor_id | truncate(length=8, end="...") }}</p>
+        </div>
+
+        <div class="nexus-participant">
+          <div class="nexus-participant-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <h3>Arbiter</h3>
+          <p>NEXUS System</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Actions & Info -->
+    <div>
+      <!-- Quick Actions (show based on user role and status) -->
+      {% if user_role == "buyer" and escrow.status == "funded" %}
+      <div class="nexus-glass-card" style="margin-bottom: var(--nexus-space-4);">
+        <h2 style="margin: 0 0 var(--nexus-space-4) 0; color: var(--nexus-fg); font-size: var(--nexus-text-lg);">Quick Actions</h2>
+        <div class="nexus-actions-grid">
+          <button class="nexus-btn nexus-btn-primary"
+                  hx-get="/escrow/{{ escrow.id }}/release-form"
+                  hx-target="#modal-container"
+                  hx-swap="innerHTML">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Release Funds
+          </button>
+          <button class="nexus-btn nexus-btn-destructive"
+                  hx-get="/escrow/{{ escrow.id }}/dispute-form"
+                  hx-target="#modal-container"
+                  hx-swap="innerHTML">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            Open Dispute
+          </button>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if user_role == "vendor" and escrow.status == "funded" %}
+      <div class="nexus-glass-card" style="margin-bottom: var(--nexus-space-4);">
+        <h2 style="margin: 0 0 var(--nexus-space-4) 0; color: var(--nexus-fg); font-size: var(--nexus-text-lg);">Quick Actions</h2>
+        <div class="nexus-actions-grid">
+          <button class="nexus-btn nexus-btn-secondary"
+                  hx-get="/escrow/{{ escrow.id }}/refund-form"
+                  hx-target="#modal-container"
+                  hx-swap="innerHTML">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            </svg>
+            Refund Buyer
+          </button>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Security Info -->
+      <div class="nexus-glass-card" style="margin-bottom: var(--nexus-space-4);">
+        <h2 style="margin: 0 0 var(--nexus-space-4) 0; color: var(--nexus-fg); font-size: var(--nexus-text-lg);">Security Features</h2>
+        <div style="display: flex; flex-direction: column; gap: var(--nexus-space-3);">
+          <div style="display: flex; align-items: center; gap: var(--nexus-space-3);">
+            <svg style="width: 20px; height: 20px; color: var(--nexus-primary); flex-shrink: 0;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            <span style="color: var(--nexus-muted-fg); font-size: var(--nexus-text-sm);">2-of-3 Multisig Protection</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: var(--nexus-space-3);">
+            <svg style="width: 20px; height: 20px; color: var(--nexus-primary); flex-shrink: 0;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            <span style="color: var(--nexus-muted-fg); font-size: var(--nexus-text-sm);">Monero Privacy Features</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: var(--nexus-space-3);">
+            <svg style="width: 20px; height: 20px; color: var(--nexus-primary); flex-shrink: 0;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            <span style="color: var(--nexus-muted-fg); font-size: var(--nexus-text-sm);">Neutral Arbiter System</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: var(--nexus-space-3);">
+            <svg style="width: 20px; height: 20px; color: var(--nexus-primary); flex-shrink: 0;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            <span style="color: var(--nexus-muted-fg); font-size: var(--nexus-text-sm);">Testnet Only (v0.2.6)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- How It Works -->
+      <div class="nexus-glass-card">
+        <h2 style="margin: 0 0 var(--nexus-space-4) 0; color: var(--nexus-fg); font-size: var(--nexus-text-lg);">How 2-of-3 Works</h2>
+        <p style="color: var(--nexus-muted-fg); font-size: var(--nexus-text-sm); line-height: 1.6; margin-bottom: var(--nexus-space-4);">
+          Any 2 out of 3 parties (Buyer, Vendor, Arbiter) must sign to move funds.
+        </p>
+        <h3 style="margin: 0 0 var(--nexus-space-2) 0; color: var(--nexus-fg); font-size: var(--nexus-text-sm); font-weight: var(--nexus-weight-bold);">Scenarios:</h3>
+        <ul style="margin: 0; padding-left: var(--nexus-space-5); color: var(--nexus-muted-fg); font-size: var(--nexus-text-sm); line-height: 1.8;">
+          <li><strong style="color: var(--nexus-primary);">Happy Path:</strong> Buyer + Arbiter → Release to vendor</li>
+          <li><strong style="color: var(--nexus-secondary);">Refund:</strong> Vendor + Arbiter → Return to buyer</li>
+          <li><strong style="color: hsl(45, 100%, 55%);">Dispute:</strong> Arbiter decides based on evidence</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Container for Forms -->
+<div id="modal-container"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// WebSocket for live escrow updates (NEXUS version)
+(function() {
+  const escrowId = '{{ escrow.id }}';
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = wsProtocol + '//' + window.location.host + '/ws/';
+
+  let ws;
+  let reconnectAttempts = 0;
+  const maxReconnectAttempts = 5;
+
+  function connect() {
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = function() {
+      console.log('✅ WebSocket connected for escrow:', escrowId);
+      reconnectAttempts = 0;
+
+      // Subscribe to escrow updates
+      ws.send(JSON.stringify({
+        type: 'subscribe',
+        channel: 'escrow:' + escrowId
+      }));
+    };
+
+    ws.onmessage = function(event) {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('Escrow update received:', data);
+
+        if (data.type === 'EscrowStatusChanged' && data.escrow_id === escrowId) {
+          // Show toast notification
+          if (window.notificationManager) {
+            window.notificationManager.showToast(
+              '🔒 Escrow Updated',
+              `Status changed to: ${data.new_status}`,
+              'success',
+              3000
+            );
+          }
+
+          // Reload page after 2 seconds to show updated status
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        }
+      } catch (e) {
+        console.error('Failed to parse WebSocket message:', e);
+      }
+    };
+
+    ws.onerror = function(error) {
+      console.error('WebSocket error:', error);
+    };
+
+    ws.onclose = function() {
+      console.log('WebSocket disconnected');
+
+      if (reconnectAttempts < maxReconnectAttempts) {
+        reconnectAttempts++;
+        console.log(`Reconnecting... (attempt ${reconnectAttempts}/${maxReconnectAttempts})`);
+        setTimeout(connect, 3000);
+      }
+    };
+  }
+
+  // Initialize connection
+  connect();
+})();
+</script>
+{% endblock %}

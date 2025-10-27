@@ -1,0 +1,416 @@
+<!-- NEXUS Modal: Release Funds to Vendor -->
+<div class="nexus-modal-overlay" id="release-modal" onclick="this.remove()">
+  <div class="nexus-modal-dialog" onclick="event.stopPropagation()">
+    <div class="nexus-modal-header">
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Release Funds to Vendor
+      </h2>
+      <button class="nexus-modal-close" onclick="document.getElementById('release-modal').remove()" aria-label="Close modal">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="nexus-modal-body">
+      <!-- Warning Notice -->
+      <div class="nexus-alert nexus-alert-warning">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <div>
+          <strong>⚠️ This action is irreversible</strong>
+          <p>Once released, funds will be sent to the vendor's Monero address. Make sure you've received the goods/services before proceeding.</p>
+        </div>
+      </div>
+
+      <!-- Release Form -->
+      <form id="release-form"
+            hx-post="/api/escrow/{{ escrow_id }}/release"
+            hx-ext="json-enc"
+            hx-target="#release-result"
+            hx-swap="innerHTML"
+            hx-indicator="#release-spinner">
+
+        {% if csrf_token %}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        {% endif %}
+
+        <!-- Vendor Address -->
+        <div class="nexus-form-group">
+          <label for="vendor_address" class="nexus-label">
+            Vendor Monero Address *
+          </label>
+          <input type="text"
+                 name="vendor_address"
+                 id="vendor_address"
+                 class="nexus-input nexus-input-monospace"
+                 placeholder="4ABC...xyz (95 characters)"
+                 required
+                 pattern="^4[0-9A-Za-z]{94}$"
+                 minlength="95"
+                 maxlength="95"
+                 aria-describedby="vendor-address-help">
+          <small id="vendor-address-help" class="nexus-help-text">
+            Monero testnet addresses start with '4' and are exactly 95 characters long.
+          </small>
+        </div>
+
+        <!-- Transaction Details -->
+        <div class="nexus-info-box">
+          <h4>Transaction Details</h4>
+          <dl class="nexus-details-list">
+            <dt>Amount:</dt>
+            <dd>{{ amount_xmr }} XMR</dd>
+
+            <dt>Signatures Required:</dt>
+            <dd>2-of-3 (Buyer + Arbiter)</dd>
+
+            <dt>Status After Release:</dt>
+            <dd><span class="nexus-badge nexus-badge-warning">Releasing</span></dd>
+          </dl>
+        </div>
+
+        <!-- Result Container -->
+        <div id="release-result"></div>
+
+        <!-- Actions -->
+        <div class="nexus-modal-actions">
+          <button type="button"
+                  class="nexus-btn nexus-btn-ghost"
+                  onclick="document.getElementById('release-modal').remove()">
+            Cancel
+          </button>
+          <button type="submit"
+                  class="nexus-btn nexus-btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Release {{ amount_xmr }} XMR
+          </button>
+          <div id="release-spinner" class="nexus-spinner htmx-indicator">
+            <div class="nexus-spinner-circle"></div>
+            <span>Processing transaction...</span>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+/* === NEXUS MODAL STYLES === */
+.nexus-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--nexus-space-4);
+  animation: nexus-modal-fade-in 0.2s ease-out;
+}
+
+@keyframes nexus-modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.nexus-modal-dialog {
+  background: rgba(13, 13, 13, 0.98);
+  backdrop-filter: blur(20px);
+  border: 1px solid hsl(0, 0%, 15%);
+  border-radius: var(--nexus-radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: nexus-modal-slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes nexus-modal-slide-up {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.nexus-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--nexus-space-6);
+  border-bottom: 1px solid hsl(0, 0%, 15%);
+}
+
+.nexus-modal-header h2 {
+  margin: 0;
+  font-size: var(--nexus-text-xl);
+  font-weight: var(--nexus-weight-bold);
+  color: var(--nexus-fg);
+  display: flex;
+  align-items: center;
+  gap: var(--nexus-space-3);
+}
+
+.nexus-modal-header h2 svg {
+  color: var(--nexus-primary);
+}
+
+.nexus-modal-close {
+  background: none;
+  border: none;
+  color: var(--nexus-muted-fg);
+  cursor: pointer;
+  padding: var(--nexus-space-2);
+  border-radius: var(--nexus-radius-sm);
+  transition: all var(--nexus-transition-base);
+}
+
+.nexus-modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--nexus-fg);
+}
+
+.nexus-modal-body {
+  padding: var(--nexus-space-6);
+}
+
+.nexus-alert {
+  display: flex;
+  gap: var(--nexus-space-3);
+  padding: var(--nexus-space-4);
+  border-radius: var(--nexus-radius-md);
+  margin-bottom: var(--nexus-space-6);
+}
+
+.nexus-alert svg {
+  flex-shrink: 0;
+}
+
+.nexus-alert-warning {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  color: hsl(45, 100%, 70%);
+}
+
+.nexus-alert strong {
+  display: block;
+  margin-bottom: var(--nexus-space-1);
+  color: hsl(45, 100%, 60%);
+}
+
+.nexus-alert p {
+  margin: 0;
+  font-size: var(--nexus-text-sm);
+  color: var(--nexus-muted-fg);
+  line-height: 1.5;
+}
+
+.nexus-form-group {
+  margin-bottom: var(--nexus-space-5);
+}
+
+.nexus-label {
+  display: block;
+  margin-bottom: var(--nexus-space-2);
+  font-size: var(--nexus-text-sm);
+  font-weight: var(--nexus-weight-medium);
+  color: var(--nexus-fg);
+}
+
+.nexus-input {
+  width: 100%;
+  padding: var(--nexus-space-3) var(--nexus-space-4);
+  background: rgba(10, 10, 10, 0.8);
+  border: 1px solid hsl(0, 0%, 20%);
+  border-radius: var(--nexus-radius-md);
+  color: var(--nexus-fg);
+  font-size: var(--nexus-text-sm);
+  transition: all var(--nexus-transition-base);
+}
+
+.nexus-input:focus {
+  outline: none;
+  border-color: var(--nexus-primary);
+  box-shadow: 0 0 0 3px rgba(255, 26, 92, 0.1);
+}
+
+.nexus-input:invalid:not(:placeholder-shown) {
+  border-color: hsl(0, 85%, 60%);
+}
+
+.nexus-input-monospace {
+  font-family: var(--nexus-font-mono);
+  font-size: var(--nexus-text-xs);
+}
+
+.nexus-help-text {
+  display: block;
+  margin-top: var(--nexus-space-2);
+  font-size: var(--nexus-text-xs);
+  color: var(--nexus-muted-fg);
+  line-height: 1.4;
+}
+
+.nexus-info-box {
+  padding: var(--nexus-space-4);
+  background: rgba(0, 217, 255, 0.05);
+  border: 1px solid rgba(0, 217, 255, 0.2);
+  border-radius: var(--nexus-radius-md);
+  margin-bottom: var(--nexus-space-5);
+}
+
+.nexus-info-box h4 {
+  margin: 0 0 var(--nexus-space-3) 0;
+  font-size: var(--nexus-text-sm);
+  font-weight: var(--nexus-weight-bold);
+  color: hsl(190, 100%, 55%);
+  text-transform: uppercase;
+  letter-spacing: var(--nexus-tracking-wide);
+}
+
+.nexus-details-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--nexus-space-2) var(--nexus-space-4);
+  margin: 0;
+}
+
+.nexus-details-list dt {
+  font-size: var(--nexus-text-sm);
+  color: var(--nexus-muted-fg);
+  font-weight: var(--nexus-weight-medium);
+}
+
+.nexus-details-list dd {
+  margin: 0;
+  font-size: var(--nexus-text-sm);
+  color: var(--nexus-fg);
+  font-weight: var(--nexus-weight-medium);
+}
+
+.nexus-badge {
+  display: inline-block;
+  padding: var(--nexus-space-1) var(--nexus-space-2);
+  border-radius: var(--nexus-radius-full);
+  font-size: var(--nexus-text-xs);
+  font-weight: var(--nexus-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--nexus-tracking-wide);
+}
+
+.nexus-badge-warning {
+  background: rgba(251, 191, 36, 0.2);
+  color: hsl(45, 100%, 60%);
+  border: 1px solid hsl(45, 100%, 50%);
+}
+
+.nexus-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--nexus-space-3);
+  margin-top: var(--nexus-space-6);
+}
+
+.nexus-spinner {
+  display: none;
+  align-items: center;
+  gap: var(--nexus-space-2);
+  color: var(--nexus-primary);
+  font-size: var(--nexus-text-sm);
+}
+
+.nexus-spinner.htmx-request {
+  display: flex;
+}
+
+.nexus-spinner-circle {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 26, 92, 0.3);
+  border-top-color: var(--nexus-primary);
+  border-radius: 50%;
+  animation: nexus-spin 0.8s linear infinite;
+}
+
+@keyframes nexus-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .nexus-modal-dialog {
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .nexus-modal-actions {
+    flex-direction: column;
+  }
+
+  .nexus-modal-actions .nexus-btn {
+    width: 100%;
+  }
+}
+</style>
+
+<script>
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('release-modal');
+    if (modal) modal.remove();
+  }
+}, { once: true });
+
+// Handle HTMX response
+document.getElementById('release-form').addEventListener('htmx:afterRequest', function(event) {
+  if (event.detail.successful) {
+    // Show success notification
+    if (window.notificationManager) {
+      window.notificationManager.showToast(
+        '✅ Funds Released',
+        'Transaction submitted successfully. Awaiting blockchain confirmation.',
+        'success',
+        5000
+      );
+    }
+
+    // Close modal and reload page after 2 seconds
+    setTimeout(() => {
+      document.getElementById('release-modal').remove();
+      window.location.reload();
+    }, 2000);
+  } else {
+    // Show error notification
+    const errorMessage = event.detail.xhr.responseText || 'Failed to release funds';
+    if (window.notificationManager) {
+      window.notificationManager.showToast(
+        '❌ Release Failed',
+        errorMessage,
+        'error',
+        8000
+      );
+    }
+  }
+});
+</script>
