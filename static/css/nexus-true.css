@@ -5,25 +5,49 @@
 
 /* === KEYFRAMES ANIMATIONS === */
 
+/* JUMP ANIMATION - Direct jump with smooth rotation */
 @keyframes jump {
+  /* START - Rest position */
   0% {
     transform: translateY(0) rotate(0deg) scale(1);
   }
+
+  /* ASCENT - Fast upward with rotation */
   15% {
-    transform: translateY(-100vh) rotate(15deg) scale(1.2);
+    transform: translateY(-100vh) rotate(180deg) scale(1.05);
   }
-  50% {
-    transform: translateY(-100vh) rotate(180deg) scale(1.3);
+
+  /* PEAK - Hang at top */
+  40% {
+    transform: translateY(-105vh) rotate(270deg) scale(1);
   }
-  85% {
-    transform: translateY(20px) rotate(350deg) scale(0.9);
+
+  /* DESCENT - Fall down */
+  70% {
+    transform: translateY(0) rotate(350deg) scale(1);
   }
-  92% {
-    transform: translateY(-10px) rotate(360deg) scale(1.05);
+
+  /* LAND - First impact */
+  75% {
+    transform: translateY(0) rotate(360deg) scale(1);
   }
-  96% {
-    transform: translateY(5px) rotate(360deg) scale(0.98);
+
+  /* BOUNCE 1 */
+  82% {
+    transform: translateY(-30px) rotate(360deg) scale(1);
   }
+
+  /* LAND 2 */
+  88% {
+    transform: translateY(0) rotate(360deg) scale(1);
+  }
+
+  /* BOUNCE 2 */
+  94% {
+    transform: translateY(-10px) rotate(360deg) scale(1);
+  }
+
+  /* FINAL - Back to rest */
   100% {
     transform: translateY(0) rotate(360deg) scale(1);
   }
@@ -163,13 +187,24 @@
 .nexus-animated-letter {
   display: inline-block;
   cursor: pointer;
-  transition: all 0.3s ease;
   vertical-align: baseline;
+  transition: transform 0.2s ease, color 0.2s ease;
+
+  /* Performance optimizations */
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
-.nexus-animated-letter:hover,
+/* Subtle hover effect (before click/touch) */
+.nexus-animated-letter:hover {
+  color: hsl(180, 100%, 50%); /* Cyan accent */
+  transform: scale(1.05);
+}
+
+/* Main jump animation - Simple and direct */
 .nexus-animated-letter.jumping {
-  animation: jump 1.5s cubic-bezier(0.6, 0, 0.2, 1.5);
+  animation: jump 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 /* Special E with horizontal lines */
@@ -234,29 +269,91 @@
   text-transform: uppercase;
 }
 
-/* Scroll Indicator */
+/* === SCROLL INDICATOR === */
+
 .nexus-scroll-indicator {
   position: absolute;
-  bottom: 2rem;
+  bottom: 3rem;
   left: 50%;
   transform: translateX(-50%);
-  color: hsl(0, 0%, 5%);
-  animation: bounce 1s infinite;
   text-align: center;
+  z-index: 20;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.nexus-scroll-indicator:hover {
+  transform: translateX(-50%) scale(1.1);
 }
 
 .nexus-scroll-text {
   font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
+  font-weight: 900;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
+  color: rgba(13, 13, 13, 0.8);
+  margin-bottom: 0.75rem;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.1);
 }
 
 .nexus-scroll-line {
-  width: 1px;
-  height: 3rem;
-  background-color: rgba(13, 13, 13, 0.4);
-  margin: 0.5rem auto 0;
+  width: 2px;
+  height: 4rem;
+  background: linear-gradient(
+    to bottom,
+    rgba(13, 13, 13, 0.8) 0%,
+    rgba(13, 13, 13, 0.4) 50%,
+    transparent 100%
+  );
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated dot sliding down the line */
+.nexus-scroll-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: hsl(0, 0%, 5%);
+  border-radius: 50%;
+  animation: scrollDot 2s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(13, 13, 13, 0.6);
+}
+
+@keyframes scrollDot {
+  0% {
+    top: 0;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+/* Bounce animation for the whole indicator */
+.nexus-scroll-indicator {
+  animation: scrollBounce 2s ease-in-out infinite;
+}
+
+@keyframes scrollBounce {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-10px);
+  }
 }
 
 /* === NAVIGATION === */
@@ -416,5 +513,282 @@
 
   .nexus-floating-shape {
     display: none;
+  }
+}
+
+/* === ACCESSIBILITY - PREFERS REDUCED MOTION === */
+
+/**
+ * For users with motion sensitivity, we disable/simplify animations
+ * This is CRITICAL for accessibility compliance (WCAG 2.1 Level AA)
+ */
+@media (prefers-reduced-motion: reduce) {
+  /* Disable all animations except simple fades */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Letters: Simple scale instead of full jump */
+  .nexus-animated-letter.jumping {
+    animation: none !important;
+    transform: scale(1.15) !important;
+    transition: transform 0.2s ease-out !important;
+  }
+
+  /* Disable floating shapes */
+  .nexus-floating-shape {
+    animation: none !important;
+    opacity: 0.05 !important;
+  }
+
+  /* Disable background wave */
+  .nexus-hero-pattern {
+    animation: none !important;
+  }
+
+  /* Disable grid pulse */
+  .nexus-hero-grid {
+    animation: none !important;
+    opacity: 0.05 !important;
+  }
+
+  /* Disable scroll bounce */
+  .nexus-scroll-indicator {
+    animation: none !important;
+  }
+}
+
+/* === PERFORMANCE OPTIMIZATIONS === */
+
+/**
+ * Force GPU acceleration on critical animated elements
+ */
+.nexus-animated-letter,
+.nexus-floating-shape,
+.nexus-hero-pattern {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/**
+ * Optimize paint performance
+ */
+.nexus-animated-letter.jumping {
+  contain: layout style paint;
+}
+
+/* === PRINT STYLES === */
+
+/**
+ * Optimize for printing (remove animations, backgrounds)
+ */
+@media print {
+  .nexus-animated-letter {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .nexus-hero-pattern,
+  .nexus-hero-grid,
+  .nexus-floating-shape {
+    display: none !important;
+  }
+
+  .nexus-hero-true {
+    background: white !important;
+    color: black !important;
+    min-height: auto !important;
+    page-break-after: always;
+  }
+
+  .nexus-hero-title-true {
+    color: black !important;
+  }
+}
+
+/* === FOCUS STYLES (Keyboard Navigation) === */
+
+/**
+ * Ensure keyboard users can see focus state
+ */
+.nexus-animated-letter:focus {
+  outline: 3px solid hsl(349, 100%, 55%);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.nexus-animated-letter:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.nexus-animated-letter:focus-visible {
+  outline: 3px solid hsl(349, 100%, 55%);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 6px rgba(255, 26, 92, 0.2);
+}
+
+/* === HIGH CONTRAST MODE === */
+
+/**
+ * Support for Windows High Contrast Mode
+ */
+@media (prefers-contrast: high) {
+  .nexus-animated-letter {
+    border: 2px solid transparent;
+  }
+
+  .nexus-animated-letter:hover,
+  .nexus-animated-letter:focus {
+    border-color: currentColor;
+  }
+
+  .nexus-hero-pattern,
+  .nexus-hero-grid,
+  .nexus-floating-shape {
+    display: none;
+  }
+}
+
+/* === FOOTER STYLES === */
+
+.nexus-footer {
+  background-color: hsl(0, 0%, 5%);
+  border-top: 1px solid hsl(0, 0%, 15%);
+  padding: 4rem 0 2rem;
+  margin-top: 6rem;
+}
+
+.nexus-footer-glass {
+  background: rgba(13, 13, 13, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+.nexus-footer-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.nexus-footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+@media (max-width: 1024px) {
+  .nexus-footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .nexus-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+.nexus-footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.nexus-footer-logo {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  color: hsl(349, 100%, 55%);
+  margin: 0;
+  text-shadow: 0 0 20px rgba(255, 26, 92, 0.3);
+}
+
+.nexus-footer-tagline {
+  font-size: 0.875rem;
+  color: hsl(0, 0%, 65%);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.nexus-footer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.nexus-footer-title {
+  font-size: 0.875rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: hsl(0, 0%, 98%);
+  margin: 0 0 0.5rem 0;
+  border-bottom: 2px solid hsl(349, 100%, 55%);
+  padding-bottom: 0.5rem;
+  display: inline-block;
+}
+
+.nexus-footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.nexus-footer-links a {
+  color: hsl(0, 0%, 70%);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+
+.nexus-footer-links a:hover {
+  color: hsl(349, 100%, 55%);
+  transform: translateX(4px);
+  text-shadow: 0 0 10px rgba(255, 26, 92, 0.4);
+}
+
+.nexus-footer-bottom {
+  border-top: 1px solid hsl(0, 0%, 15%);
+  padding-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.nexus-footer-bottom p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: hsl(0, 0%, 50%);
+  font-weight: 500;
+}
+
+.nexus-footer-bottom strong {
+  color: hsl(38, 92%, 50%);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 640px) {
+  .nexus-footer-bottom {
+    flex-direction: column;
+    text-align: center;
   }
 }
