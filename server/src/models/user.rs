@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::schema::users;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Insertable)]
+#[derive(Clone, Serialize, Deserialize, Queryable, Insertable)]
 #[diesel(table_name = users)]
 pub struct User {
     pub id: String,
@@ -18,6 +18,22 @@ pub struct User {
     pub wallet_id: Option<String>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+}
+
+// TM-005 Fix: Custom Debug qui redacte les champs sensibles
+impl std::fmt::Debug for User {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("User")
+            .field("id", &self.id)
+            .field("username", &self.username)
+            .field("password_hash", &"<redacted>")
+            .field("role", &self.role)
+            .field("wallet_address", &self.wallet_address.as_ref().map(|_| "<redacted>"))
+            .field("wallet_id", &self.wallet_id.as_ref().map(|_| "<redacted>"))
+            .field("created_at", &self.created_at)
+            .field("updated_at", &self.updated_at)
+            .finish()
+    }
 }
 
 #[derive(Clone, Insertable)]

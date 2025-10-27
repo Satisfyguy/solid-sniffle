@@ -1,5 +1,6 @@
 //! Monero RPC client implementation
 
+use crate::validation::validate_localhost_strict;
 use monero_marketplace_common::{
     error::MoneroError,
     types::{
@@ -39,12 +40,9 @@ impl MoneroRpcClient {
     pub fn new(config: MoneroConfig) -> Result<Self, MoneroError> {
         let url = config.rpc_url;
 
-        // OPSEC: Vérifier que URL est localhost
-        if !url.contains("127.0.0.1") && !url.contains("localhost") {
-            return Err(MoneroError::InvalidResponse(
-                "RPC URL must be localhost only (OPSEC)".to_string(),
-            ));
-        }
+        // TM-004 Fix: Validation stricte (pas de bypass avec evil-127.0.0.1.com)
+        validate_localhost_strict(&url)
+            .map_err(|e| MoneroError::InvalidResponse(format!("OPSEC violation: {}", e)))?;
 
         // Utiliser timeout depuis config
         let timeout_secs = config.timeout_seconds;
