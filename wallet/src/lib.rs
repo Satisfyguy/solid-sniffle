@@ -9,6 +9,7 @@ pub mod multisig;
 pub mod rpc;
 pub mod tor;
 pub mod transaction;
+pub mod validation;
 
 pub use client::MoneroClient;
 pub use escrow::EscrowManager;
