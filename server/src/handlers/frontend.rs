@@ -17,6 +17,7 @@ pub async fn index(tera: web::Data<Tera>, session: Session) -> impl Responder {
     // Check if user is logged in
     if let Ok(Some(username)) = session.get::<String>("username") {
         ctx.insert("username", &username);
+        ctx.insert("user_name", &username); // For nav template
         ctx.insert("logged_in", &true);
 
         if let Ok(Some(role)) = session.get::<String>("role") {
@@ -25,6 +26,10 @@ pub async fn index(tera: web::Data<Tera>, session: Session) -> impl Responder {
     } else {
         ctx.insert("logged_in", &false);
     }
+
+    // Add CSRF token for logout form in navigation
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
 
     // Empty listings for now (will be populated by DB query later)
     ctx.insert("listings", &Vec::<String>::new());
@@ -129,6 +134,7 @@ pub async fn show_listings(
     // Check auth
     if let Ok(Some(username)) = session.get::<String>("username") {
         ctx.insert("username", &username);
+        ctx.insert("user_name", &username); // For nav template
         ctx.insert("logged_in", &true);
 
         if let Ok(Some(role)) = session.get::<String>("role") {
@@ -137,6 +143,10 @@ pub async fn show_listings(
     } else {
         ctx.insert("logged_in", &false);
     }
+
+    // Add CSRF token for logout form in navigation
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
 
     // Fetch listings from database
     let mut conn = match pool.get() {
@@ -581,12 +591,17 @@ pub async fn show_order(
     // Insert session data
     if let Ok(Some(username)) = session.get::<String>("username") {
         ctx.insert("username", &username);
+        ctx.insert("user_name", &username); // For nav template
         ctx.insert("logged_in", &true);
 
         if let Ok(Some(role)) = session.get::<String>("role") {
             ctx.insert("role", &role);
         }
     }
+
+    // Add CSRF token for forms
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
 
     // Fetch order from database
     let mut conn = match pool.get() {
@@ -722,12 +737,17 @@ pub async fn show_escrow(
     // Insert session data
     if let Ok(Some(username)) = session.get::<String>("username") {
         ctx.insert("username", &username);
+        ctx.insert("user_name", &username); // For nav template
         ctx.insert("logged_in", &true);
 
         if let Ok(Some(role)) = session.get::<String>("role") {
             ctx.insert("role", &role);
         }
     }
+
+    // Add CSRF token for forms
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
 
     // Fetch escrow from database
     let mut conn = match pool.get() {
@@ -887,12 +907,17 @@ pub async fn submit_review_form(
     // Insert session data
     if let Ok(Some(username)) = session.get::<String>("username") {
         ctx.insert("username", &username);
+        ctx.insert("user_name", &username); // For nav template
         ctx.insert("logged_in", &true);
 
         if let Ok(Some(role)) = session.get::<String>("role") {
             ctx.insert("role", &role);
         }
     }
+
+    // Add CSRF token for forms
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
 
     // Add CSRF token
     let csrf_token = get_csrf_token(&session);
@@ -929,12 +954,17 @@ pub async fn show_settings(tera: web::Data<Tera>, session: Session) -> impl Resp
     // Insert session data
     if let Ok(Some(username)) = session.get::<String>("username") {
         ctx.insert("username", &username);
+        ctx.insert("user_name", &username); // For nav template
         ctx.insert("logged_in", &true);
 
         if let Ok(Some(role)) = session.get::<String>("role") {
             ctx.insert("role", &role);
         }
     }
+
+    // Add CSRF token for forms
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
 
     match tera.render("settings/index.html", &ctx) {
         Ok(html) => {
@@ -964,12 +994,17 @@ pub async fn show_wallet_settings(tera: web::Data<Tera>, session: Session) -> im
     // Insert session data
     if let Ok(Some(username)) = session.get::<String>("username") {
         ctx.insert("username", &username);
+        ctx.insert("user_name", &username); // For nav template
         ctx.insert("logged_in", &true);
 
         if let Ok(Some(role)) = session.get::<String>("role") {
             ctx.insert("role", &role);
         }
     }
+
+    // Add CSRF token for forms
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
 
     // Add CSRF token
     let csrf_token = get_csrf_token(&session);

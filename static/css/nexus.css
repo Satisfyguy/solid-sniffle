@@ -599,3 +599,20 @@
 .nexus-grid-4 {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
+
+
+/* ===== BUTTON ANIMATIONS ===== */
+
+@keyframes nexus-btn-shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.nexus-btn-glow {
+  pointer-events: none;
+}
+
