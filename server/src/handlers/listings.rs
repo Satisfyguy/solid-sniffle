@@ -824,6 +824,7 @@ pub async fn update_listing(
         price_xmr: req.price_xmr,
         stock: req.stock,
         status: req.status.clone(),
+        category: req.category.clone(),
     };
 
             let update_result = web::block(move || {
