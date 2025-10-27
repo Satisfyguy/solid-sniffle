@@ -65,6 +65,7 @@ pub struct Listing {
     pub images_ipfs_cids: Option<String>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+    pub category: String,
 }
 
 /// New listing for insertion
@@ -79,6 +80,7 @@ pub struct NewListing {
     pub stock: i32,
     pub status: String,
     pub images_ipfs_cids: Option<String>,
+    pub category: String,
 }
 
 /// Listing update data
@@ -90,6 +92,7 @@ pub struct UpdateListing {
     pub price_xmr: Option<i64>,
     pub stock: Option<i32>,
     pub status: Option<String>,
+    pub category: Option<String>,
 }
 
 impl Listing {

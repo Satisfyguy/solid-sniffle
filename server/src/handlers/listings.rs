@@ -36,6 +36,9 @@ pub struct CreateListingRequest {
 
     #[validate(range(min = 0, message = "Stock cannot be negative"))]
     pub stock: i32,
+
+    #[validate(length(min = 2, max = 50, message = "Category must be between 2-50 characters"))]
+    pub category: String,
 }
 
 /// Request body for updating a listing
@@ -54,6 +57,9 @@ pub struct UpdateListingRequest {
     pub stock: Option<i32>,
 
     pub status: Option<String>,
+
+    #[validate(length(min = 2, max = 50))]
+    pub category: Option<String>,
 }
 
 /// Response for listing operations
@@ -70,6 +76,7 @@ pub struct ListingResponse {
     pub created_at: String,
     pub updated_at: String,
     pub images: Vec<String>, // IPFS CIDs for images
+    pub category: String,
 }
 
 impl From<Listing> for ListingResponse {
@@ -92,6 +99,7 @@ impl From<Listing> for ListingResponse {
             created_at: listing.created_at.to_string(),
             updated_at: listing.updated_at.to_string(),
             images,
+            category: listing.category.clone(),
         }
     }
 }
@@ -233,6 +241,7 @@ pub async fn create_listing(
         stock: req.stock,
         status: ListingStatus::Active.as_str().to_string(),
         images_ipfs_cids: Some("[]".to_string()), // Default to empty JSON array
+        category: req.category.clone(),
     };
 
     let mut conn = match pool.get() {
@@ -283,6 +292,7 @@ pub async fn create_listing_with_images(
     let mut description = String::new();
     let mut price_xmr: i64 = 0;
     let mut stock: i32 = 0;
+    let mut category = String::from("other"); // Default category
     let mut image_files = Vec::new();
 
     while let Some(item) = multipart.try_next().await.map_err(|e| {
@@ -332,6 +342,7 @@ pub async fn create_listing_with_images(
                         "description" => description = value,
                         "price_xmr" => price_xmr = value.parse().unwrap_or(0),
                         "stock" => stock = value.parse().unwrap_or(0),
+                        "category" => category = value,
                         _ => {}
                     }
                 }
@@ -396,6 +407,7 @@ pub async fn create_listing_with_images(
         stock,
         status: ListingStatus::Active.as_str().to_string(),
         images_ipfs_cids: Some(images_json),
+        category,
     };
 
     let mut conn = match pool.get() {

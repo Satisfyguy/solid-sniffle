@@ -37,6 +37,7 @@ diesel::table! {
         images_ipfs_cids -> Nullable<Text>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+        category -> Text,
     }
 }
 

@@ -80,6 +80,34 @@
           </small>
         </div>
 
+        {# Category Field #}
+        <div>
+          <label for="category" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+            Category
+          </label>
+          <select
+            id="category"
+            name="category"
+            required
+            class="nexus-input"
+            style="width: 100%;"
+          >
+            <option value="">Select a category...</option>
+            <option value="digital">💻 Digital Goods</option>
+            <option value="physical">📦 Physical Goods</option>
+            <option value="services">🛠️ Services</option>
+            <option value="vpn">🔒 VPN & Privacy</option>
+            <option value="hosting">🌐 Web Hosting</option>
+            <option value="software">⚙️ Software & Tools</option>
+            <option value="tutorials">📚 Tutorials & Guides</option>
+            <option value="accounts">👤 Accounts & Subscriptions</option>
+            <option value="other">🔹 Other</option>
+          </select>
+          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+            Select the category that best matches your product
+          </small>
+        </div>
+
         {# Price and Stock Grid #}
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
           {# Price Field #}
