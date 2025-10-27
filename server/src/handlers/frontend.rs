@@ -157,11 +157,12 @@ pub async fn index(tera: web::Data<Tera>, pool: web::Data<DbPool>, session: Sess
             _ => "Unknown".to_string(),
         };
 
+        let price_xmr = listing.price_as_xmr();
         products.push(ProductForTemplate {
             id: listing.id,
             title: listing.title,
             vendor: vendor_username,
-            price_display: format!("{:.4}", listing.price_as_xmr()),
+            price_display: format!("{:.4}", price_xmr),
             rating: 5, // TODO: Get real rating
             verified: true, // TODO: Check if vendor is verified
         });
