@@ -10,8 +10,12 @@ use tracing::{error, info};
 use crate::db::DbPool;
 use crate::middleware::csrf::get_csrf_token;
 
-/// GET / - Homepage (listings index)
-pub async fn index(tera: web::Data<Tera>, session: Session) -> impl Responder {
+/// GET / - Homepage (Underground NEXUS design)
+pub async fn index(tera: web::Data<Tera>, pool: web::Data<DbPool>, session: Session) -> impl Responder {
+    use crate::models::listing::Listing;
+    use crate::models::user::User;
+    use serde::Serialize;
+
     let mut ctx = Context::new();
 
     // Check if user is logged in
@@ -31,12 +35,143 @@ pub async fn index(tera: web::Data<Tera>, session: Session) -> impl Responder {
     let csrf_token = get_csrf_token(&session);
     ctx.insert("csrf_token", &csrf_token);
 
-    // Empty listings for now (will be populated by DB query later)
-    ctx.insert("listings", &Vec::<String>::new());
+    // Categories with icons
+    #[derive(Serialize)]
+    struct Category {
+        slug: String,
+        title: String,
+        icon: String,
+        count: i32,
+    }
 
-    match tera.render("listings/index.html", &ctx) {
+    let categories = vec![
+        Category {
+            slug: "digital".to_string(),
+            title: "DIGITAL GOODS".to_string(),
+            icon: r#"<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>"#.to_string(),
+            count: 0,
+        },
+        Category {
+            slug: "physical".to_string(),
+            title: "PHYSICAL GOODS".to_string(),
+            icon: r#"<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>"#.to_string(),
+            count: 0,
+        },
+        Category {
+            slug: "services".to_string(),
+            title: "SERVICES".to_string(),
+            icon: r#"<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m-5.2-9.8l4.2 4.2m0 0l4.2 4.2m-8.4 0l4.2-4.2m0 0l4.2-4.2"/></svg>"#.to_string(),
+            count: 0,
+        },
+        Category {
+            slug: "vpn".to_string(),
+            title: "VPN & PRIVACY".to_string(),
+            icon: r#"<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>"#.to_string(),
+            count: 0,
+        },
+        Category {
+            slug: "hosting".to_string(),
+            title: "WEB HOSTING".to_string(),
+            icon: r#"<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>"#.to_string(),
+            count: 0,
+        },
+        Category {
+            slug: "software".to_string(),
+            title: "SOFTWARE & TOOLS".to_string(),
+            icon: r#"<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>"#.to_string(),
+            count: 0,
+        },
+    ];
+
+    ctx.insert("categories", &categories);
+
+    // Stats for hero section
+    #[derive(Serialize)]
+    struct Stats {
+        listings: i32,
+        vendors: i32,
+    }
+
+    // TODO: Get real counts from DB
+    let stats = Stats {
+        listings: 0,
+        vendors: 0,
+    };
+    ctx.insert("stats", &stats);
+
+    // Fetch featured listings from database (limit 6)
+    let mut conn = match pool.get() {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Database connection error: {}", e);
+            ctx.insert("products", &Vec::<String>::new());
+            match tera.render("home.html", &ctx) {
+                Ok(html) => {
+                    return HttpResponse::Ok()
+                        .content_type("text/html; charset=utf-8")
+                        .body(html)
+                }
+                Err(e) => {
+                    return HttpResponse::InternalServerError()
+                        .body(format!("Template error: {}", e))
+                }
+            }
+        }
+    };
+
+    let listings_result = web::block(move || Listing::list_active(&mut conn, 6, 0)).await;
+
+    let listings = match listings_result {
+        Ok(Ok(l)) => l,
+        Ok(Err(e)) => {
+            error!("Error fetching listings: {}", e);
+            Vec::new()
+        }
+        Err(e) => {
+            error!("Database query error: {}", e);
+            Vec::new()
+        }
+    };
+
+    // Format products for template
+    #[derive(Serialize)]
+    struct ProductForTemplate {
+        id: String,
+        title: String,
+        vendor: String,
+        price_display: String,
+        rating: i32,
+        verified: bool,
+    }
+
+    let mut products = Vec::new();
+    for listing in listings {
+        let mut conn2 = match pool.get() {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+        let vendor_id = listing.vendor_id.clone();
+        let vendor_result = web::block(move || User::find_by_id(&mut conn2, vendor_id)).await;
+        let vendor_username = match vendor_result {
+            Ok(Ok(v)) => v.username,
+            _ => "Unknown".to_string(),
+        };
+
+        products.push(ProductForTemplate {
+            id: listing.id,
+            title: listing.title,
+            vendor: vendor_username,
+            price_display: format!("{:.4}", listing.price_as_xmr()),
+            rating: 5, // TODO: Get real rating
+            verified: true, // TODO: Check if vendor is verified
+        });
+    }
+
+    ctx.insert("products", &products);
+
+    match tera.render("home.html", &ctx) {
         Ok(html) => {
-            info!("Rendered homepage");
+            info!("Rendered underground homepage");
             HttpResponse::Ok()
                 .content_type("text/html; charset=utf-8")
                 .body(html)

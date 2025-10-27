@@ -1,0 +1,65 @@
+<section class="hero" id="home">
+  <!-- Background Pattern -->
+  <div class="hero-bg-pattern"></div>
+
+  <!-- Animated Grid -->
+  <div class="hero-grid"></div>
+
+  <!-- Floating Shapes -->
+  <div class="hero-shape hero-shape-1"></div>
+  <div class="hero-shape hero-shape-2"></div>
+  <div class="hero-shape hero-shape-3"></div>
+
+  <!-- Content -->
+  <div class="container hero-content">
+    <!-- Top Text -->
+    <div class="hero-top-text">
+      ANONYMOUS • SECURE • DECENTRALIZED
+    </div>
+
+    <!-- Main Title -->
+    <h1 class="hero-title">
+      <span class="animated-letter">N</span>
+      <span class="animated-letter">
+        <span class="letter-e">
+          <span class="letter-e-spacer">E</span>
+          <span class="letter-e-bars">
+            <span class="letter-e-bar"></span>
+            <span class="letter-e-bar"></span>
+            <span class="letter-e-bar"></span>
+          </span>
+        </span>
+      </span>
+      <span class="animated-letter">X</span>
+      <span class="animated-letter">U</span>
+      <span class="animated-letter">S</span>
+    </h1>
+
+    <!-- Subtitle -->
+    <p class="hero-subtitle">
+      UNDERGROUND • MARKETPLACE
+    </p>
+
+    <!-- Stats -->
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-value">{{ stats.listings | default(value="0") }}</div>
+        <div class="hero-stat-label">LISTINGS</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">{{ stats.vendors | default(value="0") }}</div>
+        <div class="hero-stat-label">VENDORS</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-value">100%</div>
+        <div class="hero-stat-label">ANONYMOUS</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scroll Indicator -->
+  <div class="hero-scroll">
+    <div class="hero-scroll-text">SCROLL</div>
+    <div class="hero-scroll-line"></div>
+  </div>
+</section>
