@@ -62,7 +62,8 @@
 
             <hr style="margin: 8px 0; border: none; border-top: 1px solid var(--nexus-border);">
 
-            <form action="/auth/logout" method="POST" style="margin: 0;">
+            <form action="/logout" method="POST" style="margin: 0;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
               <button type="submit" class="nexus-nav-dropdown-item" style="width: 100%; text-align: left; border: none; background: none; cursor: pointer; padding: 12px 16px; font-size: 14px; color: var(--nexus-destructive);">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -76,10 +77,10 @@
         </div>
       {% else %}
         {# Guest User #}
-        <a href="/auth/login" class="nexus-btn nexus-btn-ghost nexus-btn-sm">
+        <a href="/login" class="nexus-btn nexus-btn-ghost nexus-btn-sm">
           Login
         </a>
-        <a href="/auth/register" class="nexus-btn nexus-btn-primary nexus-btn-sm">
+        <a href="/register" class="nexus-btn nexus-btn-primary nexus-btn-sm">
           Sign Up
         </a>
       {% endif %}

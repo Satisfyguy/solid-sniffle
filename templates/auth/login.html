@@ -113,31 +113,70 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Notification System for Auth Feedback -->
+<script src="/static/js/notifications-nexus.js"></script>
+
 <script>
-// Handle HTMX response
+// Handle HTMX response with premium toast notifications
 document.body.addEventListener('htmx:afterRequest', function(event) {
   if (event.detail.pathInfo.requestPath === '/api/auth/login') {
     const resultDiv = document.getElementById('auth-result');
 
     if (event.detail.successful) {
-      // Success - redirect will happen automatically
+      // Success - show toast and redirect
+      if (window.notificationManager) {
+        window.notificationManager.showToast(
+          '✅ Login Successful',
+          'Welcome back! Redirecting to marketplace...',
+          'success',
+          3000
+        );
+      }
+
       resultDiv.innerHTML = `
-        <div class="nexus-alert nexus-alert-success">
-          <div class="nexus-alert-icon">✓</div>
-          <div class="nexus-alert-content">
-            <div class="nexus-alert-title">Login Successful</div>
-            <div class="nexus-alert-message">Redirecting to marketplace...</div>
+        <div class="nexus-alert nexus-alert-success" style="padding: 1rem; border-radius: 8px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); color: hsl(142, 76%, 60%); display: flex; align-items: center; gap: 0.75rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <div>
+            <strong style="display: block; margin-bottom: 0.25rem;">Login Successful</strong>
+            <small>Redirecting to marketplace...</small>
           </div>
         </div>
       `;
+
+      // Redirect after 2 seconds (HTMX handles this via HX-Redirect header)
+      setTimeout(() => {
+        if (!window.location.pathname.includes('/login')) {
+          // Already redirected by HTMX
+          return;
+        }
+        window.location.href = '/';
+      }, 2000);
     } else {
-      // Error handling
+      // Error handling with toast
+      const errorMessage = event.detail.xhr?.responseText || 'Invalid username or password';
+
+      if (window.notificationManager) {
+        window.notificationManager.showToast(
+          '❌ Login Failed',
+          errorMessage,
+          'error',
+          5000
+        );
+      }
+
       resultDiv.innerHTML = `
-        <div class="nexus-alert nexus-alert-error">
-          <div class="nexus-alert-icon">✕</div>
-          <div class="nexus-alert-content">
-            <div class="nexus-alert-title">Login Failed</div>
-            <div class="nexus-alert-message">Invalid username or password.</div>
+        <div class="nexus-alert nexus-alert-error" style="padding: 1rem; border-radius: 8px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: hsl(0, 85%, 70%); display: flex; align-items: center; gap: 0.75rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+          <div>
+            <strong style="display: block; margin-bottom: 0.25rem;">Login Failed</strong>
+            <small>${errorMessage}</small>
           </div>
         </div>
       `;
