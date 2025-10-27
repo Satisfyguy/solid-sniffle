@@ -289,6 +289,10 @@ async fn main() -> Result<()> {
                 "/listings/new",
                 web::get().to(frontend::show_create_listing),
             )
+            .route(
+                "/listings/create",
+                web::get().to(frontend::show_create_listing),
+            )
             .route("/listings/{id}", web::get().to(frontend::show_listing))
             .route("/listings/{id}/edit", web::get().to(frontend::show_edit_listing))
             .route("/orders", web::get().to(frontend::show_orders))

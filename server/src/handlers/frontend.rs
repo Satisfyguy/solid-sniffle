@@ -334,11 +334,14 @@ pub async fn show_create_listing(tera: web::Data<Tera>, session: Session) -> imp
 
     if let Ok(Some(username)) = session.get::<String>("username") {
         ctx.insert("username", &username);
+        ctx.insert("user_name", &username); // For nav template
         ctx.insert("logged_in", &true);
         ctx.insert("role", &"vendor");
+    } else {
+        ctx.insert("logged_in", &false);
     }
 
-    // Add CSRF token for form submission
+    // Add CSRF token for form submission and logout
     let csrf_token = get_csrf_token(&session);
     ctx.insert("csrf_token", &csrf_token);
 
