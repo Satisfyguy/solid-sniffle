@@ -1,0 +1,383 @@
+/**
+ * NEXUS Modal System
+ * Reusable modal styles for HTMX-powered forms
+ * Premium glassmorphism design with accessibility
+ */
+
+/* === MODAL OVERLAY === */
+.nexus-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--nexus-space-4);
+  animation: nexus-modal-fade-in 0.2s ease-out;
+}
+
+@keyframes nexus-modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* === MODAL DIALOG === */
+.nexus-modal-dialog {
+  background: rgba(13, 13, 13, 0.98);
+  backdrop-filter: blur(20px);
+  border: 1px solid hsl(0, 0%, 15%);
+  border-radius: var(--nexus-radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: nexus-modal-slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes nexus-modal-slide-up {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* === MODAL HEADER === */
+.nexus-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--nexus-space-6);
+  border-bottom: 1px solid hsl(0, 0%, 15%);
+}
+
+.nexus-modal-header h2 {
+  margin: 0;
+  font-size: var(--nexus-text-xl);
+  font-weight: var(--nexus-weight-bold);
+  color: var(--nexus-fg);
+  display: flex;
+  align-items: center;
+  gap: var(--nexus-space-3);
+}
+
+.nexus-modal-header h2 svg {
+  color: var(--nexus-primary);
+  flex-shrink: 0;
+}
+
+.nexus-modal-close {
+  background: none;
+  border: none;
+  color: var(--nexus-muted-fg);
+  cursor: pointer;
+  padding: var(--nexus-space-2);
+  border-radius: var(--nexus-radius-sm);
+  transition: all var(--nexus-transition-base);
+  flex-shrink: 0;
+}
+
+.nexus-modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--nexus-fg);
+}
+
+/* === MODAL BODY === */
+.nexus-modal-body {
+  padding: var(--nexus-space-6);
+}
+
+/* === ALERTS === */
+.nexus-alert {
+  display: flex;
+  gap: var(--nexus-space-3);
+  padding: var(--nexus-space-4);
+  border-radius: var(--nexus-radius-md);
+  margin-bottom: var(--nexus-space-6);
+}
+
+.nexus-alert svg {
+  flex-shrink: 0;
+}
+
+.nexus-alert strong {
+  display: block;
+  margin-bottom: var(--nexus-space-1);
+}
+
+.nexus-alert p {
+  margin: 0;
+  font-size: var(--nexus-text-sm);
+  line-height: 1.5;
+}
+
+.nexus-alert-warning {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  color: hsl(45, 100%, 70%);
+}
+
+.nexus-alert-warning strong {
+  color: hsl(45, 100%, 60%);
+}
+
+.nexus-alert-warning p {
+  color: var(--nexus-muted-fg);
+}
+
+.nexus-alert-info {
+  background: rgba(0, 217, 255, 0.1);
+  border: 1px solid rgba(0, 217, 255, 0.3);
+  color: hsl(190, 100%, 70%);
+}
+
+.nexus-alert-info strong {
+  color: hsl(190, 100%, 55%);
+}
+
+.nexus-alert-info p {
+  color: var(--nexus-muted-fg);
+}
+
+.nexus-alert-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: hsl(0, 85%, 70%);
+}
+
+.nexus-alert-error strong {
+  color: hsl(0, 85%, 60%);
+}
+
+.nexus-alert-error p {
+  color: var(--nexus-muted-fg);
+}
+
+/* === FORM ELEMENTS === */
+.nexus-form-group {
+  margin-bottom: var(--nexus-space-5);
+}
+
+.nexus-label {
+  display: block;
+  margin-bottom: var(--nexus-space-2);
+  font-size: var(--nexus-text-sm);
+  font-weight: var(--nexus-weight-medium);
+  color: var(--nexus-fg);
+}
+
+.nexus-input,
+.nexus-textarea {
+  width: 100%;
+  padding: var(--nexus-space-3) var(--nexus-space-4);
+  background: rgba(10, 10, 10, 0.8);
+  border: 1px solid hsl(0, 0%, 20%);
+  border-radius: var(--nexus-radius-md);
+  color: var(--nexus-fg);
+  font-size: var(--nexus-text-sm);
+  transition: all var(--nexus-transition-base);
+}
+
+.nexus-textarea {
+  font-family: inherit;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.nexus-input:focus,
+.nexus-textarea:focus {
+  outline: none;
+  border-color: var(--nexus-primary);
+  box-shadow: 0 0 0 3px rgba(255, 26, 92, 0.1);
+}
+
+.nexus-input:invalid:not(:placeholder-shown),
+.nexus-textarea:invalid:not(:placeholder-shown) {
+  border-color: hsl(0, 85%, 60%);
+}
+
+.nexus-input-monospace {
+  font-family: var(--nexus-font-mono);
+  font-size: var(--nexus-text-xs);
+  letter-spacing: -0.5px;
+}
+
+.nexus-help-text {
+  display: block;
+  margin-top: var(--nexus-space-2);
+  font-size: var(--nexus-text-xs);
+  color: var(--nexus-muted-fg);
+  line-height: 1.4;
+}
+
+.nexus-char-count {
+  text-align: right;
+  font-size: var(--nexus-text-xs);
+  color: var(--nexus-muted-fg);
+  margin-top: var(--nexus-space-1);
+  font-family: var(--nexus-font-mono);
+}
+
+/* === INFO BOX === */
+.nexus-info-box {
+  padding: var(--nexus-space-4);
+  background: rgba(0, 217, 255, 0.05);
+  border: 1px solid rgba(0, 217, 255, 0.2);
+  border-radius: var(--nexus-radius-md);
+  margin-bottom: var(--nexus-space-5);
+}
+
+.nexus-info-box h4 {
+  margin: 0 0 var(--nexus-space-3) 0;
+  font-size: var(--nexus-text-sm);
+  font-weight: var(--nexus-weight-bold);
+  color: hsl(190, 100%, 55%);
+  text-transform: uppercase;
+  letter-spacing: var(--nexus-tracking-wide);
+}
+
+.nexus-details-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--nexus-space-2) var(--nexus-space-4);
+  margin: 0;
+}
+
+.nexus-details-list dt {
+  font-size: var(--nexus-text-sm);
+  color: var(--nexus-muted-fg);
+  font-weight: var(--nexus-weight-medium);
+}
+
+.nexus-details-list dd {
+  margin: 0;
+  font-size: var(--nexus-text-sm);
+  color: var(--nexus-fg);
+  font-weight: var(--nexus-weight-medium);
+}
+
+.nexus-timeline-list {
+  margin: 0;
+  padding-left: var(--nexus-space-5);
+  color: var(--nexus-muted-fg);
+  font-size: var(--nexus-text-sm);
+  line-height: 1.8;
+}
+
+.nexus-timeline-list li {
+  margin-bottom: var(--nexus-space-2);
+}
+
+/* === BADGES === */
+.nexus-badge {
+  display: inline-block;
+  padding: var(--nexus-space-1) var(--nexus-space-2);
+  border-radius: var(--nexus-radius-full);
+  font-size: var(--nexus-text-xs);
+  font-weight: var(--nexus-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--nexus-tracking-wide);
+}
+
+.nexus-badge-warning {
+  background: rgba(251, 191, 36, 0.2);
+  color: hsl(45, 100%, 60%);
+  border: 1px solid hsl(45, 100%, 50%);
+}
+
+.nexus-badge-secondary {
+  background: rgba(124, 58, 237, 0.2);
+  color: hsl(270, 60%, 65%);
+  border: 1px solid hsl(270, 60%, 50%);
+}
+
+/* === MODAL ACTIONS === */
+.nexus-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--nexus-space-3);
+  margin-top: var(--nexus-space-6);
+}
+
+/* === SPINNER === */
+.nexus-spinner {
+  display: none;
+  align-items: center;
+  gap: var(--nexus-space-2);
+  color: var(--nexus-primary);
+  font-size: var(--nexus-text-sm);
+}
+
+.nexus-spinner.htmx-request {
+  display: flex;
+}
+
+.nexus-spinner-circle {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 26, 92, 0.3);
+  border-top-color: var(--nexus-primary);
+  border-radius: 50%;
+  animation: nexus-spin 0.8s linear infinite;
+}
+
+@keyframes nexus-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 640px) {
+  .nexus-modal-dialog {
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .nexus-modal-overlay {
+    padding: 0;
+  }
+
+  .nexus-modal-actions {
+    flex-direction: column;
+  }
+
+  .nexus-modal-actions .nexus-btn {
+    width: 100%;
+  }
+
+  .nexus-modal-actions .nexus-spinner {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* === ACCESSIBILITY === */
+@media (prefers-reduced-motion: reduce) {
+  .nexus-modal-overlay,
+  .nexus-modal-dialog {
+    animation: none;
+  }
+}
+
+/* Focus visible for keyboard navigation */
+.nexus-modal-close:focus-visible {
+  outline: 2px solid var(--nexus-primary);
+  outline-offset: 2px;
+}
+
+.nexus-input:focus-visible,
+.nexus-textarea:focus-visible {
+  outline: 2px solid var(--nexus-primary);
+  outline-offset: 2px;
+}
