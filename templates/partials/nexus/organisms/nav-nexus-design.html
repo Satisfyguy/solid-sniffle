@@ -1,0 +1,152 @@
+{# NEXUS NAVIGATION - Design complet du vrai Nexus #}
+<nav class="nexus-nav-true">
+  <div class="nexus-nav-container-true">
+    <!-- Logo -->
+    <a href="/" class="nexus-nav-logo-true" hx-boost="true">
+      <div class="nexus-logo-shield-true">🛡️</div>
+      <h1 class="nexus-logo-text-true">NEXUS</h1>
+    </a>
+
+    <!-- Navigation Menu -->
+    <div class="nexus-nav-menu-true">
+      <a href="/" class="nexus-nav-link-true">HOME</a>
+      <a href="#categories" class="nexus-nav-link-true">CATEGORIES</a>
+      <a href="/listings" class="nexus-nav-link-true" hx-boost="true">LISTINGS</a>
+      <a href="/vendors" class="nexus-nav-link-true" hx-boost="true">VENDORS</a>
+    </div>
+
+    <!-- Actions -->
+    <div class="nexus-nav-actions-true">
+      <button class="nexus-btn-search-true">🔍</button>
+
+      {% if logged_in %}
+        {# User connecté #}
+        <a href="/settings" class="nexus-btn-connect-true" hx-boost="true">
+          <span>👤</span>
+          {{ username | upper }}
+        </a>
+      {% else %}
+        {# User non connecté #}
+        <a href="/auth/login" class="nexus-btn-connect-true" hx-boost="true">
+          <span>👤</span>
+          CONNECT
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<style>
+/* ========== NAVIGATION NEXUS TRUE ========== */
+.nexus-nav-true {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  border-bottom: 1px solid hsl(0, 0%, 20%);
+  background: rgba(13, 6, 8, 0.8);
+  backdrop-filter: blur(12px);
+}
+
+.nexus-nav-container-true {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nexus-nav-logo-true {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.nexus-logo-shield-true {
+  width: 3rem;
+  height: 3rem;
+  background: hsl(349, 100%, 55%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.nexus-logo-text-true {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  color: hsl(0, 0%, 98%);
+}
+
+.nexus-nav-menu-true {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.nexus-nav-link-true {
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: hsl(0, 0%, 98%);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.nexus-nav-link-true:hover {
+  color: hsl(349, 100%, 55%);
+}
+
+.nexus-nav-actions-true {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nexus-btn-search-true {
+  background: none;
+  border: none;
+  color: hsl(0, 0%, 98%);
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  font-size: 1.25rem;
+}
+
+.nexus-btn-search-true:hover {
+  color: hsl(349, 100%, 55%);
+}
+
+.nexus-btn-connect-true {
+  background: hsl(349, 100%, 55%);
+  color: hsl(0, 0%, 5%);
+  padding: 0.5rem 1.5rem;
+  border: none;
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.nexus-btn-connect-true:hover {
+  background: hsl(349, 100%, 60%);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .nexus-nav-menu-true {
+    display: none;
+  }
+}
+</style>

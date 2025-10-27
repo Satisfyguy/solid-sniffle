@@ -1,77 +1,172 @@
-{% extends "base-nexus.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS — Anonymous Marketplace</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 
-{% block title %}NEXUS — Anonymous Marketplace{% endblock %}
+    <!-- HTMX -->
+    <script src="/static/js/htmx.min.js"></script>
 
-{% block extra_css %}
-<style>
-/* Keyframes pour les animations */
+    <style>
+/* ========== RESET & BASE ========== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Monaco', 'Courier New', monospace;
+  background: hsl(0, 0%, 5%);
+  color: hsl(0, 0%, 98%);
+  overflow-x: hidden;
+}
+
+/* ========== ANIMATIONS ========== */
 @keyframes wave {
-  0%, 100% {
-    transform: translateX(0) translateY(0) scale(1);
-  }
-  33% {
-    transform: translateX(-5%) translateY(-5%) scale(1.05);
-  }
-  66% {
-    transform: translateX(5%) translateY(5%) scale(0.95);
-  }
+  0%, 100% { transform: translateX(0) translateY(0) scale(1); }
+  33% { transform: translateX(-5%) translateY(-5%) scale(1.05); }
+  66% { transform: translateX(5%) translateY(5%) scale(0.95); }
 }
 
 @keyframes float {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-20px) rotate(2deg);
-  }
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(2deg); }
 }
 
 @keyframes pulse-slow {
-  0%, 100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.6;
-  }
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
 }
 
 @keyframes jump {
-  0% {
-    transform: translateY(0) rotate(0deg) scale(1);
-  }
-  15% {
-    transform: translateY(-100vh) rotate(15deg) scale(1.2);
-  }
-  50% {
-    transform: translateY(-100vh) rotate(180deg) scale(1.3);
-  }
-  85% {
-    transform: translateY(20px) rotate(350deg) scale(0.9);
-  }
-  92% {
-    transform: translateY(-10px) rotate(360deg) scale(1.05);
-  }
-  96% {
-    transform: translateY(5px) rotate(360deg) scale(0.98);
-  }
-  100% {
-    transform: translateY(0) rotate(360deg) scale(1);
-  }
+  0% { transform: translateY(0) rotate(0deg) scale(1); }
+  15% { transform: translateY(-100vh) rotate(15deg) scale(1.2); }
+  50% { transform: translateY(-100vh) rotate(180deg) scale(1.3); }
+  85% { transform: translateY(20px) rotate(350deg) scale(0.9); }
+  92% { transform: translateY(-10px) rotate(360deg) scale(1.05); }
+  96% { transform: translateY(5px) rotate(360deg) scale(0.98); }
+  100% { transform: translateY(0) rotate(360deg) scale(1); }
 }
 
-/* Hero avec vraies vagues */
-.hero-with-waves {
+/* ========== NAVIGATION ========== */
+.nexus-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  border-bottom: 1px solid hsl(0, 0%, 20%);
+  background: rgba(13, 6, 8, 0.8);
+  backdrop-filter: blur(12px);
+}
+
+.nexus-nav-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nexus-nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.nexus-logo-shield {
+  width: 3rem;
+  height: 3rem;
+  background: hsl(349, 100%, 55%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.nexus-logo-text {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+}
+
+.nexus-nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.nexus-nav-link {
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: hsl(0, 0%, 98%);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.nexus-nav-link:hover {
+  color: hsl(349, 100%, 55%);
+}
+
+.nexus-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nexus-btn-search {
+  background: none;
+  border: none;
+  color: hsl(0, 0%, 98%);
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.nexus-btn-search:hover {
+  color: hsl(349, 100%, 55%);
+}
+
+.nexus-btn-connect {
+  background: hsl(349, 100%, 55%);
+  color: hsl(0, 0%, 5%);
+  padding: 0.5rem 1.5rem;
+  border: none;
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.nexus-btn-connect:hover {
+  background: hsl(349, 100%, 60%);
+  transform: translateY(-2px);
+}
+
+/* ========== HERO ========== */
+.nexus-hero {
   position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: hsl(349, 100%, 55%); /* --primary */
+  background: hsl(349, 100%, 55%);
 }
 
-/* Background Pattern - Les VRAIES vagues! */
-.wave-background {
+.wave-bg {
   position: absolute;
   inset: 0;
   opacity: 0.3;
@@ -81,89 +176,59 @@
   background-position: center;
 }
 
-/* Grille animée */
 .grid-overlay {
   position: absolute;
   inset: 0;
   opacity: 0.1;
   animation: pulse-slow 4s ease-in-out infinite;
-}
-
-.grid-lines {
-  height: 100%;
-  width: 100%;
   background-image: repeating-linear-gradient(0deg, transparent, transparent 49px, #000 49px, #000 51px);
 }
 
-/* Formes flottantes */
 .floating-shape {
   position: absolute;
-  border: 4px solid rgba(13, 13, 13, 0.1); /* primary-foreground/10 */
+  border: 4px solid rgba(13, 13, 13, 0.1);
   animation: float 6s ease-in-out infinite;
 }
 
-.floating-shape-1 {
-  top: 5rem;
-  left: 5rem;
-  width: 8rem;
-  height: 8rem;
-}
+.floating-shape-1 { top: 5rem; left: 5rem; width: 8rem; height: 8rem; }
+.floating-shape-2 { bottom: 10rem; right: 10rem; width: 6rem; height: 6rem; animation-delay: 2s; }
+.floating-shape-3 { top: 33%; right: 5rem; width: 4rem; height: 4rem; animation-delay: 4s; }
 
-.floating-shape-2 {
-  bottom: 10rem;
-  right: 10rem;
-  width: 6rem;
-  height: 6rem;
-  animation-delay: 2s;
-}
-
-.floating-shape-3 {
-  top: 33%;
-  right: 5rem;
-  width: 4rem;
-  height: 4rem;
-  animation-delay: 4s;
-}
-
-/* Contenu hero */
 .hero-content {
   position: relative;
   z-index: 10;
-  max-width: 96rem;
-  margin: 0 auto;
-  padding: 0 1.5rem;
   text-align: center;
+  max-width: 96rem;
+  padding: 0 1.5rem;
 }
 
 .hero-top-text {
   margin-bottom: 2rem;
-  color: rgba(13, 13, 13, 0.6); /* primary-foreground/60 */
+  color: rgba(13, 13, 13, 0.6);
   font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
 }
 
-/* Titre avec lettres animées */
 .hero-title {
-  font-size: 12rem; /* 192px */
+  font-size: 12rem;
   line-height: 1;
   font-weight: 900;
   letter-spacing: -0.05em;
-  color: hsl(0, 0%, 5%); /* primary-foreground */
+  color: hsl(0, 0%, 5%);
   margin-bottom: 2rem;
-  user-select: none;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1rem;
+  user-select: none;
 }
 
 .animated-letter {
   display: inline-block;
   cursor: pointer;
   transition: all 0.3s ease;
-  vertical-align: baseline;
 }
 
 .animated-letter:hover,
@@ -171,17 +236,8 @@
   animation: jump 1.5s cubic-bezier(0.6, 0, 0.2, 1.5);
 }
 
-/* E spécial avec 3 lignes */
-.letter-e {
-  position: relative;
-  display: inline-block;
-  vertical-align: baseline;
-}
-
-.letter-e-invisible {
-  visibility: hidden;
-}
-
+.letter-e { position: relative; }
+.letter-e-invisible { visibility: hidden; }
 .letter-e-lines {
   position: absolute;
   inset: 0;
@@ -191,24 +247,16 @@
   align-items: flex-start;
   padding: 0.05em 0;
 }
+.letter-e-line { height: 0.15em; width: 100%; background: hsl(0, 0%, 5%); }
 
-.letter-e-line {
-  height: 0.15em;
-  width: 100%;
-  background-color: hsl(0, 0%, 5%);
-}
-
-/* Subtitle */
 .hero-subtitle {
   font-size: 2.25rem;
   font-weight: 900;
-  letter-spacing: -0.025em;
   color: hsl(0, 0%, 5%);
   margin-bottom: 3rem;
   text-transform: uppercase;
 }
 
-/* Stats */
 .hero-stats {
   display: flex;
   justify-content: center;
@@ -229,95 +277,170 @@
   text-transform: uppercase;
 }
 
-/* Scroll indicator */
-.scroll-indicator {
-  position: absolute;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  color: hsl(0, 0%, 5%);
-  animation: bounce 1s infinite;
-  text-align: center;
+/* ========== CATEGORIES ========== */
+.categories-section {
+  padding: 6rem 0;
+  background: hsl(0, 0%, 5%);
 }
 
-.scroll-text {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.section-title {
+  font-size: 3.75rem;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  margin-bottom: 1rem;
   text-transform: uppercase;
 }
 
-.scroll-line {
-  width: 1px;
-  height: 3rem;
-  background-color: rgba(13, 13, 13, 0.4);
-  margin: 0.5rem auto 0;
+.section-subtitle {
+  color: hsl(0, 0%, 65%);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
-  }
-  50% {
-    transform: translateY(25%);
-    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
-  }
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .hero-title {
-    font-size: 8rem;
-  }
+.category-card {
+  position: relative;
+  background: hsl(0, 0%, 8%);
+  border: 2px solid hsl(0, 0%, 20%);
+  padding: 2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  display: block;
 }
 
+.category-card:hover {
+  background: hsl(349, 100%, 55%);
+  border-color: hsl(349, 100%, 55%);
+  transform: translateY(-4px);
+}
+
+.category-card-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.category-icon {
+  font-size: 3rem;
+  color: hsl(349, 100%, 55%);
+  transition: color 0.3s ease;
+}
+
+.category-card:hover .category-icon {
+  color: hsl(0, 0%, 5%);
+}
+
+.category-count {
+  text-align: right;
+}
+
+.category-count-value {
+  font-size: 1.875rem;
+  font-weight: 900;
+  color: hsl(349, 100%, 55%);
+  transition: color 0.3s ease;
+}
+
+.category-card:hover .category-count-value {
+  color: hsl(0, 0%, 5%);
+}
+
+.category-count-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: hsl(0, 0%, 65%);
+  text-transform: uppercase;
+  transition: color 0.3s ease;
+}
+
+.category-card:hover .category-count-label {
+  color: rgba(13, 13, 13, 0.6);
+}
+
+.category-title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  transition: color 0.3s ease;
+}
+
+.category-card:hover .category-title {
+  color: hsl(0, 0%, 5%);
+}
+
+/* ========== RESPONSIVE ========== */
 @media (max-width: 768px) {
-  .hero-title {
-    font-size: 4rem;
-  }
-
-  .hero-subtitle {
-    font-size: 1.5rem;
-  }
-
-  .hero-stats {
-    flex-direction: column;
-    gap: 2rem;
-  }
-
-  .floating-shape {
-    display: none;
-  }
+  .hero-title { font-size: 4rem; }
+  .hero-subtitle { font-size: 1.5rem; }
+  .hero-stats { flex-direction: column; gap: 2rem; }
+  .floating-shape { display: none; }
+  .section-title { font-size: 2.5rem; }
+  .nexus-nav-menu { display: none; }
 }
-</style>
-{% endblock %}
+    </style>
+</head>
+<body>
 
-{% block content %}
+<!-- NAVIGATION -->
+<nav class="nexus-nav">
+  <div class="nexus-nav-container">
+    <!-- Logo -->
+    <a href="/" class="nexus-nav-logo">
+      <div class="nexus-logo-shield">🛡️</div>
+      <h1 class="nexus-logo-text">NEXUS</h1>
+    </a>
 
-{# VRAI HERO NEXUS - Avec les vraies vagues animées #}
-<section class="hero-with-waves">
-  {# Background avec vraies vagues PNG #}
-  <div class="wave-background"></div>
+    <!-- Navigation Menu -->
+    <div class="nexus-nav-menu">
+      <a href="#home" class="nexus-nav-link">HOME</a>
+      <a href="#categories" class="nexus-nav-link">CATEGORIES</a>
+      <a href="#listings" class="nexus-nav-link">LISTINGS</a>
+      <a href="#vendors" class="nexus-nav-link">VENDORS</a>
+    </div>
 
-  {# Grille animée #}
-  <div class="grid-overlay">
-    <div class="grid-lines"></div>
+    <!-- Actions -->
+    <div class="nexus-nav-actions">
+      <button class="nexus-btn-search">🔍</button>
+      <button class="nexus-btn-connect">
+        <span>👤</span>
+        CONNECT
+      </button>
+    </div>
   </div>
+</nav>
 
-  {# Formes géométriques flottantes #}
+<!-- HERO -->
+<section id="home" class="nexus-hero">
+  <div class="wave-bg"></div>
+  <div class="grid-overlay"></div>
   <div class="floating-shape floating-shape-1"></div>
   <div class="floating-shape floating-shape-2"></div>
   <div class="floating-shape floating-shape-3"></div>
 
-  {# Contenu #}
   <div class="hero-content">
-    {# Texte du haut #}
-    <div class="hero-top-text">
-      ANONYMOUS • SECURE • DECENTRALIZED
-    </div>
+    <div class="hero-top-text">ANONYMOUS • SECURE • DECENTRALIZED</div>
 
-    {# Titre avec lettres interactives #}
     <h1 class="hero-title">
       <span class="animated-letter" onmouseenter="this.classList.add('jumping'); setTimeout(() => this.classList.remove('jumping'), 1500);">N</span>
       <span class="animated-letter letter-e" onmouseenter="this.classList.add('jumping'); setTimeout(() => this.classList.remove('jumping'), 1500);">
@@ -333,12 +456,8 @@
       <span class="animated-letter" onmouseenter="this.classList.add('jumping'); setTimeout(() => this.classList.remove('jumping'), 1500);">S</span>
     </h1>
 
-    {# Subtitle #}
-    <p class="hero-subtitle">
-      UNDERGROUND • MARKETPLACE
-    </p>
+    <p class="hero-subtitle">UNDERGROUND • MARKETPLACE</p>
 
-    {# Stats - EXACTEMENT comme le design original #}
     <div class="hero-stats">
       <div class="text-center">
         <div class="hero-stat-value">1337</div>
@@ -354,46 +473,91 @@
       </div>
     </div>
   </div>
-
-  {# Scroll indicator #}
-  <div class="scroll-indicator">
-    <div class="scroll-text">SCROLL</div>
-    <div class="scroll-line"></div>
-  </div>
 </section>
 
-{# Le reste des sections (categories, listings, etc.) #}
-<section id="categories" style="padding: 6rem 0; background: hsl(0, 0%, 5%);">
-  <div style="max-width: 1400px; margin: 0 auto; padding: 0 1.5rem;">
-    <div style="margin-bottom: 4rem; text-align: center;">
-      <h2 style="font-size: 3.75rem; font-weight: 900; letter-spacing: -0.05em; margin-bottom: 1rem; text-transform: uppercase;">
-        BROWSE CATEGORIES
-      </h2>
-      <p style="color: hsl(0, 0%, 65%); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;">
-        SECURE • ANONYMOUS • UNTRACEABLE
-      </p>
+<!-- CATEGORIES -->
+<section id="categories" class="categories-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">BROWSE CATEGORIES</h2>
+      <p class="section-subtitle">SECURE • ANONYMOUS • UNTRACEABLE</p>
     </div>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
-      {# Categories cards ici #}
-      <a href="/categories/electronics" style="text-decoration: none;" hx-boost="true">
-        <div class="nexus-category-card">
-          <div class="nexus-category-card-icon">💻</div>
-          <h3 class="nexus-category-card-title">ELECTRONICS</h3>
-          <p class="nexus-category-card-count">View listings</p>
+    <div class="category-grid">
+      <!-- Digital Goods -->
+      <a href="/categories/digital-goods" class="category-card">
+        <div class="category-card-header">
+          <div class="category-icon">📦</div>
+          <div class="category-count">
+            <div class="category-count-value">342</div>
+            <div class="category-count-label">ITEMS</div>
+          </div>
         </div>
+        <h3 class="category-title">DIGITAL GOODS</h3>
+      </a>
+
+      <!-- Electronics -->
+      <a href="/categories/electronics" class="category-card">
+        <div class="category-card-header">
+          <div class="category-icon">💻</div>
+          <div class="category-count">
+            <div class="category-count-value">156</div>
+            <div class="category-count-label">ITEMS</div>
+          </div>
+        </div>
+        <h3 class="category-title">ELECTRONICS</h3>
+      </a>
+
+      <!-- Pharmaceuticals -->
+      <a href="/categories/pharmaceuticals" class="category-card">
+        <div class="category-card-header">
+          <div class="category-icon">💊</div>
+          <div class="category-count">
+            <div class="category-count-value">203</div>
+            <div class="category-count-label">ITEMS</div>
+          </div>
+        </div>
+        <h3 class="category-title">PHARMACEUTICALS</h3>
+      </a>
+
+      <!-- Documents -->
+      <a href="/categories/documents" class="category-card">
+        <div class="category-card-header">
+          <div class="category-icon">📄</div>
+          <div class="category-count">
+            <div class="category-count-value">89</div>
+            <div class="category-count-label">ITEMS</div>
+          </div>
+        </div>
+        <h3 class="category-title">DOCUMENTS</h3>
+      </a>
+
+      <!-- Financial -->
+      <a href="/categories/financial" class="category-card">
+        <div class="category-card-header">
+          <div class="category-icon">💳</div>
+          <div class="category-count">
+            <div class="category-count-value">127</div>
+            <div class="category-count-label">ITEMS</div>
+          </div>
+        </div>
+        <h3 class="category-title">FINANCIAL</h3>
+      </a>
+
+      <!-- Security -->
+      <a href="/categories/security" class="category-card">
+        <div class="category-card-header">
+          <div class="category-icon">🛡️</div>
+          <div class="category-count">
+            <div class="category-count-value">94</div>
+            <div class="category-count-label">ITEMS</div>
+          </div>
+        </div>
+        <h3 class="category-title">SECURITY</h3>
       </a>
     </div>
   </div>
 </section>
 
-{% endblock %}
-
-{% block scripts %}
-<script>
-// Animation des lettres au chargement (optionnel)
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('Nexus hero avec VRAIES vagues chargé!');
-});
-</script>
-{% endblock %}
+</body>
+</html>
