@@ -104,6 +104,10 @@ pub struct Order {
     pub total_xmr: i64,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
+    /// Shipping address (encrypted in DB via SQLCipher)
+    pub shipping_address: Option<String>,
+    /// Optional shipping notes from buyer (e.g., delivery instructions)
+    pub shipping_notes: Option<String>,
 }
 
 /// New order for insertion
@@ -117,6 +121,8 @@ pub struct NewOrder {
     pub escrow_id: Option<String>,
     pub status: String,
     pub total_xmr: i64,
+    pub shipping_address: Option<String>,
+    pub shipping_notes: Option<String>,
 }
 
 impl Order {

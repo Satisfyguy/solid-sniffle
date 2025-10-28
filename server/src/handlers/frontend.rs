@@ -840,6 +840,8 @@ pub async fn show_order(
         "funded_at": None::<String>,
         "shipped_at": None::<String>,
         "completed_at": None::<String>,
+        "shipping_address": order.shipping_address,
+        "shipping_notes": order.shipping_notes,
     });
 
     ctx.insert("order", &order_data);

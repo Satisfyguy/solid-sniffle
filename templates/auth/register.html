@@ -112,24 +112,24 @@
         <!-- Wallet Address Field (Vendors only) -->
         <div id="wallet-address-field" style="display: none;">
           <label for="wallet_address" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
-            Monero Wallet Address <span style="color: var(--nexus-primary, #ff1a5c);">*</span>
+            Monero Wallet Address <span style="color: var(--nexus-muted-fg, #9ca3af); font-weight: 400;">(Optional)</span>
           </label>
           <input
             type="text"
             id="wallet_address"
             name="wallet_address"
-            placeholder="4..."
+            placeholder="4... (optional - you can add this later in Settings)"
             minlength="95"
             maxlength="106"
             pattern="^[48][0-9A-Za-z]{94,105}$"
             autocomplete="off"
-            aria-label="Your Monero wallet address"
+            aria-label="Your Monero wallet address (optional)"
             aria-describedby="wallet-help"
             class="nexus-input"
             style="width: 100%; font-family: monospace; font-size: 0.875rem;"
           >
           <small id="wallet-help" style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
-            Your Monero address for receiving payments. Required to mark orders as shipped. You can configure this later in Settings.
+            💡 <strong>Optional:</strong> You can skip this now and configure your wallet address later in ⚙️ Settings. Required before shipping orders.
           </small>
         </div>
 
@@ -181,11 +181,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   roleSelect.addEventListener('change', function() {
     if (this.value === 'vendor') {
+      // Show wallet field but keep it OPTIONAL (not required)
       walletField.style.display = 'block';
-      walletInput.setAttribute('required', 'required');
+      // Do NOT add required attribute - user can configure later in Settings
     } else {
       walletField.style.display = 'none';
-      walletInput.removeAttribute('required');
       walletInput.value = ''; // Clear value if switching away from vendor
     }
   });

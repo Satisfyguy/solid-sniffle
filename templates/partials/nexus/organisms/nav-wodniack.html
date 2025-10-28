@@ -1,0 +1,124 @@
+{# NEXUS HEADER - WODNIACK STYLE
+   3-zone layout: Logo+Text | Navigation | Actions
+   Inspired by wodniack.dev with NEXUS cyberpunk edge #}
+
+<header class="nexus-header-wodniack">
+  <div class="nexus-header-wodniack-inner">
+
+    {# ========== ZONE 1: LOGO + ANIMATED TEXT ========== #}
+    <div class="nexus-header-logo-zone">
+      <a href="/" class="nexus-header-logo" hx-boost="true">NX</a>
+      <div class="nexus-header-animated-text">
+        <span id="nexus-typewriter-text"></span>
+        <span class="nexus-header-typewriter-cursor"></span>
+      </div>
+    </div>
+
+    {# ========== ZONE 2: NAVIGATION ========== #}
+    <nav class="nexus-header-nav-zone" role="navigation" aria-label="Main navigation">
+      <a href="/" class="nexus-header-nav-link" hx-boost="true">HOME</a>
+      <span class="nexus-header-nav-separator" aria-hidden="true">•</span>
+
+      <a href="/listings#categories" class="nexus-header-nav-link">CATEGORIES</a>
+      <span class="nexus-header-nav-separator" aria-hidden="true">•</span>
+
+      <a href="/listings" class="nexus-header-nav-link" hx-boost="true">LISTINGS</a>
+      <span class="nexus-header-nav-separator" aria-hidden="true">•</span>
+
+      <a href="/vendors" class="nexus-header-nav-link" hx-boost="true">VENDORS</a>
+    </nav>
+
+    {# ========== ZONE 3: ACTIONS ========== #}
+    <div class="nexus-header-actions-zone">
+
+      {# Dark/Light Mode Toggle #}
+      <button
+        class="nexus-theme-toggle"
+        id="nexus-theme-toggle"
+        aria-label="Toggle dark/light mode"
+        type="button"
+      >
+        <div class="nexus-theme-toggle-slider"></div>
+      </button>
+
+      {# Authentication #}
+      <div class="nexus-header-auth">
+        {% if logged_in %}
+          {# Logged in - Show username and logout #}
+          <span class="nexus-header-btn" style="cursor: default; border-color: transparent; padding: 0.5rem 0;">
+            👤 {{ username | upper }}
+          </span>
+
+          <form action="/logout" method="POST" style="display: inline; margin: 0;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="nexus-header-btn nexus-header-btn-logout">
+              LOGOUT
+            </button>
+          </form>
+
+          {# Dynamic CTA based on role #}
+          {% if role == "vendor" %}
+            <a href="/listings/create" class="nexus-header-btn nexus-header-cta" hx-boost="true">
+              ➕ ADD PRODUCT
+            </a>
+          {% elif role == "buyer" %}
+            <a href="/orders" class="nexus-header-btn nexus-header-cta" hx-boost="true">
+              📦 MY ORDERS
+            </a>
+          {% else %}
+            <a href="/settings" class="nexus-header-btn nexus-header-cta" hx-boost="true">
+              ⚙️ SETTINGS
+            </a>
+          {% endif %}
+
+        {% else %}
+          {# Not logged in - Show login/signup #}
+          <a href="/login" class="nexus-header-btn nexus-header-btn-login" hx-boost="true">
+            LOGIN
+          </a>
+          <a href="/register" class="nexus-header-btn nexus-header-btn-signup" hx-boost="true">
+            SIGN UP
+          </a>
+        {% endif %}
+      </div>
+
+      {# Empty minimalist space (Option D) #}
+      <div class="nexus-header-spacer" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  {# ========== HASH BANNER ========== #}
+  <div class="nexus-header-banner">
+    <div class="nexus-header-banner-content">
+      {# Populated by nexus-banner-scroll.js #}
+    </div>
+  </div>
+</header>
+
+{# ========== THEME TOGGLE SCRIPT ========== #}
+<script>
+(function() {
+  'use strict';
+
+  const toggle = document.getElementById('nexus-theme-toggle');
+
+  if (toggle) {
+    // Check for saved theme preference or default to dark
+    const savedTheme = localStorage.getItem('nexus-theme') || 'dark';
+
+    if (savedTheme === 'light') {
+      document.body.classList.add('light-mode');
+      toggle.classList.add('light');
+    }
+
+    // Toggle theme on click
+    toggle.addEventListener('click', function() {
+      const isLight = document.body.classList.toggle('light-mode');
+      toggle.classList.toggle('light');
+
+      // Save preference
+      localStorage.setItem('nexus-theme', isLight ? 'light' : 'dark');
+    });
+  }
+})();
+</script>

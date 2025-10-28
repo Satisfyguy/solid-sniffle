@@ -93,6 +93,38 @@
                         </div>
                     </div>
 
+                    <!-- Delivery Address (Vendor only) -->
+                    {% if role == "vendor" %}
+                    <div class="section">
+                        <h2>🔒 Delivery Address (Confidential)</h2>
+                        {% if order.shipping_address %}
+                        <div class="info-box" style="background: rgba(255, 26, 92, 0.05); border: 1px solid rgba(255, 26, 92, 0.2);">
+                            <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--nexus-primary, #ff1a5c);">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <div style="flex: 1;">
+                                <p class="info-title" style="color: var(--nexus-primary, #ff1a5c);">Shipping Address</p>
+                                <p class="info-text" style="white-space: pre-wrap; font-family: monospace; color: var(--nexus-fg, #f9fafb); background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 4px; margin-top: 0.75rem;">{{ order.shipping_address }}</p>
+
+                                {% if order.shipping_notes %}
+                                <p class="info-title" style="color: var(--nexus-muted-fg, #9ca3af); margin-top: 1rem; font-size: 0.875rem;">Delivery Instructions:</p>
+                                <p class="info-text" style="font-style: italic; color: var(--nexus-muted-fg, #9ca3af); margin-top: 0.5rem;">{{ order.shipping_notes }}</p>
+                                {% endif %}
+
+                                <small style="display: block; margin-top: 1rem; color: var(--nexus-muted-fg, #9ca3af); font-size: 0.75rem;">
+                                    ⚠️ This address is encrypted in the database and only visible to you and the buyer. Handle with care.
+                                </small>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="info-box" style="background: rgba(234, 179, 8, 0.05); border: 1px solid rgba(234, 179, 8, 0.2);">
+                            <p style="color: rgba(234, 179, 8, 0.9);">⚠️ No shipping address provided (digital product or legacy order)</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
                     <!-- Shipping Information (if shipped) -->
                     {% if order.status == "shipped" or order.status == "completed" %}
                     <div class="section">

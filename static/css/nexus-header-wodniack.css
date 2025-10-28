@@ -1,0 +1,399 @@
+/* ==========================================
+   NEXUS - WODNIACK-STYLE HEADER
+   Inspired by wodniack.dev with NEXUS cyberpunk edge
+   ========================================== */
+
+/* ===== HEADER CONTAINER ===== */
+.nexus-header-wodniack {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: transparent;  /* TOTALEMENT transparent */
+  backdrop-filter: none;     /* Pas de blur */
+  border-bottom: none;       /* Pas de border */
+}
+
+/* Push content below fixed header - removed for pink background compatibility */
+
+/* ===== 3-ZONE LAYOUT ===== */
+.nexus-header-wodniack-inner {
+  max-width: var(--nexus-container-max);
+  margin: 0 auto;
+  padding: 1.5rem var(--nexus-container-padding);
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) auto minmax(300px, 1fr);
+  align-items: center;
+  gap: 3rem;
+}
+
+/* ===== ZONE 1: LOGO + ANIMATED TEXT ===== */
+.nexus-header-logo-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nexus-header-logo {
+  font-family: var(--nexus-font-mono);
+  font-size: 3.5rem;
+  font-weight: var(--nexus-weight-black);
+  letter-spacing: -0.05em;
+  color: var(--nexus-fg);
+  text-decoration: none;
+  line-height: 1;
+  transition: color var(--nexus-transition-base) var(--nexus-ease-in-out);
+}
+
+.nexus-header-logo:hover {
+  color: var(--nexus-primary);
+}
+
+.nexus-header-animated-text {
+  font-family: var(--nexus-font-sans);
+  font-size: 1.2rem;
+  font-weight: var(--nexus-weight-medium);
+  color: hsl(0, 0%, 70%);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  min-height: 1.5rem;
+  opacity: 0.8;
+}
+
+/* Typewriter cursor */
+.nexus-header-typewriter-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.2rem;
+  background-color: var(--nexus-primary);
+  margin-left: 4px;
+  animation: nexus-cursor-blink 1s infinite;
+  vertical-align: middle;
+}
+
+@keyframes nexus-cursor-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* ===== ZONE 2: NAVIGATION ===== */
+.nexus-header-nav-zone {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.nexus-header-nav-link {
+  font-family: var(--nexus-font-sans);
+  font-size: 0.875rem;
+  font-weight: var(--nexus-weight-medium);
+  color: var(--nexus-fg);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: relative;
+  transition: font-weight var(--nexus-transition-fast) var(--nexus-ease-in-out);
+}
+
+.nexus-header-nav-link:hover {
+  font-weight: var(--nexus-weight-bold);
+  color: var(--nexus-fg);
+}
+
+/* Bullet separator between nav links */
+.nexus-header-nav-separator {
+  color: hsl(0, 0%, 40%);
+  font-size: 0.6rem;
+  vertical-align: middle;
+}
+
+/* ===== ZONE 3: ACTIONS ===== */
+.nexus-header-actions-zone {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.5rem;
+}
+
+/* Dark/Light Mode Toggle */
+.nexus-theme-toggle {
+  position: relative;
+  width: 60px;
+  height: 30px;
+  background: hsl(0, 0%, 20%);
+  border-radius: var(--nexus-radius-full);
+  cursor: pointer;
+  transition: background var(--nexus-transition-base) var(--nexus-ease-in-out);
+  border: 1px solid hsl(0, 0%, 30%);
+}
+
+.nexus-theme-toggle-slider {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  background: var(--nexus-fg);
+  border-radius: 50%;
+  transition: transform var(--nexus-transition-base) var(--nexus-ease-in-out);
+  box-shadow: var(--nexus-shadow-sm);
+}
+
+.nexus-theme-toggle.light .nexus-theme-toggle-slider {
+  transform: translateX(30px);
+  background: var(--nexus-primary);
+}
+
+/* Auth Buttons */
+.nexus-header-auth {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nexus-header-btn {
+  padding: 0.5rem 1.25rem;
+  font-family: var(--nexus-font-sans);
+  font-size: 0.875rem;
+  font-weight: var(--nexus-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  border-radius: var(--nexus-radius-sm);
+  transition: all var(--nexus-transition-base) var(--nexus-ease-in-out);
+  cursor: pointer;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.nexus-header-btn-login {
+  background: transparent;
+  color: var(--nexus-fg);
+  border-color: hsl(0, 0%, 40%);
+}
+
+.nexus-header-btn-login:hover {
+  border-color: var(--nexus-primary);
+  color: var(--nexus-primary);
+  transform: translateY(-2px);
+}
+
+.nexus-header-btn-signup {
+  background: var(--nexus-primary);
+  color: var(--nexus-primary-fg);
+  border-color: var(--nexus-primary);
+}
+
+.nexus-header-btn-signup:hover {
+  background: hsl(349, 100%, 60%);
+  border-color: hsl(349, 100%, 60%);
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(255, 26, 92, 0.4);
+}
+
+.nexus-header-btn-logout {
+  background: transparent;
+  color: var(--nexus-destructive);
+  border-color: var(--nexus-destructive);
+}
+
+.nexus-header-btn-logout:hover {
+  background: var(--nexus-destructive);
+  color: var(--nexus-destructive-fg);
+  transform: translateY(-2px);
+}
+
+/* Dynamic CTA Button */
+.nexus-header-cta {
+  background: linear-gradient(135deg, var(--nexus-primary) 0%, hsl(349, 100%, 45%) 100%);
+  color: var(--nexus-fg);
+  border-color: var(--nexus-primary);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(255, 26, 92, 0.25);
+}
+
+.nexus-header-cta::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left var(--nexus-transition-slow);
+}
+
+.nexus-header-cta:hover::before {
+  left: 100%;
+}
+
+.nexus-header-cta:hover {
+  background: linear-gradient(135deg, hsl(349, 100%, 60%) 0%, hsl(349, 100%, 50%) 100%);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 30px rgba(255, 26, 92, 0.5);
+}
+
+/* Empty minimalist space (Option D) */
+.nexus-header-spacer {
+  width: 60px;
+}
+
+/* ===== HASH BANNER ===== */
+.nexus-header-banner {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background: transparent;  /* Transparent pour voir le rose */
+  border: none;              /* Pas de borders */
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.nexus-header-banner-content {
+  display: flex;
+  white-space: nowrap;
+  animation: nexus-banner-scroll 60s linear infinite;
+}
+
+.nexus-header-banner-text {
+  font-family: var(--nexus-font-mono);
+  font-size: 0.75rem;
+  color: rgba(0, 0, 0, 0.5);  /* Noir semi-transparent pour être visible sur rose */
+  letter-spacing: 0.05em;
+  padding-right: 4rem;
+}
+
+@keyframes nexus-banner-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* ===== CANVAS BACKGROUND (désactivé - gardé pour réutilisation) ===== */
+/* .nexus-lines-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  pointer-events: none;
+} */
+
+/* ===== LIGHT MODE ===== */
+body.light-mode .nexus-header-wodniack {
+  background: transparent;  /* Aussi transparent en light mode */
+  border-bottom: none;      /* Pas de border */
+}
+
+body.light-mode .nexus-header-logo,
+body.light-mode .nexus-header-nav-link {
+  color: hsl(0, 0%, 5%);
+}
+
+body.light-mode .nexus-header-logo:hover {
+  color: var(--nexus-primary);
+}
+
+body.light-mode .nexus-header-animated-text {
+  color: hsl(0, 0%, 30%);
+}
+
+body.light-mode .nexus-theme-toggle {
+  background: hsl(30, 20%, 85%);
+  border-color: hsl(30, 10%, 75%);
+}
+
+body.light-mode .nexus-header-btn-login {
+  color: hsl(0, 0%, 5%);
+  border-color: hsl(0, 0%, 60%);
+}
+
+body.light-mode .nexus-header-btn-login:hover {
+  border-color: var(--nexus-primary);
+  color: var(--nexus-primary);
+}
+
+body.light-mode .nexus-header-banner {
+  background: transparent;  /* Transparent aussi en light mode */
+  border: none;             /* Pas de border */
+}
+
+body.light-mode .nexus-header-banner-text {
+  color: rgba(0, 0, 0, 0.6);  /* Noir semi-transparent */
+}
+
+/* ===== RESPONSIVE MOBILE ===== */
+@media (max-width: 1024px) {
+  .nexus-header-wodniack-inner {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    text-align: center;
+  }
+
+  .nexus-header-logo-zone {
+    align-items: center;
+  }
+
+  .nexus-header-nav-zone {
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .nexus-header-nav-link {
+    font-size: 0.75rem;
+  }
+
+  .nexus-header-actions-zone {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .nexus-header-spacer {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .nexus-header-wodniack-inner {
+    padding: 1rem;
+  }
+
+  .nexus-header-logo {
+    font-size: 2.5rem;
+  }
+
+  .nexus-header-animated-text {
+    font-size: 0.875rem;
+  }
+
+  .nexus-header-nav-zone {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .nexus-header-nav-separator {
+    display: none;
+  }
+
+  .nexus-header-btn {
+    font-size: 0.75rem;
+    padding: 0.4rem 1rem;
+  }
+
+  .nexus-header-banner {
+    height: 24px;
+  }
+
+  .nexus-header-banner-text {
+    font-size: 0.65rem;
+  }
+}

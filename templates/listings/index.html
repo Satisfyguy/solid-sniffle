@@ -4,12 +4,16 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="/static/css/nexus-true.css">
+<link rel="stylesheet" href="/static/css/hero-cinematic.css">
 {% endblock %}
 
 {% block content %}
 
 {# TRUE NEXUS HERO - Full Screen with Animated Letters #}
 <section class="nexus-hero-true">
+  {# CINEMATIC: Flash blanc aveuglant (Phase 4) #}
+  <div id="cinematic-flash" class="cinematic-flash-overlay"></div>
+
   {# Background Pattern with Wave Animation #}
   <div class="nexus-hero-pattern" style="background-image: url('/static/hero-pattern.png');"></div>
 
@@ -28,14 +32,30 @@
       ANONYMOUS • SECURE • DECENTRALIZED
     </div>
 
-    {# Main Title with Interactive Letters #}
-    <h1 class="nexus-hero-title-true" id="nexus-title">
-      <span class="nexus-animated-letter" data-letter="N" role="button" tabindex="0" aria-label="Animate letter N">N</span>
-      <span class="nexus-animated-letter nexus-letter-e" data-letter="E" role="button" tabindex="0" aria-label="Animate letter E">E</span>
-      <span class="nexus-animated-letter" data-letter="X" role="button" tabindex="0" aria-label="Animate letter X">X</span>
-      <span class="nexus-animated-letter" data-letter="U" role="button" tabindex="0" aria-label="Animate letter U">U</span>
-      <span class="nexus-animated-letter" data-letter="S" role="button" tabindex="0" aria-label="Animate letter S">S</span>
-    </h1>
+    {# CINEMATIC: Container pour 3 états (NEXUS / Typewriter / Zoom) #}
+    <div id="cinematic-title-container" class="nexus-hero-title-true">
+
+      {# Phase 1, 2, 5: NEXUS Letters #}
+      <h1 id="cinematic-nexus-letters" class="cinematic-nexus-container">
+        <span class="nexus-animated-letter" data-letter="N" role="button" tabindex="0" aria-label="Animate letter N">N</span>
+        <span class="nexus-animated-letter nexus-letter-e" data-letter="E" role="button" tabindex="0" aria-label="Animate letter E">E</span>
+        <span class="nexus-animated-letter" data-letter="X" role="button" tabindex="0" aria-label="Animate letter X">X</span>
+        <span class="nexus-animated-letter" data-letter="U" role="button" tabindex="0" aria-label="Animate letter U">U</span>
+        <span class="nexus-animated-letter" data-letter="S" role="button" tabindex="0" aria-label="Animate letter S">S</span>
+      </h1>
+
+      {# Phase 3: Typewriter - Message anonymat #}
+      <div id="cinematic-typewriter" class="cinematic-typewriter" style="display: none;">
+        <span id="cinematic-typewriter-text"></span>
+        <span class="cinematic-cursor">|</span>
+      </div>
+
+      {# Phase 4: Zoom Strike - Même message qui frappe l'écran #}
+      <div id="cinematic-zoom-strike" class="cinematic-zoom-strike" style="display: none;">
+        Here you are no one. Here you are nowhere.
+      </div>
+
+    </div>
 
     {# Subtitle #}
     <p class="nexus-hero-subtitle-true">
@@ -294,4 +314,5 @@
 
 {% block scripts %}
 <script src="/static/js/nexus-letters-animation.js"></script>
+<script src="/static/js/hero-cinematic.js"></script>
 {% endblock %}

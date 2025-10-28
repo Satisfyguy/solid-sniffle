@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const resultDiv = document.getElementById('order-result');
         const listingId = orderForm.querySelector('input[name="listing_id"]').value;
         const quantity = parseInt(quantityInput.value, 10);
+        const shippingAddress = document.getElementById('shipping_address').value;
+        const shippingNotes = document.getElementById('shipping_notes').value;
 
         // Get CSRF token from meta tag or cookie
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
@@ -40,7 +42,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify({
                     listing_id: listingId,
-                    quantity: quantity
+                    quantity: quantity,
+                    shipping_address: shippingAddress,
+                    shipping_notes: shippingNotes || null
                 }),
                 credentials: 'same-origin'
             });

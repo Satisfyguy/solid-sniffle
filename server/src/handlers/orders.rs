@@ -26,6 +26,12 @@ pub struct CreateOrderRequest {
 
     #[validate(range(min = 1, message = "Quantity must be at least 1"))]
     pub quantity: i32,
+
+    #[validate(length(min = 10, max = 500, message = "Shipping address must be between 10 and 500 characters"))]
+    pub shipping_address: String,
+
+    #[validate(length(max = 200, message = "Shipping notes must be 200 characters or less"))]
+    pub shipping_notes: Option<String>,
 }
 
 /// Request body for updating order status
@@ -224,6 +230,8 @@ pub async fn create_order(
             escrow_id: None, // Set when escrow is created
             status: OrderStatus::Pending.as_str().to_string(),
             total_xmr,
+            shipping_address: Some(req.shipping_address.clone()),
+            shipping_notes: req.shipping_notes.clone(),
         };
 
         Order::create(conn, new_order).map_err(|e| {
@@ -458,6 +466,23 @@ pub async fn ship_order(
     if order.vendor_id != user_id {
         return HttpResponse::Forbidden().json(serde_json::json!({
             "error": "Only the vendor can mark order as shipped"
+        }));
+    }
+
+    // CRITICAL: Verify vendor has wallet address configured
+    // Without this, buyer cannot complete the order (complete_order requires vendor wallet_address)
+    let vendor = match User::find_by_id(&mut conn, user_id.clone()) {
+        Ok(user) => user,
+        Err(_) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Vendor not found"
+            }))
+        }
+    };
+
+    if vendor.wallet_address.is_none() {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "You must configure your Monero wallet address before shipping orders. Go to Settings to add your wallet address."
         }));
     }
 

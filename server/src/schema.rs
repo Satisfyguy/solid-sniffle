@@ -52,6 +52,8 @@ diesel::table! {
         total_xmr -> BigInt,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+        shipping_address -> Nullable<Text>,
+        shipping_notes -> Nullable<Text>,
     }
 }
 
