@@ -104,7 +104,7 @@
                             </svg>
                             <div>
                                 <p class="info-title">Order Shipped</p>
-                                <p class="info-text">The vendor has marked this order as shipped on {{ order.shipped_at | date(format="%Y-%m-%d %H:%M") }}</p>
+                                <p class="info-text">The vendor has marked this order as shipped on {{ order.updated_at | date(format="%Y-%m-%d %H:%M") }}</p>
                             </div>
                         </div>
                     </div>

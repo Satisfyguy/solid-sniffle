@@ -16,7 +16,7 @@ use argon2::{
     Argon2,
 };
 use serde::{Deserialize, Serialize};
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 use uuid::Uuid;
 use validator::Validate;
 
@@ -57,7 +57,22 @@ pub struct RegisterRequest {
     #[validate(length(min = 8, max = 128))]
     pub password: String,
     pub role: String,
+    pub wallet_address: Option<String>,
     pub csrf_token: String,
+}
+
+/// Validate Monero address format (simple check: starts with 4 or 8, 95-106 chars)
+fn is_valid_monero_address(addr: &str) -> bool {
+    let len = addr.len();
+    if len < 95 || len > 106 {
+        return false;
+    }
+    let first_char = addr.chars().next().unwrap_or('0');
+    if first_char != '4' && first_char != '8' {
+        return false;
+    }
+    // Check all characters are alphanumeric
+    addr.chars().all(|c| c.is_ascii_alphanumeric())
 }
 
 #[post("/register")]
@@ -85,6 +100,27 @@ pub async fn register(
         } else {
             Err(ApiError::from(e))
         };
+    }
+
+    // Validate that vendors have wallet address (optional but recommended)
+    // Note: We don't make it strictly required here to allow vendors to set it later in Settings
+    // But we log a warning if missing
+    if req.role == "vendor" && req.wallet_address.is_none() {
+        warn!(
+            username = %req.username,
+            "Vendor registered without wallet address - will need to configure before shipping orders"
+        );
+    }
+
+    // If wallet_address is provided, validate its format
+    if let Some(ref addr) = req.wallet_address {
+        if !is_valid_monero_address(addr) {
+            return if is_htmx {
+                Ok(htmx_error_response("Invalid Monero address format. Must start with 4 or 8 and be 95-106 characters."))
+            } else {
+                Err(ApiError::Internal("Invalid Monero address format".to_string()))
+            };
+        }
     }
 
     let mut conn = pool.get().map_err(|e| ApiError::Internal(e.to_string()))?;
@@ -118,7 +154,7 @@ pub async fn register(
         id: Uuid::new_v4().to_string(),
         username: req.username.clone(),
         password_hash,
-        wallet_address: None,
+        wallet_address: req.wallet_address.clone(),
         wallet_id: None,
         role: req.role.clone(),
     };
@@ -384,4 +420,99 @@ pub async fn logout(session: Session) -> Result<HttpResponse, ApiError> {
     Ok(HttpResponse::Ok().json(serde_json::json!({
         "message": "Logged out successfully"
     })))
+}
+
+/// POST /api/settings/update-wallet - Update user's Monero wallet address
+#[derive(Debug, Deserialize)]
+pub struct UpdateWalletRequest {
+    pub wallet_address: String,
+    pub csrf_token: String,
+}
+
+#[post("/settings/update-wallet")]
+pub async fn update_wallet_address(
+    pool: web::Data<DbPool>,
+    req: web::Form<UpdateWalletRequest>,
+    http_req: HttpRequest,
+    session: Session,
+) -> Result<HttpResponse, ApiError> {
+    use diesel::prelude::*;
+    use crate::schema::users;
+
+    let is_htmx = is_htmx_request(&http_req);
+
+    // Require authentication
+    let user_id = match session.get::<String>("user_id") {
+        Ok(Some(uid)) => uid,
+        _ => {
+            return if is_htmx {
+                Ok(htmx_error_response("Not authenticated"))
+            } else {
+                Err(ApiError::Unauthorized("Not authenticated".to_string()))
+            };
+        }
+    };
+
+    // Validate CSRF token
+    if !validate_csrf_token(&session, &req.csrf_token) {
+        return if is_htmx {
+            Ok(htmx_error_response("Invalid CSRF token"))
+        } else {
+            Err(ApiError::Forbidden("Invalid CSRF token".to_string()))
+        };
+    }
+
+    // Validate wallet address format
+    if !is_valid_monero_address(&req.wallet_address) {
+        return if is_htmx {
+            Ok(htmx_error_response("Invalid Monero address format. Must start with 4 or 8 and be 95-106 characters."))
+        } else {
+            Err(ApiError::Internal("Invalid Monero address format".to_string()))
+        };
+    }
+
+    // Update wallet address in database
+    let mut conn = pool.get().map_err(|e| ApiError::Internal(e.to_string()))?;
+
+    let wallet_addr = req.wallet_address.clone();
+    let uid = user_id.clone();
+
+    let update_result = web::block(move || {
+        diesel::update(users::table.filter(users::id.eq(&uid)))
+            .set(users::wallet_address.eq(Some(&wallet_addr)))
+            .execute(&mut conn)
+    }).await;
+
+    match update_result {
+        Ok(Ok(_)) => {
+            info!(
+                user_id = %user_id,
+                "Wallet address updated successfully"
+            );
+
+            if is_htmx {
+                Ok(HttpResponse::Ok().content_type("text/html").body(""))
+            } else {
+                Ok(HttpResponse::Ok().json(serde_json::json!({
+                    "message": "Wallet address updated successfully"
+                })))
+            }
+        }
+        Ok(Err(e)) => {
+            error!("Failed to update wallet address: {}", e);
+            if is_htmx {
+                Ok(htmx_error_response("Failed to update wallet address"))
+            } else {
+                Err(ApiError::Internal("Failed to update wallet address".to_string()))
+            }
+        }
+        Err(e) => {
+            error!("Database operation failed: {}", e);
+            if is_htmx {
+                Ok(htmx_error_response("Database error"))
+            } else {
+                Err(ApiError::Internal(e.to_string()))
+            }
+        }
+    }
 }

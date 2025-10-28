@@ -11,13 +11,21 @@
     <div class="nexus-nav-menu-true">
       <a href="/" class="nexus-nav-link-true">HOME</a>
       <a href="#categories" class="nexus-nav-link-true">CATEGORIES</a>
-      <a href="/listings" class="nexus-nav-link-true" hx-boost="true">LISTINGS</a>
+      <a href="#listings" class="nexus-nav-link-true nexus-scroll-link">LISTINGS</a>
       <a href="/vendors" class="nexus-nav-link-true" hx-boost="true">VENDORS</a>
     </div>
 
     <!-- Actions -->
     <div class="nexus-nav-actions-true">
       <button class="nexus-btn-search-true" aria-label="Search">🔍</button>
+
+      {% if logged_in %}
+        {# Bouton Add Product - visible seulement pour les utilisateurs connectés #}
+        <a href="/listings/create" class="nexus-btn-add-product-true" hx-boost="true">
+          <span class="nexus-add-icon-true">➕</span>
+          <span class="nexus-add-text-true">ADD PRODUCT</span>
+        </a>
+      {% endif %}
 
       {% if logged_in %}
         {# User connecté - Dropdown menu #}
@@ -158,6 +166,7 @@
   color: hsl(0, 0%, 98%);
   border: 1px solid hsl(0, 0%, 40%);
   padding: 0.5rem 1.5rem;
+  height: 40px;
   font-weight: 700;
   font-size: 0.875rem;
   text-transform: uppercase;
@@ -167,6 +176,7 @@
   gap: 0.5rem;
   transition: all 0.3s ease;
   text-decoration: none;
+  border-radius: 2px;
 }
 
 .nexus-btn-login-true:hover {
@@ -179,7 +189,8 @@
   background: hsl(349, 100%, 55%);
   color: hsl(0, 0%, 5%);
   padding: 0.5rem 1.5rem;
-  border: none;
+  height: 40px;
+  border: 1px solid hsl(349, 100%, 55%);
   font-weight: 700;
   font-size: 0.875rem;
   text-transform: uppercase;
@@ -189,11 +200,83 @@
   gap: 0.5rem;
   transition: all 0.3s ease;
   text-decoration: none;
+  border-radius: 2px;
 }
 
 .nexus-btn-connect-true:hover {
   background: hsl(349, 100%, 60%);
   transform: translateY(-2px);
+}
+
+/* ========== ADD PRODUCT BUTTON ========== */
+.nexus-btn-add-product-true {
+  background: linear-gradient(135deg, hsl(349, 100%, 55%) 0%, hsl(349, 100%, 45%) 100%);
+  color: hsl(0, 0%, 98%);
+  padding: 0.5rem 1.5rem;
+  height: 40px;
+  border: 1px solid hsl(349, 100%, 60%);
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(255, 26, 92, 0.25);
+  border-radius: 2px;
+}
+
+.nexus-btn-add-product-true::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.nexus-btn-add-product-true:hover::before {
+  left: 100%;
+}
+
+.nexus-btn-add-product-true:hover {
+  background: linear-gradient(135deg, hsl(349, 100%, 60%) 0%, hsl(349, 100%, 50%) 100%);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 30px rgba(255, 26, 92, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-color: hsl(349, 100%, 70%);
+}
+
+.nexus-btn-add-product-true:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.nexus-add-icon-true {
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.nexus-btn-add-product-true:hover .nexus-add-icon-true {
+  background: rgba(255, 255, 255, 0.25);
+  transform: rotate(90deg);
+}
+
+.nexus-add-text-true {
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* ========== USER MENU DROPDOWN ========== */
@@ -267,5 +350,54 @@
     padding: 0.4rem 1rem;
     font-size: 0.75rem;
   }
+
+  .nexus-btn-add-product-true {
+    padding: 0.4rem 1rem;
+    font-size: 0.75rem;
+    height: 36px;
+    gap: 0.4rem;
+  }
+
+  .nexus-add-text-true {
+    display: none;
+  }
+
+  .nexus-add-icon-true {
+    font-size: 1.125rem;
+    width: auto;
+    height: auto;
+    background: transparent;
+  }
+
+  .nexus-btn-search-true {
+    display: none;
+  }
 }
 </style>
+
+<script>
+// Smooth scroll for internal navigation links
+document.addEventListener('DOMContentLoaded', function() {
+  const scrollLinks = document.querySelectorAll('.nexus-scroll-link');
+
+  scrollLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+
+      const targetId = this.getAttribute('href').substring(1);
+      const targetElement = document.getElementById(targetId);
+
+      if (targetElement) {
+        // Calculate offset for fixed navigation (adjust if needed)
+        const navHeight = document.querySelector('.nexus-nav-true')?.offsetHeight || 80;
+        const targetPosition = targetElement.offsetTop - navHeight - 20;
+
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
+        });
+      }
+    });
+  });
+});
+</script>

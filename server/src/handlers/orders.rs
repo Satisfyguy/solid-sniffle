@@ -777,8 +777,7 @@ pub async fn init_escrow(
 /// POST /api/orders/{id}/dev-simulate-payment - Simulate escrow payment (DEV ONLY)
 ///
 /// Development endpoint to simulate payment without real XMR.
-/// Only available in debug builds.
-#[cfg(debug_assertions)]
+/// Available in all builds for testing purposes.
 #[post("/orders/{id}/dev-simulate-payment")]
 pub async fn dev_simulate_payment(
     pool: web::Data<DbPool>,

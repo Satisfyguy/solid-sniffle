@@ -712,3 +712,73 @@ pub async fn get_escrow(
         })),
     }
 }
+
+/// Get escrow status (simplified for monitoring)
+///
+/// # Endpoint
+/// GET /api/escrow/:id/status
+#[actix_web::get("/escrow/{id}/status")]
+pub async fn get_escrow_status(
+    pool: web::Data<DbPool>,
+    session: Session,
+    path: web::Path<String>,
+) -> impl Responder {
+    // Get authenticated user
+    let user_id_str = match session.get::<String>("user_id") {
+        Ok(Some(id)) => id,
+        Ok(None) => {
+            return HttpResponse::Unauthorized().json(serde_json::json!({
+                "error": "Not authenticated"
+            }));
+        }
+        Err(e) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": format!("Session error: {}", e)
+            }));
+        }
+    };
+
+    let user_id = match user_id_str.parse::<Uuid>() {
+        Ok(id) => id,
+        Err(_) => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "Invalid user_id in session"
+            }));
+        }
+    };
+
+    // Parse escrow_id from path
+    let escrow_id_str = path.into_inner();
+    let escrow_id = match escrow_id_str.parse::<Uuid>() {
+        Ok(id) => id,
+        Err(_) => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "Invalid escrow_id"
+            }));
+        }
+    };
+
+    // Load escrow from database
+    match crate::db::db_load_escrow(&pool, escrow_id).await {
+        Ok(escrow) => {
+            // Verify user is part of this escrow
+            if user_id.to_string() != escrow.buyer_id
+                && user_id.to_string() != escrow.vendor_id
+                && user_id.to_string() != escrow.arbiter_id
+            {
+                return HttpResponse::Forbidden().json(serde_json::json!({
+                    "error": "You are not authorized to view this escrow"
+                }));
+            }
+
+            // Return simplified status response
+            HttpResponse::Ok().json(serde_json::json!({
+                "escrow_id": escrow.id,
+                "status": escrow.status
+            }))
+        }
+        Err(e) => HttpResponse::NotFound().json(serde_json::json!({
+            "error": format!("Escrow not found: {}", e)
+        })),
+    }
+}

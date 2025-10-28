@@ -105,7 +105,7 @@ where
                     "default-src 'self'; \
                      script-src 'self' https://unpkg.com 'sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC' 'sha256-N2pfIAEnpE2vmu77Xjadv5PP2CdREj1pDSq5RXaRbBs='; \
                      style-src 'self' 'unsafe-inline'; \
-                     img-src 'self' data:; \
+                     img-src 'self' data: http://127.0.0.1:8081; \
                      font-src 'self'; \
                      connect-src 'self' ws://127.0.0.1:8080; \
                      frame-ancestors 'none'; \

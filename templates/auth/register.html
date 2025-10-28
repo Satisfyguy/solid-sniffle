@@ -109,6 +109,30 @@
           </small>
         </div>
 
+        <!-- Wallet Address Field (Vendors only) -->
+        <div id="wallet-address-field" style="display: none;">
+          <label for="wallet_address" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+            Monero Wallet Address <span style="color: var(--nexus-primary, #ff1a5c);">*</span>
+          </label>
+          <input
+            type="text"
+            id="wallet_address"
+            name="wallet_address"
+            placeholder="4..."
+            minlength="95"
+            maxlength="106"
+            pattern="^[48][0-9A-Za-z]{94,105}$"
+            autocomplete="off"
+            aria-label="Your Monero wallet address"
+            aria-describedby="wallet-help"
+            class="nexus-input"
+            style="width: 100%; font-family: monospace; font-size: 0.875rem;"
+          >
+          <small id="wallet-help" style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+            Your Monero address for receiving payments. Required to mark orders as shipped. You can configure this later in Settings.
+          </small>
+        </div>
+
         <!-- Submit Button -->
         <button
           type="submit"
@@ -149,6 +173,24 @@
 <script src="/static/js/notifications-nexus.js"></script>
 
 <script>
+// Show/hide wallet address field based on role selection
+document.addEventListener('DOMContentLoaded', function() {
+  const roleSelect = document.getElementById('role');
+  const walletField = document.getElementById('wallet-address-field');
+  const walletInput = document.getElementById('wallet_address');
+
+  roleSelect.addEventListener('change', function() {
+    if (this.value === 'vendor') {
+      walletField.style.display = 'block';
+      walletInput.setAttribute('required', 'required');
+    } else {
+      walletField.style.display = 'none';
+      walletInput.removeAttribute('required');
+      walletInput.value = ''; // Clear value if switching away from vendor
+    }
+  });
+});
+
 // Handle HTMX response with premium toast notifications
 document.body.addEventListener('htmx:afterRequest', function(event) {
   if (event.detail.pathInfo.requestPath === '/api/auth/register') {

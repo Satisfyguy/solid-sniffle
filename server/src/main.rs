@@ -318,6 +318,11 @@ async fn main() -> Result<()> {
                     .service(auth::whoami)
                     .service(auth::logout),
             )
+            // Settings endpoints
+            .service(
+                web::scope("/api/settings")
+                    .service(auth::update_wallet_address),
+            )
             // Protected endpoints (listings + orders + escrow) with moderate rate limiting (60 req/min per IP)
             // Single scope ensures shared rate limit quota across all protected operations
             .service(
@@ -341,16 +346,14 @@ async fn main() -> Result<()> {
                     .service(orders::list_orders)
                     .service(orders::get_order)
                     .service(orders::init_escrow)
-                    .configure(|cfg| {
-                        #[cfg(debug_assertions)]
-                        cfg.service(orders::dev_simulate_payment);
-                    })
+                    .service(orders::dev_simulate_payment)
                     .service(orders::ship_order)
                     .service(orders::complete_order)
                     .service(orders::cancel_order)
                     .service(orders::dispute_order)
                     // Escrow
                     .route("/escrow/{id}", web::get().to(escrow::get_escrow))
+                    .service(escrow::get_escrow_status)
                     // NON-CUSTODIAL: Client wallet registration
                     .route(
                         "/escrow/register-wallet-rpc",

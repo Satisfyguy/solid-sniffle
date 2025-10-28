@@ -141,6 +141,7 @@ pub async fn index(tera: web::Data<Tera>, pool: web::Data<DbPool>, session: Sess
         vendor_username: String,
         price_xmr: String,
         status: String,
+        first_image_cid: Option<String>,
     }
 
     let mut listings_for_template = Vec::new();
@@ -157,12 +158,20 @@ pub async fn index(tera: web::Data<Tera>, pool: web::Data<DbPool>, session: Sess
         };
 
         let price_xmr = listing.price_as_xmr();
+
+        // Parse first image CID from JSON
+        let first_image_cid = listing.images_ipfs_cids
+            .as_ref()
+            .and_then(|json| serde_json::from_str::<Vec<String>>(json).ok())
+            .and_then(|images| images.into_iter().next());
+
         listings_for_template.push(ListingForTemplate {
             id: listing.id,
             title: listing.title,
             vendor_username,
             price_xmr: format!("{:.4}", price_xmr),
             status: listing.status,
+            first_image_cid,
         });
     }
 
@@ -1078,13 +1087,22 @@ pub async fn submit_review_form(
 // ============================================================================
 
 /// GET /settings - Settings page
-pub async fn show_settings(tera: web::Data<Tera>, session: Session) -> impl Responder {
+pub async fn show_settings(
+    tera: web::Data<Tera>,
+    pool: web::Data<DbPool>,
+    session: Session,
+) -> impl Responder {
+    use crate::models::user::User;
+
     // Require authentication
-    if session.get::<String>("username").unwrap_or(None).is_none() {
-        return HttpResponse::Found()
-            .append_header(("Location", "/login"))
-            .finish();
-    }
+    let user_id = match session.get::<String>("user_id") {
+        Ok(Some(uid)) => uid,
+        _ => {
+            return HttpResponse::Found()
+                .append_header(("Location", "/login"))
+                .finish()
+        }
+    };
 
     let mut ctx = Context::new();
 
@@ -1103,7 +1121,30 @@ pub async fn show_settings(tera: web::Data<Tera>, session: Session) -> impl Resp
     let csrf_token = get_csrf_token(&session);
     ctx.insert("csrf_token", &csrf_token);
 
-    match tera.render("settings/index.html", &ctx) {
+    // Fetch user from database to get wallet_address
+    let mut conn = match pool.get() {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Database connection error: {}", e);
+            return HttpResponse::InternalServerError().body("Database error");
+        }
+    };
+
+    let user_result = web::block(move || User::find_by_id(&mut conn, user_id)).await;
+
+    match user_result {
+        Ok(Ok(user)) => {
+            // Insert wallet_address if present
+            if let Some(ref addr) = user.wallet_address {
+                ctx.insert("wallet_address", addr);
+            }
+        }
+        _ => {
+            error!("Failed to fetch user for settings page");
+        }
+    }
+
+    match tera.render("settings.html", &ctx) {
         Ok(html) => {
             info!("Rendered settings page");
             HttpResponse::Ok()
@@ -1190,3 +1231,4 @@ pub async fn show_wallet_guide(tera: web::Data<Tera>, session: Session) -> impl 
         }
     }
 }
+
