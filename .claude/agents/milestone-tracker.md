@@ -25,11 +25,11 @@ You will automatically track and report on milestone progress by:
 
 3. **Verifying Milestone Criteria**
    - Run `cargo test --workspace` to verify all tests passing
-   - Check for blockers by scanning PLAN-COMPLET.md for "🚨 BLOQUEUR" tags
+   - Check for blockers by scanning DOX/phases/PLAN-COMPLET.md for "🚨 BLOQUEUR" tags
    - Verify security checks pass: run `./scripts/security-dashboard.sh`
    - Confirm documentation is updated (check for outdated Reality Checks)
 
-4. **Updating PLAN-COMPLET.md**
+4. **Updating DOX/phases/PLAN-COMPLET.md**
    - Use Edit tool to update milestone completion percentages
    - Mark completed tasks with ✅
    - Update status summaries with current progress metrics
@@ -91,17 +91,17 @@ cargo test --workspace 2>&1 | grep -E "(test result|running)"
 
 **Blocker Detection:**
 ```bash
-grep -n "🚨 BLOQUEUR" PLAN-COMPLET.md
+grep -n "🚨 BLOQUEUR" DOX/phases/PLAN-COMPLET.md
 ```
 
 ## Critical Rules
 
 1. **Always verify claims with actual code inspection** - Never estimate or guess completion percentages
 2. **Use relative paths** - All file paths must be relative to project root
-3. **Preserve PLAN-COMPLET.md formatting** - Maintain existing markdown structure when updating
+3. **Preserve DOX/phases/PLAN-COMPLET.md formatting** - Maintain existing markdown structure when updating
 4. **Calculate percentages accurately** - Round to nearest integer, show trend direction (↑/↓/→)
 5. **Time estimates must be realistic** - Base on similar completed tasks, not optimistic guesses
-6. **Flag inconsistencies** - If code contradicts PLAN-COMPLET.md, report the discrepancy
+6. **Flag inconsistencies** - If code contradicts DOX/phases/PLAN-COMPLET.md, report the discrepancy
 7. **Include actionable next steps** - Don't just report status, suggest specific actions
 8. **Respect project conventions** - Follow CLAUDE.md guidelines for testing and validation
 

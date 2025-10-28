@@ -30,7 +30,7 @@ pub struct IpfsClient {
     /// Base URL for IPFS API (e.g., http://localhost:5001/api/v0)
     api_base_url: String,
 
-    /// Gateway URL for retrieving files (e.g., http://localhost:8080/ipfs)
+    /// Gateway URL for retrieving files (e.g., http://localhost:8081/ipfs)
     gateway_url: String,
 }
 
@@ -54,13 +54,13 @@ impl IpfsClient {
     ///
     /// # Arguments
     /// * `api_url` - IPFS API URL (default: http://localhost:5001/api/v0)
-    /// * `gateway_url` - IPFS Gateway URL (default: http://localhost:8080/ipfs)
+    /// * `gateway_url` - IPFS Gateway URL (default: http://localhost:8081/ipfs)
     ///
     /// # Example
     /// ```no_run
     /// let client = IpfsClient::new(
     ///     "http://localhost:5001/api/v0".to_string(),
-    ///     "http://localhost:8080/ipfs".to_string()
+    ///     "http://localhost:8081/ipfs".to_string()
     /// )?;
     /// ```
     pub fn new(api_url: String, gateway_url: String) -> Result<Self> {
@@ -93,7 +93,7 @@ impl IpfsClient {
 
     /// Create client with default local IPFS node settings
     ///
-    /// Connects to localhost:5001 (API) and localhost:8080 (gateway)
+    /// Connects to localhost:5001 (API) and localhost:8081 (gateway)
     pub fn new_local() -> Result<Self> {
         Self::new(
             "http://127.0.0.1:5001/api/v0".to_string(),

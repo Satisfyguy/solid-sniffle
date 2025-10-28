@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Current Status:** Alpha (v0.2.6) - Testnet only, NOT for production use.
 
-**📋 Après chaque commit significatif:** Exécuter `/alpha-terminal` pour vérification anti-hallucination + mise à jour doc. Voir [PROTOCOLE-ALPHA-TERMINAL.md](PROTOCOLE-ALPHA-TERMINAL.md)
+**📋 Après chaque commit significatif:** Exécuter `/alpha-terminal` pour vérification anti-hallucination + mise à jour doc. Voir [PROTOCOLE-ALPHA-TERMINAL.md](DOX/protocols/PROTOCOLE-ALPHA-TERMINAL.md)
 
 ## Critical Security Context
 
@@ -583,7 +583,7 @@ ou
 /alpha-terminal
 ```
 
-**Documentation complète:** [PROTOCOLE-ALPHA-TERMINAL.md](PROTOCOLE-ALPHA-TERMINAL.md)
+**Documentation complète:** [PROTOCOLE-ALPHA-TERMINAL.md](DOX/protocols/PROTOCOLE-ALPHA-TERMINAL.md)
 
 **Quand utiliser:**
 - Après commits avec nouvelles fonctionnalités

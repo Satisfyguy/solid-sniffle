@@ -518,50 +518,6 @@
 
 /* === ACCESSIBILITY - PREFERS REDUCED MOTION === */
 
-/**
- * For users with motion sensitivity, we disable/simplify animations
- * This is CRITICAL for accessibility compliance (WCAG 2.1 Level AA)
- */
-@media (prefers-reduced-motion: reduce) {
-  /* Disable all animations except simple fades */
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-
-  /* Letters: Simple scale instead of full jump */
-  .nexus-animated-letter.jumping {
-    animation: none !important;
-    transform: scale(1.15) !important;
-    transition: transform 0.2s ease-out !important;
-  }
-
-  /* Disable floating shapes */
-  .nexus-floating-shape {
-    animation: none !important;
-    opacity: 0.05 !important;
-  }
-
-  /* Disable background wave */
-  .nexus-hero-pattern {
-    animation: none !important;
-  }
-
-  /* Disable grid pulse */
-  .nexus-hero-grid {
-    animation: none !important;
-    opacity: 0.05 !important;
-  }
-
-  /* Disable scroll bounce */
-  .nexus-scroll-indicator {
-    animation: none !important;
-  }
-}
-
 /* === PERFORMANCE OPTIMIZATIONS === */
 
 /**
@@ -791,4 +747,297 @@
     flex-direction: column;
     text-align: center;
   }
+}
+
+/* === CATEGORY CARDS (Original Nexus Design) === */
+
+.nexus-category-card {
+  position: relative;
+  overflow: hidden;
+  background: hsl(0, 0%, 8%);
+  border: 2px solid hsl(0, 0%, 20%);
+  padding: 2rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.nexus-category-card:hover {
+  background: hsl(349, 100%, 55%);
+  border-color: hsl(349, 100%, 55%);
+}
+
+.nexus-category-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.nexus-category-card-icon {
+  width: 3rem;
+  height: 3rem;
+  color: hsl(349, 100%, 55%);
+  transition: color 0.3s ease;
+}
+
+.nexus-category-card:hover .nexus-category-card-icon {
+  color: hsl(0, 0%, 5%);
+}
+
+.nexus-category-card-count {
+  text-align: right;
+}
+
+.nexus-category-card-count-value {
+  font-size: 1.875rem;
+  font-weight: 900;
+  color: hsl(349, 100%, 55%);
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.nexus-category-card:hover .nexus-category-card-count-value {
+  color: hsl(0, 0%, 5%);
+}
+
+.nexus-category-card-count-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: hsl(0, 0%, 65%);
+  margin-top: 0.25rem;
+  transition: color 0.3s ease;
+}
+
+.nexus-category-card:hover .nexus-category-card-count-label {
+  color: rgba(12, 12, 12, 0.6);
+}
+
+.nexus-category-card-title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
+  color: hsl(0, 0%, 98%);
+  transition: color 0.3s ease;
+  margin: 0;
+}
+
+.nexus-category-card:hover .nexus-category-card-title {
+  color: hsl(0, 0%, 5%);
+}
+
+/* === PRODUCT CARDS (Original Nexus Design) === */
+
+.nexus-product-card {
+  position: relative;
+  overflow: hidden;
+  background: hsl(0, 0%, 8%);
+  border: 2px solid hsl(0, 0%, 20%);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.nexus-product-card:hover {
+  border-color: hsl(349, 100%, 55%);
+}
+
+/* Product Image Section */
+.nexus-product-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: hsl(0, 0%, 15%);
+  overflow: hidden;
+}
+
+.nexus-product-image-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, hsla(349, 100%, 55%, 0.2) 0%, hsla(280, 60%, 50%, 0.2) 100%);
+}
+
+.nexus-product-image-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 6rem;
+  font-weight: 900;
+  color: hsla(349, 100%, 55%, 0.1);
+  user-select: none;
+}
+
+/* Verified Badge */
+.nexus-verified-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: hsl(180, 100%, 50%);
+  color: hsl(0, 0%, 5%);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.nexus-verified-badge-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+/* Product Content */
+.nexus-product-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.nexus-product-info {
+  margin-bottom: 1rem;
+}
+
+.nexus-product-title {
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  color: hsl(0, 0%, 98%);
+  margin-bottom: 0.5rem;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.nexus-product-vendor {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: hsl(0, 0%, 65%);
+  text-transform: uppercase;
+}
+
+/* Rating */
+.nexus-product-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.nexus-product-stars {
+  display: flex;
+  gap: 0.125rem;
+}
+
+.nexus-product-star {
+  width: 1rem;
+  height: 1rem;
+  color: hsl(280, 60%, 50%);
+  fill: hsl(280, 60%, 50%);
+}
+
+.nexus-product-star-empty {
+  width: 1rem;
+  height: 1rem;
+  color: hsl(0, 0%, 15%);
+  fill: none;
+}
+
+.nexus-product-rating-text {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: hsl(0, 0%, 65%);
+}
+
+/* Price and Action */
+.nexus-product-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.nexus-product-price-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.nexus-product-price {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: hsl(349, 100%, 55%);
+  line-height: 1;
+}
+
+.nexus-product-price-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: hsl(0, 0%, 65%);
+  margin-top: 0.25rem;
+}
+
+.nexus-product-view-btn {
+  background: hsl(349, 100%, 55%);
+  color: hsl(0, 0%, 5%);
+  padding: 0.5rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.nexus-product-view-btn:hover {
+  background: hsl(349, 100%, 65%);
+  transform: translateY(-2px);
+}
+
+/* Stats Banner */
+.nexus-stats-banner {
+  padding: 6rem 0;
+  background: hsl(349, 100%, 55%);
+}
+
+.nexus-stats-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.nexus-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 3rem;
+  text-align: center;
+}
+
+.nexus-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nexus-stat-value {
+  font-size: 3.75rem;
+  font-weight: 900;
+  color: hsl(0, 0%, 5%);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.nexus-stat-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: hsla(0, 0%, 5%, 0.6);
+  text-transform: uppercase;
 }

@@ -133,18 +133,17 @@ pub async fn index(tera: web::Data<Tera>, pool: web::Data<DbPool>, session: Sess
         }
     };
 
-    // Format products for template
+    // Format listings for template
     #[derive(Serialize)]
-    struct ProductForTemplate {
+    struct ListingForTemplate {
         id: String,
         title: String,
-        vendor: String,
-        price_display: String,
-        rating: i32,
-        verified: bool,
+        vendor_username: String,
+        price_xmr: String,
+        status: String,
     }
 
-    let mut products = Vec::new();
+    let mut listings_for_template = Vec::new();
     for listing in listings {
         let mut conn2 = match pool.get() {
             Ok(c) => c,
@@ -158,21 +157,20 @@ pub async fn index(tera: web::Data<Tera>, pool: web::Data<DbPool>, session: Sess
         };
 
         let price_xmr = listing.price_as_xmr();
-        products.push(ProductForTemplate {
+        listings_for_template.push(ListingForTemplate {
             id: listing.id,
             title: listing.title,
-            vendor: vendor_username,
-            price_display: format!("{:.4}", price_xmr),
-            rating: 5, // TODO: Get real rating
-            verified: true, // TODO: Check if vendor is verified
+            vendor_username,
+            price_xmr: format!("{:.4}", price_xmr),
+            status: listing.status,
         });
     }
 
-    ctx.insert("products", &products);
+    ctx.insert("listings", &listings_for_template);
 
-    match tera.render("home.html", &ctx) {
+    match tera.render("listings/index.html", &ctx) {
         Ok(html) => {
-            info!("Rendered underground homepage");
+            info!("Rendered Nexus homepage");
             HttpResponse::Ok()
                 .content_type("text/html; charset=utf-8")
                 .body(html)

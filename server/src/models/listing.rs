@@ -370,6 +370,7 @@ mod tests {
             created_at: chrono::Utc::now().naive_utc(),
             updated_at: chrono::Utc::now().naive_utc(),
             images_ipfs_cids: None,
+            category: "other".to_string(),
         };
 
         assert_eq!(listing.price_as_xmr(), 1.5);

@@ -16,7 +16,7 @@ Execute the **Protocole Alpha Terminal** workflow:
 
 ## Full Protocol Documentation
 
-See: [PROTOCOLE-ALPHA-TERMINAL.md](../../PROTOCOLE-ALPHA-TERMINAL.md)
+See: [PROTOCOLE-ALPHA-TERMINAL.md](../../DOX/protocols/PROTOCOLE-ALPHA-TERMINAL.md)
 
 ## Your Task
 
@@ -112,7 +112,7 @@ For each task:
 
 ### Step 7: Git Commit Documentation
 ```bash
-git add PLAN-COMPLET.md
+git add DOX/phases/PLAN-COMPLET.md
 git commit --no-verify -m "docs: Update PLAN-COMPLET.md - Milestone X.Y → ZZ% (Protocole Alpha Terminal)
 
 Version X.Y+1 - Vérification anti-hallucination complète
