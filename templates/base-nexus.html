@@ -26,6 +26,10 @@
     <script src="/static/js/htmx.min.js"></script>
     <!-- HTMX JSON encoding extension for API requests -->
     <script src="/static/js/json-enc.js"></script>
+    <!-- Debug mode flag (set to false for production) -->
+    <script>
+      window.NEXUS_DEBUG = false; // Set to true to enable debug logging
+    </script>
     {% block head_extra %}{% endblock %}
 </head>
 <body>
