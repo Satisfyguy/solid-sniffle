@@ -3,6 +3,10 @@
 
 {% block title %}Order #{{ order.id | truncate(length=8, end="") }} - Monero Marketplace{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/order-escrow.css">
+{% endblock %}
+
 {% block content %}
 <div class="order-detail-container">
     <!-- Back button -->
@@ -262,31 +266,35 @@
                     </button>
 
                     <!-- Escrow Funding Instructions -->
-                    <div id="escrow-instructions" style="display: none; margin-bottom: 15px; padding: 15px; background: #1a1a3a; border: 1px solid #3b82f6; border-radius: 4px;">
-                        <h3 style="font-size: 12px; color: #3b82f6; margin-bottom: 10px; letter-spacing: 1px;">🔒 ESCROW PAYMENT</h3>
-                        <div style="margin-bottom: 10px;">
-                            <p style="font-size: 11px; color: #888; margin-bottom: 5px;">ESCROW ADDRESS:</p>
-                            <div style="background: #0a0a0a; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 10px; word-break: break-all; color: #f5f5f5;">
-                                <span id="escrow-address">Initializing...</span>
-                            </div>
-                            <button id="copy-address-btn" style="margin-top: 5px; font-size: 10px; padding: 4px 8px; background: #2a2a2a; border: 1px solid #3b82f6; color: #3b82f6; cursor: pointer; border-radius: 3px;">
+                    <div id="escrow-instructions">
+                        <h3>🔒 ESCROW PAYMENT</h3>
+                        <div class="escrow-address-section">
+                            <p class="escrow-address-label">ESCROW ADDRESS:</p>
+                            <div id="escrow-address">Initializing...</div>
+                            <button id="copy-address-btn">
                                 📋 COPY ADDRESS
                             </button>
                         </div>
-                        <div style="margin-bottom: 10px;">
-                            <p style="font-size: 11px; color: #888; margin-bottom: 5px;">AMOUNT TO SEND:</p>
-                            <div style="background: #0a0a0a; padding: 10px; border-radius: 4px; font-size: 14px; font-weight: bold; color: #22c55e;">
+                        <div class="escrow-amount-section">
+                            <p class="escrow-amount-label">AMOUNT TO SEND:</p>
+                            <div class="escrow-amount-value">
                                 {{ order.total_price_xmr }} XMR
                             </div>
                         </div>
-                        <div style="padding: 10px; background: #1a3a1a; border: 1px solid #22c55e; border-radius: 4px; margin-top: 10px;">
-                            <p style="font-size: 10px; color: #22c55e; line-height: 1.6;">
+                        <div class="escrow-info-box">
+                            <p>
                                 ✓ Send EXACTLY {{ order.total_price_xmr }} XMR to the escrow address above<br>
                                 ✓ Funds are secured in 2-of-3 multisig<br>
                                 ✓ Released to vendor only after you confirm receipt
                             </p>
                         </div>
-                        <div id="payment-status" style="margin-top: 10px;"></div>
+
+                        <!-- DEV: Simulate Payment Button -->
+                        <button id="dev-simulate-payment-btn">
+                            🧪 DEV: SIMULATE PAYMENT (TESTNET ONLY)
+                        </button>
+
+                        <div id="payment-status"></div>
                     </div>
 
                     {{ nx::button(
@@ -331,42 +339,12 @@
     </div>
 </div>
 
-<!-- WebSocket for live updates -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const orderId = '{{ order.id }}';
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(wsProtocol + '//' + window.location.host + '/ws/');
-
-    ws.onopen = function() {
-        console.log('WebSocket connected');
-        ws.send(JSON.stringify({
-            type: 'subscribe',
-            channel: 'order:' + orderId
-        }));
-    };
-
-    ws.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        if (data.type === 'order_update' && data.order_id === orderId) {
-            location.reload();
-        }
-    };
-
-    ws.onerror = function(error) {
-        console.error('WebSocket error:', error);
-    };
-
-    ws.onclose = function() {
-        console.log('WebSocket disconnected');
-        setTimeout(() => location.reload(), 5000);
-    };
-});
-</script>
+<!-- WebSocket live updates and order actions -->
+<div id="order-data" data-order-id="{{ order.id }}"></div>
 
 <!-- Fund Escrow Script -->
 <script src="/static/js/fund-escrow.js"></script>
 
-<!-- Order Actions Script -->
+<!-- Order Actions Script (includes WebSocket) -->
 <script src="/static/js/order-actions.js"></script>
 {% endblock %}

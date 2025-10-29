@@ -807,10 +807,23 @@ pub async fn init_escrow(
 pub async fn dev_simulate_payment(
     pool: web::Data<DbPool>,
     session: Session,
+    http_req: HttpRequest,
     id: web::Path<String>,
     websocket: web::Data<Addr<WebSocketServer>>,
 ) -> impl Responder {
-    
+    // SECURITY: Validate CSRF token
+    let csrf_token = http_req
+        .headers()
+        .get("X-CSRF-Token")
+        .and_then(|h| h.to_str().ok())
+        .unwrap_or("");
+
+    if !validate_csrf_token(&session, csrf_token) {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Invalid or missing CSRF token"
+        }));
+    }
+
     // Get authenticated user
     let user_id = match get_user_id_from_session(&session) {
         Ok(id) => id,
