@@ -109,7 +109,7 @@
 /* Animated Grid Lines */
 .nexus-hero-grid {
   position: absolute;
-  top: 120px; /* Commence après le header (header ≈ 100px) */
+  top: 80px; /* Commence après le header grid (80px de hauteur) */
   left: 0;
   right: 0;
   bottom: 0;

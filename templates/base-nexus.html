@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="/static/css/nexus-reset.css">
     <link rel="stylesheet" href="/static/css/nexus-animations.css">
     <link rel="stylesheet" href="/static/css/nexus.css">
-    <link rel="stylesheet" href="/static/css/nexus-simple-header.css">
+    <link rel="stylesheet" href="/static/css/nexus-grid-header.css">
 
     <!-- Extra CSS for specific pages -->
     {% block extra_css %}{% endblock %}
@@ -29,7 +29,7 @@
     <!-- Skip to main content link for keyboard navigation -->
     <a href="#main-content" class="skip-link">SKIP TO MAIN CONTENT</a>
 
-    {% include "partials/nexus/organisms/nav-simple.html" %}
+    {% include "partials/nexus/organisms/nav-grid.html" %}
 
     <main id="main-content" role="main" aria-label="Main content">
         {% block content %}{% endblock %}
@@ -42,8 +42,9 @@
     <script src="/static/js/notifications-nexus.js"></script>
     {% endif %}
 
-    <!-- Simple Header JavaScript -->
+    <!-- Grid Header JavaScript -->
     <script src="/static/js/nexus-simple-typewriter.js"></script>
+    <script src="/static/js/nexus-grid-toggle.js"></script>
 
     {% block scripts %}{% endblock %}
 </body>
