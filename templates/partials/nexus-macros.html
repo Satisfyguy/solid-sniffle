@@ -29,7 +29,7 @@
 
 
 {# BUTTON - Action button with multiple variants #}
-{% macro button(text, variant="primary", size="md", type="button", disabled=false, href="", hx_get="", hx_post="", hx_put="", hx_delete="", hx_target="", hx_swap="", hx_confirm="", class="", id="", aria_label="") %}
+{% macro button(text, variant="primary", size="md", type="button", disabled=false, href="", hx_get="", hx_post="", hx_put="", hx_delete="", hx_target="", hx_swap="", hx_confirm="", hx_indicator="", class="", id="", aria_label="") %}
   {%- set css_classes = "nexus-btn nexus-btn-" ~ variant ~ " nexus-btn-" ~ size -%}
   {%- if class -%}
     {%- set css_classes = css_classes ~ " " ~ class -%}
@@ -46,6 +46,7 @@
       {%- if hx_target %} hx-target="{{ hx_target }}"{% endif -%}
       {%- if hx_swap %} hx-swap="{{ hx_swap }}"{% endif -%}
       {%- if hx_confirm %} hx-confirm="{{ hx_confirm }}"{% endif -%}
+      {%- if hx_indicator %} hx-indicator="{{ hx_indicator }}"{% endif -%}
     >{{ text | safe }}</a>
   {%- else -%}
     <button type="{{ type }}" class="{{ css_classes }}"
@@ -59,6 +60,7 @@
       {%- if hx_target %} hx-target="{{ hx_target }}"{% endif -%}
       {%- if hx_swap %} hx-swap="{{ hx_swap }}"{% endif -%}
       {%- if hx_confirm %} hx-confirm="{{ hx_confirm }}"{% endif -%}
+      {%- if hx_indicator %} hx-indicator="{{ hx_indicator }}"{% endif -%}
     >{{ text | safe }}</button>
   {%- endif -%}
 {%- endmacro button %}

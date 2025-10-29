@@ -10,8 +10,16 @@ use tracing::{error, info};
 use crate::db::DbPool;
 use crate::middleware::csrf::get_csrf_token;
 
-/// GET / - Homepage (Underground NEXUS design)
+/// GET / - Homepage (redirects to listings)
 pub async fn index(tera: web::Data<Tera>, pool: web::Data<DbPool>, session: Session) -> impl Responder {
+    // Redirect to listings page (NEXUS design homepage)
+    return HttpResponse::Found()
+        .append_header(("Location", "/listings"))
+        .finish();
+
+    // Old underground theme code below (kept for reference but unreachable)
+    #[allow(unreachable_code)]
+    {
     use crate::models::listing::Listing;
     use crate::models::user::User;
     use serde::Serialize;
@@ -189,6 +197,7 @@ pub async fn index(tera: web::Data<Tera>, pool: web::Data<DbPool>, session: Sess
             HttpResponse::InternalServerError().body(format!("Template error: {}", e))
         }
     }
+    } // Close unreachable code block
 }
 
 /// GET /login - Login page
