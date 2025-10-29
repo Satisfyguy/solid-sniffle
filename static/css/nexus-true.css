@@ -1082,3 +1082,47 @@
   margin: 0;
   padding: 0;
 }
+
+/* ========================================
+   LIGHT MODE - Inspiré de wodniack.dev
+   ======================================== */
+
+body.light-mode .nexus-hero-true {
+  background: hsl(30, 30%, 92%); /* Fond beige clair */
+}
+
+body.light-mode .nexus-hero-pattern {
+  opacity: 0.15; /* Pattern plus subtil en light mode */
+}
+
+body.light-mode .nexus-hero-grid {
+  opacity: 0.08; /* Lignes plus subtiles */
+}
+
+body.light-mode .nexus-animated-letter {
+  color: hsl(0, 0%, 10%); /* Lettres noires */
+}
+
+body.light-mode .cinematic-zoom-strike {
+  color: hsl(0, 0%, 10%); /* Texte noir */
+}
+
+body.light-mode .nexus-hero-subtitle-true {
+  color: hsl(0, 0%, 10%); /* Subtitle noir */
+}
+
+body.light-mode .nexus-hero-stat-value {
+  color: hsl(0, 0%, 10%); /* Stats noires */
+}
+
+body.light-mode .nexus-hero-stat-label {
+  color: hsla(0, 0%, 10%, 0.6); /* Labels semi-transparents */
+}
+
+body.light-mode .nexus-floating-shape {
+  border-color: rgba(10, 10, 10, 0.08); /* Formes plus subtiles */
+}
+
+body.light-mode .cinematic-flash-overlay {
+  background: hsl(30, 30%, 92%); /* Flash beige au lieu de blanc */
+}
