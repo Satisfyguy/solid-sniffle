@@ -4,84 +4,7 @@
    =============================================== */
 
 /* === KEYFRAMES ANIMATIONS === */
-
-/* JUMP ANIMATION - Direct jump with smooth rotation */
-@keyframes jump {
-  /* START - Rest position */
-  0% {
-    transform: translateY(0) rotate(0deg) scale(1) translateZ(0);
-  }
-
-  /* ASCENT - Fast upward with rotation */
-  15% {
-    transform: translateY(-100vh) rotate(180deg) scale(1.05) translateZ(0);
-  }
-
-  /* PEAK - Hang at top */
-  40% {
-    transform: translateY(-105vh) rotate(270deg) scale(1) translateZ(0);
-  }
-
-  /* DESCENT - Fall down */
-  70% {
-    transform: translateY(0) rotate(350deg) scale(1) translateZ(0);
-  }
-
-  /* LAND - First impact */
-  75% {
-    transform: translateY(0) rotate(360deg) scale(1) translateZ(0);
-  }
-
-  /* BOUNCE 1 */
-  82% {
-    transform: translateY(-30px) rotate(360deg) scale(1) translateZ(0);
-  }
-
-  /* LAND 2 */
-  88% {
-    transform: translateY(0) rotate(360deg) scale(1) translateZ(0);
-  }
-
-  /* BOUNCE 2 */
-  94% {
-    transform: translateY(-10px) rotate(360deg) scale(1) translateZ(0);
-  }
-
-  /* FINAL - Back to rest */
-  100% {
-    transform: translateY(0) rotate(360deg) scale(1) translateZ(0);
-  }
-}
-
-@keyframes wave {
-  0%, 100% {
-    transform: translateX(0) translateY(0) scale(1);
-  }
-  33% {
-    transform: translateX(-5%) translateY(-5%) scale(1.05);
-  }
-  66% {
-    transform: translateX(5%) translateY(5%) scale(0.95);
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-20px) rotate(2deg);
-  }
-}
-
-@keyframes pulse-slow {
-  0%, 100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.6;
-  }
-}
+/* NOTE: jump, wave, float, pulse-slow animations removed - use nexus-animations.css instead */
 
 /* === HERO SECTION === */
 
@@ -93,7 +16,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: hsl(16, 100%, 67%); /* Primary color */
+  background: var(--nexus-primary); /* Primary color */
 }
 
 /* Background Pattern - Container pour lignes animées en JS */
@@ -184,7 +107,7 @@
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 1rem;
+  gap: var(--nexus-space-4);
 }
 
 .nexus-animated-letter {
@@ -201,7 +124,7 @@
 
 /* Subtle hover effect (before click/touch) */
 .nexus-animated-letter:hover {
-  color: hsl(180, 100%, 50%); /* Cyan accent */
+  color: var(--nexus-cyan); /* Cyan accent */
   transform: scale(1.05);
 }
 
@@ -243,9 +166,9 @@
 /* Hover effect for E lines */
 .nexus-letter-e:hover::before {
   background:
-    linear-gradient(to right, hsl(180, 100%, 50%) 0%, hsl(180, 100%, 50%) 100%) 0% 0% / 100% 12% no-repeat,
-    linear-gradient(to right, hsl(180, 100%, 50%) 0%, hsl(180, 100%, 50%) 100%) 0% 44% / 100% 12% no-repeat,
-    linear-gradient(to right, hsl(180, 100%, 50%) 0%, hsl(180, 100%, 50%) 100%) 0% 88% / 100% 12% no-repeat;
+    linear-gradient(to right, var(--nexus-cyan) 0%, var(--nexus-cyan) 100%) 0% 0% / 100% 12% no-repeat,
+    linear-gradient(to right, var(--nexus-cyan) 0%, var(--nexus-cyan) 100%) 0% 44% / 100% 12% no-repeat,
+    linear-gradient(to right, var(--nexus-cyan) 0%, var(--nexus-cyan) 100%) 0% 88% / 100% 12% no-repeat;
 }
 
 /* Hero Subtitle */
@@ -262,7 +185,7 @@
 .nexus-hero-stats {
   display: flex;
   justify-content: center;
-  gap: 4rem;
+  gap: var(--nexus-space-16);
   color: hsl(0, 0%, 5%);
 }
 
@@ -386,7 +309,7 @@
 .nexus-nav-container-true {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 1rem 1.5rem;
+  padding: var(--nexus-space-4) 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -395,13 +318,13 @@
 .nexus-nav-logo-box {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--nexus-space-4);
 }
 
 .nexus-nav-logo-shield {
   width: 3rem;
   height: 3rem;
-  background-color: hsl(16, 100%, 67%);
+  background-color: var(--nexus-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -417,7 +340,7 @@
 .nexus-nav-menu-true {
   display: none;
   align-items: center;
-  gap: 2rem;
+  gap: var(--nexus-space-8);
 }
 
 @media (min-width: 768px) {
@@ -436,20 +359,20 @@
 }
 
 .nexus-nav-link-true:hover {
-  color: hsl(16, 100%, 67%);
+  color: var(--nexus-primary);
 }
 
 .nexus-nav-actions-true {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--nexus-space-4);
 }
 
 /* === STATS BANNER === */
 
 .nexus-stats-banner {
-  padding: 6rem 0;
-  background-color: hsl(16, 100%, 67%);
+  padding: var(--nexus-space-24) 0;
+  background-color: var(--nexus-primary);
 }
 
 .nexus-stats-container {
@@ -461,7 +384,7 @@
 .nexus-stats-grid {
   display: grid;
   grid-template-columns: repeat(1, 1fr);
-  gap: 3rem;
+  gap: var(--nexus-space-12);
   text-align: center;
   color: hsl(0, 0%, 5%);
 }
@@ -522,7 +445,7 @@
 
   .nexus-hero-stats {
     flex-direction: column;
-    gap: 2rem;
+    gap: var(--nexus-space-8);
   }
 
   .nexus-floating-shape {
@@ -569,7 +492,7 @@
   }
 
   .nexus-hero-true {
-    background: white !important;
+    background: var(--nexus-white) !important;
     color: black !important;
     min-height: auto !important;
     page-break-after: always;
@@ -586,7 +509,7 @@
  * Ensure keyboard users can see focus state
  */
 .nexus-animated-letter:focus {
-  outline: 3px solid hsl(16, 100%, 67%);
+  outline: 3px solid var(--nexus-primary);
   outline-offset: 4px;
   border-radius: 4px;
 }
@@ -596,7 +519,7 @@
 }
 
 .nexus-animated-letter:focus-visible {
-  outline: 3px solid hsl(16, 100%, 67%);
+  outline: 3px solid var(--nexus-primary);
   outline-offset: 4px;
   box-shadow: 0 0 0 6px rgba(255, 26, 92, 0.2);
 }
@@ -627,8 +550,8 @@
 
 .nexus-footer {
   background-color: hsl(16, 100%, 21%); /* #6A2900 - Corail 900 brun chaleureux */
-  border-top: 3px solid hsl(16, 100%, 31%); /* #A04100 - Corail 800 */
-  padding: 4rem 0 2rem;
+  border-top: 3px solid var(--nexus-corail-800); /* #A04100 - Corail 800 */
+  padding: var(--nexus-space-16) 0 2rem;
   margin-top: 6rem;
 }
 
@@ -646,28 +569,28 @@
 .nexus-footer-grid {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 3rem;
+  gap: var(--nexus-space-12);
   margin-bottom: 3rem;
 }
 
 @media (max-width: 1024px) {
   .nexus-footer-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 2rem;
+    gap: var(--nexus-space-8);
   }
 }
 
 @media (max-width: 640px) {
   .nexus-footer-grid {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: var(--nexus-space-8);
   }
 }
 
 .nexus-footer-brand {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--nexus-space-3);
 }
 
 .nexus-footer-logo {
@@ -675,14 +598,14 @@
   font-weight: 900;
   letter-spacing: -0.05em;
   text-transform: uppercase;
-  color: hsl(16, 100%, 85%); /* #FFBFB1 - Corail 100 */
+  color: var(--nexus-corail-100); /* #FFBFB1 - Corail 100 */
   margin: 0;
   text-shadow: 0 0 20px rgba(255, 133, 89, 0.4);
 }
 
 .nexus-footer-tagline {
   font-size: 0.875rem;
-  color: hsl(16, 100%, 85%); /* #FFBFB1 - Corail 100 */
+  color: var(--nexus-corail-100); /* #FFBFB1 - Corail 100 */
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -693,7 +616,7 @@
 .nexus-footer-section {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--nexus-space-4);
 }
 
 .nexus-footer-title {
@@ -701,9 +624,9 @@
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: hsl(16, 100%, 96%); /* #FFEDE9 - Corail 50 */
+  color: var(--nexus-corail-50); /* #FFEDE9 - Corail 50 */
   margin: 0 0 0.5rem 0;
-  border-bottom: 2px solid hsl(16, 100%, 43%); /* #D95B00 - Corail 700 */
+  border-bottom: 2px solid var(--nexus-corail-700); /* #D95B00 - Corail 700 */
   padding-bottom: 0.5rem;
   display: inline-block;
 }
@@ -714,11 +637,11 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--nexus-space-3);
 }
 
 .nexus-footer-links a {
-  color: hsl(16, 100%, 85%); /* #FFBFB1 - Corail 100 */
+  color: var(--nexus-corail-100); /* #FFBFB1 - Corail 100 */
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 500;
@@ -729,32 +652,32 @@
 }
 
 .nexus-footer-links a:hover {
-  color: hsl(16, 100%, 96%); /* #FFEDE9 - Corail 50 très clair */
+  color: var(--nexus-corail-50); /* #FFEDE9 - Corail 50 très clair */
   transform: translateX(4px);
   text-shadow: 0 0 10px rgba(255, 133, 89, 0.5);
   opacity: 1;
 }
 
 .nexus-footer-bottom {
-  border-top: 2px solid hsl(16, 100%, 31%); /* #A04100 - Corail 800 */
+  border-top: 2px solid var(--nexus-corail-800); /* #A04100 - Corail 800 */
   padding-top: 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--nexus-space-4);
 }
 
 .nexus-footer-bottom p {
   margin: 0;
   font-size: 0.875rem;
-  color: hsl(16, 100%, 85%); /* #FFBFB1 - Corail 100 */
+  color: var(--nexus-corail-100); /* #FFBFB1 - Corail 100 */
   font-weight: 500;
   opacity: 0.8;
 }
 
 .nexus-footer-bottom strong {
-  color: hsl(16, 100%, 96%); /* #FFEDE9 - Corail 50 highlight */
+  color: var(--nexus-corail-50); /* #FFEDE9 - Corail 50 highlight */
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -774,8 +697,8 @@
    ========================================== */
 
 .nexus-categories-section {
-  padding: 6rem 0;
-  background: hsl(16, 100%, 67%); /* NEXUS PINK */
+  padding: var(--nexus-space-24) 0;
+  background: var(--nexus-primary); /* NEXUS PINK */
 }
 
 .nexus-categories-container {
@@ -787,25 +710,25 @@
 .nexus-categories-header {
   margin-bottom: 4rem;
   text-align: center;
-  border-bottom: 3px solid rgba(0, 0, 0, 0.3);
+  border-bottom: 3px solid var(--nexus-overlay-light);
   padding-bottom: 2rem;
 }
 
 .nexus-categories-title {
-  font-family: 'Courier New', monospace;
+  font-family: var(--nexus-font-mono);
   font-size: 3rem;
   font-weight: 900;
   letter-spacing: 0.1em;
-  color: #0d0d0d;
+  color: var(--nexus-bg);
   margin: 0 0 1rem 0;
 }
 
 .nexus-categories-subtitle {
-  font-family: 'Courier New', monospace;
+  font-family: var(--nexus-font-mono);
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.2em;
-  color: #0d0d0d;
+  color: var(--nexus-bg);
   opacity: 0.7;
   margin: 0;
 }
@@ -820,10 +743,10 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 2rem;
-  padding: 2rem;
+  gap: var(--nexus-space-8);
+  padding: var(--nexus-space-8);
   background: transparent;
-  border: 3px solid rgba(0, 0, 0, 0.3);
+  border: 3px solid var(--nexus-overlay-light);
   margin: -3px 0 0 -3px; /* Compensate borders to avoid doubling */
   text-decoration: none;
   transition: background 0.3s ease, color 0.3s ease;
@@ -840,7 +763,7 @@
   bottom: 0;
   width: 100%;
   height: 100%;
-  background: #0d0d0d;
+  background: var(--nexus-bg);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.3s ease;
@@ -858,12 +781,12 @@
 }
 
 .nexus-category-box-icon .nexus-icon {
-  color: #0d0d0d;
+  color: var(--nexus-bg);
   transition: color 0.3s ease;
 }
 
 .nexus-category-box:hover .nexus-icon {
-  color: hsl(16, 100%, 67%);
+  color: var(--nexus-primary);
 }
 
 .nexus-category-box-info {
@@ -873,21 +796,21 @@
 }
 
 .nexus-category-box-title {
-  font-family: 'Courier New', monospace;
+  font-family: var(--nexus-font-mono);
   font-size: 1.5rem;
   font-weight: 900;
   letter-spacing: 0.05em;
-  color: #0d0d0d;
+  color: var(--nexus-bg);
   margin: 0 0 0.5rem 0;
   transition: color 0.3s ease;
 }
 
 .nexus-category-box:hover .nexus-category-box-title {
-  color: white;
+  color: var(--nexus-white);
 }
 
 .nexus-category-box-count {
-  font-family: 'Courier New', monospace;
+  font-family: var(--nexus-font-mono);
   font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -902,8 +825,8 @@
 /* === FEATURED LISTINGS SECTION === */
 
 .nexus-listings-section {
-  padding: 6rem 0;
-  background: hsl(16, 100%, 67%); /* NEXUS PINK - Même que Categories */
+  padding: var(--nexus-space-24) 0;
+  background: var(--nexus-primary); /* NEXUS PINK - Même que Categories */
   position: relative;
   overflow: hidden; /* Clip birds overflow */
 }
@@ -926,7 +849,7 @@
   position: absolute;
   width: auto;
   height: auto;
-  fill: #0d0d0d; /* Black birds on pink */
+  fill: var(--nexus-bg); /* Black birds on pink */
 }
 
 /* Individual bird paths with random animations */
@@ -1030,7 +953,7 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 2rem;
+  gap: var(--nexus-space-8);
 }
 
 .nexus-listings-header-content {
@@ -1045,16 +968,16 @@
   letter-spacing: -0.05em;
   margin-bottom: 1rem;
   text-transform: uppercase;
-  color: #0d0d0d; /* Noir sur fond rose */
+  color: var(--nexus-bg); /* Noir sur fond rose */
   line-height: 1;
 }
 
 .nexus-listings-subtitle {
-  font-family: var(--nexus-font-mono), 'PP Fraktion Mono', 'Courier New', monospace;
+  font-family: var(--nexus-font-mono), 'PP Fraktion Mono', var(--nexus-font-mono);
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.2em;
-  color: #0d0d0d; /* Noir sur fond rose */
+  color: var(--nexus-bg); /* Noir sur fond rose */
   opacity: 0.7;
   text-transform: uppercase;
 }
@@ -1062,7 +985,7 @@
 .nexus-listings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+  gap: var(--nexus-space-6);
   position: relative;
   z-index: 10; /* Above birds background */
 }
@@ -1074,7 +997,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 5rem;
+  padding: var(--nexus-space-20);
   text-align: center;
 }
 
@@ -1112,11 +1035,11 @@
 
   .nexus-listings-grid {
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1rem;
+    gap: var(--nexus-space-4);
   }
 
   .nexus-listings-empty-state {
-    padding: 3rem 1rem;
+    padding: var(--nexus-space-12) 1rem;
   }
 
   /* Birds - Mobile optimizations */
@@ -1155,7 +1078,7 @@
   position: relative;
   overflow: hidden;
   background: transparent; /* Pas de fond - transparent */
-  border: 3px solid rgba(0, 0, 0, 0.3); /* Bordure noire comme header */
+  border: 3px solid var(--nexus-overlay-light); /* Bordure noire comme header */
   transition: all 0.3s ease;
   cursor: pointer;
   display: flex;
@@ -1212,8 +1135,8 @@
   top: 1rem;
   right: 1rem;
   background: transparent; /* Fond transparent */
-  color: #0d0d0d; /* Texte noir */
-  border: 2px solid rgba(0, 0, 0, 0.3); /* Bordure noire */
+  color: var(--nexus-bg); /* Texte noir */
+  border: 2px solid var(--nexus-overlay-light); /* Bordure noire */
   padding: 0.375rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 700;
@@ -1230,7 +1153,7 @@
 
 /* Product Content */
 .nexus-product-content {
-  padding: 1.5rem;
+  padding: var(--nexus-space-6);
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -1244,7 +1167,7 @@
   font-size: 1.25rem;
   font-weight: 900;
   letter-spacing: -0.025em;
-  color: #0d0d0d; /* Noir sur fond rose */
+  color: var(--nexus-bg); /* Noir sur fond rose */
   margin-bottom: 0.5rem;
   line-height: 1.2;
   overflow: hidden;
@@ -1265,7 +1188,7 @@
 .nexus-product-rating {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--nexus-space-2);
   margin-bottom: 1rem;
 }
 
@@ -1277,14 +1200,14 @@
 .nexus-product-star {
   width: 1rem;
   height: 1rem;
-  color: #0d0d0d; /* Étoiles noires */
-  fill: #0d0d0d;
+  color: var(--nexus-bg); /* Étoiles noires */
+  fill: var(--nexus-bg);
 }
 
 .nexus-product-star-empty {
   width: 1rem;
   height: 1rem;
-  color: rgba(0, 0, 0, 0.3); /* Étoiles vides noires transparentes */
+  color: var(--nexus-overlay-light); /* Étoiles vides noires transparentes */
   fill: none;
 }
 
@@ -1310,7 +1233,7 @@
 .nexus-product-price {
   font-size: 1.5rem;
   font-weight: 900;
-  color: #0d0d0d; /* Prix en noir */
+  color: var(--nexus-bg); /* Prix en noir */
   line-height: 1;
 }
 
@@ -1323,7 +1246,7 @@
 
 .nexus-product-view-btn {
   background: transparent; /* Pas de fond */
-  color: #0d0d0d; /* Texte noir */
+  color: var(--nexus-bg); /* Texte noir */
   padding: 0; /* Pas de padding */
   font-size: 0.875rem;
   font-weight: 700;
@@ -1341,8 +1264,8 @@
 
 /* Stats Banner */
 .nexus-stats-banner {
-  padding: 6rem 0;
-  background: hsl(16, 100%, 67%);
+  padding: var(--nexus-space-24) 0;
+  background: var(--nexus-primary);
 }
 
 .nexus-stats-container {
@@ -1354,7 +1277,7 @@
 .nexus-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 3rem;
+  gap: var(--nexus-space-12);
   text-align: center;
 }
 
@@ -1389,7 +1312,7 @@
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 1rem;
+  gap: var(--nexus-space-4);
   margin: 0;
   padding: 0;
 }

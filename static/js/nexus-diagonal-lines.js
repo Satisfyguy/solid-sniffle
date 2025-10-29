@@ -121,9 +121,31 @@
   }
 
   // Initialize when DOM is ready
+  let diagonalLinesInstance = null;
+
   function init() {
-    new DiagonalLines();
+    // Cleanup previous instance if exists (HTMX navigation)
+    if (diagonalLinesInstance) {
+      diagonalLinesInstance.destroy();
+    }
+    diagonalLinesInstance = new DiagonalLines();
   }
+
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    if (diagonalLinesInstance) {
+      diagonalLinesInstance.destroy();
+      diagonalLinesInstance = null;
+    }
+  });
+
+  // Cleanup on HTMX navigation
+  document.body.addEventListener('htmx:beforeSwap', () => {
+    if (diagonalLinesInstance) {
+      diagonalLinesInstance.destroy();
+      diagonalLinesInstance = null;
+    }
+  });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

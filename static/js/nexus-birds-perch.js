@@ -295,12 +295,35 @@ class BirdsPerchingSystem {
 }
 
 // Initialize when DOM is ready
+let perchingSystemInstance = null;
+
+function initPerchingSystem() {
+  // Cleanup previous instance if exists (HTMX navigation)
+  if (perchingSystemInstance) {
+    perchingSystemInstance.destroy();
+  }
+  perchingSystemInstance = new BirdsPerchingSystem();
+  perchingSystemInstance.init();
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+  if (perchingSystemInstance) {
+    perchingSystemInstance.destroy();
+    perchingSystemInstance = null;
+  }
+});
+
+// Cleanup on HTMX navigation
+document.body.addEventListener('htmx:beforeSwap', () => {
+  if (perchingSystemInstance) {
+    perchingSystemInstance.destroy();
+    perchingSystemInstance = null;
+  }
+});
+
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    const perchingSystem = new BirdsPerchingSystem();
-    perchingSystem.init();
-  });
+  document.addEventListener('DOMContentLoaded', initPerchingSystem);
 } else {
-  const perchingSystem = new BirdsPerchingSystem();
-  perchingSystem.init();
+  initPerchingSystem();
 }

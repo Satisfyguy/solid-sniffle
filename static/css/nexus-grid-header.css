@@ -10,7 +10,7 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  background: hsl(16, 100%, 67%); /* NEXUS CORAIL #FF8559 */
+  background: var(--nexus-primary); /* NEXUS CORAIL #FF8559 */
   display: grid;
   grid-template-columns: 80px 1fr 1fr 80px 1fr;
   height: 80px;
@@ -39,7 +39,7 @@
   font-family: 'PP Monument Extended', sans-serif;
   font-size: 2.5rem;
   font-weight: 900;
-  color: #0d0d0d;
+  color: var(--nexus-bg);
   text-decoration: none;
   letter-spacing: 0.1em;
   transition: transform 0.2s ease;
@@ -61,7 +61,7 @@
   font-family: 'PP Fraktion Mono', monospace;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #0d0d0d;
+  color: var(--nexus-bg);
   opacity: 0.7;
 }
 
@@ -96,7 +96,7 @@
   font-family: 'PP Fraktion Sans', sans-serif;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #0d0d0d;
+  color: var(--nexus-bg);
   text-decoration: none;
   letter-spacing: 0.05em;
   transition: opacity 0.2s ease;
@@ -107,7 +107,7 @@
 }
 
 .nexus-grid-nav .sep {
-  color: #0d0d0d;
+  color: var(--nexus-bg);
   opacity: 0.3;
   font-size: 0.75rem;
 }
@@ -153,7 +153,7 @@
   bottom: 0;
   width: 100%;
   height: 100%;
-  background: #0d0d0d;
+  background: var(--nexus-bg);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.3s ease;
@@ -172,7 +172,7 @@
   height: 100%;
   background: none;
   border: none;
-  color: #0d0d0d;
+  color: var(--nexus-bg);
   cursor: pointer;
   font-family: 'PP Monument Extended', sans-serif;
   font-size: 1.5rem;
@@ -215,7 +215,7 @@
   left: auto;
   right: auto;
   transform: translateX(-50%);
-  background: hsl(16, 100%, 67%); /* NEXUS CORAIL #FF8559 */
+  background: var(--nexus-primary); /* NEXUS CORAIL #FF8559 */
   border: 3px solid rgba(0, 0, 0, 0.3);
   border-top: none;
   min-width: 200px;
@@ -238,7 +238,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 1rem 1.25rem;
-  color: #0d0d0d;
+  color: var(--nexus-bg);
   text-decoration: none;
   font-family: 'PP Fraktion Sans', sans-serif;
   font-size: 0.875rem;
@@ -256,7 +256,7 @@
 
 .nexus-dropdown-item svg {
   flex-shrink: 0;
-  stroke: #0d0d0d;
+  stroke: var(--nexus-bg);
 }
 
 .nexus-dropdown-divider {
@@ -268,7 +268,7 @@
 .nexus-dropdown-username {
   display: block;
   padding: 0.75rem 1.25rem;
-  color: #0d0d0d;
+  color: var(--nexus-bg);
   font-family: 'PP Fraktion Mono', monospace;
   font-size: 0.75rem;
   font-weight: 700;
@@ -285,7 +285,7 @@ body.light-mode .nexus-user-dropdown {
 }
 
 body.light-mode .nexus-dropdown-item {
-  color: #0d0d0d;
+  color: var(--nexus-bg);
   border-bottom-color: rgba(0, 0, 0, 0.15);
 }
 
@@ -294,7 +294,7 @@ body.light-mode .nexus-dropdown-item:hover {
 }
 
 body.light-mode .nexus-dropdown-username {
-  color: #0d0d0d;
+  color: var(--nexus-bg);
 }
 
 /* ========== RECTANGLE 5: TOGGLE DARK/LIGHT ========== */
@@ -318,8 +318,8 @@ body.light-mode .nexus-dropdown-username {
   width: 40px;
   height: 40px;
   /* Divisé verticalement: gauche transparent, droite noir */
-  background: linear-gradient(90deg, transparent 50%, #0d0d0d 50%);
-  border: 2px solid #0d0d0d; /* Bordure pour marquer le cercle */
+  background: linear-gradient(90deg, transparent 50%, var(--nexus-bg) 50%);
+  border: 2px solid var(--nexus-bg); /* Bordure pour marquer le cercle */
   border-radius: 50%;
   transition: background 0.3s ease, transform 0.2s ease, border 0.3s ease;
 }
@@ -331,7 +331,7 @@ body.light-mode .nexus-dropdown-username {
 /* Light mode: point devient inversé (gauche blanc, droite transparent) */
 .nexus-toggle-dot.light .nexus-dot {
   background: linear-gradient(90deg, white 50%, transparent 50%);
-  border: 2px solid #0d0d0d;
+  border: 2px solid var(--nexus-bg);
   box-shadow: none;
 }
 
@@ -341,7 +341,7 @@ body.light-mode .nexus-typewriter-content,
 body.light-mode .nexus-grid-nav a,
 body.light-mode .nexus-grid-nav .sep,
 body.light-mode .nexus-auth-icon {
-  color: #0d0d0d;
+  color: var(--nexus-bg);
 }
 
 body.light-mode .nexus-grid-header {

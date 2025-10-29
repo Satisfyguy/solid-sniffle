@@ -78,7 +78,7 @@
 
 /* Phase 4: Zoom Strike */
 .cinematic-zoom-strike {
-  font-family: 'Courier New', monospace;
+  font-family: var(--nexus-font-mono);
   font-size: 6rem;
   font-weight: 900;
   letter-spacing: -0.025em;

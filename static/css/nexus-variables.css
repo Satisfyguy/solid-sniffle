@@ -242,6 +242,30 @@
   --nexus-status-cancelled: hsl(0, 0%, 50%);     /* Gray */
   --nexus-status-disputed: hsl(0, 100%, 50%);    /* Red */
   --nexus-status-refunded: hsl(180, 100%, 50%);  /* Cyan */
+
+  /* ===== ADDITIONAL COLORS (added from audit) ===== */
+  --nexus-cyan: hsl(180, 100%, 50%);             /* #00ffff - Cyan accent */
+  --nexus-white: #ffffff;                         /* Pure white */
+
+  /* Overlay colors (for backgrounds, borders) */
+  --nexus-overlay-light: rgba(0, 0, 0, 0.3);
+  --nexus-overlay-dark: rgba(0, 0, 0, 0.6);
+  --nexus-overlay-darker: rgba(0, 0, 0, 0.8);
+
+  /* Text overlays */
+  --nexus-text-overlay-light: rgba(255, 255, 255, 0.1);
+  --nexus-text-overlay-medium: rgba(255, 255, 255, 0.3);
+  --nexus-text-overlay-dark: rgba(0, 0, 0, 0.3);
+
+  /* RGB values for rgba() usage */
+  --nexus-bg-rgb: 13, 13, 13;         /* #0d0d0d */
+  --nexus-fg-rgb: 250, 250, 250;      /* #fafafa */
+  --nexus-primary-rgb: 255, 133, 89;  /* #FF8559 */
+
+  /* ===== BORDER WIDTHS ===== */
+  --nexus-border-width-sm: 1px;
+  --nexus-border-width-md: 2px;
+  --nexus-border-width-lg: 3px;
 }
 
 /* ===== DARK MODE OVERRIDES (if needed) ===== */
