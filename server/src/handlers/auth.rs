@@ -429,7 +429,7 @@ pub struct UpdateWalletRequest {
     pub csrf_token: String,
 }
 
-#[post("/settings/update-wallet")]
+#[post("/update-wallet")]
 pub async fn update_wallet_address(
     pool: web::Data<DbPool>,
     req: web::Form<UpdateWalletRequest>,

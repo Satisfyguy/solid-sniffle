@@ -33,6 +33,12 @@
     }
 
     init() {
+      // Check for prefers-reduced-motion
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        console.log('⏸️ Magnetic grid animation disabled (prefers-reduced-motion)');
+        return;
+      }
+
       // Calculer le nombre de lignes nécessaires
       const gridHeight = this.grid.offsetHeight;
       const lineCount = Math.ceil(gridHeight / this.config.lineSpacing) + 2;

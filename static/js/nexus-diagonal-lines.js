@@ -33,6 +33,12 @@
     }
 
     init() {
+      // Check for prefers-reduced-motion
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        console.log('⏸️ Diagonal lines animation disabled (prefers-reduced-motion)');
+        return;
+      }
+
       // Créer un canvas pour dessiner les lignes
       this.canvas = document.createElement('canvas');
       this.ctx = this.canvas.getContext('2d');

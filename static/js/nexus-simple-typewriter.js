@@ -214,6 +214,12 @@
 
   // Initialize when DOM is ready
   function initTypewriter() {
+    // Check for prefers-reduced-motion
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      console.log('⏸️ Typewriter animation disabled (prefers-reduced-motion)');
+      return;
+    }
+
     const element = document.getElementById('nexus-simple-typewriter-text');
     console.log('🔍 Typewriter init - Element found:', element);
     console.log('📝 Phrases count:', phrases.length);

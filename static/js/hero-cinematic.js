@@ -55,12 +55,18 @@ class HeroCinematicController {
     this.elements.letters = Array.from(document.querySelectorAll('.nexus-animated-letter'));
     
     // Vérifier que tous les éléments sont présents
-    if (!this.elements.heroSection || !this.elements.nexusLetters || 
+    if (!this.elements.heroSection || !this.elements.nexusLetters ||
         this.elements.letters.length === 0) {
       console.error('[HeroCinematic] Éléments DOM manquants');
       return;
     }
-    
+
+    // Check for prefers-reduced-motion
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      console.log('[HeroCinematic] Animation disabled (prefers-reduced-motion)');
+      return;
+    }
+
     // Ajouter classe pour désactiver hover pendant cinématique
     this.elements.heroSection.classList.add('cinematic-active');
     
