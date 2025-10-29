@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <!-- Security Headers -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <meta name="referrer" content="no-referrer">
+
+  <!-- Page Title -->
+  <title>{% block title %}NEXUS Geometric Marketplace{% endblock %}</title>
+
+  <!-- Meta Description -->
+  <meta name="description" content="{% block description %}Secure privacy-focused marketplace running as Tor hidden service with Monero escrow{% endblock %}">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+
+  <!-- Geometric CSS (Order matters!) -->
+  <link rel="stylesheet" href="/static/css/geometric-variables.css">
+  <link rel="stylesheet" href="/static/css/geometric-base.css">
+  <link rel="stylesheet" href="/static/css/geometric-animations.css">
+  <link rel="stylesheet" href="/static/css/geometric-components.css">
+
+  <!-- Page-specific CSS -->
+  {% block extra_css %}{% endblock %}
+
+  <!-- HTMX (Local) - Preserved from Phase 6.2 -->
+  <script src="/static/js/htmx.min.js" defer></script>
+  <script src="/static/js/json-enc.js" defer></script>
+
+  <!-- Preload Critical Resources -->
+  <link rel="preload" href="/static/css/geometric-variables.css" as="style">
+  <link rel="preload" href="/static/js/geometric-utils.js" as="script">
+
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="geometric-body">
+
+  <!-- Skip to Content Link (Accessibility) -->
+  <a href="#main-content" class="geo-sr-only">Skip to main content</a>
+
+  <!-- Main Content Area -->
+  <main id="main-content" role="main">
+    {% block content %}
+    <!-- Page content goes here -->
+    {% endblock %}
+  </main>
+
+  <!-- Global Loading Indicator (Optional) -->
+  <div id="geoLoadingIndicator" class="geo-loading-indicator" style="display: none;">
+    <div class="geo-spinner"></div>
+  </div>
+
+  <!-- HTMX Global Events Handler -->
+  <script>
+    // Global HTMX event listeners
+    document.body.addEventListener('htmx:beforeRequest', function(evt) {
+      if (window.NEXUS_DEBUG) {
+        console.log('[HTMX] Before request:', evt.detail);
+      }
+    });
+
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+      if (window.NEXUS_DEBUG) {
+        console.log('[HTMX] After request:', evt.detail);
+      }
+    });
+
+    document.body.addEventListener('htmx:responseError', function(evt) {
+      console.error('[HTMX] Response error:', evt.detail);
+      // Show user-friendly error message
+      if (typeof showToast === 'function') {
+        showToast('Une erreur est survenue. Veuillez réessayer.', 'error');
+      }
+    });
+  </script>
+
+  <!-- Geometric JavaScript (Order matters!) -->
+  <script src="/static/js/geometric-utils.js" defer></script>
+  <script src="/static/js/geometric-nav.js" defer></script>
+  <script src="/static/js/geometric-onboarding.js" defer></script>
+  <script src="/static/js/geometric-toast.js" defer></script>
+  <script src="/static/js/geometric-user-menu.js" defer></script>
+
+  <!-- Page-specific JavaScript -->
+  {% block extra_js %}{% endblock %}
+
+  <!-- NEXUS_DEBUG Flag (From Phase 6.2) -->
+  <script>
+    // Global debug flag
+    window.NEXUS_DEBUG = {{ nexus_debug|default(value=false)|json_encode }};
+
+    if (window.NEXUS_DEBUG) {
+      console.log('%c[NEXUS DEBUG] Geometric UI Loaded', 'color: #E91E8C; font-weight: bold; font-size: 14px;');
+      console.log('[NEXUS DEBUG] User logged in:', {{ logged_in|default(value=false)|json_encode }});
+      {% if logged_in and username %}
+      console.log('[NEXUS DEBUG] Username:', '{{ username }}');
+      {% endif %}
+      console.log('[NEXUS DEBUG] Page:', '{% block page_id %}unknown{% endblock %}');
+    }
+  </script>
+
+  <!-- Session Timeout Warning (If logged in) -->
+  {% if logged_in %}
+  <script>
+    // Warn user 5 minutes before session expires (30 min session)
+    const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+    const WARNING_TIME = SESSION_TIMEOUT - (5 * 60 * 1000); // 25 minutes
+
+    setTimeout(() => {
+      if (typeof showToast === 'function') {
+        showToast('Votre session expire dans 5 minutes. Activité requise pour rester connecté.', 'warning');
+      }
+    }, WARNING_TIME);
+  </script>
+  {% endif %}
+
+  <!-- Analytics / Telemetry (DISABLED for Tor privacy) -->
+  <!-- NO ANALYTICS - Privacy-first approach -->
+
+  <!-- Service Worker Registration (Optional - Phase 2) -->
+  {% block service_worker %}{% endblock %}
+
+</body>
+</html>

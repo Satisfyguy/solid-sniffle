@@ -803,9 +803,11 @@ pub async fn init_escrow(
 ///
 /// Development endpoint to simulate payment without real XMR.
 /// Available in all builds for testing purposes.
+/// Also initializes mock multisig wallets for testing the release flow.
 #[post("/orders/{id}/dev-simulate-payment")]
 pub async fn dev_simulate_payment(
     pool: web::Data<DbPool>,
+    escrow_orchestrator: web::Data<EscrowOrchestrator>,
     session: Session,
     http_req: HttpRequest,
     id: web::Path<String>,
@@ -890,10 +892,31 @@ pub async fn dev_simulate_payment(
                 }
             };
             
-            match Order::update_status(&mut conn2, order_id_str, OrderStatus::Funded) {
+            match Order::update_status(&mut conn2, order_id_str.clone(), OrderStatus::Funded) {
                 Ok(_) => {
                     tracing::info!("DEV: Simulated payment for order {} (escrow {})", order.id, escrow_id);
-                    
+
+                    // DEV: Initialize mock multisig wallets for testing
+                    let escrow_uuid = match Uuid::parse_str(&escrow_id) {
+                        Ok(uuid) => uuid,
+                        Err(_) => {
+                            tracing::error!("Invalid escrow UUID: {}", escrow_id);
+                            return HttpResponse::InternalServerError().json(serde_json::json!({
+                                "error": "Internal error"
+                            }));
+                        }
+                    };
+
+                    match escrow_orchestrator.dev_initialize_mock_wallets(escrow_uuid).await {
+                        Ok(_) => {
+                            tracing::info!("DEV: Mock multisig wallets initialized for escrow {}", escrow_id);
+                        }
+                        Err(e) => {
+                            tracing::warn!("DEV: Failed to initialize mock wallets: {}. This may cause issues with release.", e);
+                            // Don't fail the request, just log warning
+                        }
+                    }
+
                     // Send WebSocket notification to vendor
                     let vendor_uuid = match Uuid::parse_str(&order.vendor_id) {
                         Ok(uuid) => uuid,

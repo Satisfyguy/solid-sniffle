@@ -1,0 +1,501 @@
+/**
+ * NEXUS Geometric UI - Base Styles
+ *
+ * Core styles for geometric canvas, shapes, labels, and foundational elements.
+ * This file establishes the basic visual structure for the geometric UI.
+ *
+ * Reference: MVP_GEOMETRIC_UI_PLAN.md
+ */
+
+/* ========================================
+   RESET & BASE
+   ======================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body.geometric-body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  background-color: var(--geo-beige);
+  font-family: var(--geo-font-sans);
+  color: var(--geo-gray-dark);
+  line-height: var(--geo-leading-normal);
+}
+
+/* ========================================
+   GEOMETRIC CANVAS
+   ======================================== */
+
+.geometric-canvas {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--geo-beige);
+}
+
+.geo-svg-main {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ========================================
+   GEOMETRIC SHAPES
+   ======================================== */
+
+.geo-shape {
+  transition: all var(--geo-hover-duration) var(--geo-ease-out);
+  cursor: pointer;
+  transform-origin: center;
+}
+
+.geo-shape:focus {
+  outline: 3px solid var(--geo-pink);
+  outline-offset: 4px;
+}
+
+/* Hover effect on shapes */
+.geo-nav-item:hover .geo-shape {
+  transform: scale(var(--geo-hover-scale));
+}
+
+/* Shape color variants - darken on hover */
+.geo-nav-item[data-color="pink"]:hover .geo-shape {
+  fill: var(--geo-pink-dark) !important;
+  stroke: var(--geo-pink-dark) !important;
+}
+
+.geo-nav-item[data-color="yellow"]:hover .geo-shape {
+  fill: var(--geo-yellow-dark) !important;
+  stroke: var(--geo-yellow-dark) !important;
+}
+
+.geo-nav-item[data-color="turquoise"]:hover .geo-shape {
+  fill: var(--geo-turquoise-dark) !important;
+  stroke: var(--geo-turquoise-dark) !important;
+}
+
+.geo-nav-item[data-color="blue"]:hover .geo-shape {
+  fill: var(--geo-blue-dark) !important;
+  stroke: var(--geo-blue-dark) !important;
+}
+
+/* Active state */
+.geo-nav-item:active .geo-shape {
+  transform: scale(var(--geo-active-scale));
+}
+
+/* ========================================
+   NAVIGATION ITEMS
+   ======================================== */
+
+.geo-nav-item {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.geo-nav-item:focus-visible {
+  outline: none;
+}
+
+.geo-nav-item:focus-visible .geo-shape {
+  filter: drop-shadow(0 0 8px var(--geo-pink));
+}
+
+/* ========================================
+   LABELS
+   ======================================== */
+
+.geo-label {
+  opacity: 0;
+  transition: opacity var(--geo-fade-duration) var(--geo-ease-out),
+              transform var(--geo-fade-duration) var(--geo-ease-out);
+  transform: translateY(var(--geo-nav-label-offset));
+  font-family: var(--geo-font-mono);
+  font-weight: var(--geo-weight-bold);
+  font-size: var(--geo-nav-label-font-size);
+  letter-spacing: var(--geo-nav-label-tracking);
+  pointer-events: none;
+  fill: var(--geo-gray-dark);
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.geo-nav-item:hover .geo-label {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Label background for better readability */
+.geo-label-bg {
+  fill: var(--geo-white);
+  opacity: 0.9;
+  rx: 4px;
+}
+
+/* ========================================
+   DECORATIVE SHAPES (Parallax Background)
+   ======================================== */
+
+.geo-decor {
+  position: absolute;
+  pointer-events: none;
+  opacity: var(--geo-opacity-60);
+  z-index: var(--z-decor);
+  transition: transform 0.1s var(--geo-ease-out);
+  will-change: transform;
+}
+
+/* Decorative shape animations */
+.geo-decor.float-1 {
+  animation: geo-float 6s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.geo-decor.float-2 {
+  animation: geo-float 8s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.geo-decor.float-3 {
+  animation: geo-float 10s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+.geo-decor.pulse-1 {
+  animation: geo-pulse 4s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.geo-decor.pulse-2 {
+  animation: geo-pulse 6s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+/* ========================================
+   CLICKABLE ELEMENTS
+   ======================================== */
+
+.geo-clickable {
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.geo-clickable:active {
+  transform: scale(var(--geo-active-scale));
+}
+
+/* ========================================
+   CONTAINERS
+   ======================================== */
+
+.geo-container {
+  max-width: var(--geo-max-width-2xl);
+  margin: 0 auto;
+  padding: 0 var(--geo-space-lg);
+}
+
+.geo-container-sm {
+  max-width: var(--geo-max-width-sm);
+  margin: 0 auto;
+  padding: 0 var(--geo-space-lg);
+}
+
+.geo-container-md {
+  max-width: var(--geo-max-width-md);
+  margin: 0 auto;
+  padding: 0 var(--geo-space-lg);
+}
+
+.geo-container-lg {
+  max-width: var(--geo-max-width-lg);
+  margin: 0 auto;
+  padding: 0 var(--geo-space-lg);
+}
+
+.geo-container-xl {
+  max-width: var(--geo-max-width-xl);
+  margin: 0 auto;
+  padding: 0 var(--geo-space-lg);
+}
+
+/* ========================================
+   SECTIONS
+   ======================================== */
+
+.geo-section {
+  padding: var(--geo-space-3xl) 0;
+}
+
+.geo-section-sm {
+  padding: var(--geo-space-2xl) 0;
+}
+
+.geo-section-lg {
+  padding: var(--geo-space-3xl) 0;
+}
+
+/* ========================================
+   TYPOGRAPHY
+   ======================================== */
+
+.geo-heading-1 {
+  font-size: var(--geo-text-5xl);
+  font-weight: var(--geo-weight-bold);
+  line-height: var(--geo-leading-tight);
+  margin-bottom: var(--geo-space-lg);
+}
+
+.geo-heading-2 {
+  font-size: var(--geo-text-4xl);
+  font-weight: var(--geo-weight-bold);
+  line-height: var(--geo-leading-tight);
+  margin-bottom: var(--geo-space-md);
+}
+
+.geo-heading-3 {
+  font-size: var(--geo-text-3xl);
+  font-weight: var(--geo-weight-semibold);
+  line-height: var(--geo-leading-tight);
+  margin-bottom: var(--geo-space-md);
+}
+
+.geo-heading-4 {
+  font-size: var(--geo-text-2xl);
+  font-weight: var(--geo-weight-semibold);
+  line-height: var(--geo-leading-normal);
+  margin-bottom: var(--geo-space-sm);
+}
+
+.geo-text-gradient {
+  background: var(--geo-gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.geo-text-mono {
+  font-family: var(--geo-font-mono);
+  letter-spacing: var(--geo-tracking-wide);
+}
+
+/* ========================================
+   UTILITIES
+   ======================================== */
+
+/* Visibility */
+.geo-hidden {
+  display: none !important;
+}
+
+.geo-visible {
+  display: block !important;
+}
+
+.geo-invisible {
+  visibility: hidden;
+}
+
+/* Screen Reader Only */
+.geo-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Flexbox Utilities */
+.geo-flex {
+  display: flex;
+}
+
+.geo-flex-col {
+  flex-direction: column;
+}
+
+.geo-flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.geo-flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Spacing Utilities */
+.geo-gap-sm {
+  gap: var(--geo-space-sm);
+}
+
+.geo-gap-md {
+  gap: var(--geo-space-md);
+}
+
+.geo-gap-lg {
+  gap: var(--geo-space-lg);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+/* Tablet (768px) */
+@media (max-width: 768px) {
+  .geometric-canvas {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .geo-svg-main {
+    position: relative;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .geo-label {
+    font-size: var(--geo-text-xs);
+    letter-spacing: var(--geo-tracking-wide);
+  }
+
+  .geo-heading-1 {
+    font-size: var(--geo-text-4xl);
+  }
+
+  .geo-heading-2 {
+    font-size: var(--geo-text-3xl);
+  }
+
+  .geo-heading-3 {
+    font-size: var(--geo-text-2xl);
+  }
+
+  .geo-container {
+    padding: 0 var(--geo-space-md);
+  }
+}
+
+/* Mobile (375px) */
+@media (max-width: 375px) {
+  .geo-label {
+    /* Always visible on mobile - no hover needed */
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .geo-heading-1 {
+    font-size: var(--geo-text-3xl);
+  }
+
+  .geo-heading-2 {
+    font-size: var(--geo-text-2xl);
+  }
+
+  .geo-heading-3 {
+    font-size: var(--geo-text-xl);
+  }
+
+  .geo-container {
+    padding: 0 var(--geo-space-sm);
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+/* Focus visible outline for keyboard navigation */
+*:focus-visible {
+  outline: 3px solid var(--geo-pink);
+  outline-offset: 2px;
+}
+
+/* Disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .geo-shape {
+    transition: none !important;
+  }
+
+  .geo-label {
+    transition: none !important;
+  }
+
+  .geo-decor {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .geo-shape {
+    stroke: var(--geo-black);
+    stroke-width: 2px;
+  }
+
+  .geo-label {
+    fill: var(--geo-black);
+    font-weight: var(--geo-weight-extrabold);
+  }
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
+@media print {
+  .geometric-canvas {
+    height: auto;
+  }
+
+  .geo-decor {
+    display: none;
+  }
+
+  .geo-shape {
+    transition: none;
+  }
+
+  .geo-label {
+    opacity: 1;
+    transform: none;
+  }
+}

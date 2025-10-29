@@ -1,0 +1,477 @@
+/**
+ * NEXUS BRUTALIST - Listings Page
+ *
+ * Product listings grid with brutalist aesthetic
+ * Rigid grid layout, grunge frames, monospace pricing
+ */
+
+/* ========================================
+   PAGE LAYOUT
+   ======================================== */
+
+.brutalist-listings-page {
+  padding-top: calc(var(--brutalist-header-height) + var(--brutalist-space-8));
+  padding-bottom: var(--brutalist-space-16);
+  min-height: 100vh;
+  background: var(--brutalist-bg);
+}
+
+/* ========================================
+   PAGE HEADER
+   ======================================== */
+
+.brutalist-listings-header {
+  padding: var(--brutalist-space-12) var(--brutalist-space-6);
+  text-align: center;
+  border-bottom: var(--brutalist-border-width-normal) solid var(--brutalist-border);
+  margin-bottom: var(--brutalist-space-8);
+}
+
+.brutalist-listings-title {
+  font-family: var(--brutalist-font-display);
+  font-size: var(--brutalist-text-5xl);
+  font-weight: var(--brutalist-weight-black);
+  color: var(--brutalist-fg);
+  margin: 0;
+  margin-bottom: var(--brutalist-space-4);
+  text-transform: uppercase;
+  letter-spacing: var(--brutalist-tracking-tight);
+}
+
+.brutalist-listings-subtitle {
+  font-family: var(--brutalist-font-mono);
+  font-size: var(--brutalist-text-sm);
+  color: var(--brutalist-fg);
+  opacity: 0.6;
+  text-transform: uppercase;
+  letter-spacing: var(--brutalist-tracking-wider);
+}
+
+/* ========================================
+   FILTERS/SEARCH BAR
+   ======================================== */
+
+.brutalist-filters-container {
+  max-width: 1400px;
+  margin: 0 auto var(--brutalist-space-8);
+  padding: 0 var(--brutalist-space-6);
+}
+
+.brutalist-search-bar {
+  display: flex;
+  gap: var(--brutalist-space-4);
+  margin-bottom: var(--brutalist-space-6);
+}
+
+.brutalist-search-input-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.brutalist-search-input {
+  width: 100%;
+  padding: var(--brutalist-space-4);
+  font-family: var(--brutalist-font-mono);
+  font-size: var(--brutalist-text-base);
+  border: var(--brutalist-border-width-normal) solid var(--brutalist-border);
+  background: var(--brutalist-bg);
+  color: var(--brutalist-fg);
+}
+
+.brutalist-search-input:focus {
+  outline: none;
+  border-color: var(--brutalist-red);
+  box-shadow: 0 0 0 var(--brutalist-focus-ring-width) var(--brutalist-focus-ring-color);
+}
+
+.brutalist-filter-buttons {
+  display: flex;
+  gap: var(--brutalist-space-2);
+  flex-wrap: wrap;
+}
+
+.brutalist-filter-btn {
+  padding: var(--brutalist-space-2) var(--brutalist-space-4);
+  font-family: var(--brutalist-font-mono);
+  font-size: var(--brutalist-text-sm);
+  font-weight: var(--brutalist-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--brutalist-tracking-wide);
+  background: transparent;
+  color: var(--brutalist-fg);
+  border: var(--brutalist-border-width-thin) solid var(--brutalist-border);
+  cursor: pointer;
+  transition: all var(--brutalist-duration-fast) var(--brutalist-ease-linear);
+}
+
+.brutalist-filter-btn:hover,
+.brutalist-filter-btn.active {
+  background: var(--brutalist-hover-bg);
+  color: var(--brutalist-hover-fg);
+  border-color: var(--brutalist-fg);
+}
+
+/* ========================================
+   LISTINGS GRID
+   ======================================== */
+
+.brutalist-listings-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--brutalist-space-6);
+}
+
+.brutalist-listings-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--brutalist-grid-cols-desktop), 1fr);
+  gap: var(--brutalist-grid-gap);
+}
+
+/* ========================================
+   PRODUCT CARD
+   ======================================== */
+
+.brutalist-product-card {
+  background: var(--brutalist-bg-secondary);
+  border: var(--brutalist-border-width-normal) solid var(--brutalist-border);
+  transition: all var(--brutalist-duration-normal) var(--brutalist-ease-out);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.brutalist-product-card:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: var(--brutalist-shadow-lg);
+}
+
+/* Product Image */
+.brutalist-product-image-wrapper {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-bottom: var(--brutalist-border-width-normal) solid var(--brutalist-border);
+  position: relative;
+  background: var(--brutalist-gray-5);
+}
+
+.brutalist-product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--brutalist-duration-slow) var(--brutalist-ease-out);
+}
+
+.brutalist-product-card:hover .brutalist-product-image {
+  transform: scale(1.05);
+}
+
+/* Vendor badge overlay */
+.brutalist-product-vendor-badge {
+  position: absolute;
+  top: var(--brutalist-space-3);
+  right: var(--brutalist-space-3);
+  z-index: 2;
+}
+
+/* Product Content */
+.brutalist-product-content {
+  padding: var(--brutalist-space-6);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.brutalist-product-title {
+  font-family: var(--brutalist-font-display);
+  font-size: var(--brutalist-text-xl);
+  font-weight: var(--brutalist-weight-bold);
+  color: var(--brutalist-fg);
+  margin: 0;
+  margin-bottom: var(--brutalist-space-3);
+  text-transform: uppercase;
+  letter-spacing: var(--brutalist-tracking-tight);
+  line-height: var(--brutalist-leading-tight);
+}
+
+.brutalist-product-description {
+  font-family: var(--brutalist-font-sans);
+  font-size: var(--brutalist-text-sm);
+  color: var(--brutalist-fg);
+  opacity: 0.7;
+  line-height: var(--brutalist-leading-normal);
+  margin-bottom: var(--brutalist-space-4);
+  flex: 1;
+}
+
+/* Product Price */
+.brutalist-product-price-section {
+  padding-top: var(--brutalist-space-4);
+  border-top: var(--brutalist-border-width-thin) solid var(--brutalist-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--brutalist-space-4);
+}
+
+.brutalist-product-price {
+  font-family: var(--brutalist-font-mono);
+  font-size: var(--brutalist-text-2xl);
+  font-weight: var(--brutalist-weight-black);
+  color: var(--brutalist-red);
+  letter-spacing: var(--brutalist-tracking-tight);
+}
+
+.brutalist-product-price-currency {
+  font-size: 0.6em;
+  opacity: 0.7;
+  margin-left: var(--brutalist-space-1);
+}
+
+/* Product Actions */
+.brutalist-product-actions {
+  display: flex;
+  gap: var(--brutalist-space-3);
+}
+
+.brutalist-product-view-btn {
+  flex: 1;
+  padding: var(--brutalist-space-3) var(--brutalist-space-4);
+  font-family: var(--brutalist-font-mono);
+  font-size: var(--brutalist-text-sm);
+  font-weight: var(--brutalist-weight-bold);
+  text-transform: uppercase;
+  text-align: center;
+  text-decoration: none;
+  letter-spacing: var(--brutalist-tracking-wide);
+  color: var(--brutalist-fg);
+  background: transparent;
+  border: var(--brutalist-border-width-normal) solid var(--brutalist-border);
+  cursor: pointer;
+  transition: all var(--brutalist-duration-fast) var(--brutalist-ease-linear);
+}
+
+.brutalist-product-view-btn:hover {
+  background: var(--brutalist-hover-bg);
+  color: var(--brutalist-hover-fg);
+}
+
+/* ========================================
+   EMPTY STATE
+   ======================================== */
+
+.brutalist-empty-state {
+  text-align: center;
+  padding: var(--brutalist-space-16) var(--brutalist-space-6);
+  border: var(--brutalist-border-width-normal) solid var(--brutalist-border);
+}
+
+.brutalist-empty-title {
+  font-family: var(--brutalist-font-display);
+  font-size: var(--brutalist-text-3xl);
+  font-weight: var(--brutalist-weight-bold);
+  text-transform: uppercase;
+  margin-bottom: var(--brutalist-space-4);
+}
+
+.brutalist-empty-text {
+  font-family: var(--brutalist-font-mono);
+  font-size: var(--brutalist-text-sm);
+  color: var(--brutalist-fg);
+  opacity: 0.6;
+  margin-bottom: var(--brutalist-space-6);
+}
+
+/* ========================================
+   PAGINATION
+   ======================================== */
+
+.brutalist-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--brutalist-space-2);
+  margin-top: var(--brutalist-space-12);
+  padding-top: var(--brutalist-space-8);
+  border-top: var(--brutalist-border-width-normal) solid var(--brutalist-border);
+}
+
+.brutalist-pagination-btn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--brutalist-font-mono);
+  font-size: var(--brutalist-text-sm);
+  font-weight: var(--brutalist-weight-bold);
+  background: transparent;
+  color: var(--brutalist-fg);
+  border: var(--brutalist-border-width-normal) solid var(--brutalist-border);
+  cursor: pointer;
+  transition: all var(--brutalist-duration-fast) var(--brutalist-ease-linear);
+}
+
+.brutalist-pagination-btn:hover {
+  background: var(--brutalist-hover-bg);
+  color: var(--brutalist-hover-fg);
+}
+
+.brutalist-pagination-btn.active {
+  background: var(--brutalist-black-0);
+  color: var(--brutalist-white-0);
+  border-color: var(--brutalist-black-0);
+}
+
+.brutalist-pagination-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
+  .brutalist-listings-grid {
+    grid-template-columns: repeat(var(--brutalist-grid-cols-tablet), 1fr);
+  }
+
+  .brutalist-listings-title {
+    font-size: var(--brutalist-text-4xl);
+  }
+
+  .brutalist-product-title {
+    font-size: var(--brutalist-text-lg);
+  }
+
+  .brutalist-product-price {
+    font-size: var(--brutalist-text-xl);
+  }
+}
+
+/* Mobile (<768px) */
+@media (max-width: 768px) {
+  .brutalist-listings-page {
+    padding-top: calc(60px + var(--brutalist-space-6));
+  }
+
+  .brutalist-listings-header {
+    padding: var(--brutalist-space-8) var(--brutalist-space-4);
+  }
+
+  .brutalist-listings-title {
+    font-size: var(--brutalist-text-3xl);
+  }
+
+  .brutalist-listings-subtitle {
+    font-size: var(--brutalist-text-xs);
+  }
+
+  .brutalist-filters-container {
+    padding: 0 var(--brutalist-space-4);
+  }
+
+  .brutalist-search-bar {
+    flex-direction: column;
+  }
+
+  .brutalist-filter-buttons {
+    flex-wrap: wrap;
+  }
+
+  .brutalist-listings-container {
+    padding: 0 var(--brutalist-space-4);
+  }
+
+  .brutalist-listings-grid {
+    grid-template-columns: repeat(var(--brutalist-grid-cols-mobile), 1fr);
+    gap: var(--brutalist-space-4);
+  }
+
+  .brutalist-product-content {
+    padding: var(--brutalist-space-4);
+  }
+
+  .brutalist-product-title {
+    font-size: var(--brutalist-text-base);
+  }
+
+  .brutalist-product-price {
+    font-size: var(--brutalist-text-lg);
+  }
+
+  .brutalist-product-view-btn {
+    padding: var(--brutalist-space-2) var(--brutalist-space-3);
+    font-size: var(--brutalist-text-xs);
+  }
+
+  .brutalist-pagination-btn {
+    width: 40px;
+    height: 40px;
+    font-size: var(--brutalist-text-xs);
+  }
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
+@media print {
+  .brutalist-listings-page {
+    padding-top: 0;
+  }
+
+  .brutalist-filters-container,
+  .brutalist-pagination,
+  .brutalist-product-actions {
+    display: none;
+  }
+
+  .brutalist-listings-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .brutalist-product-card {
+    break-inside: avoid;
+    box-shadow: none;
+  }
+
+  .brutalist-product-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .brutalist-product-card,
+  .brutalist-product-image,
+  .brutalist-product-view-btn,
+  .brutalist-pagination-btn {
+    transition: none;
+  }
+
+  .brutalist-product-card:hover .brutalist-product-image {
+    transform: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .brutalist-product-card {
+    border-width: var(--brutalist-border-width-thick);
+  }
+
+  .brutalist-product-image-wrapper {
+    border-bottom-width: var(--brutalist-border-width-thick);
+  }
+
+  .brutalist-pagination-btn {
+    border-width: var(--brutalist-border-width-thick);
+  }
+}

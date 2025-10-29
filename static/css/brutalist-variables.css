@@ -1,0 +1,322 @@
+/**
+ * NEXUS BRUTALIST - Design System Variables
+ *
+ * Brutalist/Grunge aesthetic with strict black & white palette
+ * Red accents for CTAs (buy, create multisig)
+ * Optimized for Tor Browser and accessibility
+ *
+ * Style: Minimalist, efficient, artistic textures
+ */
+
+:root {
+  /* ========================================
+     COLOR PALETTE - MONOCHROME + RED ACCENT
+     ======================================== */
+
+  /* Pure Black & White */
+  --brutalist-black: #000000;
+  --brutalist-white: #FFFFFF;
+
+  /* Black Scale */
+  --brutalist-black-0: #000000;
+  --brutalist-black-1: #0D0D0D;
+  --brutalist-black-2: #1A1A1A;
+  --brutalist-black-3: #212121;
+  --brutalist-black-4: #2C2C2C;
+
+  /* Gray Scale (5 steps) */
+  --brutalist-gray-1: #424242;  /* Dark gray */
+  --brutalist-gray-2: #757575;  /* Medium gray */
+  --brutalist-gray-3: #BDBDBD;  /* Light gray */
+  --brutalist-gray-4: #E0E0E0;  /* Very light gray */
+  --brutalist-gray-5: #F5F5F5;  /* Almost white */
+
+  /* White Scale */
+  --brutalist-white-0: #FFFFFF;
+  --brutalist-white-1: #FAFAFA;
+  --brutalist-white-2: #F5F5F5;
+
+  /* Red Accent (CTAs) */
+  --brutalist-red: #FF0000;
+  --brutalist-red-dark: #CC0000;
+  --brutalist-red-darker: #990000;
+  --brutalist-red-blood: #E31B23;
+
+  /* ========================================
+     SEMANTIC COLORS
+     ======================================== */
+
+  /* Light Mode (Default) */
+  --brutalist-bg: var(--brutalist-white-1);
+  --brutalist-fg: var(--brutalist-black-0);
+  --brutalist-bg-secondary: var(--brutalist-white-0);
+  --brutalist-border: var(--brutalist-black-0);
+  --brutalist-accent: var(--brutalist-red);
+
+  /* Status Colors */
+  --brutalist-success: var(--brutalist-black-0);
+  --brutalist-warning: var(--brutalist-black-0);
+  --brutalist-error: var(--brutalist-red);
+  --brutalist-info: var(--brutalist-black-0);
+
+  /* Interactive States */
+  --brutalist-hover-bg: var(--brutalist-black-0);
+  --brutalist-hover-fg: var(--brutalist-white-0);
+  --brutalist-active-bg: var(--brutalist-black-2);
+  --brutalist-focus-outline: var(--brutalist-red);
+
+  /* ========================================
+     TYPOGRAPHY
+     ======================================== */
+
+  /* Font Families */
+  --brutalist-font-mono: 'IBM Plex Mono', 'Courier New', Courier, monospace;
+  --brutalist-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                         Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --brutalist-font-display: 'Inter', sans-serif;
+
+  /* Font Sizes */
+  --brutalist-text-xs: 0.75rem;      /* 12px */
+  --brutalist-text-sm: 0.875rem;     /* 14px */
+  --brutalist-text-base: 1rem;       /* 16px */
+  --brutalist-text-lg: 1.125rem;     /* 18px */
+  --brutalist-text-xl: 1.25rem;      /* 20px */
+  --brutalist-text-2xl: 1.5rem;      /* 24px */
+  --brutalist-text-3xl: 2rem;        /* 32px */
+  --brutalist-text-4xl: 2.5rem;      /* 40px */
+  --brutalist-text-5xl: 3rem;        /* 48px */
+
+  /* Font Weights */
+  --brutalist-weight-normal: 400;
+  --brutalist-weight-medium: 500;
+  --brutalist-weight-semibold: 600;
+  --brutalist-weight-bold: 700;
+  --brutalist-weight-black: 900;
+
+  /* Line Heights */
+  --brutalist-leading-none: 1;
+  --brutalist-leading-tight: 1.25;
+  --brutalist-leading-normal: 1.5;
+  --brutalist-leading-relaxed: 1.75;
+
+  /* Letter Spacing */
+  --brutalist-tracking-tighter: -0.05em;
+  --brutalist-tracking-tight: -0.025em;
+  --brutalist-tracking-normal: 0;
+  --brutalist-tracking-wide: 0.025em;
+  --brutalist-tracking-wider: 0.05em;
+  --brutalist-tracking-widest: 0.1em;
+
+  /* ========================================
+     SPACING (8px base unit)
+     ======================================== */
+
+  --brutalist-space-0: 0;
+  --brutalist-space-1: 0.25rem;   /* 4px */
+  --brutalist-space-2: 0.5rem;    /* 8px */
+  --brutalist-space-3: 0.75rem;   /* 12px */
+  --brutalist-space-4: 1rem;      /* 16px */
+  --brutalist-space-5: 1.25rem;   /* 20px */
+  --brutalist-space-6: 1.5rem;    /* 24px */
+  --brutalist-space-8: 2rem;      /* 32px */
+  --brutalist-space-10: 2.5rem;   /* 40px */
+  --brutalist-space-12: 3rem;     /* 48px */
+  --brutalist-space-16: 4rem;     /* 64px */
+  --brutalist-space-20: 5rem;     /* 80px */
+  --brutalist-space-24: 6rem;     /* 96px */
+
+  /* ========================================
+     BORDER RADIUS (Minimal - Brutalist)
+     ======================================== */
+
+  --brutalist-radius-none: 0;
+  --brutalist-radius-sm: 2px;
+  --brutalist-radius-md: 4px;
+  --brutalist-radius-lg: 8px;
+  --brutalist-radius-full: 9999px;
+
+  /* ========================================
+     BORDERS
+     ======================================== */
+
+  --brutalist-border-width-thin: 1px;
+  --brutalist-border-width-normal: 2px;
+  --brutalist-border-width-thick: 3px;
+  --brutalist-border-width-heavy: 4px;
+
+  /* ========================================
+     SHADOWS (Hard, No Blur - Brutalist)
+     ======================================== */
+
+  /* Hard shadows without blur */
+  --brutalist-shadow-sm: 2px 2px 0 var(--brutalist-black-0);
+  --brutalist-shadow-md: 4px 4px 0 var(--brutalist-black-0);
+  --brutalist-shadow-lg: 6px 6px 0 var(--brutalist-black-0);
+  --brutalist-shadow-xl: 8px 8px 0 var(--brutalist-black-0);
+  --brutalist-shadow-2xl: 12px 12px 0 var(--brutalist-black-0);
+
+  /* Red shadows for CTAs */
+  --brutalist-shadow-red-sm: 2px 2px 0 var(--brutalist-red-dark);
+  --brutalist-shadow-red-md: 4px 4px 0 var(--brutalist-red-dark);
+
+  /* Inset shadows */
+  --brutalist-shadow-inset: inset 2px 2px 0 rgba(0, 0, 0, 0.1);
+
+  /* ========================================
+     TRANSITIONS (Fast, Linear - Brutalist)
+     ======================================== */
+
+  --brutalist-duration-instant: 0ms;
+  --brutalist-duration-fast: 100ms;
+  --brutalist-duration-normal: 150ms;
+  --brutalist-duration-slow: 200ms;
+
+  /* Easing (mostly linear for brutalist feel) */
+  --brutalist-ease-linear: linear;
+  --brutalist-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --brutalist-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --brutalist-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ========================================
+     Z-INDEX LAYERS
+     ======================================== */
+
+  --z-background: 0;
+  --z-texture: 1;
+  --z-content: 10;
+  --z-header: 100;
+  --z-dropdown: 200;
+  --z-modal-backdrop: 500;
+  --z-modal: 501;
+  --z-toast: 600;
+  --z-tooltip: 700;
+
+  /* ========================================
+     BREAKPOINTS
+     ======================================== */
+
+  --breakpoint-mobile: 375px;
+  --breakpoint-tablet: 768px;
+  --breakpoint-desktop: 1024px;
+  --breakpoint-wide: 1440px;
+  --breakpoint-ultrawide: 1920px;
+
+  /* ========================================
+     COMPONENT-SPECIFIC VARIABLES
+     ======================================== */
+
+  /* Header */
+  --brutalist-header-height: 80px;
+  --brutalist-header-bg: var(--brutalist-white-1);
+  --brutalist-header-border: var(--brutalist-border-width-normal) solid var(--brutalist-black-0);
+
+  /* Buttons */
+  --brutalist-btn-padding-x: var(--brutalist-space-6);
+  --brutalist-btn-padding-y: var(--brutalist-space-3);
+  --brutalist-btn-border: var(--brutalist-border-width-normal) solid var(--brutalist-black-0);
+
+  /* Cards */
+  --brutalist-card-padding: var(--brutalist-space-6);
+  --brutalist-card-border: var(--brutalist-border-width-normal) solid var(--brutalist-black-0);
+  --brutalist-card-bg: var(--brutalist-white-0);
+
+  /* Forms */
+  --brutalist-input-padding-x: var(--brutalist-space-4);
+  --brutalist-input-padding-y: var(--brutalist-space-3);
+  --brutalist-input-border: var(--brutalist-border-width-normal) solid var(--brutalist-black-0);
+  --brutalist-input-focus-border: var(--brutalist-border-width-normal) solid var(--brutalist-red);
+
+  /* Grid */
+  --brutalist-grid-gap: var(--brutalist-space-6);
+  --brutalist-grid-cols-mobile: 1;
+  --brutalist-grid-cols-tablet: 2;
+  --brutalist-grid-cols-desktop: 3;
+
+  /* ========================================
+     TEXTURES (Opacity for subtle effects)
+     ======================================== */
+
+  --brutalist-texture-opacity-light: 0.03;
+  --brutalist-texture-opacity-medium: 0.05;
+  --brutalist-texture-opacity-heavy: 0.08;
+
+  /* ========================================
+     ACCESSIBILITY
+     ======================================== */
+
+  /* Focus ring */
+  --brutalist-focus-ring-width: 3px;
+  --brutalist-focus-ring-color: var(--brutalist-red);
+  --brutalist-focus-ring-offset: 2px;
+
+  /* Minimum tap target size (mobile) */
+  --brutalist-tap-target-min: 44px;
+}
+
+/* ========================================
+   DARK MODE OVERRIDES
+   ======================================== */
+
+body.dark-mode {
+  /* Inverted colors */
+  --brutalist-bg: var(--brutalist-black-1);
+  --brutalist-fg: var(--brutalist-white-0);
+  --brutalist-bg-secondary: var(--brutalist-black-0);
+  --brutalist-border: var(--brutalist-white-0);
+
+  /* Interactive states inverted */
+  --brutalist-hover-bg: var(--brutalist-white-0);
+  --brutalist-hover-fg: var(--brutalist-black-0);
+
+  /* Hard shadows in white */
+  --brutalist-shadow-sm: 2px 2px 0 var(--brutalist-white-0);
+  --brutalist-shadow-md: 4px 4px 0 var(--brutalist-white-0);
+  --brutalist-shadow-lg: 6px 6px 0 var(--brutalist-white-0);
+  --brutalist-shadow-xl: 8px 8px 0 var(--brutalist-white-0);
+  --brutalist-shadow-2xl: 12px 12px 0 var(--brutalist-white-0);
+
+  /* Header dark mode */
+  --brutalist-header-bg: var(--brutalist-black-1);
+  --brutalist-header-border: var(--brutalist-border-width-normal) solid var(--brutalist-white-0);
+
+  /* Cards dark mode */
+  --brutalist-card-bg: var(--brutalist-black-0);
+  --brutalist-card-border: var(--brutalist-border-width-normal) solid var(--brutalist-white-0);
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
+@media print {
+  :root {
+    /* Force light mode colors for printing */
+    --brutalist-bg: var(--brutalist-white-0);
+    --brutalist-fg: var(--brutalist-black-0);
+    --brutalist-border: var(--brutalist-black-0);
+
+    /* Disable transitions for print */
+    --brutalist-duration-instant: 0ms;
+    --brutalist-duration-fast: 0ms;
+    --brutalist-duration-normal: 0ms;
+    --brutalist-duration-slow: 0ms;
+
+    /* No shadows for print */
+    --brutalist-shadow-sm: none;
+    --brutalist-shadow-md: none;
+    --brutalist-shadow-lg: none;
+  }
+}
+
+/* ========================================
+   PREFERS REDUCED MOTION
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --brutalist-duration-instant: 0ms;
+    --brutalist-duration-fast: 0ms;
+    --brutalist-duration-normal: 0ms;
+    --brutalist-duration-slow: 0ms;
+  }
+}

@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 200 60" preserveAspectRatio="none">
+  <!-- Red brush stroke for CTA buttons -->
+  <!-- Inspired by reference image (red paint strokes) -->
+  <defs>
+    <!-- Brush texture filter -->
+    <filter id="brush-texture">
+      <feTurbulence type="fractalNoise" baseFrequency="1.5" numOctaves="3" seed="10"/>
+      <feDisplacementMap in="SourceGraphic" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <!-- Edge roughness -->
+    <filter id="brush-edges">
+      <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="2" seed="12"/>
+      <feDisplacementMap in="SourceGraphic" scale="4" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+
+  <!-- Main brush stroke shape -->
+  <path d="M 5 35 Q 50 25, 100 30 T 195 28"
+        fill="none"
+        stroke="#FF0000"
+        stroke-width="35"
+        stroke-linecap="round"
+        filter="url(#brush-edges)"
+        opacity="0.95"/>
+
+  <!-- Secondary stroke layer (for depth) -->
+  <path d="M 8 33 Q 52 26, 102 31 T 193 29"
+        fill="none"
+        stroke="#E31B23"
+        stroke-width="30"
+        stroke-linecap="round"
+        filter="url(#brush-texture)"
+        opacity="0.8"/>
+
+  <!-- Brush bristle marks (texture details) -->
+  <g opacity="0.4" stroke="#CC0000" stroke-width="1.5" fill="none">
+    <path d="M 20 22 L 22 40"/>
+    <path d="M 45 18 L 47 38"/>
+    <path d="M 70 20 L 72 42"/>
+    <path d="M 95 19 L 97 39"/>
+    <path d="M 120 21 L 122 41"/>
+    <path d="M 145 18 L 147 38"/>
+    <path d="M 170 20 L 172 40"/>
+  </g>
+
+  <!-- Paint drips/imperfections -->
+  <g opacity="0.3" fill="#CC0000">
+    <ellipse cx="35" cy="48" rx="2" ry="4"/>
+    <ellipse cx="85" cy="46" rx="1.5" ry="3"/>
+    <ellipse cx="135" cy="47" rx="2" ry="3.5"/>
+    <ellipse cx="175" cy="45" rx="1.5" ry="3"/>
+  </g>
+
+  <!-- Edge fade effect (top) -->
+  <path d="M 10 20 Q 50 15, 100 18 T 190 16"
+        fill="none"
+        stroke="#FF0000"
+        stroke-width="8"
+        stroke-linecap="round"
+        opacity="0.2"/>
+
+  <!-- Edge fade effect (bottom) -->
+  <path d="M 10 48 Q 50 42, 100 46 T 190 44"
+        fill="none"
+        stroke="#E31B23"
+        stroke-width="6"
+        stroke-linecap="round"
+        opacity="0.15"/>
+</svg>

@@ -1,0 +1,485 @@
+/**
+ * NEXUS BRUTALIST - Components
+ *
+ * All UI components with brutalist aesthetic:
+ * - Buttons (primary, secondary, red CTA with brush stroke)
+ * - Cards (with grunge frames)
+ * - Forms (inputs, textareas, selects)
+ * - Badges
+ * - Alerts
+ */
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+
+/* Base button styles */
+.brutalist-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--brutalist-space-2);
+  padding: var(--brutalist-btn-padding-y) var(--brutalist-btn-padding-x);
+  font-family: var(--brutalist-font-sans);
+  font-size: var(--brutalist-text-base);
+  font-weight: var(--brutalist-weight-bold);
+  letter-spacing: var(--brutalist-tracking-wide);
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: all var(--brutalist-duration-fast) var(--brutalist-ease-linear);
+  user-select: none;
+}
+
+.brutalist-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Primary Button (Black) */
+.brutalist-btn-primary {
+  background: var(--brutalist-black-0);
+  color: var(--brutalist-white-0);
+  border: var(--brutalist-btn-border);
+  box-shadow: var(--brutalist-shadow-md);
+}
+
+.brutalist-btn-primary:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--brutalist-shadow-lg);
+}
+
+.brutalist-btn-primary:active {
+  transform: translate(0, 0);
+  box-shadow: var(--brutalist-shadow-sm);
+}
+
+/* Secondary Button (Outline) */
+.brutalist-btn-secondary {
+  background: transparent;
+  color: var(--brutalist-fg);
+  border: var(--brutalist-border-width-normal) solid var(--brutalist-border);
+  box-shadow: none;
+}
+
+.brutalist-btn-secondary:hover {
+  background: var(--brutalist-hover-bg);
+  color: var(--brutalist-hover-fg);
+  box-shadow: var(--brutalist-shadow-sm);
+}
+
+.brutalist-btn-secondary:active {
+  transform: scale(0.98);
+}
+
+/* Red CTA Button (Buy, Create Multisig) - Uses brush texture */
+/* Note: Brush stroke texture applied via .brutalist-btn-red in brutalist-textures.css */
+.brutalist-btn-cta {
+  font-family: var(--brutalist-font-display);
+  font-size: var(--brutalist-text-lg);
+  font-weight: var(--brutalist-weight-black);
+  padding: var(--brutalist-space-4) var(--brutalist-space-8);
+  letter-spacing: var(--brutalist-tracking-wider);
+  min-width: 180px;
+}
+
+/* Small button variant */
+.brutalist-btn-sm {
+  padding: var(--brutalist-space-2) var(--brutalist-space-4);
+  font-size: var(--brutalist-text-sm);
+}
+
+/* Large button variant */
+.brutalist-btn-lg {
+  padding: var(--brutalist-space-4) var(--brutalist-space-8);
+  font-size: var(--brutalist-text-lg);
+}
+
+/* ========================================
+   CARDS
+   ======================================== */
+
+.brutalist-card {
+  background: var(--brutalist-card-bg);
+  border: var(--brutalist-card-border);
+  padding: var(--brutalist-card-padding);
+  box-shadow: var(--brutalist-shadow-md);
+  transition: all var(--brutalist-duration-normal) var(--brutalist-ease-out);
+}
+
+.brutalist-card:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: var(--brutalist-shadow-xl);
+}
+
+/* Card with grunge frame (product listings) */
+/* Note: Grunge frame texture applied via .brutalist-card-frame in brutalist-textures.css */
+.brutalist-card-product {
+  position: relative;
+  padding: var(--brutalist-space-8);
+}
+
+.brutalist-card-header {
+  margin-bottom: var(--brutalist-space-4);
+  padding-bottom: var(--brutalist-space-4);
+  border-bottom: var(--brutalist-border-width-thin) solid var(--brutalist-border);
+}
+
+.brutalist-card-title {
+  font-family: var(--brutalist-font-display);
+  font-size: var(--brutalist-text-xl);
+  font-weight: var(--brutalist-weight-bold);
+  margin: 0;
+  margin-bottom: var(--brutalist-space-2);
+}
+
+.brutalist-card-body {
+  margin-bottom: var(--brutalist-space-4);
+}
+
+.brutalist-card-footer {
+  padding-top: var(--brutalist-space-4);
+  border-top: var(--brutalist-border-width-thin) solid var(--brutalist-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--brutalist-space-4);
+}
+
+/* ========================================
+   FORMS
+   ======================================== */
+
+.brutalist-form-group {
+  margin-bottom: var(--brutalist-space-6);
+}
+
+.brutalist-label {
+  display: block;
+  font-family: var(--brutalist-font-mono);
+  font-size: var(--brutalist-text-sm);
+  font-weight: var(--brutalist-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--brutalist-tracking-wide);
+  margin-bottom: var(--brutalist-space-2);
+  color: var(--brutalist-fg);
+}
+
+.brutalist-input,
+.brutalist-textarea,
+.brutalist-select {
+  width: 100%;
+  padding: var(--brutalist-input-padding-y) var(--brutalist-input-padding-x);
+  font-family: var(--brutalist-font-sans);
+  font-size: var(--brutalist-text-base);
+  color: var(--brutalist-fg);
+  background: var(--brutalist-bg);
+  border: var(--brutalist-input-border);
+  transition: all var(--brutalist-duration-fast) var(--brutalist-ease-linear);
+}
+
+.brutalist-input:focus,
+.brutalist-textarea:focus,
+.brutalist-select:focus {
+  outline: none;
+  border-color: var(--brutalist-focus-outline);
+  box-shadow: 0 0 0 var(--brutalist-focus-ring-width) var(--brutalist-focus-ring-color);
+}
+
+.brutalist-input::placeholder,
+.brutalist-textarea::placeholder {
+  color: var(--brutalist-gray-3);
+  opacity: 0.6;
+}
+
+.brutalist-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.brutalist-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23000' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--brutalist-space-3) center;
+  background-size: 12px;
+  padding-right: var(--brutalist-space-8);
+}
+
+body.dark-mode .brutalist-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23FFF' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+.brutalist-input:disabled,
+.brutalist-textarea:disabled,
+.brutalist-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Checkbox */
+.brutalist-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--brutalist-space-3);
+}
+
+.brutalist-checkbox {
+  width: 20px;
+  height: 20px;
+  border: var(--brutalist-border-width-normal) solid var(--brutalist-border);
+  cursor: pointer;
+  appearance: none;
+  background: var(--brutalist-bg);
+  transition: all var(--brutalist-duration-fast) var(--brutalist-ease-linear);
+}
+
+.brutalist-checkbox:checked {
+  background: var(--brutalist-black-0);
+  position: relative;
+}
+
+.brutalist-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--brutalist-white-0);
+  font-size: 14px;
+  font-weight: var(--brutalist-weight-black);
+}
+
+.brutalist-checkbox:focus {
+  outline: var(--brutalist-focus-ring-width) solid var(--brutalist-focus-ring-color);
+  outline-offset: var(--brutalist-focus-ring-offset);
+}
+
+/* Form error */
+.brutalist-form-error {
+  margin-top: var(--brutalist-space-2);
+  font-family: var(--brutalist-font-mono);
+  font-size: var(--brutalist-text-sm);
+  color: var(--brutalist-error);
+  font-weight: var(--brutalist-weight-semibold);
+}
+
+.brutalist-input.error,
+.brutalist-textarea.error,
+.brutalist-select.error {
+  border-color: var(--brutalist-error);
+}
+
+/* ========================================
+   BADGES
+   ======================================== */
+
+.brutalist-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--brutalist-space-1) var(--brutalist-space-3);
+  font-family: var(--brutalist-font-mono);
+  font-size: var(--brutalist-text-xs);
+  font-weight: var(--brutalist-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--brutalist-tracking-widest);
+  border: var(--brutalist-border-width-thin) solid var(--brutalist-border);
+}
+
+.brutalist-badge-vendor {
+  background: var(--brutalist-black-0);
+  color: var(--brutalist-white-0);
+  border-color: var(--brutalist-black-0);
+}
+
+.brutalist-badge-status {
+  background: transparent;
+  color: var(--brutalist-fg);
+}
+
+.brutalist-badge-error {
+  background: var(--brutalist-red);
+  color: var(--brutalist-white-0);
+  border-color: var(--brutalist-red);
+}
+
+/* ========================================
+   PRICE DISPLAY (Monero)
+   ======================================== */
+
+.brutalist-price {
+  font-family: var(--brutalist-font-mono);
+  font-size: var(--brutalist-text-2xl);
+  font-weight: var(--brutalist-weight-black);
+  color: var(--brutalist-red);
+  letter-spacing: var(--brutalist-tracking-tight);
+}
+
+.brutalist-price-sm {
+  font-size: var(--brutalist-text-lg);
+}
+
+.brutalist-price-lg {
+  font-size: var(--brutalist-text-3xl);
+}
+
+.brutalist-price-currency {
+  font-size: 0.7em;
+  opacity: 0.7;
+  margin-left: var(--brutalist-space-1);
+}
+
+/* ========================================
+   ALERTS
+   ======================================== */
+
+.brutalist-alert {
+  padding: var(--brutalist-space-4);
+  border: var(--brutalist-border-width-normal) solid var(--brutalist-border);
+  margin-bottom: var(--brutalist-space-6);
+  box-shadow: var(--brutalist-shadow-sm);
+}
+
+.brutalist-alert-info {
+  background: var(--brutalist-bg);
+  border-color: var(--brutalist-black-0);
+}
+
+.brutalist-alert-error {
+  background: var(--brutalist-red);
+  color: var(--brutalist-white-0);
+  border-color: var(--brutalist-red-dark);
+}
+
+.brutalist-alert-title {
+  font-family: var(--brutalist-font-mono);
+  font-size: var(--brutalist-text-sm);
+  font-weight: var(--brutalist-weight-bold);
+  text-transform: uppercase;
+  margin-bottom: var(--brutalist-space-2);
+}
+
+.brutalist-alert-body {
+  font-size: var(--brutalist-text-sm);
+  line-height: var(--brutalist-leading-normal);
+}
+
+/* ========================================
+   LOADING SPINNER
+   ======================================== */
+
+.brutalist-spinner {
+  width: 40px;
+  height: 40px;
+  border: var(--brutalist-border-width-thick) solid var(--brutalist-border);
+  border-top-color: var(--brutalist-red);
+  border-radius: 0;
+  animation: brutalist-spin 1s linear infinite;
+}
+
+@keyframes brutalist-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========================================
+   DIVIDER
+   ======================================== */
+
+.brutalist-divider {
+  height: var(--brutalist-border-width-normal);
+  background: var(--brutalist-border);
+  border: none;
+  margin: var(--brutalist-space-8) 0;
+}
+
+.brutalist-divider-vertical {
+  width: var(--brutalist-border-width-normal);
+  height: 100%;
+  background: var(--brutalist-border);
+  margin: 0 var(--brutalist-space-4);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 768px) {
+  .brutalist-btn {
+    padding: var(--brutalist-space-3) var(--brutalist-space-4);
+    font-size: var(--brutalist-text-sm);
+  }
+
+  .brutalist-btn-cta {
+    font-size: var(--brutalist-text-base);
+    padding: var(--brutalist-space-3) var(--brutalist-space-6);
+    min-width: 140px;
+  }
+
+  .brutalist-card {
+    padding: var(--brutalist-space-4);
+  }
+
+  .brutalist-card-product {
+    padding: var(--brutalist-space-4);
+  }
+
+  .brutalist-price {
+    font-size: var(--brutalist-text-xl);
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .brutalist-btn,
+  .brutalist-card,
+  .brutalist-input,
+  .brutalist-checkbox,
+  .brutalist-spinner {
+    transition: none;
+    animation: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .brutalist-btn-primary {
+    border-width: var(--brutalist-border-width-thick);
+  }
+
+  .brutalist-btn-secondary {
+    border-width: var(--brutalist-border-width-thick);
+  }
+
+  .brutalist-card {
+    border-width: var(--brutalist-border-width-thick);
+  }
+
+  .brutalist-input,
+  .brutalist-textarea,
+  .brutalist-select {
+    border-width: var(--brutalist-border-width-normal);
+  }
+}
+
+/* ========================================
+   PRINT
+   ======================================== */
+
+@media print {
+  .brutalist-btn,
+  .brutalist-spinner {
+    display: none;
+  }
+
+  .brutalist-card {
+    box-shadow: none;
+    border-width: var(--brutalist-border-width-thin);
+  }
+}

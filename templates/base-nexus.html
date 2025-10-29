@@ -9,15 +9,15 @@
     <title>{% block title %}NEXUS — SECURE MONERO MARKETPLACE{% endblock %}</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 
-    <!-- Nexus Design System CSS -->
-    <link rel="stylesheet" href="/static/css/nexus-variables.css">
+    <!-- NEXUS Brutalist Design System CSS -->
+    <link rel="stylesheet" href="/static/css/brutalist-variables.css">
     <link rel="stylesheet" href="/static/css/nexus-reset.css">
-    <link rel="stylesheet" href="/static/css/nexus-animations.css">
-    <link rel="stylesheet" href="/static/css/nexus.css">
+    <link rel="stylesheet" href="/static/css/brutalist-textures.css">
+    <link rel="stylesheet" href="/static/css/brutalist-header.css">
+    <link rel="stylesheet" href="/static/css/brutalist-components.css">
+    <link rel="stylesheet" href="/static/css/brutalist-listings.css">
     <link rel="stylesheet" href="/static/css/nexus-icons.css">
     <link rel="stylesheet" href="/static/css/nexus-typography.css">
-    <link rel="stylesheet" href="/static/css/nexus-grid-header.css">
-    <link rel="stylesheet" href="/static/css/nexus-true.css">
 
     <!-- Extra CSS for specific pages -->
     {% block extra_css %}{% endblock %}
@@ -26,8 +26,6 @@
     <script src="/static/js/htmx.min.js"></script>
     <!-- HTMX JSON encoding extension for API requests -->
     <script src="/static/js/json-enc.js"></script>
-    <!-- Global Nexus configuration and HTMX error handlers -->
-    <script src="/static/js/nexus-config.js" defer></script>
     {% block head_extra %}{% endblock %}
 </head>
 <body>
@@ -52,94 +50,8 @@
     <script src="/static/js/nexus-grid-toggle.js" defer></script>
     <script src="/static/js/nexus-user-menu.js" defer></script>
 
-    <!-- Global HTMX Error Handler -->
-    <script>
-    // Global error handler for all HTMX requests
-    document.body.addEventListener('htmx:responseError', function(event) {
-        const status = event.detail.xhr.status;
-        const url = event.detail.requestConfig.path;
-
-        let message = 'AN ERROR OCCURRED. PLEASE TRY AGAIN.';
-        let title = 'ERROR';
-
-        // Handle specific HTTP status codes
-        if (status === 401) {
-            title = 'UNAUTHORIZED';
-            message = 'SESSION EXPIRED. REDIRECTING TO LOGIN...';
-            setTimeout(() => window.location.href = '/login', 2000);
-        } else if (status === 403) {
-            title = 'FORBIDDEN';
-            message = 'YOU DO NOT HAVE PERMISSION TO PERFORM THIS ACTION.';
-        } else if (status === 404) {
-            title = 'NOT FOUND';
-            message = 'THE REQUESTED RESOURCE COULD NOT BE FOUND.';
-        } else if (status === 422) {
-            title = 'VALIDATION ERROR';
-            message = 'PLEASE CHECK YOUR INPUT AND TRY AGAIN.';
-        } else if (status === 429) {
-            title = 'RATE LIMIT';
-            message = 'TOO MANY REQUESTS. PLEASE WAIT A MOMENT.';
-        } else if (status >= 500) {
-            title = 'SERVER ERROR';
-            message = 'A SERVER ERROR OCCURRED. OUR TEAM HAS BEEN NOTIFIED.';
-        } else if (status === 0) {
-            title = 'CONNECTION ERROR';
-            message = 'COULD NOT CONNECT TO SERVER. CHECK YOUR TOR CONNECTION.';
-        }
-
-        // Create error alert (NEXUS design system)
-        const alertHtml = `
-            <div class="nexus-alert nexus-alert-error nexus-alert-dismissible" role="alert" style="position: fixed; top: 80px; right: 20px; z-index: 10000; max-width: 400px; animation: slideInRight 0.3s ease;">
-                <div class="nexus-alert-icon">❌</div>
-                <div class="nexus-alert-content">
-                    <div class="nexus-alert-title">${title}</div>
-                    <div class="nexus-alert-message">${message}</div>
-                </div>
-                <button class="nexus-alert-close" aria-label="Close alert" onclick="this.parentElement.remove()">✕</button>
-            </div>
-        `;
-
-        // Remove any existing error alerts
-        document.querySelectorAll('.nexus-alert-error').forEach(el => el.remove());
-
-        // Insert new alert
-        document.body.insertAdjacentHTML('beforeend', alertHtml);
-
-        // Auto-dismiss after 5 seconds (unless it's a redirect message)
-        if (status !== 401) {
-            setTimeout(() => {
-                const alert = document.querySelector('.nexus-alert-error');
-                if (alert) alert.remove();
-            }, 5000);
-        }
-
-        // Log for debugging (non-sensitive info only)
-        console.error(`[HTMX Error] ${status} on ${url}`);
-    });
-
-    // Global timeout handler
-    document.body.addEventListener('htmx:timeout', function(event) {
-        const alertHtml = `
-            <div class="nexus-alert nexus-alert-warning nexus-alert-dismissible" role="alert" style="position: fixed; top: 80px; right: 20px; z-index: 10000; max-width: 400px; animation: slideInRight 0.3s ease;">
-                <div class="nexus-alert-icon">⚠️</div>
-                <div class="nexus-alert-content">
-                    <div class="nexus-alert-title">TIMEOUT</div>
-                    <div class="nexus-alert-message">REQUEST TIMED OUT. THIS MAY BE NORMAL FOR BLOCKCHAIN OPERATIONS.</div>
-                </div>
-                <button class="nexus-alert-close" aria-label="Close alert" onclick="this.parentElement.remove()">✕</button>
-            </div>
-        `;
-
-        document.body.insertAdjacentHTML('beforeend', alertHtml);
-
-        setTimeout(() => {
-            const alert = document.querySelector('.nexus-alert-warning');
-            if (alert) alert.remove();
-        }, 5000);
-
-        console.warn('[HTMX Timeout] Request timed out');
-    });
-    </script>
+    <!-- Global Nexus configuration and HTMX error handlers (must be after HTMX) -->
+    <script src="/static/js/nexus-config.js"></script>
 
     {% block scripts %}{% endblock %}
 </body>
