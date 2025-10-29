@@ -96,14 +96,10 @@
   background: hsl(349, 100%, 55%); /* Primary color */
 }
 
-/* Background Pattern with Wave Animation */
+/* Background Pattern - Container pour lignes animées en JS */
 .nexus-hero-pattern {
   position: absolute;
   inset: 0;
-  opacity: 0.3;
-  animation: wave 20s ease-in-out infinite;
-  background-size: cover;
-  background-position: center;
   z-index: 1;  /* Derrière le contenu */
 }
 
