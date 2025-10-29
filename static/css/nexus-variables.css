@@ -4,6 +4,51 @@
    Pure CSS - No framework dependencies
    ========================================== */
 
+/* ===== FONT FACES - PP FONTS ===== */
+
+/* PP Monument Extended - Hero / Titres principaux */
+@font-face {
+  font-family: 'PP Monument Extended';
+  src: url('/static/fonts/PPMonumentExtended-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* PP Fraktion Mono - Technique / Monospace */
+@font-face {
+  font-family: 'PP Fraktion Mono';
+  src: url('/static/fonts/PPFraktionMono-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PP Fraktion Mono';
+  src: url('/static/fonts/PPFraktionMono-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* PP Fraktion Sans - Navigation / UI */
+@font-face {
+  font-family: 'PP Fraktion Sans';
+  src: url('/static/fonts/PPFraktionSans-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PP Fraktion Sans';
+  src: url('/static/fonts/PPFraktionSans-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* ===== COLOR PALETTE (HSL) ===== */
 
@@ -66,9 +111,16 @@
 
   /* ===== TYPOGRAPHY ===== */
 
-  /* Font families */
-  --nexus-font-mono: 'Courier New', 'Courier', monospace;
-  --nexus-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  /* Font families - Système NEXUS (inspiré wodniack.dev) */
+
+  /* Hero / Titres principaux - PP Monument Extended Black ✨ */
+  --nexus-font-hero: 'PP Monument Extended', 'Arial Black', 'Impact', sans-serif;
+
+  /* Technique / Monospace - PP Fraktion Mono ✨ */
+  --nexus-font-mono: 'PP Fraktion Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+
+  /* Navigation / UI - PP Fraktion Sans ✨ */
+  --nexus-font-sans: 'PP Fraktion Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   /* Font sizes */
   --nexus-text-xs: 0.75rem;     /* 12px */

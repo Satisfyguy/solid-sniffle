@@ -176,27 +176,27 @@
   </div>
 </section>
 
-{# Featured Listings Section #}
-<section id="listings" style="padding: 6rem 0; background: hsla(0, 0%, 15%, 0.3);">
-  <div style="max-width: 1400px; margin: 0 auto; padding: 0 1.5rem;">
-    <div style="margin-bottom: 4rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2rem;">
-      <div>
-        <h2 class="nexus-section-title-huge">
+{# Featured Listings Section - NEXUS CHARTE #}
+<section id="listings" class="nexus-listings-section">
+  <div class="nexus-listings-container">
+    <div class="nexus-listings-header">
+      <div class="nexus-listings-header-content">
+        <h2 class="nexus-listings-title">
           FEATURED LISTINGS
         </h2>
-        <p class="nexus-section-subtitle-bold">
+        <p class="nexus-listings-subtitle">
           VERIFIED VENDORS • ESCROW PROTECTED
         </p>
       </div>
-      <a href="/listings" class="nexus-btn nexus-btn-primary nexus-btn-lg" hx-boost="true" style="font-weight: 700;">
+      <a href="/listings" class="nexus-btn nexus-btn-primary nexus-btn-lg nexus-listings-view-all-btn" hx-boost="true">
         VIEW ALL
       </a>
     </div>
 
-  <div id="listings-results" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+  <div id="listings-results" class="nexus-listings-grid">
     {% if listings and listings | length > 0 %}
       {% for listing in listings %}
-      <a href="/listings/{{ listing.id }}" style="text-decoration: none; color: inherit;" hx-boost="true">
+      <a href="/listings/{{ listing.id }}" class="nexus-product-link" hx-boost="true">
         <div class="nexus-product-card">
           {# Product Image with Gradient #}
           <div class="nexus-product-image">
@@ -254,7 +254,7 @@
       {% endfor %}
     {% else %}
       {# Empty State #}
-      <div style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5rem; text-align: center;">
+      <div class="nexus-listings-empty-state">
         <div class="nexus-alert nexus-alert-info">
           <div class="nexus-alert-icon">ℹ️</div>
           <div class="nexus-alert-content">
@@ -266,7 +266,7 @@
         </div>
 
         {% if logged_in and role == "vendor" %}
-        <a href="/listings/create" class="nexus-btn nexus-btn-primary" style="margin-top: 2rem;">
+        <a href="/listings/create" class="nexus-btn nexus-btn-primary nexus-listings-empty-cta">
           Create Your First Listing
         </a>
         {% endif %}
