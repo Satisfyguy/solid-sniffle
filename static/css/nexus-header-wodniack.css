@@ -186,10 +186,10 @@
 }
 
 .nexus-header-btn-signup:hover {
-  background: hsl(349, 100%, 60%);
-  border-color: hsl(349, 100%, 60%);
+  background: hsl(16, 100%, 67%); /* Corail 500 */
+  border-color: hsl(16, 100%, 67%);
   transform: translateY(-2px);
-  box-shadow: 0 0 20px rgba(255, 26, 92, 0.4);
+  box-shadow: 0 0 20px rgba(255, 133, 89, 0.4); /* Corail glow */
 }
 
 .nexus-header-btn-logout {
@@ -206,12 +206,12 @@
 
 /* Dynamic CTA Button */
 .nexus-header-cta {
-  background: linear-gradient(135deg, var(--nexus-primary) 0%, hsl(349, 100%, 45%) 100%);
+  background: linear-gradient(135deg, var(--nexus-primary) 0%, hsl(16, 100%, 43%) 100%); /* Corail 500 to 700 */
   color: var(--nexus-fg);
   border-color: var(--nexus-primary);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 0 15px rgba(255, 26, 92, 0.25);
+  box-shadow: 0 0 15px rgba(255, 133, 89, 0.25); /* Corail glow */
 }
 
 .nexus-header-cta::before {
@@ -230,9 +230,9 @@
 }
 
 .nexus-header-cta:hover {
-  background: linear-gradient(135deg, hsl(349, 100%, 60%) 0%, hsl(349, 100%, 50%) 100%);
+  background: linear-gradient(135deg, hsl(16, 100%, 67%) 0%, hsl(16, 100%, 67%) 100%); /* Corail 500 gradient */
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 0 30px rgba(255, 26, 92, 0.5);
+  box-shadow: 0 0 30px rgba(255, 133, 89, 0.5); /* Corail glow intense */
 }
 
 /* Empty minimalist space (Option D) */

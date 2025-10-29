@@ -50,23 +50,36 @@
 }
 
 :root {
+  /* ===== PALETTE CORAIL NEXUS ===== */
+  /* Palette harmonieuse orange/brun inspirée de #FF8559 */
+
+  --nexus-corail-50:  hsl(16, 100%, 96%);  /* #FFEDE9 - Très clair, backgrounds subtils */
+  --nexus-corail-100: hsl(16, 100%, 85%);  /* #FFBFB1 - Clair, hover states */
+  --nexus-corail-500: hsl(16, 100%, 67%);  /* #FF8559 - PRIMARY Corail vibrant */
+  --nexus-corail-700: hsl(16, 100%, 43%);  /* #D95B00 - Foncé, accents forts */
+  --nexus-corail-800: hsl(16, 100%, 31%);  /* #A04100 - Très foncé, bordures */
+  --nexus-corail-900: hsl(16, 100%, 21%);  /* #6A2900 - Ultra foncé, texte important */
+  --nexus-corail-950: hsl(16, 100%, 11%);  /* #391200 - Brun noir, footer/backgrounds */
+
   /* ===== COLOR PALETTE (HSL) ===== */
 
   /* Base colors */
   --nexus-bg: hsl(0, 0%, 5%);           /* #0d0d0d - Almost black */
   --nexus-fg: hsl(0, 0%, 98%);          /* #fafafa - Almost white */
 
-  /* Primary (Pink/Red accent) */
-  --nexus-primary: hsl(349, 100%, 55%); /* #ff1a5c - Bright pink/red */
-  --nexus-primary-fg: hsl(0, 0%, 5%);   /* Text on primary */
+  /* Primary (Corail) */
+  --nexus-primary: var(--nexus-corail-500); /* #FF8559 - Corail vibrant */
+  --nexus-primary-hover: var(--nexus-corail-700); /* #D95B00 - Hover */
+  --nexus-primary-fg: var(--nexus-corail-950);    /* #391200 - Text on primary */
+  --nexus-primary-fg-light: var(--nexus-corail-50); /* #FFEDE9 - Light text */
 
-  /* Secondary (Purple) */
-  --nexus-secondary: hsl(280, 60%, 50%); /* #9933cc - Purple */
-  --nexus-secondary-fg: hsl(0, 0%, 98%);
+  /* Secondary (Corail foncé) */
+  --nexus-secondary: var(--nexus-corail-700); /* #D95B00 - Accents */
+  --nexus-secondary-fg: var(--nexus-corail-50);
 
-  /* Accent (Cyan) */
-  --nexus-accent: hsl(180, 100%, 50%);   /* #00ffff - Cyan */
-  --nexus-accent-fg: hsl(0, 0%, 5%);
+  /* Accent (Corail très clair) */
+  --nexus-accent: var(--nexus-corail-100);   /* #FFBFB1 - Subtle accents */
+  --nexus-accent-fg: var(--nexus-corail-950);
 
   /* Card/Surface */
   --nexus-card: hsl(0, 0%, 8%);          /* #141414 - Dark card */
@@ -77,7 +90,8 @@
   --nexus-muted-fg: hsl(0, 0%, 65%);     /* #a6a6a6 - Muted text */
 
   /* Borders & Inputs */
-  --nexus-border: hsl(0, 0%, 20%);       /* #333333 - Borders */
+  --nexus-border: var(--nexus-corail-800);   /* #A04100 - Borders */
+  --nexus-border-active: var(--nexus-corail-700); /* #D95B00 - Active borders */
   --nexus-input: hsl(0, 0%, 20%);        /* Input backgrounds */
   --nexus-ring: hsl(349, 100%, 55%);     /* Focus rings */
 
@@ -178,10 +192,10 @@
                       0 8px 10px -6px rgba(0, 0, 0, 0.5);
   --nexus-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
 
-  /* Glow shadows (for accent elements) */
-  --nexus-glow-primary: 0 0 20px rgba(255, 26, 92, 0.5);
-  --nexus-glow-secondary: 0 0 20px rgba(153, 51, 204, 0.5);
-  --nexus-glow-accent: 0 0 20px rgba(0, 255, 255, 0.5);
+  /* Glow shadows (for accent elements) - CORAIL */
+  --nexus-glow-primary: 0 0 20px rgba(255, 133, 89, 0.5); /* Corail #FF8559 */
+  --nexus-glow-secondary: 0 0 20px rgba(217, 91, 0, 0.5); /* Corail 700 #D95B00 */
+  --nexus-glow-accent: 0 0 20px rgba(255, 191, 177, 0.5); /* Corail 100 #FFBFB1 */
 
   /* ===== Z-INDEX SCALE ===== */
   --nexus-z-0: 0;
@@ -191,7 +205,7 @@
   --nexus-z-40: 40;
   --nexus-z-50: 50;         /* Dropdowns, popovers */
   --nexus-z-modal: 100;     /* Modals, dialogs */
-  --nexus-z-toast: 200;     /* Toast notifications */
+  --nexus-z-toast: 5000;    /* Toast notifications (au-dessus du header 1000, en dessous du dropdown 10000) */
   --nexus-z-tooltip: 300;   /* Tooltips */
 
   /* ===== TRANSITIONS ===== */

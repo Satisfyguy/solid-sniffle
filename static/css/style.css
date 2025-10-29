@@ -9,13 +9,13 @@
   --bg: hsl(0, 0%, 5%);
   --fg: hsl(0, 0%, 98%);
   --card: hsl(0, 0%, 8%);
-  --primary: hsl(349, 100%, 55%);
-  --primary-fg: hsl(0, 0%, 5%);
-  --secondary: hsl(280, 60%, 50%);
-  --accent: hsl(180, 100%, 50%);
+  --primary: hsl(16, 100%, 67%); /* Corail #FF8559 */
+  --primary-fg: hsl(16, 100%, 11%); /* Corail 950 for text on primary */
+  --secondary: hsl(16, 100%, 43%); /* Corail 700 #D95B00 */
+  --accent: hsl(16, 100%, 85%); /* Corail 100 #FFBFB1 */
   --muted: hsl(0, 0%, 15%);
   --muted-fg: hsl(0, 0%, 65%);
-  --border: hsl(0, 0%, 20%);
+  --border: hsl(16, 100%, 31%); /* Corail 800 #A04100 */
 }
 
 body {

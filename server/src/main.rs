@@ -254,7 +254,7 @@ async fn main() -> Result<()> {
             // Logging middleware (logs all requests)
             .wrap(Logger::default())
             // Global rate limiter (100 req/min per IP)
-            .wrap(global_rate_limiter())
+            // .wrap(global_rate_limiter()) // TEMPORAIREMENT DÉSACTIVÉ
             // Session middleware
             // Security features:
             // - HttpOnly: prevents JavaScript access
@@ -327,7 +327,7 @@ async fn main() -> Result<()> {
             // Single scope ensures shared rate limit quota across all protected operations
             .service(
                 web::scope("/api")
-                    .wrap(protected_rate_limiter())
+                    // .wrap(protected_rate_limiter()) // TEMPORAIREMENT DÉSACTIVÉ
                     // Listings
                     .service(listings::create_listing)
                     .service(listings::create_listing_with_images)

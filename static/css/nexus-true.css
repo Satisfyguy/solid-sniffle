@@ -93,7 +93,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: hsl(349, 100%, 55%); /* Primary color */
+  background: hsl(16, 100%, 67%); /* Primary color */
 }
 
 /* Background Pattern - Container pour lignes animées en JS */
@@ -401,7 +401,7 @@
 .nexus-nav-logo-shield {
   width: 3rem;
   height: 3rem;
-  background-color: hsl(349, 100%, 55%);
+  background-color: hsl(16, 100%, 67%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -436,7 +436,7 @@
 }
 
 .nexus-nav-link-true:hover {
-  color: hsl(349, 100%, 55%);
+  color: hsl(16, 100%, 67%);
 }
 
 .nexus-nav-actions-true {
@@ -449,7 +449,7 @@
 
 .nexus-stats-banner {
   padding: 6rem 0;
-  background-color: hsl(349, 100%, 55%);
+  background-color: hsl(16, 100%, 67%);
 }
 
 .nexus-stats-container {
@@ -586,7 +586,7 @@
  * Ensure keyboard users can see focus state
  */
 .nexus-animated-letter:focus {
-  outline: 3px solid hsl(349, 100%, 55%);
+  outline: 3px solid hsl(16, 100%, 67%);
   outline-offset: 4px;
   border-radius: 4px;
 }
@@ -596,7 +596,7 @@
 }
 
 .nexus-animated-letter:focus-visible {
-  outline: 3px solid hsl(349, 100%, 55%);
+  outline: 3px solid hsl(16, 100%, 67%);
   outline-offset: 4px;
   box-shadow: 0 0 0 6px rgba(255, 26, 92, 0.2);
 }
@@ -626,14 +626,14 @@
 /* === FOOTER STYLES === */
 
 .nexus-footer {
-  background-color: hsl(0, 0%, 5%);
-  border-top: 1px solid hsl(0, 0%, 15%);
+  background-color: hsl(16, 100%, 21%); /* #6A2900 - Corail 900 brun chaleureux */
+  border-top: 3px solid hsl(16, 100%, 31%); /* #A04100 - Corail 800 */
   padding: 4rem 0 2rem;
   margin-top: 6rem;
 }
 
 .nexus-footer-glass {
-  background: rgba(13, 13, 13, 0.95);
+  background: rgba(106, 41, 0, 0.95); /* Corail 900 avec transparence */
   backdrop-filter: blur(10px);
 }
 
@@ -675,18 +675,19 @@
   font-weight: 900;
   letter-spacing: -0.05em;
   text-transform: uppercase;
-  color: hsl(349, 100%, 55%);
+  color: hsl(16, 100%, 85%); /* #FFBFB1 - Corail 100 */
   margin: 0;
-  text-shadow: 0 0 20px rgba(255, 26, 92, 0.3);
+  text-shadow: 0 0 20px rgba(255, 133, 89, 0.4);
 }
 
 .nexus-footer-tagline {
   font-size: 0.875rem;
-  color: hsl(0, 0%, 65%);
+  color: hsl(16, 100%, 85%); /* #FFBFB1 - Corail 100 */
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   margin: 0;
+  opacity: 0.8;
 }
 
 .nexus-footer-section {
@@ -700,9 +701,9 @@
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: hsl(0, 0%, 98%);
+  color: hsl(16, 100%, 96%); /* #FFEDE9 - Corail 50 */
   margin: 0 0 0.5rem 0;
-  border-bottom: 2px solid hsl(349, 100%, 55%);
+  border-bottom: 2px solid hsl(16, 100%, 43%); /* #D95B00 - Corail 700 */
   padding-bottom: 0.5rem;
   display: inline-block;
 }
@@ -717,23 +718,25 @@
 }
 
 .nexus-footer-links a {
-  color: hsl(0, 0%, 70%);
+  color: hsl(16, 100%, 85%); /* #FFBFB1 - Corail 100 */
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 500;
   letter-spacing: 0.025em;
   transition: all 0.2s ease;
   display: inline-block;
+  opacity: 0.9;
 }
 
 .nexus-footer-links a:hover {
-  color: hsl(349, 100%, 55%);
+  color: hsl(16, 100%, 96%); /* #FFEDE9 - Corail 50 très clair */
   transform: translateX(4px);
-  text-shadow: 0 0 10px rgba(255, 26, 92, 0.4);
+  text-shadow: 0 0 10px rgba(255, 133, 89, 0.5);
+  opacity: 1;
 }
 
 .nexus-footer-bottom {
-  border-top: 1px solid hsl(0, 0%, 15%);
+  border-top: 2px solid hsl(16, 100%, 31%); /* #A04100 - Corail 800 */
   padding-top: 2rem;
   display: flex;
   justify-content: space-between;
@@ -745,12 +748,13 @@
 .nexus-footer-bottom p {
   margin: 0;
   font-size: 0.875rem;
-  color: hsl(0, 0%, 50%);
+  color: hsl(16, 100%, 85%); /* #FFBFB1 - Corail 100 */
   font-weight: 500;
+  opacity: 0.8;
 }
 
 .nexus-footer-bottom strong {
-  color: hsl(38, 92%, 50%);
+  color: hsl(16, 100%, 96%); /* #FFEDE9 - Corail 50 highlight */
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -771,7 +775,7 @@
 
 .nexus-categories-section {
   padding: 6rem 0;
-  background: hsl(349, 100%, 55%); /* NEXUS PINK */
+  background: hsl(16, 100%, 67%); /* NEXUS PINK */
 }
 
 .nexus-categories-container {
@@ -859,7 +863,7 @@
 }
 
 .nexus-category-box:hover .nexus-icon {
-  color: hsl(349, 100%, 55%);
+  color: hsl(16, 100%, 67%);
 }
 
 .nexus-category-box-info {
@@ -899,14 +903,125 @@
 
 .nexus-listings-section {
   padding: 6rem 0;
-  background: hsl(349, 100%, 55%); /* NEXUS PINK - Même que Categories */
+  background: hsl(16, 100%, 67%); /* NEXUS PINK - Même que Categories */
   position: relative;
+  overflow: hidden; /* Clip birds overflow */
+}
+
+/* === BIRDS ANIMATED BACKGROUND === */
+
+.nexus-listings-birds-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; /* Above pink background, below cards */
+  pointer-events: none; /* Don't block interactions */
+  opacity: 1.0; /* Full opacity - pure black */
+  overflow: hidden;
+}
+
+.nexus-listings-birds-bg svg {
+  position: absolute;
+  width: auto;
+  height: auto;
+  fill: #0d0d0d; /* Black birds on pink */
+}
+
+/* Individual bird paths with random animations */
+.bird-path {
+  position: absolute;
+  will-change: transform;
+  transform: translateZ(0); /* GPU acceleration */
+  backface-visibility: hidden;
+}
+
+/* Animation Keyframes */
+
+/* Horizontal glide animation */
+@keyframes bird-glide-horizontal {
+  0% {
+    transform: translateX(-10%) translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateX(10%) translateY(-5%) rotate(3deg);
+  }
+  100% {
+    transform: translateX(-10%) translateY(0) rotate(0deg);
+  }
+}
+
+/* Diagonal glide animation */
+@keyframes bird-glide-diagonal {
+  0% {
+    transform: translateX(-8%) translateY(-5%) rotate(-2deg);
+  }
+  50% {
+    transform: translateX(8%) translateY(5%) rotate(2deg);
+  }
+  100% {
+    transform: translateX(-8%) translateY(-5%) rotate(-2deg);
+  }
+}
+
+/* Vertical float animation */
+@keyframes bird-float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-3%) rotate(-2deg);
+  }
+  75% {
+    transform: translateY(3%) rotate(2deg);
+  }
+}
+
+/* Wing tilt animation */
+@keyframes bird-wing-tilt {
+  0%, 100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+/* Random animation patterns - 6 variations */
+.bird-path-1 {
+  animation: bird-glide-horizontal 10s ease-in-out infinite;
+}
+
+.bird-path-2 {
+  animation: bird-glide-diagonal 12s ease-in-out infinite 2s;
+}
+
+.bird-path-3 {
+  animation: bird-float 14s ease-in-out infinite 4s;
+}
+
+.bird-path-4 {
+  animation: bird-glide-horizontal 15s ease-in-out infinite 1s,
+             bird-wing-tilt 5s ease-in-out infinite;
+}
+
+.bird-path-5 {
+  animation: bird-glide-diagonal 13s ease-in-out infinite 3s,
+             bird-float 7s ease-in-out infinite;
+}
+
+.bird-path-6 {
+  animation: bird-glide-horizontal 11s ease-in-out infinite 5s,
+             bird-wing-tilt 6s ease-in-out infinite 1s;
 }
 
 .nexus-listings-container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 1.5rem;
+  position: relative;
+  z-index: 10; /* Above birds background */
 }
 
 .nexus-listings-header {
@@ -948,6 +1063,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
+  position: relative;
+  z-index: 10; /* Above birds background */
 }
 
 /* Empty State */
@@ -975,6 +1092,14 @@
   display: block;
 }
 
+.nexus-product-link:hover {
+  text-decoration: none;
+}
+
+.nexus-product-link:hover * {
+  text-decoration: none !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .nexus-listings-title {
@@ -993,6 +1118,35 @@
   .nexus-listings-empty-state {
     padding: 3rem 1rem;
   }
+
+  /* Birds - Mobile optimizations */
+  .nexus-listings-birds-bg {
+    opacity: 1.0; /* Full opacity on mobile too */
+  }
+
+  /* Slower animations on mobile */
+  .bird-path-1 { animation-duration: 15s; }
+  .bird-path-2 { animation-duration: 18s; }
+  .bird-path-3 { animation-duration: 21s; }
+  .bird-path-4 { animation-duration: 22.5s; }
+  .bird-path-5 { animation-duration: 19.5s; }
+  .bird-path-6 { animation-duration: 16.5s; }
+}
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .nexus-listings-birds-bg {
+    display: none; /* Hide animated birds if user prefers reduced motion */
+  }
+
+  .bird-path-1,
+  .bird-path-2,
+  .bird-path-3,
+  .bird-path-4,
+  .bird-path-5,
+  .bird-path-6 {
+    animation: none !important;
+  }
 }
 
 /* === PRODUCT CARDS (Original Nexus Design) === */
@@ -1000,8 +1154,8 @@
 .nexus-product-card {
   position: relative;
   overflow: hidden;
-  background: hsl(0, 0%, 8%);
-  border: 2px solid hsl(0, 0%, 20%);
+  background: transparent; /* Pas de fond - transparent */
+  border: 3px solid rgba(0, 0, 0, 0.3); /* Bordure noire comme header */
   transition: all 0.3s ease;
   cursor: pointer;
   display: flex;
@@ -1009,7 +1163,10 @@
 }
 
 .nexus-product-card:hover {
-  border-color: hsl(349, 100%, 55%);
+  border-color: rgba(0, 0, 0, 0.6); /* Bordure plus foncée au hover */
+  background: rgba(0, 0, 0, 0.05); /* Très léger fond au hover */
+  transform: translateY(-4px); /* Légère élévation au hover */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); /* Ombre pour effet élévation */
 }
 
 /* Product Image Section */
@@ -1017,14 +1174,14 @@
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1;
-  background: hsl(0, 0%, 15%);
+  background: transparent; /* Pas de fond - transparent */
   overflow: hidden;
 }
 
 .nexus-product-image-gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, hsla(349, 100%, 55%, 0.2) 0%, hsla(280, 60%, 50%, 0.2) 100%);
+  background: transparent; /* Pas de gradient - transparent */
 }
 
 .nexus-product-image-placeholder {
@@ -1035,7 +1192,7 @@
   justify-content: center;
   font-size: 6rem;
   font-weight: 900;
-  color: hsla(349, 100%, 55%, 0.1);
+  color: rgba(0, 0, 0, 0.2); /* Noir transparent pour placeholder */
   user-select: none;
 }
 
@@ -1054,8 +1211,9 @@
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: hsl(180, 100%, 50%);
-  color: hsl(0, 0%, 5%);
+  background: transparent; /* Fond transparent */
+  color: #0d0d0d; /* Texte noir */
+  border: 2px solid rgba(0, 0, 0, 0.3); /* Bordure noire */
   padding: 0.375rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 700;
@@ -1086,7 +1244,7 @@
   font-size: 1.25rem;
   font-weight: 900;
   letter-spacing: -0.025em;
-  color: hsl(0, 0%, 98%);
+  color: #0d0d0d; /* Noir sur fond rose */
   margin-bottom: 0.5rem;
   line-height: 1.2;
   overflow: hidden;
@@ -1099,7 +1257,7 @@
 .nexus-product-vendor {
   font-size: 0.875rem;
   font-weight: 700;
-  color: hsl(0, 0%, 65%);
+  color: rgba(0, 0, 0, 0.7); /* Noir 70% sur fond rose */
   text-transform: uppercase;
 }
 
@@ -1119,21 +1277,21 @@
 .nexus-product-star {
   width: 1rem;
   height: 1rem;
-  color: hsl(280, 60%, 50%);
-  fill: hsl(280, 60%, 50%);
+  color: #0d0d0d; /* Étoiles noires */
+  fill: #0d0d0d;
 }
 
 .nexus-product-star-empty {
   width: 1rem;
   height: 1rem;
-  color: hsl(0, 0%, 15%);
+  color: rgba(0, 0, 0, 0.3); /* Étoiles vides noires transparentes */
   fill: none;
 }
 
 .nexus-product-rating-text {
   font-size: 0.875rem;
   font-weight: 700;
-  color: hsl(0, 0%, 65%);
+  color: rgba(0, 0, 0, 0.7); /* Noir 70% */
 }
 
 /* Price and Action */
@@ -1152,38 +1310,39 @@
 .nexus-product-price {
   font-size: 1.5rem;
   font-weight: 900;
-  color: hsl(349, 100%, 55%);
+  color: #0d0d0d; /* Prix en noir */
   line-height: 1;
 }
 
 .nexus-product-price-label {
   font-size: 0.75rem;
   font-weight: 700;
-  color: hsl(0, 0%, 65%);
+  color: rgba(0, 0, 0, 0.7); /* Label noir 70% */
   margin-top: 0.25rem;
 }
 
 .nexus-product-view-btn {
-  background: hsl(349, 100%, 55%);
-  color: hsl(0, 0%, 5%);
-  padding: 0.5rem 1.5rem;
+  background: transparent; /* Pas de fond */
+  color: #0d0d0d; /* Texte noir */
+  padding: 0; /* Pas de padding */
   font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: 0.05em;
-  border: none;
+  border: none; /* Pas de bordure */
   cursor: pointer;
   transition: all 0.3s ease;
+  text-decoration: none; /* Pas de soulignement */
 }
 
 .nexus-product-view-btn:hover {
-  background: hsl(349, 100%, 65%);
-  transform: translateY(-2px);
+  opacity: 0.6; /* Légère transparence au hover */
+  transform: translateX(4px); /* Petit déplacement à droite */
 }
 
 /* Stats Banner */
 .nexus-stats-banner {
   padding: 6rem 0;
-  background: hsl(349, 100%, 55%);
+  background: hsl(16, 100%, 67%);
 }
 
 .nexus-stats-container {
@@ -1323,4 +1482,9 @@ body.light-mode .nexus-listings-title {
 
 body.light-mode .nexus-listings-subtitle {
   color: hsl(0, 0%, 10%); /* Subtitle noir */
+}
+
+/* Light mode - Birds background */
+body.light-mode .nexus-listings-birds-bg {
+  opacity: 1.0; /* Full opacity in light mode too */
 }

@@ -48,8 +48,8 @@
 }
 
 .nexus-btn-primary:hover {
-  background-color: hsl(349, 100%, 60%);
-  box-shadow: var(--nexus-glow-primary);
+  background-color: var(--nexus-primary-hover); /* #D95B00 - Corail 700 */
+  box-shadow: 0 0 20px rgba(217, 91, 0, 0.5);
 }
 
 .nexus-btn-secondary {
@@ -59,19 +59,20 @@
 }
 
 .nexus-btn-secondary:hover {
-  background-color: hsl(280, 60%, 55%);
-  box-shadow: var(--nexus-glow-secondary);
+  background-color: var(--nexus-corail-800); /* #A04100 */
+  box-shadow: 0 0 20px rgba(160, 65, 0, 0.5);
 }
 
 .nexus-btn-outline {
   background-color: transparent;
   color: var(--nexus-fg);
-  border-color: var(--nexus-border);
+  border-color: var(--nexus-border); /* Corail 800 */
 }
 
 .nexus-btn-outline:hover {
-  background-color: var(--nexus-muted);
-  border-color: var(--nexus-fg);
+  background-color: var(--nexus-corail-950); /* #391200 */
+  border-color: var(--nexus-primary); /* Corail 500 */
+  color: var(--nexus-corail-50); /* #FFEDE9 */
 }
 
 .nexus-btn-ghost {

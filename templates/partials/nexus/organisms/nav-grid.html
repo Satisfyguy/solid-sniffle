@@ -31,10 +31,38 @@
   {# ========== CARRÉ 4: AUTH (divisé en 2) ========== #}
   <div class="nexus-grid-box nexus-grid-auth">
 
-    {# Zone gauche: Login #}
+    {# Zone gauche: Login / User Menu #}
     <div class="nexus-auth-half">
       {% if logged_in %}
-        <span class="nexus-auth-icon">{{ username[0] | upper }}</span>
+        <div class="nexus-user-menu-container">
+          <button class="nexus-auth-icon nexus-user-menu-trigger" id="nexus-user-menu-trigger">
+            {{ username | truncate(length=1, end="") | upper }}
+          </button>
+          <div class="nexus-user-dropdown" id="nexus-user-dropdown">
+            <a href="/settings" class="nexus-dropdown-item" hx-boost="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m5.2-13.8l-4.2 4.2m0 0L8.8 19.2m0-8.4l4.2 4.2m0 0l4.2-4.2"/>
+              </svg>
+              <span>SETTINGS</span>
+            </a>
+            <a href="/orders" class="nexus-dropdown-item" hx-boost="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/>
+              </svg>
+              <span>ORDERS</span>
+            </a>
+            {% if role == "vendor" %}
+            <a href="/listings/create" class="nexus-dropdown-item" hx-boost="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              <span>NEW LISTING</span>
+            </a>
+            {% endif %}
+            <div class="nexus-dropdown-divider"></div>
+            <span class="nexus-dropdown-username">{{ username }}</span>
+          </div>
+        </div>
       {% else %}
         <a href="/login" class="nexus-auth-icon" hx-boost="true">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
