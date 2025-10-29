@@ -26,9 +26,25 @@
     <script src="/static/js/htmx.min.js"></script>
     <!-- HTMX JSON encoding extension for API requests -->
     <script src="/static/js/json-enc.js"></script>
-    <!-- Debug mode flag (set to false for production) -->
+    <!-- Debug Configuration -->
     <script>
-      window.NEXUS_DEBUG = false; // Set to true to enable debug logging
+    // Global debug flag - enable via URL (?debug=1) or localStorage
+    window.NEXUS_DEBUG = (
+        new URLSearchParams(window.location.search).get('debug') === '1' ||
+        localStorage.getItem('nexus_debug') === '1'
+    );
+
+    // Save debug state if URL parameter is set
+    if (new URLSearchParams(window.location.search).get('debug') === '1') {
+        localStorage.setItem('nexus_debug', '1');
+    }
+
+    // Helper to disable debug mode
+    window.disableDebug = function() {
+        localStorage.removeItem('nexus_debug');
+        window.NEXUS_DEBUG = false;
+        console.log('[NEXUS] Debug mode disabled. Reload to apply.');
+    };
     </script>
     {% block head_extra %}{% endblock %}
 </head>
