@@ -86,100 +86,90 @@
   </div>
 </section>
 
-{# Browse Categories Section #}
-<section id="categories" style="padding: 6rem 0; background: hsl(0, 0%, 5%);">
-  <div style="max-width: 1400px; margin: 0 auto; padding: 0 1.5rem;">
-    <div style="margin-bottom: 4rem; text-align: center;">
-      <h2 class="nexus-section-title-huge">
-        BROWSE CATEGORIES
-      </h2>
-      <p class="nexus-section-subtitle-bold">
-        SECURE • ANONYMOUS • UNTRACEABLE
-      </p>
+{# Browse Categories Section - NEXUS CHARTE #}
+<section id="categories" class="nexus-categories-section">
+  <div class="nexus-categories-container">
+    <div class="nexus-categories-header">
+      <h2 class="nexus-categories-title">BROWSE CATEGORIES</h2>
+      <p class="nexus-categories-subtitle">SECURE • ANONYMOUS • UNTRACEABLE</p>
     </div>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+    <div class="nexus-categories-grid">
       <!-- Digital Goods -->
-      <a href="/categories/digital" style="text-decoration: none;" hx-boost="true">
-        <div class="nexus-category-card">
-          <div class="nexus-category-card-header">
-            <svg class="nexus-category-card-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-            <div class="nexus-category-card-count">
-              <div class="nexus-category-card-count-value">342</div>
-              <div class="nexus-category-card-count-label">ITEMS</div>
-            </div>
-          </div>
-          <h3 class="nexus-category-card-title">DIGITAL GOODS</h3>
+      <a href="/categories/digital" class="nexus-category-box" hx-boost="true">
+        <div class="nexus-category-box-icon">
+          <svg class="nexus-icon nexus-icon-xl">
+            <use href="/static/icons/nexus-icons.svg#icon-grid"></use>
+          </svg>
+        </div>
+        <div class="nexus-category-box-info">
+          <h3 class="nexus-category-box-title">DIGITAL GOODS</h3>
+          <div class="nexus-category-box-count">342 ITEMS</div>
         </div>
       </a>
 
       <!-- Electronics -->
-      <a href="/categories/electronics" style="text-decoration: none;" hx-boost="true">
-        <div class="nexus-category-card">
-          <div class="nexus-category-card-header">
-            <svg class="nexus-category-card-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
-            <div class="nexus-category-card-count">
-              <div class="nexus-category-card-count-value">156</div>
-              <div class="nexus-category-card-count-label">ITEMS</div>
-            </div>
-          </div>
-          <h3 class="nexus-category-card-title">ELECTRONICS</h3>
+      <a href="/categories/electronics" class="nexus-category-box" hx-boost="true">
+        <div class="nexus-category-box-icon">
+          <svg class="nexus-icon nexus-icon-xl">
+            <use href="/static/icons/nexus-icons.svg#icon-tag"></use>
+          </svg>
+        </div>
+        <div class="nexus-category-box-info">
+          <h3 class="nexus-category-box-title">ELECTRONICS</h3>
+          <div class="nexus-category-box-count">156 ITEMS</div>
         </div>
       </a>
 
       <!-- Pharmaceuticals -->
-      <a href="/categories/pharmaceuticals" style="text-decoration: none;" hx-boost="true">
-        <div class="nexus-category-card">
-          <div class="nexus-category-card-header">
-            <svg class="nexus-category-card-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>
-            <div class="nexus-category-card-count">
-              <div class="nexus-category-card-count-value">203</div>
-              <div class="nexus-category-card-count-label">ITEMS</div>
-            </div>
-          </div>
-          <h3 class="nexus-category-card-title">PHARMACEUTICALS</h3>
+      <a href="/categories/pharmaceuticals" class="nexus-category-box" hx-boost="true">
+        <div class="nexus-category-box-icon">
+          <svg class="nexus-icon nexus-icon-xl">
+            <use href="/static/icons/nexus-icons.svg#icon-shield"></use>
+          </svg>
+        </div>
+        <div class="nexus-category-box-info">
+          <h3 class="nexus-category-box-title">PHARMACEUTICALS</h3>
+          <div class="nexus-category-box-count">203 ITEMS</div>
         </div>
       </a>
 
       <!-- Documents -->
-      <a href="/categories/documents" style="text-decoration: none;" hx-boost="true">
-        <div class="nexus-category-card">
-          <div class="nexus-category-card-header">
-            <svg class="nexus-category-card-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            <div class="nexus-category-card-count">
-              <div class="nexus-category-card-count-value">89</div>
-              <div class="nexus-category-card-count-label">ITEMS</div>
-            </div>
-          </div>
-          <h3 class="nexus-category-card-title">DOCUMENTS</h3>
+      <a href="/categories/documents" class="nexus-category-box" hx-boost="true">
+        <div class="nexus-category-box-icon">
+          <svg class="nexus-icon nexus-icon-xl">
+            <use href="/static/icons/nexus-icons.svg#icon-file"></use>
+          </svg>
+        </div>
+        <div class="nexus-category-box-info">
+          <h3 class="nexus-category-box-title">DOCUMENTS</h3>
+          <div class="nexus-category-box-count">89 ITEMS</div>
         </div>
       </a>
 
       <!-- Financial -->
-      <a href="/categories/financial" style="text-decoration: none;" hx-boost="true">
-        <div class="nexus-category-card">
-          <div class="nexus-category-card-header">
-            <svg class="nexus-category-card-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-            <div class="nexus-category-card-count">
-              <div class="nexus-category-card-count-value">127</div>
-              <div class="nexus-category-card-count-label">ITEMS</div>
-            </div>
-          </div>
-          <h3 class="nexus-category-card-title">FINANCIAL</h3>
+      <a href="/categories/financial" class="nexus-category-box" hx-boost="true">
+        <div class="nexus-category-box-icon">
+          <svg class="nexus-icon nexus-icon-xl">
+            <use href="/static/icons/nexus-icons.svg#icon-key"></use>
+          </svg>
+        </div>
+        <div class="nexus-category-box-info">
+          <h3 class="nexus-category-box-title">FINANCIAL</h3>
+          <div class="nexus-category-box-count">127 ITEMS</div>
         </div>
       </a>
 
       <!-- Security -->
-      <a href="/categories/security" style="text-decoration: none;" hx-boost="true">
-        <div class="nexus-category-card">
-          <div class="nexus-category-card-header">
-            <svg class="nexus-category-card-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <div class="nexus-category-card-count">
-              <div class="nexus-category-card-count-value">94</div>
-              <div class="nexus-category-card-count-label">ITEMS</div>
-            </div>
-          </div>
-          <h3 class="nexus-category-card-title">SECURITY</h3>
+      <a href="/categories/security" class="nexus-category-box" hx-boost="true">
+        <div class="nexus-category-box-icon">
+          <svg class="nexus-icon nexus-icon-xl">
+            <use href="/static/icons/nexus-icons.svg#icon-lock"></use>
+          </svg>
+        </div>
+        <div class="nexus-category-box-info">
+          <h3 class="nexus-category-box-title">SECURITY</h3>
+          <div class="nexus-category-box-count">94 ITEMS</div>
         </div>
       </a>
     </div>

@@ -10,7 +10,7 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  background: transparent;
+  background: hsl(349, 100%, 55%); /* NEXUS PINK - fond uni sans ondulations */
   display: grid;
   grid-template-columns: 80px 1fr 1fr 80px 1fr;
   height: 80px;
@@ -239,6 +239,7 @@ body.light-mode .nexus-auth-icon {
 }
 
 body.light-mode .nexus-grid-header {
+  background: hsl(30, 30%, 92%); /* Fond beige clair en light mode */
   border-bottom-color: rgba(0, 0, 0, 0.35);
 }
 
