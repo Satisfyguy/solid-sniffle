@@ -36,7 +36,9 @@
             hx-ext="json-enc"
             hx-target="#release-result"
             hx-swap="innerHTML"
-            hx-indicator="#release-spinner">
+            hx-indicator="#release-spinner"
+            hx-timeout="30000"
+            hx-disabled-elt="find button[type='submit']">
 
         {% if csrf_token %}
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
