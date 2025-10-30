@@ -1,5 +1,7 @@
 /* ==========================================
-   NEXUS GRID HEADER - THEME TOGGLE
+   NEXUS BRUTALIST - THEME TOGGLE
+   Light mode = default, Dark mode = toggle
+   Circle texture swaps via CSS (brutalist-textures.css)
    ========================================== */
 
 (function() {
@@ -12,22 +14,20 @@
       return;
     }
 
-    // Restore saved theme
-    const savedTheme = localStorage.getItem('nexus-theme') || 'dark';
-    if (savedTheme === 'light') {
-      document.body.classList.add('light-mode');
-      toggle.classList.add('light');
+    // Restore saved theme (default: light)
+    const savedTheme = localStorage.getItem('nexus-theme') || 'light';
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark-mode');
     }
 
     // Toggle on click
     toggle.addEventListener('click', function() {
-      const isLight = document.body.classList.toggle('light-mode');
-      toggle.classList.toggle('light');
-      localStorage.setItem('nexus-theme', isLight ? 'light' : 'dark');
-      console.log('🎨 Theme switched to:', isLight ? 'light' : 'dark');
+      const isDark = document.body.classList.toggle('dark-mode');
+      localStorage.setItem('nexus-theme', isDark ? 'dark' : 'light');
+      console.log('🎨 Theme switched to:', isDark ? 'dark' : 'light');
     });
 
-    console.log('✅ Theme toggle initialized');
+    console.log('✅ Brutalist theme toggle initialized (default: light)');
   }
 
   if (document.readyState === 'loading') {

@@ -673,4 +673,20 @@ impl EscrowOrchestrator {
 
         Ok(tx_hash)
     }
+
+    /// DEV ONLY: Initialize mock multisig wallets for testing
+    ///
+    /// This method creates mock wallets in the WalletManager to allow
+    /// testing the release/refund flow without real multisig setup.
+    pub async fn dev_initialize_mock_wallets(&self, escrow_id: Uuid) -> Result<()> {
+        info!("DEV: Initializing mock multisig wallets for escrow {}", escrow_id);
+
+        let mut wallet_manager = self.wallet_manager.lock().await;
+
+        // Call the dev method on wallet_manager to create mock wallets
+        wallet_manager.dev_create_mock_multisig(escrow_id).await?;
+
+        info!("DEV: Mock wallets created for escrow {}", escrow_id);
+        Ok(())
+    }
 }
