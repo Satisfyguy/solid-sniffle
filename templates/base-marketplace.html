@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NEXUS - Secure, Private Marketplace powered by Monero and 2/3 Multisig Escrow">
+    <meta name="robots" content="noindex, nofollow">
+
+    <title>{% block title %}NEXUS Marketplace{% endblock %}</title>
+
+    <!-- Design System CSS -->
+    <link rel="stylesheet" href="/static/css/marketplace-variables.css">
+    <link rel="stylesheet" href="/static/css/marketplace-base.css">
+    <link rel="stylesheet" href="/static/css/marketplace-components.css">
+
+    <!-- HTMX (locally served, Tor-safe) -->
+    <script src="/static/js/htmx.min.js"></script>
+
+    <!-- Lucide Icons (inline SVG, no CDN) -->
+    <style>
+        .lucide {
+            width: 1.5rem;
+            height: 1.5rem;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+
+        .lucide-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .lucide-lg {
+            width: 2rem;
+            height: 2rem;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container header-container">
+            <!-- Logo -->
+            <div class="header-logo">
+                <a href="/" style="color: inherit; text-decoration: none;">NEXUS</a>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="header-nav">
+                <a href="/">Home</a>
+                <a href="/listings">Listings</a>
+                {% if logged_in and role == "vendor" %}
+                <a href="/listings/create">Sell</a>
+                {% endif %}
+                {% if logged_in %}
+                <a href="/orders">Orders</a>
+                {% endif %}
+            </nav>
+
+            <!-- Actions -->
+            <div class="header-actions">
+                {% if logged_in %}
+                    <!-- User menu -->
+                    <div class="relative">
+                        <button class="btn btn-ghost btn-icon" id="user-menu-btn">
+                            <svg class="lucide" viewBox="0 0 24 24">
+                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </button>
+                    </div>
+                {% else %}
+                    <!-- Login button -->
+                    <a href="/auth/login" class="btn btn-primary btn-sm">
+                        <svg class="lucide lucide-sm" viewBox="0 0 24 24">
+                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        <span class="hidden md:inline">Login</span>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-logo">NEXUS</div>
+            <p class="footer-tagline">Your Market. Your Keys. Your Privacy.</p>
+            <p class="footer-copyright">© 2025 NEXUS. Built for financial sovereignty.</p>
+        </div>
+    </footer>
+
+    <!-- HTMX Config -->
+    <script>
+        // HTMX configuration for Tor-safe navigation
+        document.body.addEventListener('htmx:configRequest', function(evt) {
+            evt.detail.headers['X-Requested-With'] = 'XMLHttpRequest';
+        });
+
+        // Dark mode toggle (stored in localStorage)
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+
+        // User menu toggle (simple implementation)
+        const userMenuBtn = document.getElementById('user-menu-btn');
+        if (userMenuBtn) {
+            userMenuBtn.addEventListener('click', function() {
+                alert('User menu not yet implemented');
+            });
+        }
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
