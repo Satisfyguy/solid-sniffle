@@ -220,8 +220,7 @@
                 <div class="product-card-image">
                     {% if listing.first_image_cid %}
                         <img src="http://127.0.0.1:8081/ipfs/{{ listing.first_image_cid }}"
-                             alt="{{ listing.title }}"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                             alt="{{ listing.title }}">
                         <div style="display: none; width: 100%; height: 100%; background: linear-gradient(135deg, #E0E0E0, #BDBDBD); align-items: center; justify-content: center; font-size: 4rem; color: #757575;">?</div>
                     {% else %}
                         <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #E0E0E0, #BDBDBD); display: flex; align-items: center; justify-content: center; font-size: 4rem; color: #757575;">?</div>
@@ -298,4 +297,8 @@
     </div>
 </section>
 
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/listings.js"></script>
 {% endblock %}

@@ -1,229 +1,363 @@
-{% extends "base-nexus.html" %}
-{% import "partials/nexus-macros.html" as nx %}
+{% extends "base-marketplace.html" %}
 
-{% block title %}{{ listing.title }} - Monero Marketplace{% endblock %}
+{% block title %}{{ listing.title }} - NEXUS Marketplace{% endblock %}
 
 {% block content %}
-<div class="container">
-    <!-- Breadcrumb Navigation -->
-    <nav class="nexus-breadcrumb" aria-label="Breadcrumb">
-        <ol class="nexus-breadcrumb-list">
-            <li class="nexus-breadcrumb-item">
-                <a href="/" class="nexus-breadcrumb-link" hx-boost="true">Home</a>
-                <span class="nexus-breadcrumb-separator" aria-hidden="true">/</span>
-            </li>
-            <li class="nexus-breadcrumb-item">
-                <a href="/listings" class="nexus-breadcrumb-link" hx-boost="true">Listings</a>
-                <span class="nexus-breadcrumb-separator" aria-hidden="true">/</span>
-            </li>
-            <li class="nexus-breadcrumb-item nexus-breadcrumb-item-current">
-                <span class="nexus-breadcrumb-current" aria-current="page">{{ listing.title }}</span>
-            </li>
-        </ol>
-    </nav>
 
-    <div style="margin-top: 2rem; max-width: 1000px; margin-left: auto; margin-right: auto;">
-        <!-- Listing Card -->
-        <div class="nexus-card nexus-card-elevated nexus-card-glass">
-            <!-- Badge -->
-            <div class="nexus-card-badge">
-                {{ nx::badge(text=listing.status | upper, variant="primary") }}
-            </div>
+<!-- Product Detail Container -->
+<div class="container py-8">
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-separator">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </span>
+    <a href="/listings">Listings</a>
+    <span class="breadcrumb-separator">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="9 18 15 12 9 6"></polyline>
+      </svg>
+    </span>
+    <span class="breadcrumb-current">{{ listing.title }}</span>
+  </nav>
 
-            <!-- Header -->
-            <div class="nexus-card-header" style="border-bottom: 1px solid #2a2a2a; padding-bottom: 20px;">
-                <h3 class="nexus-card-title" style="font-size: 24px; margin-bottom: 10px;">
-                    {{ listing.title | upper }}
-                </h3>
-                <p class="nexus-card-subtitle" style="display: flex; gap: 20px; font-size: 11px; color: #888; letter-spacing: 1px; text-transform: uppercase;">
-                    <span>VENDOR: {{ vendor.username | upper }}</span>
-                    <span class="separator">—</span>
-                    <span>STOCK: {{ listing.stock }}</span>
-                </p>
-            </div>
+  <!-- Product Detail Layout (60/40) -->
+  <div class="product-detail-layout">
+    <!-- Left Column: Images + Tabs (60%) -->
+    <div class="space-y-6">
+      <!-- Main Image -->
+      {% if images and images | length > 0 %}
+      <div class="product-detail-image-main" onclick="openImageModal()">
+        <img
+          id="main-image"
+          src="/api/listings/{{ listing.id }}/images/{{ images[0] }}"
+          alt="{{ listing.title }}"
+          loading="lazy"
+        />
+      </div>
 
-            <!-- Content -->
-            <div class="nexus-card-content">
-                <!-- Images -->
-                {% if images %}
-                <div style="margin-bottom: 40px;">
-                    <h2 style="font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #aaa; margin-bottom: 15px;">
-                        — PRODUCT IMAGES
-                    </h2>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
-                        {% for image_cid in images %}
-                        <div style="border: 1px solid #2a2a2a; border-radius: 8px; overflow: hidden; background: #1a1a1a;">
-                            <img
-                                src="/api/listings/{{ listing.id }}/images/{{ image_cid }}"
-                                alt="Product image"
-                                style="width: 100%; height: 200px; object-fit: cover; cursor: pointer;"
-                                onclick="openImageModal(this.src)"
-                            >
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Description -->
-                <div style="margin-bottom: 40px;">
-                    <h2 style="font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #aaa; margin-bottom: 15px;">
-                        — DESCRIPTION
-                    </h2>
-                    <p style="color: #f5f5f5; line-height: 1.8; font-size: 13px;">
-                        {{ listing.description }}
-                    </p>
-                </div>
-
-                <!-- Price -->
-                <div style="margin-bottom: 40px; padding: 20px; border: 1px solid #2a2a2a; background-color: #1a1a1a; border-radius: 8px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <span style="display: block; font-size: 10px; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px;">
-                                UNIT PRICE
-                            </span>
-                            <span style="font-size: 28px; font-weight: bold; color: #f5f5f5; letter-spacing: 2px;">
-                                {{ listing.price_xmr }}
-                            </span>
-                            <span style="font-size: 12px; color: #888; margin-left: 8px;">XMR</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Order form (buyer only) -->
-                {% if logged_in and role == "buyer" and listing.status == "active" and listing.stock > 0 %}
-                <div style="border-top: 1px solid #2a2a2a; padding-top: 40px; margin-top: 40px;">
-                    <h2 style="font-size: 14px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px;">
-                        — PLACE ORDER
-                    </h2>
-
-                    <form id="order-form" data-unit-price="{{ listing.price_xmr }}">
-                        <input type="hidden" name="listing_id" value="{{ listing.id }}">
-
-                        <div class="form-group">
-                            <label for="quantity">QUANTITY</label>
-                            <input
-                                type="number"
-                                id="quantity"
-                                name="quantity"
-                                min="1"
-                                max="{{ listing.stock }}"
-                                value="1"
-                                required
-                            >
-                            <small>AVAILABLE: {{ listing.stock }} UNITS</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="shipping_address">SHIPPING ADDRESS <span style="color: #ff1a5c;">*</span></label>
-                            <textarea
-                                id="shipping_address"
-                                name="shipping_address"
-                                rows="3"
-                                minlength="10"
-                                maxlength="500"
-                                placeholder="Enter your full delivery address..."
-                                required
-                                style="width: 100%; padding: 10px; background-color: #1a1a1a; border: 1px solid #2a2a2a; color: #f5f5f5; border-radius: 4px; font-family: inherit; font-size: 14px; resize: vertical;"
-                            ></textarea>
-                            <small style="color: #888; font-size: 11px;">🔒 ENCRYPTED AND VISIBLE ONLY TO YOU AND THE VENDOR</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="shipping_notes">DELIVERY INSTRUCTIONS (OPTIONAL)</label>
-                            <textarea
-                                id="shipping_notes"
-                                name="shipping_notes"
-                                rows="2"
-                                maxlength="200"
-                                placeholder="e.g., 'Ring doorbell', 'Leave with neighbor'..."
-                                style="width: 100%; padding: 10px; background-color: #1a1a1a; border: 1px solid #2a2a2a; color: #f5f5f5; border-radius: 4px; font-family: inherit; font-size: 14px; resize: vertical;"
-                            ></textarea>
-                            <small style="color: #888; font-size: 11px;">SPECIAL INSTRUCTIONS FOR THE COURIER (MAX 200 CHARS)</small>
-                        </div>
-
-                        <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #2a2a2a; background-color: #1a1a1a; border-radius: 8px;">
-                            <span style="font-size: 10px; color: #888; letter-spacing: 1px; text-transform: uppercase;">
-                                TOTAL PRICE
-                            </span>
-                            <div style="font-size: 18px; color: #f5f5f5; margin-top: 5px;">
-                                <span id="total-price">{{ price_display | round(precision=12) }} XMR</span>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">
-                            CREATE ESCROW ORDER →
-                        </button>
-                    </form>
-
-                    <div id="order-result" style="margin-top: 20px;"></div>
-                </div>
-                {% endif %}
-
-                <!-- Vendor actions -->
-                {% if logged_in and role == "vendor" and listing.vendor_id == user_id %}
-                <div style="border-top: 1px solid #2a2a2a; padding-top: 40px; margin-top: 40px; display: flex; gap: 15px;">
-                    <a href="/listings/{{ listing.id }}/edit" class="btn btn-secondary" style="flex: 1;">
-                        EDIT LISTING
-                    </a>
-                    <button
-                        hx-delete="/api/listings/{{ listing.id }}"
-                        hx-confirm="DELETE THIS LISTING? THIS CANNOT BE UNDONE."
-                        hx-target="body"
-                        hx-indicator="#delete-spinner"
-                        hx-disabled-elt="this"
-                        class="btn btn-danger"
-                        style="flex: 1;"
-                    >
-                        <span>DELETE</span>
-                        <span id="delete-spinner" class="htmx-indicator" style="margin-left: 8px;">
-                            <svg class="spinner" width="16" height="16" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-                                <circle class="path" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" cx="25" cy="25" r="20"></circle>
-                            </svg>
-                        </span>
-                    </button>
-                </div>
-                {% endif %}
-            </div>
+      <!-- Thumbnails -->
+      {% if images | length > 1 %}
+      <div class="product-detail-thumbnails">
+        {% for image_cid in images %}
+        <div
+          class="product-detail-thumbnail {% if loop.index0 == 0 %}active{% endif %}"
+          data-image-cid="{{ image_cid }}"
+          onclick="changeMainImage(this, event)"
+        >
+          <img
+            src="/api/listings/{{ listing.id }}/images/{{ image_cid }}"
+            alt="{{ listing.title }} - Image {{ loop.index }}"
+            loading="lazy"
+          />
         </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% else %}
+      <!-- No Images Placeholder -->
+      <div class="product-detail-image-main">
+        <div class="product-detail-image-placeholder">
+          <svg class="lucide" viewBox="0 0 24 24" style="width: 4rem; height: 4rem;">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+            <circle cx="9" cy="9" r="2"/>
+            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+          </svg>
+          <span>No images available</span>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Tabs: Description / Features / Reviews -->
+      <div class="tabs-container">
+        <div class="tabs-nav">
+          <button class="tab-button active" onclick="switchTab(event, 'description')">Description</button>
+          <button class="tab-button" onclick="switchTab(event, 'details')">Details</button>
+        </div>
+
+        <!-- Tab Content: Description -->
+        <div id="tab-description" class="tab-content active">
+          <div class="text-base" style="color: hsl(var(--muted-foreground)); line-height: 1.7;">
+            {{ listing.description | safe }}
+          </div>
+        </div>
+
+        <!-- Tab Content: Details -->
+        <div id="tab-details" class="tab-content">
+          <div class="space-y-4" style="color: hsl(var(--muted-foreground)); font-size: 0.875rem;">
+            <div style="display: grid; grid-template-columns: 140px 1fr; gap: 0.5rem;">
+              <strong style="color: hsl(var(--foreground));">Category:</strong>
+              <span class="category-badge-yellow">{{ listing.category | upper }}</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 140px 1fr; gap: 0.5rem;">
+              <strong style="color: hsl(var(--foreground));">Listing ID:</strong>
+              <span>{{ listing.id }}</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 140px 1fr; gap: 0.5rem;">
+              <strong style="color: hsl(var(--foreground));">Status:</strong>
+              <span class="badge badge-accent">{{ listing.status | upper }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Related Products -->
+      {% if related_products and related_products | length > 0 %}
+      <div class="related-products-section">
+        <h2 class="related-products-title">Related Products</h2>
+        <div class="related-products-grid">
+          {% for product in related_products %}
+          <a href="/listings/{{ product.id }}" class="product-card">
+            <div class="product-card-image">
+              {% if product.images_ipfs_cids %}
+              {% set product_images = product.images_ipfs_cids | from_json %}
+              {% if product_images and product_images | length > 0 %}
+              <img src="/api/listings/{{ product.id }}/images/{{ product_images[0] }}" alt="{{ product.title }}" />
+              {% endif %}
+              {% endif %}
+            </div>
+            <div class="product-card-content">
+              <div class="product-card-category">{{ product.category | upper }}</div>
+              <h3 class="product-card-title">{{ product.title }}</h3>
+              <div class="product-card-footer">
+                <div class="product-card-price">
+                  <span class="product-card-price-value">{{ (product.price_xmr / 1000000000000) | round(precision=4) }} XMR</span>
+                  <span class="product-card-price-currency">Monero</span>
+                </div>
+              </div>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
     </div>
+
+    <!-- Right Column: Product Info Card (40%) -->
+    <div>
+      <div class="card product-info-sticky" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
+        <!-- Category Badge -->
+        <span class="category-badge-yellow">{{ listing.category | upper }}</span>
+
+        <!-- Title -->
+        <h1 class="text-3xl font-bold" style="color: hsl(var(--foreground)); margin: 0;">
+          {{ listing.title }}
+        </h1>
+
+        <!-- Price with USD Conversion -->
+        <div class="price-conversion">
+          <span class="price-primary">{{ price_display | round(precision=4) }} XMR</span>
+          {% if price_usd %}
+          <span class="price-secondary">Approximately ${{ price_usd | round }} USD</span>
+          {% endif %}
+        </div>
+
+        <!-- Vendor Card -->
+        {% if vendor %}
+        <a href="/vendor/{{ vendor.id }}" class="vendor-card">
+          <div class="vendor-card-avatar">
+            <svg class="lucide" viewBox="0 0 24 24">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div class="vendor-card-info">
+            <div class="vendor-card-label">Sold By</div>
+            <div class="vendor-card-name">{{ vendor.username }}</div>
+          </div>
+          <div class="vendor-card-arrow">
+            <svg class="lucide-sm" viewBox="0 0 24 24">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </div>
+        </a>
+        {% endif %}
+
+        <!-- Trust Badges -->
+        <div class="trust-badges-inline">
+          <div class="trust-badge-inline">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>Secure Escrow</span>
+          </div>
+          <div class="trust-badge-inline">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <span>Monero Only</span>
+          </div>
+        </div>
+
+        <!-- Quantity Selector -->
+        <div>
+          <label class="text-sm font-medium" style="display: block; margin-bottom: 0.5rem; color: hsl(var(--foreground));">
+            Quantity
+          </label>
+          <div class="quantity-stepper">
+            <button
+              type="button"
+              class="quantity-stepper-btn"
+              onclick="decreaseQuantity()"
+              aria-label="Decrease quantity"
+            >
+              <svg class="lucide-sm" viewBox="0 0 24 24">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+            <span id="quantity-display" class="quantity-stepper-value">1</span>
+            <button
+              type="button"
+              class="quantity-stepper-btn"
+              onclick="increaseQuantity()"
+              aria-label="Increase quantity"
+            >
+              <svg class="lucide-sm" viewBox="0 0 24 24">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Add to Cart Button -->
+        <button
+          type="button"
+          class="btn btn-primary w-full btn-lg"
+          onclick="showShippingForm()"
+        >
+          <svg class="lucide-sm" viewBox="0 0 24 24">
+            <circle cx="8" cy="21" r="1"/>
+            <circle cx="19" cy="21" r="1"/>
+            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+          </svg>
+          Add to Cart
+        </button>
+
+        <!-- Shipping Form (Initially Hidden) -->
+        <div id="shipping-form" style="display: none;">
+          <form hx-post="/api/cart" hx-swap="outerHTML" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+            <input type="hidden" name="listing_id" value="{{ listing.id }}" />
+            <input type="hidden" id="quantity-input" name="quantity" value="1" />
+
+            <div class="space-y-2">
+              <label for="shipping_name" class="text-sm font-medium">Recipient Name</label>
+              <input
+                id="shipping_name"
+                name="shipping_name"
+                type="text"
+                placeholder="Full name"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                required
+              />
+            </div>
+
+            <div class="space-y-2">
+              <label for="shipping_address" class="text-sm font-medium">Shipping Address</label>
+              <textarea
+                id="shipping_address"
+                name="shipping_address"
+                rows="3"
+                placeholder="Street, City, Postal Code, Country"
+                class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                required
+              ></textarea>
+            </div>
+
+            <div class="flex gap-2">
+              <button type="submit" class="btn btn-primary flex-1">
+                Confirm & Add to Cart
+              </button>
+              <button type="button" class="btn btn-outline" onclick="hideShippingForm()">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
-<script src="/static/js/show-listing.js" defer></script>
+<!-- Image Modal (Fullscreen) -->
+<div id="image-modal" class="image-modal hidden" onclick="closeImageModal()">
+  <img id="modal-image" src="" alt="Full size product image" />
+</div>
+
+<!-- JavaScript for Image Gallery & Quantity -->
 <script>
-// Image modal functionality
-function openImageModal(src) {
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.9);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        cursor: pointer;
-    `;
+  let currentQuantity = 1;
 
-    const img = document.createElement('img');
-    img.src = src;
-    img.style.cssText = `
-        max-width: 90%;
-        max-height: 90%;
-        object-fit: contain;
-    `;
+  // Change main image when clicking thumbnail
+  function changeMainImage(thumbnail, event) {
+    event.preventDefault();
+    const imageCid = thumbnail.getAttribute('data-image-cid');
+    const listingId = '{{ listing.id }}';
+    const mainImage = document.getElementById('main-image');
 
-    modal.appendChild(img);
-    document.body.appendChild(modal);
+    mainImage.src = `/api/listings/${listingId}/images/${imageCid}`;
 
-    modal.addEventListener('click', () => {
-        document.body.removeChild(modal);
-    });
-}
+    // Update active thumbnail
+    document.querySelectorAll('.product-detail-thumbnail').forEach(t => t.classList.remove('active'));
+    thumbnail.classList.add('active');
+  }
+
+  // Open image in fullscreen modal
+  function openImageModal() {
+    const mainImage = document.getElementById('main-image');
+    const modal = document.getElementById('image-modal');
+    const modalImage = document.getElementById('modal-image');
+
+    modalImage.src = mainImage.src;
+    modal.classList.remove('hidden');
+  }
+
+  // Close fullscreen modal
+  function closeImageModal() {
+    document.getElementById('image-modal').classList.add('hidden');
+  }
+
+  // Quantity controls
+  function increaseQuantity() {
+    currentQuantity++;
+    updateQuantityDisplay();
+  }
+
+  function decreaseQuantity() {
+    if (currentQuantity > 1) {
+      currentQuantity--;
+      updateQuantityDisplay();
+    }
+  }
+
+  function updateQuantityDisplay() {
+    document.getElementById('quantity-display').textContent = currentQuantity;
+    document.getElementById('quantity-input').value = currentQuantity;
+  }
+
+  // Show/hide shipping form
+  function showShippingForm() {
+    document.getElementById('shipping-form').style.display = 'block';
+  }
+
+  function hideShippingForm() {
+    document.getElementById('shipping-form').style.display = 'none';
+  }
+
+  // Tab switching
+  function switchTab(event, tabId) {
+    // Remove active from all buttons and contents
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+    // Add active to clicked button and corresponding content
+    event.target.classList.add('active');
+    document.getElementById(`tab-${tabId}`).classList.add('active');
+  }
 </script>
+
 {% endblock %}

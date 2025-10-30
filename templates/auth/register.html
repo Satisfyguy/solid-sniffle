@@ -1,262 +1,236 @@
-{% extends "base-nexus.html" %}
-{% import "partials/nexus-macros.html" as nx %}
+{% extends "base-marketplace.html" %}
 
-{% block title %}REGISTER — NEXUS{% endblock %}
+{% block title %}Login - NEXUS{% endblock %}
 
 {% block content %}
 
-{# Animated Background Orbs #}
-<div class="nexus-hero-bg" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;">
-  <div class="nexus-hero-bg-orb nexus-hero-bg-orb-1"></div>
-  <div class="nexus-hero-bg-orb nexus-hero-bg-orb-2"></div>
-  <div class="nexus-hero-bg-orb nexus-hero-bg-orb-3"></div>
-</div>
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
+    <div style="width: 100%; max-width: 480px;">
+        <!-- Logo -->
+        <a href="/" class="flex items-center justify-center gap-2 mb-8 group">
+            <svg class="lucide" viewBox="0 0 24 24" style="width: 32px; height: 32px; color: hsl(var(--primary));" class="group-hover:scale-110 transition-transform">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+            </svg>
+            <span style="font-size: 1.875rem; font-weight: 700;">NEXUS</span>
+        </a>
 
-{# Auth Container #}
-<div style="position: relative; z-index: 1; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem;">
-  <div class="nexus-card nexus-card-elevated nexus-card-glass" style="max-width: 520px; width: 100%;">
-    <div class="nexus-card-header" style="text-align: center; border-bottom: 1px solid var(--nexus-glass-border, rgba(255, 255, 255, 0.1)); padding-bottom: 1.5rem; margin-bottom: 2rem;">
-      <h1 style="font-size: 2rem; font-weight: 700; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">
-        CREATE ACCOUNT
-      </h1>
-      <p style="margin-top: 0.5rem; color: var(--nexus-muted-fg, #9ca3af); font-size: 0.875rem;">
-        Join the secure Monero marketplace
-      </p>
-    </div>
+        <div class="card shadow-2xl" style="padding: 2rem;">
+            <!-- Tabs Login/SignUp -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem; padding: 0.25rem; background-color: hsl(var(--muted)); border-radius: 0.5rem; margin-bottom: 2rem;">
+                <button type="button" id="tab-login" class="auth-tab-btn active" data-tab="login" style="padding: 0.75rem 1rem; border-radius: 0.375rem; transition: all 0.2s; font-weight: 500; font-size: 0.875rem; border: none; cursor: pointer;">
+                    Login
+                </button>
+                <button type="button" id="tab-signup" class="auth-tab-btn" data-tab="signup" style="padding: 0.75rem 1rem; border-radius: 0.375rem; transition: all 0.2s; font-weight: 500; font-size: 0.875rem; border: none; cursor: pointer;">
+                    Sign Up
+                </button>
+            </div>
 
-    <div class="nexus-card-content">
-      <form
-        hx-post="/api/auth/register"
-        hx-target="#auth-result"
-        hx-swap="innerHTML"
-        hx-indicator=".htmx-indicator"
-        hx-disabled-elt="find button[type='submit']"
-        role="form"
-        aria-label="Registration form"
-        style="display: flex; flex-direction: column; gap: 1.5rem;"
-      >
-        <!-- CSRF Token -->
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" aria-hidden="true">
+            <!-- Login Form -->
+            <div id="content-login" class="auth-content" style="display: block;">
+                <form hx-post="/api/auth/login" hx-target="body" class="space-y-6">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
-        <!-- Username Field -->
-        <div>
-          <label for="username" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
-            Username
-          </label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            placeholder="Choose a username"
-            required
-            minlength="3"
-            maxlength="50"
-            autocomplete="username"
-            aria-label="Choose your username"
-            aria-required="true"
-            aria-describedby="username-help"
-            class="nexus-input"
-            style="width: 100%;"
-          >
-          <small id="username-help" style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
-            3-50 characters
-          </small>
+                    <div class="space-y-2">
+                        <label for="login-username" class="text-sm font-medium">Username</label>
+                        <input id="login-username" name="username" type="text" placeholder="Your username" style="border-width: 2px; height: 3rem;" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" required minlength="3" />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="login-password" class="text-sm font-medium">Password</label>
+                        <div style="position: relative;">
+                            <input id="login-password" name="password" type="password" placeholder="••••••••" style="border-width: 2px; padding-right: 2.5rem; height: 3rem;" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" required minlength="8" />
+                            <button type="button" class="password-toggle" data-target="login-password" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: hsl(var(--muted-foreground)); cursor: pointer;">
+                                <svg class="eye-icon" viewBox="0 0 24 24" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between text-sm">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="remember" style="border-width: 2px;" class="rounded">
+                            <span>Remember me</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-full btn-lg">Login</button>
+                </form>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="content-signup" class="auth-content" style="display: none;">
+                <form hx-post="/api/auth/register" hx-target="body" class="space-y-6">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                    <div class="space-y-2">
+                        <label for="signup-username" class="text-sm font-medium">Username</label>
+                        <input id="signup-username" name="username" type="text" placeholder="Choose a username" minlength="3" maxlength="50" style="border-width: 2px; height: 3rem;" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" required />
+                        <p class="text-xs text-muted-foreground">3-50 characters, no email needed</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="signup-password" class="text-sm font-medium">Password</label>
+                        <div style="position: relative;">
+                            <input id="signup-password" name="password" type="password" placeholder="Create a strong password" minlength="8" style="border-width: 2px; padding-right: 2.5rem; height: 3rem;" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" required />
+                            <button type="button" class="password-toggle" data-target="signup-password" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: hsl(var(--muted-foreground)); cursor: pointer;">
+                                <svg class="eye-icon" viewBox="0 0 24 24" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="text-xs text-muted-foreground">Must be at least 8 characters</p>
+                    </div>
+
+                    <!-- Account Type Tabs -->
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium">Account Type</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem; padding: 0.25rem; background-color: hsl(var(--muted)); border-radius: 0.5rem;">
+                            <button type="button" id="role-buyer" class="role-tab-btn active" data-role="buyer" style="padding: 0.75rem 1rem; border-radius: 0.375rem; transition: all 0.2s; font-weight: 500; font-size: 0.875rem; border: none; cursor: pointer;">
+                                Buyer
+                            </button>
+                            <button type="button" id="role-seller" class="role-tab-btn" data-role="vendor" style="padding: 0.75rem 1rem; border-radius: 0.375rem; transition: all 0.2s; font-weight: 500; font-size: 0.875rem; border: none; cursor: pointer;">
+                                Seller
+                            </button>
+                        </div>
+                        <input type="hidden" id="role-input" name="role" value="buyer" />
+                    </div>
+
+                    <!-- Monero Wallet (Seller only) -->
+                    <div id="wallet-field" class="space-y-2" style="display: none;">
+                        <label for="wallet-address" class="text-sm font-medium">Monero Wallet Address <span class="text-muted-foreground font-normal">(Optional)</span></label>
+                        <input id="wallet-address" name="wallet_address" type="text" placeholder="4... (Primary address)" style="border-width: 2px; height: 3rem;" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary font-mono" disabled />
+                        <p class="text-xs text-muted-foreground">You can add this later in settings. Required to receive payments.</p>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-full btn-lg">Create Account</button>
+                </form>
+            </div>
+
+            <!-- Privacy Notice -->
+            <div style="margin-top: 1.5rem; padding: 1rem; background-color: hsl(var(--secondary) / 0.5); border-radius: 0.5rem;">
+                <p class="text-xs text-center text-muted-foreground" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                    <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; color: hsl(var(--primary));" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                    </svg>
+                    Your privacy is our priority. All accounts are anonymous and secure.
+                </p>
+            </div>
         </div>
 
-        <!-- Password Field -->
-        <div>
-          <label for="password" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
-            Password
-          </label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="••••••••"
-            required
-            minlength="8"
-            autocomplete="new-password"
-            aria-label="Choose your password"
-            aria-required="true"
-            aria-describedby="password-help"
-            class="nexus-input"
-            style="width: 100%;"
-          >
-          <small id="password-help" style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
-            Minimum 8 characters
-          </small>
-        </div>
-
-        <!-- Role Field -->
-        <div>
-          <label for="role" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
-            Role
-          </label>
-          <select
-            id="role"
-            name="role"
-            required
-            aria-label="Select your role"
-            aria-required="true"
-            class="nexus-select"
-            style="width: 100%;"
-          >
-            <option value="">— Select Role —</option>
-            <option value="buyer">🛒 Buyer</option>
-            <option value="vendor">🏪 Vendor</option>
-          </select>
-          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
-            Choose buyer to purchase or vendor to sell
-          </small>
-        </div>
-
-        <!-- Wallet Address Field (Vendors only) -->
-        <div id="wallet-address-field" style="display: none;">
-          <label for="wallet_address" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
-            Monero Wallet Address <span style="color: var(--nexus-muted-fg, #9ca3af); font-weight: 400;">(Optional)</span>
-          </label>
-          <input
-            type="text"
-            id="wallet_address"
-            name="wallet_address"
-            placeholder="4... (optional - you can add this later in Settings)"
-            minlength="95"
-            maxlength="106"
-            pattern="^[48][0-9A-Za-z]{94,105}$"
-            autocomplete="off"
-            aria-label="Your Monero wallet address (optional)"
-            aria-describedby="wallet-help"
-            class="nexus-input"
-            style="width: 100%; font-family: monospace; font-size: 0.875rem;"
-          >
-          <small id="wallet-help" style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
-            💡 <strong>Optional:</strong> You can skip this now and configure your wallet address later in ⚙️ Settings. Required before shipping orders.
-          </small>
-        </div>
-
-        <!-- Submit Button -->
-        <button
-          type="submit"
-          class="nexus-btn nexus-btn-primary nexus-btn-lg"
-          style="width: 100%; margin-top: 0.5rem;"
-          aria-label="Submit registration form"
-        >
-          REGISTER <span class="htmx-indicator" aria-hidden="true" style="margin-left: 0.5rem;">→</span>
-        </button>
-      </form>
-
-      <!-- Response Container -->
-      <div id="auth-result" style="margin-top: 1.5rem;"></div>
-
-      <!-- Login Link -->
-      <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--nexus-glass-border, rgba(255, 255, 255, 0.1)); text-align: center;">
-        <p style="color: var(--nexus-muted-fg, #9ca3af); font-size: 0.875rem; margin: 0;">
-          Have an account?
-          <a
-            href="/login"
-            hx-boost="true"
-            style="color: var(--nexus-primary, #ff1a5c); text-decoration: none; font-weight: 600; margin-left: 0.25rem; transition: all 0.2s ease;"
-            onmouseover="this.style.textShadow='0 0 10px var(--nexus-primary)'"
-            onmouseout="this.style.textShadow='none'"
-          >
-            Login Here
-          </a>
+        <p class="text-center text-sm text-muted-foreground" style="margin-top: 1.5rem;">
+            <a href="/" class="text-primary hover:underline">← Back to Home</a>
         </p>
-      </div>
     </div>
-  </div>
 </div>
+
+<style>
+/* Auth Tab Buttons - More Visible & Darker */
+.auth-tab-btn {
+    background-color: transparent;
+    color: hsl(var(--muted-foreground));
+}
+.auth-tab-btn.active {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.auth-tab-btn:hover {
+    background-color: hsl(var(--primary) / 0.8);
+    color: hsl(var(--primary-foreground));
+}
+
+/* Role Tab Buttons - Darker & More Visible */
+.role-tab-btn {
+    background-color: transparent;
+    color: hsl(var(--muted-foreground));
+}
+.role-tab-btn.active {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.role-tab-btn:hover {
+    background-color: hsl(var(--primary) / 0.8);
+    color: hsl(var(--primary-foreground));
+}
+
+.auth-content {
+    animation: fadeIn 0.3s ease-in-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
 
 {% endblock %}
 
 {% block scripts %}
-<!-- Notification System for Auth Feedback -->
-<script src="/static/js/notifications-nexus.js"></script>
-
 <script>
-// Show/hide wallet address field based on role selection
 document.addEventListener('DOMContentLoaded', function() {
-  const roleSelect = document.getElementById('role');
-  const walletField = document.getElementById('wallet-address-field');
-  const walletInput = document.getElementById('wallet_address');
+    // Auth Tabs (Login/SignUp)
+    const loginBtn = document.getElementById('tab-login');
+    const signupBtn = document.getElementById('tab-signup');
+    const loginContent = document.getElementById('content-login');
+    const signupContent = document.getElementById('content-signup');
 
-  roleSelect.addEventListener('change', function() {
-    if (this.value === 'vendor') {
-      // Show wallet field but keep it OPTIONAL (not required)
-      walletField.style.display = 'block';
-      // Do NOT add required attribute - user can configure later in Settings
-    } else {
-      walletField.style.display = 'none';
-      walletInput.value = ''; // Clear value if switching away from vendor
-    }
-  });
-});
+    loginBtn.addEventListener('click', function() {
+        loginBtn.classList.add('active');
+        signupBtn.classList.remove('active');
+        loginContent.style.display = 'block';
+        signupContent.style.display = 'none';
+    });
 
-// Handle HTMX response with premium toast notifications
-document.body.addEventListener('htmx:afterRequest', function(event) {
-  if (event.detail.pathInfo.requestPath === '/api/auth/register') {
-    const resultDiv = document.getElementById('auth-result');
+    signupBtn.addEventListener('click', function() {
+        signupBtn.classList.add('active');
+        loginBtn.classList.remove('active');
+        signupContent.style.display = 'block';
+        loginContent.style.display = 'none';
+    });
 
-    if (event.detail.successful) {
-      // Success - show toast and redirect
-      if (window.notificationManager) {
-        window.notificationManager.showToast(
-          '🎉 Registration Successful',
-          'Account created! Redirecting to marketplace...',
-          'success',
-          3000
-        );
-      }
+    // Role Tabs (Buyer/Seller)
+    const buyerBtn = document.getElementById('role-buyer');
+    const sellerBtn = document.getElementById('role-seller');
+    const roleInput = document.getElementById('role-input');
+    const walletField = document.getElementById('wallet-field');
+    const walletInput = document.getElementById('wallet-address');
 
-      resultDiv.innerHTML = `
-        <div class="nexus-alert nexus-alert-success" style="padding: 1rem; border-radius: 8px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); color: hsl(142, 76%, 60%); display: flex; align-items: center; gap: 0.75rem;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-          </svg>
-          <div>
-            <strong style="display: block; margin-bottom: 0.25rem;">Registration Successful</strong>
-            <small>Account created! Welcome to NEXUS.</small>
-          </div>
-        </div>
-      `;
+    buyerBtn.addEventListener('click', function() {
+        buyerBtn.classList.add('active');
+        sellerBtn.classList.remove('active');
+        roleInput.value = 'buyer';
+        walletField.style.display = 'none';
+        walletInput.disabled = true;
+    });
 
-      // Redirect after 2 seconds (HTMX handles this via HX-Redirect header)
-      setTimeout(() => {
-        if (!window.location.pathname.includes('/register')) {
-          // Already redirected by HTMX
-          return;
-        }
-        window.location.href = '/';
-      }, 2000);
-    } else {
-      // Error handling with toast
-      const errorMessage = event.detail.xhr?.responseText || 'Username may already exist or invalid input';
+    sellerBtn.addEventListener('click', function() {
+        sellerBtn.classList.add('active');
+        buyerBtn.classList.remove('active');
+        roleInput.value = 'vendor';
+        walletField.style.display = 'block';
+        walletInput.disabled = false;
+    });
 
-      if (window.notificationManager) {
-        window.notificationManager.showToast(
-          '❌ Registration Failed',
-          errorMessage,
-          'error',
-          5000
-        );
-      }
-
-      resultDiv.innerHTML = `
-        <div class="nexus-alert nexus-alert-error" style="padding: 1rem; border-radius: 8px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: hsl(0, 85%, 70%); display: flex; align-items: center; gap: 0.75rem;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="15" y1="9" x2="9" y2="15"></line>
-            <line x1="9" y1="9" x2="15" y2="15"></line>
-          </svg>
-          <div>
-            <strong style="display: block; margin-bottom: 0.25rem;">Registration Failed</strong>
-            <small>${errorMessage}</small>
-          </div>
-        </div>
-      `;
-    }
-  }
+    // Password Toggle
+    const passwordToggles = document.querySelectorAll('.password-toggle');
+    passwordToggles.forEach(function(toggle) {
+        toggle.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = this.querySelector('.eye-icon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+            } else {
+                input.type = 'password';
+                icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+            }
+        });
+    });
 });
 </script>
 {% endblock %}

@@ -1,0 +1,231 @@
+{% extends "base-marketplace.html" %}
+
+{% block title %}Become a Vendor - NEXUS{% endblock %}
+
+{% block content %}
+
+<!-- Hero Section -->
+<section class="section section-primary py-16 md:py-24">
+    <div class="container px-4 md:px-8">
+        <div class="max-w-3xl mx-auto text-center space-y-6 animate-slide-up">
+            <div class="inline-flex h-16 w-16 items-center justify-center rounded-2xl" style="background-color: hsl(var(--accent));">
+                <svg class="lucide-lg" viewBox="0 0 24 24" style="width: 2rem; height: 2rem; stroke: white;">
+                    <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/>
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                    <path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/>
+                    <path d="M2 7h20"/>
+                    <path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/>
+                </svg>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-bold" style="color: hsl(var(--primary-foreground));">Become a NEXUS Vendor</h1>
+            <p class="text-xl" style="opacity: 0.9; color: hsl(var(--primary-foreground));">
+                Join a marketplace built on privacy, security, and fair commerce. Reach customers who value financial sovereignty.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Benefits Section -->
+<section class="container px-4 md:px-8 py-16 md:py-24">
+    <div class="text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">Why Sell on NEXUS?</h2>
+        <p class="text-muted-foreground text-lg">Premium benefits for trusted vendors</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        <!-- Secure Escrow -->
+        <div class="card text-center">
+            <div class="p-6 space-y-4">
+                <div class="mx-auto h-12 w-12 rounded-full flex items-center justify-center mb-4" style="background-color: hsl(var(--primary) / 0.1);">
+                    <svg class="lucide" viewBox="0 0 24 24" style="color: hsl(var(--primary));">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold">Secure Escrow</h3>
+                <p class="text-muted-foreground text-sm">
+                    2/3 multisig protection ensures both buyer and seller security
+                </p>
+            </div>
+        </div>
+
+        <!-- Low Fees -->
+        <div class="card text-center">
+            <div class="p-6 space-y-4">
+                <div class="mx-auto h-12 w-12 rounded-full flex items-center justify-center mb-4" style="background-color: hsl(var(--primary) / 0.1);">
+                    <svg class="lucide" viewBox="0 0 24 24" style="color: hsl(var(--primary));">
+                        <path d="m16 6 4 14"/>
+                        <path d="M12 6v14"/>
+                        <path d="M8 8v12"/>
+                        <path d="M4 4v16"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold">Low Fees</h3>
+                <p class="text-muted-foreground text-sm">
+                    Competitive commission rates with transparent pricing
+                </p>
+            </div>
+        </div>
+
+        <!-- Privacy-First -->
+        <div class="card text-center">
+            <div class="p-6 space-y-4">
+                <div class="mx-auto h-12 w-12 rounded-full flex items-center justify-center mb-4" style="background-color: hsl(var(--primary) / 0.1);">
+                    <svg class="lucide" viewBox="0 0 24 24" style="color: hsl(var(--primary));">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold">Privacy-First</h3>
+                <p class="text-muted-foreground text-sm">
+                    Reach customers who value privacy and cryptocurrency payments
+                </p>
+            </div>
+        </div>
+
+        <!-- Easy Setup -->
+        <div class="card text-center">
+            <div class="p-6 space-y-4">
+                <div class="mx-auto h-12 w-12 rounded-full flex items-center justify-center mb-4" style="background-color: hsl(var(--primary) / 0.1);">
+                    <svg class="lucide" viewBox="0 0 24 24" style="color: hsl(var(--primary));">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold">Easy Setup</h3>
+                <p class="text-muted-foreground text-sm">
+                    Quick onboarding process with dedicated vendor support
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Form -->
+    <div class="max-w-2xl mx-auto">
+        <div class="card">
+            <div class="p-6 space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Vendor Application</h2>
+                    <p class="text-muted-foreground text-sm">
+                        Fill out the form below to apply. We'll review your application within 48 hours.
+                    </p>
+                </div>
+
+                <form hx-post="/vendor/apply" hx-target="body" class="space-y-6">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label for="first-name" class="text-sm font-medium">First Name</label>
+                            <input
+                                id="first-name"
+                                name="first_name"
+                                placeholder="John"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                required
+                            />
+                        </div>
+                        <div class="space-y-2">
+                            <label for="last-name" class="text-sm font-medium">Last Name</label>
+                            <input
+                                id="last-name"
+                                name="last_name"
+                                placeholder="Doe"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="email" class="text-sm font-medium">Email Address</label>
+                        <input
+                            id="email"
+                            name="email"
+                            type="email"
+                            placeholder="vendor@example.com"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            required
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="store-name" class="text-sm font-medium">Store Name</label>
+                        <input
+                            id="store-name"
+                            name="store_name"
+                            placeholder="Your Store Name"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            required
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="category" class="text-sm font-medium">Primary Product Category</label>
+                        <select
+                            id="category"
+                            name="category"
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            required
+                        >
+                            <option value="">Select a category</option>
+                            <option value="audio">Audio</option>
+                            <option value="wearables">Wearables</option>
+                            <option value="devices">Devices</option>
+                            <option value="gaming">Gaming</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="description" class="text-sm font-medium">Store Description</label>
+                        <textarea
+                            id="description"
+                            name="description"
+                            placeholder="Tell us about your store and the products you plan to sell..."
+                            rows="5"
+                            class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y"
+                            required
+                        ></textarea>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="experience" class="text-sm font-medium">Previous Selling Experience</label>
+                        <textarea
+                            id="experience"
+                            name="experience"
+                            placeholder="Share your experience with e-commerce or marketplace selling..."
+                            rows="4"
+                            class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y"
+                        ></textarea>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="website" class="text-sm font-medium">Website or Social Media (Optional)</label>
+                        <input
+                            id="website"
+                            name="website"
+                            type="url"
+                            placeholder="https://..."
+                            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        />
+                    </div>
+
+                    <div class="flex items-start gap-2">
+                        <input type="checkbox" name="terms" class="mt-1 rounded" required />
+                        <span class="text-sm text-muted-foreground">
+                            I agree to NEXUS vendor terms and conditions, including the use of 2/3 multisig escrow for all transactions
+                        </span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-full btn-lg">
+                        Submit Application
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

@@ -516,3 +516,31 @@ pub async fn update_wallet_address(
         }
     }
 }
+
+/// Display the login/signup page
+pub async fn show_auth_page(
+    session: Session,
+    tmpl: web::Data<tera::Tera>,
+) -> Result<HttpResponse, ApiError> {
+    use crate::middleware::csrf::get_csrf_token;
+
+    // Check if already logged in, redirect to home
+    if let Ok(Some(_user_id)) = session.get::<String>("user_id") {
+        return Ok(HttpResponse::Found()
+            .insert_header(("Location", "/"))
+            .finish());
+    }
+
+    // Get CSRF token
+    let csrf_token = get_csrf_token(&session);
+
+    let mut ctx = tera::Context::new();
+    ctx.insert("csrf_token", &csrf_token);
+    ctx.insert("logged_in", &false);
+
+    let rendered = tmpl
+        .render("auth/login-new.html", &ctx)
+        .map_err(|e| ApiError::Internal(format!("Template error: {}", e)))?;
+
+    Ok(HttpResponse::Ok().content_type("text/html").body(rendered))
+}

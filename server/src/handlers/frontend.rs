@@ -109,9 +109,15 @@ pub async fn show_listings(
 
         if let Ok(Some(role)) = session.get::<String>("role") {
             ctx.insert("role", &role);
+            ctx.insert("user_role", &role); // For base template user menu
+            ctx.insert("is_vendor", &(role == "vendor"));
+        } else {
+            ctx.insert("user_role", "buyer");
+            ctx.insert("is_vendor", &false);
         }
     } else {
         ctx.insert("logged_in", &false);
+        ctx.insert("is_vendor", &false);
     }
 
     // Add CSRF token for logout form in navigation
@@ -209,10 +215,16 @@ pub async fn show_listing(
         }
         if let Ok(Some(role)) = session.get::<String>("role") {
             ctx.insert("role", &role);
+            ctx.insert("user_role", &role);
+            ctx.insert("is_vendor", &(role == "vendor"));
+        } else {
+            ctx.insert("user_role", "buyer");
+            ctx.insert("is_vendor", &false);
         }
         Some(uid)
     } else {
         ctx.insert("logged_in", &false);
+        ctx.insert("is_vendor", &false);
         None
     };
 
@@ -569,7 +581,15 @@ pub async fn show_order(
 
         if let Ok(Some(role)) = session.get::<String>("role") {
             ctx.insert("role", &role);
+            ctx.insert("user_role", &role);
+            ctx.insert("is_vendor", &(role == "vendor"));
+        } else {
+            ctx.insert("user_role", "buyer");
+            ctx.insert("is_vendor", &false);
         }
+    } else {
+        ctx.insert("logged_in", &false);
+        ctx.insert("is_vendor", &false);
     }
 
     // Add CSRF token for forms
@@ -717,7 +737,15 @@ pub async fn show_escrow(
 
         if let Ok(Some(role)) = session.get::<String>("role") {
             ctx.insert("role", &role);
+            ctx.insert("user_role", &role);
+            ctx.insert("is_vendor", &(role == "vendor"));
+        } else {
+            ctx.insert("user_role", "buyer");
+            ctx.insert("is_vendor", &false);
         }
+    } else {
+        ctx.insert("logged_in", &false);
+        ctx.insert("is_vendor", &false);
     }
 
     // Add CSRF token for forms
@@ -887,7 +915,15 @@ pub async fn submit_review_form(
 
         if let Ok(Some(role)) = session.get::<String>("role") {
             ctx.insert("role", &role);
+            ctx.insert("user_role", &role);
+            ctx.insert("is_vendor", &(role == "vendor"));
+        } else {
+            ctx.insert("user_role", "buyer");
+            ctx.insert("is_vendor", &false);
         }
+    } else {
+        ctx.insert("logged_in", &false);
+        ctx.insert("is_vendor", &false);
     }
 
     // Add CSRF token for forms
@@ -943,7 +979,15 @@ pub async fn show_settings(
 
         if let Ok(Some(role)) = session.get::<String>("role") {
             ctx.insert("role", &role);
+            ctx.insert("user_role", &role);
+            ctx.insert("is_vendor", &(role == "vendor"));
+        } else {
+            ctx.insert("user_role", "buyer");
+            ctx.insert("is_vendor", &false);
         }
+    } else {
+        ctx.insert("logged_in", &false);
+        ctx.insert("is_vendor", &false);
     }
 
     // Add CSRF token for forms
@@ -1006,7 +1050,15 @@ pub async fn show_wallet_settings(tera: web::Data<Tera>, session: Session) -> im
 
         if let Ok(Some(role)) = session.get::<String>("role") {
             ctx.insert("role", &role);
+            ctx.insert("user_role", &role);
+            ctx.insert("is_vendor", &(role == "vendor"));
+        } else {
+            ctx.insert("user_role", "buyer");
+            ctx.insert("is_vendor", &false);
         }
+    } else {
+        ctx.insert("logged_in", &false);
+        ctx.insert("is_vendor", &false);
     }
 
     // Add CSRF token for forms
