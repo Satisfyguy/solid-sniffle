@@ -1,30 +1,37 @@
-{% extends "base-nexus.html" %}
+{% extends "base-marketplace.html" %}
 
-{% block title %}My Orders — NEXUS{% endblock %}
+{% block title %}My Orders - NEXUS{% endblock %}
 
 {% block content %}
-<section style="max-width: 1400px; margin: 0 auto; padding: var(--nexus-space-6);">
-  <h1 style="font-size: var(--nexus-text-4xl); font-weight: var(--nexus-weight-black); margin-bottom: var(--nexus-space-8);">My Orders</h1>
-  
-  <div id="orders-list" style="display: grid; gap: var(--nexus-space-4);">
-    {% if orders and orders | length > 0 %}
-      {% for order in orders %}
-      <a href="/orders/{{ order.id }}" hx-boost="true" style="display: block; padding: var(--nexus-space-6); background: rgba(255,255,255,0.05); border: 1px solid var(--nexus-border); border-radius: var(--nexus-radius-lg); text-decoration: none; color: inherit;">
-        <div style="display: flex; justify-content: space-between;">
-          <div>
-            <h3 style="font-family: var(--nexus-font-mono); color: var(--nexus-fg);">Order #{{ order.id | truncate(length=8, end="") }}</h3>
-            <p style="color: var(--nexus-muted-fg); font-size: var(--nexus-text-sm);">{{ order.created_at | date(format="%Y-%m-%d") }}</p>
+<div class="section container" style="padding-top: 2rem;">
+  <div style="max-width: 1200px; margin: 0 auto;">
+
+    {# Page Header #}
+    <div class="section-header">
+      <h1 class="section-title">My Orders</h1>
+      <p class="section-subtitle">Track your purchases and order status</p>
+    </div>
+
+    <div id="orders-list" style="display: grid; gap: 1.5rem;">
+      {% if orders and orders | length > 0 %}
+        {% for order in orders %}
+        <a href="/orders/{{ order.id }}" hx-boost="true" class="card" style="display: block; padding: 1.5rem; text-decoration: none; color: inherit; transition: transform 0.2s;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h3 style="font-family: 'Courier New', monospace; color: hsl(var(--foreground)); font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem;">Order #{{ order.id | truncate(length=8, end="") }}</h3>
+              <p style="color: hsl(var(--muted-foreground)); font-size: 0.875rem;">{{ order.created_at | date(format="%Y-%m-%d %H:%M") }}</p>
+            </div>
+            <span class="badge" style="padding: 0.5rem 1rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; text-transform: uppercase;">{{ order.status | title }}</span>
           </div>
-          <span style="padding: var(--nexus-space-2) var(--nexus-space-4); background: var(--nexus-primary); color: white; border-radius: var(--nexus-radius-full); font-size: var(--nexus-text-sm);">{{ order.status | title }}</span>
+        </a>
+        {% endfor %}
+      {% else %}
+        <div class="card" style="text-align: center; padding: 4rem 2rem;">
+          <p style="color: hsl(var(--muted-foreground)); font-size: 1.125rem; margin-bottom: 1.5rem;">No orders yet</p>
+          <a href="/listings" class="btn btn-primary">Browse Listings</a>
         </div>
-      </a>
-      {% endfor %}
-    {% else %}
-      <div style="text-align: center; padding: var(--nexus-space-20); color: var(--nexus-muted-fg);">
-        <p>No orders yet</p>
-        <a href="/listings" class="nexus-btn nexus-btn-primary" style="margin-top: var(--nexus-space-4);">Browse Listings</a>
-      </div>
-    {% endif %}
+      {% endif %}
+    </div>
   </div>
-</section>
+</div>
 {% endblock %}

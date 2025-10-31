@@ -295,6 +295,7 @@ async fn main() -> Result<()> {
             )
             .route("/listings/{id}", web::get().to(frontend::show_listing))
             .route("/listings/{id}/edit", web::get().to(frontend::show_edit_listing))
+            .route("/vendor/listings", web::get().to(frontend::show_vendor_listings))
             .route("/orders", web::get().to(frontend::show_orders))
             .route("/orders/{id}", web::get().to(frontend::show_order))
             .route("/escrow/{id}", web::get().to(frontend::show_escrow))

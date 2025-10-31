@@ -1,46 +1,45 @@
-{% extends "base-nexus.html" %}
-{% import "partials/nexus-macros.html" as nx %}
+{% extends "base-marketplace.html" %}
 
-{% block title %}CREATE LISTING — NEXUS{% endblock %}
+{% block title %}Create Listing - NEXUS{% endblock %}
 
 {% block content %}
 
 {# Breadcrumb Navigation #}
-<nav class="nexus-breadcrumb" aria-label="Breadcrumb" style="max-width: 900px; margin: 0 auto; padding: 1.5rem 1.5rem 0;">
-  <ol class="nexus-breadcrumb-list">
-    <li class="nexus-breadcrumb-item">
-      <a href="/" class="nexus-breadcrumb-link" hx-boost="true">Home</a>
-      <span class="nexus-breadcrumb-separator">/</span>
+<nav aria-label="Breadcrumb" style="max-width: 900px; margin: 0 auto; padding: 1.5rem 1.5rem 0;">
+  <ol style="display: flex; align-items: center; gap: 0.5rem; list-style: none; padding: 0; margin: 0; font-size: 0.875rem; color: hsl(var(--muted-foreground));">
+    <li>
+      <a href="/" hx-boost="true" style="color: hsl(var(--foreground)); text-decoration: none; transition: color 0.2s;">Home</a>
+      <span style="margin-left: 0.5rem; color: hsl(var(--muted-foreground));">/</span>
     </li>
-    <li class="nexus-breadcrumb-item">
-      <a href="/listings" class="nexus-breadcrumb-link" hx-boost="true">Listings</a>
-      <span class="nexus-breadcrumb-separator">/</span>
+    <li>
+      <a href="/listings" hx-boost="true" style="color: hsl(var(--foreground)); text-decoration: none; transition: color 0.2s;">Listings</a>
+      <span style="margin-left: 0.5rem; color: hsl(var(--muted-foreground));">/</span>
     </li>
-    <li class="nexus-breadcrumb-item nexus-breadcrumb-current" aria-current="page">
+    <li style="color: hsl(var(--primary)); font-weight: 500;" aria-current="page">
       Create
     </li>
   </ol>
 </nav>
 
 {# Form Container #}
-<div style="max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem;">
-  <div class="nexus-card nexus-card-elevated nexus-card-glass">
-    <div class="nexus-card-header" style="text-align: center; border-bottom: 1px solid var(--nexus-glass-border, rgba(255, 255, 255, 0.1)); padding-bottom: 1.5rem; margin-bottom: 2rem;">
-      <h1 style="font-size: 2rem; font-weight: 700; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">
+<div class="section container" style="padding-top: 2rem; max-width: 900px;">
+  <div class="card">
+    <div class="card-header" style="text-align: center; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+      <h1 class="section-title" style="margin: 0;">
         Create New Listing
       </h1>
-      <p style="margin-top: 0.5rem; color: var(--nexus-muted-fg, #9ca3af); font-size: 0.875rem;">
+      <p class="section-subtitle" style="margin-top: 0.5rem;">
         Add a new product to the marketplace
       </p>
     </div>
 
-    <div class="nexus-card-content">
+    <div class="card-content">
       <form id="create-listing-form" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 2rem;">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
         {# Title Field #}
         <div>
-          <label for="title" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+          <label for="title" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
             Title
           </label>
           <input
@@ -51,17 +50,17 @@
             required
             minlength="3"
             maxlength="200"
-            class="nexus-input"
+            class="input"
             style="width: 100%;"
           >
-          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
             3-200 characters
           </small>
         </div>
 
         {# Description Field #}
         <div>
-          <label for="description" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+          <label for="description" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
             Description
           </label>
           <textarea
@@ -72,24 +71,24 @@
             required
             minlength="10"
             maxlength="5000"
-            class="nexus-textarea"
+            class="textarea"
             style="width: 100%;"
           ></textarea>
-          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
             10-5000 characters
           </small>
         </div>
 
         {# Category Field #}
         <div>
-          <label for="category" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+          <label for="category" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
             Category
           </label>
           <select
             id="category"
             name="category"
             required
-            class="nexus-input"
+            class="input"
             style="width: 100%;"
           >
             <option value="">Select a category...</option>
@@ -103,7 +102,7 @@
             <option value="accounts">👤 Accounts & Subscriptions</option>
             <option value="other">🔹 Other</option>
           </select>
-          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
             Select the category that best matches your product
           </small>
         </div>
@@ -112,7 +111,7 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
           {# Price Field #}
           <div>
-            <label for="price_xmr" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+            <label for="price_xmr" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
               Price (Atomic Units)
             </label>
             <input
@@ -122,17 +121,17 @@
               placeholder="0"
               min="1"
               required
-              class="nexus-input"
+              class="input"
               style="width: 100%; font-family: monospace;"
             >
-            <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+            <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
               1 XMR = 1,000,000,000,000 atomic units
             </small>
           </div>
 
           {# Stock Field #}
           <div>
-            <label for="stock" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+            <label for="stock" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
               Stock
             </label>
             <input
@@ -142,10 +141,10 @@
               placeholder="0"
               min="0"
               required
-              class="nexus-input"
+              class="input"
               style="width: 100%;"
             >
-            <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+            <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
               Available quantity
             </small>
           </div>
@@ -153,7 +152,7 @@
 
         {# Images Field #}
         <div>
-          <label for="images" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+          <label for="images" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
             Product Images
           </label>
           <input
@@ -162,21 +161,21 @@
             name="images"
             accept="image/jpeg,image/png,image/gif"
             multiple
-            class="nexus-input"
+            class="input"
             style="width: 100%;"
           >
-          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
             Upload one or more images (JPEG, PNG, GIF) - Max 10 images, 5MB each
           </small>
           <div id="image-preview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
         </div>
 
         {# Form Actions #}
-        <div style="display: flex; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--nexus-glass-border, rgba(255, 255, 255, 0.1));">
-          <a href="/listings" hx-boost="true" class="nexus-btn nexus-btn-secondary nexus-btn-lg" style="flex: 1;">
+        <div style="display: flex; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid hsl(var(--border));">
+          <a href="/listings" hx-boost="true" class="btn btn-secondary btn-lg" style="flex: 1; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
             Cancel
           </a>
-          <button type="submit" class="nexus-btn nexus-btn-primary nexus-btn-lg" style="flex: 1;">
+          <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">
             Create Listing →
           </button>
         </div>

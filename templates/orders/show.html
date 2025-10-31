@@ -1,7 +1,6 @@
-{% extends "base-nexus.html" %}
-{% import "partials/nexus-macros.html" as nx %}
+{% extends "base-marketplace.html" %}
 
-{% block title %}Order #{{ order.id | truncate(length=8, end="") }} - Monero Marketplace{% endblock %}
+{% block title %}Order #{{ order.id | truncate(length=8, end="") }} - NEXUS{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="/static/css/order-escrow.css">
@@ -10,44 +9,44 @@
 {% block content %}
 <div class="order-detail-container">
     <!-- Back button -->
-    <div class="back-nav">
-        {{ nx::button(
-            text='<svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg> Back to Orders',
-            href="/orders",
-            variant="ghost",
-            class="btn-link"
-        ) }}
+    <div class="back-nav" style="margin-bottom: 2rem;">
+        <a href="/orders" class="btn btn-ghost" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Orders
+        </a>
     </div>
 
     <div class="order-detail-layout">
         <!-- Main Content -->
         <div class="order-detail-main">
-            <div class="nexus-card nexus-card-elevated nexus-card-glass">
-                <div class="nexus-card-header order-header">
+            <div class="card">
+                <div class="card-header order-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 1rem; margin-bottom: 1.5rem;">
                     <div>
                         <h1>Order #{{ order.id | truncate(length=8, end="") }}</h1>
                         <p class="order-date">Created {{ order.created_at | date(format="%Y-%m-%d %H:%M UTC") }}</p>
                     </div>
                     {% if order.status == "pending" %}
-                        {{ nx::badge(text="⏳ PENDING", status=order.status, class="badge-lg") }}
+                        <span class="badge badge-lg">⏳ PENDING</span>
                     {% elif order.status == "funded" %}
-                        {{ nx::badge(text="💰 FUNDED", status=order.status, class="badge-lg") }}
+                        <span class="badge badge-lg">💰 FUNDED</span>
                     {% elif order.status == "shipped" %}
-                        {{ nx::badge(text="📦 SHIPPED", status=order.status, class="badge-lg") }}
+                        <span class="badge badge-lg">📦 SHIPPED</span>
                     {% elif order.status == "completed" %}
-                        {{ nx::badge(text="✅ COMPLETED", status=order.status, class="badge-lg") }}
+                        <span class="badge badge-lg badge-success">✅ COMPLETED</span>
                     {% elif order.status == "cancelled" %}
-                        {{ nx::badge(text="❌ CANCELLED", status=order.status, class="badge-lg") }}
+                        <span class="badge badge-lg badge-destructive">❌ CANCELLED</span>
                     {% elif order.status == "disputed" %}
-                        {{ nx::badge(text="⚠️ DISPUTED", status=order.status, class="badge-lg") }}
+                        <span class="badge badge-lg badge-warning">⚠️ DISPUTED</span>
                     {% elif order.status == "refunded" %}
-                        {{ nx::badge(text="↩️ REFUNDED", status=order.status, class="badge-lg") }}
+                        <span class="badge badge-lg">↩️ REFUNDED</span>
                     {% else %}
-                        {{ nx::badge(text=order.status | upper, status=order.status, class="badge-lg") }}
+                        <span class="badge badge-lg">{{ order.status | upper }}</span>
                     {% endif %}
                 </div>
 
-                <div class="nexus-card-content">
+                <div class="card-content">
                     <!-- Order Details -->
                     <div class="section">
                         <h2>Order Details</h2>
@@ -209,47 +208,59 @@
 
         <!-- Sidebar: Actions -->
         <div class="order-detail-sidebar">
-            <div class="nexus-card action-card">
+            <div class="card action-card">
                 <h2>Actions</h2>
 
                 <div id="action-result"></div>
 
                 <div class="action-buttons">
                     {% if role == "vendor" and order.status == "funded" %}
-                    {{ nx::button(
-                        text='<svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" /></svg> Mark as Shipped',
-                        variant="primary",
-                        size="md",
-                        hx_post="/api/orders/" ~ order.id ~ "/ship",
-                        hx_target="#action-result",
-                        hx_swap="innerHTML",
-                        hx_confirm="Are you sure you want to mark this order as shipped?",
-                        class="btn-block"
-                    ) }}
+                    <button
+                        class="btn btn-primary btn-block"
+                        hx-post="/api/orders/{{ order.id }}/ship"
+                        hx-target="#action-result"
+                        hx-swap="innerHTML"
+                        hx-confirm="Are you sure you want to mark this order as shipped?"
+                        style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; margin-bottom: 1rem;"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                        </svg>
+                        Mark as Shipped
+                    </button>
                     {% endif %}
 
                     {% if role == "buyer" and order.status == "shipped" %}
-                    {{ nx::button(
-                        text='<svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Confirm Receipt',
-                        variant="success",
-                        hx_post="/api/orders/" ~ order.id ~ "/complete",
-                        hx_target="#action-result",
-                        hx_swap="innerHTML",
-                        hx_confirm="Confirm you have received the order in good condition?",
-                        class="btn-block"
-                    ) }}
+                    <button
+                        class="btn btn-success btn-block"
+                        hx-post="/api/orders/{{ order.id }}/complete"
+                        hx-target="#action-result"
+                        hx-swap="innerHTML"
+                        hx-confirm="Confirm you have received the order in good condition?"
+                        style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; margin-bottom: 1rem;"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Confirm Receipt
+                    </button>
                     {% endif %}
 
                     {% if (role == "buyer" or role == "vendor") and (order.status == "funded" or order.status == "shipped") %}
-                    {{ nx::button(
-                        text='<svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg> Open Dispute',
-                        variant="destructive",
-                        hx_post="/api/orders/" ~ order.id ~ "/dispute",
-                        hx_target="#action-result",
-                        hx_swap="innerHTML",
-                        hx_confirm="Are you sure you want to open a dispute for this order?",
-                        class="btn-block"
-                    ) }}
+                    <button
+                        class="btn btn-destructive btn-block"
+                        hx-post="/api/orders/{{ order.id }}/dispute"
+                        hx-target="#action-result"
+                        hx-swap="innerHTML"
+                        hx-confirm="Are you sure you want to open a dispute for this order?"
+                        style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; margin-bottom: 1rem;"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        Open Dispute
+                    </button>
                     {% endif %}
 
                     {% if order.status == "pending" and role == "buyer" %}
@@ -297,30 +308,38 @@
                         <div id="payment-status"></div>
                     </div>
 
-                    {{ nx::button(
-                        text='<svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cancel Order',
-                        variant="secondary",
-                        hx_post="/api/orders/" ~ order.id ~ "/cancel",
-                        hx_target="#action-result",
-                        hx_swap="innerHTML",
-                        hx_confirm="Are you sure you want to cancel this order?",
-                        class="btn-block"
-                    ) }}
+                    <button
+                        class="btn btn-secondary btn-block"
+                        hx-post="/api/orders/{{ order.id }}/cancel"
+                        hx-target="#action-result"
+                        hx-swap="innerHTML"
+                        hx-confirm="Are you sure you want to cancel this order?"
+                        style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; margin-bottom: 1rem;"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Cancel Order
+                    </button>
                     {% endif %}
 
                     {% if order.escrow_id %}
-                    {{ nx::button(
-                        text='<svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg> View Escrow Details',
-                        href="/escrow/" ~ order.escrow_id,
-                        variant="secondary",
-                        class="btn-block"
-                    ) }}
+                    <a
+                        href="/escrow/{{ order.escrow_id }}"
+                        class="btn btn-secondary btn-block"
+                        style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; margin-bottom: 1rem; text-decoration: none;"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        View Escrow Details
+                    </a>
                     {% endif %}
                 </div>
             </div>
 
             <!-- Help Card -->
-            <div class="nexus-card info-card">
+            <div class="card info-card">
                 <h2>Need Help?</h2>
                 <p>If you encounter any issues with this order, you can:</p>
                 <ul class="help-list">

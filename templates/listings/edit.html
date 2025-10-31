@@ -1,7 +1,6 @@
-{% extends "base-nexus.html" %}
-{% import "partials/nexus-macros.html" as nx %}
+{% extends "base-marketplace.html" %}
 
-{% block title %}EDIT LISTING — NEXUS{% endblock %}
+{% block title %}Edit Listing - NEXUS{% endblock %}
 
 {% block content %}
 
@@ -28,23 +27,23 @@
 
 {# Form Container #}
 <div style="max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem;">
-  <div class="nexus-card nexus-card-elevated nexus-card-glass">
-    <div class="nexus-card-header" style="text-align: center; border-bottom: 1px solid var(--nexus-glass-border, rgba(255, 255, 255, 0.1)); padding-bottom: 1.5rem; margin-bottom: 2rem;">
-      <h1 style="font-size: 2rem; font-weight: 700; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">
+  <div class="card">
+    <div class="card-header" style="text-align: center; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+      <h1 style="font-size: 2rem; font-weight: 700; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">
         Edit Listing
       </h1>
-      <p style="margin-top: 0.5rem; color: var(--nexus-muted-fg, #9ca3af); font-size: 0.875rem;">
+      <p style="margin-top: 0.5rem; color: hsl(var(--muted-foreground)); font-size: 0.875rem;">
         Update your product information
       </p>
     </div>
 
-    <div class="nexus-card-content">
+    <div class="card-content">
       <form id="edit-listing-form" style="display: flex; flex-direction: column; gap: 2rem;">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
         {# Title Field #}
         <div>
-          <label for="title" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+          <label for="title" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
             Title
           </label>
           <input
@@ -56,17 +55,17 @@
             minlength="3"
             maxlength="200"
             value="{{ listing.title }}"
-            class="nexus-input"
+            class="input"
             style="width: 100%;"
           >
-          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
             3-200 characters
           </small>
         </div>
 
         {# Description Field #}
         <div>
-          <label for="description" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+          <label for="description" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
             Description
           </label>
           <textarea
@@ -77,10 +76,10 @@
             required
             minlength="10"
             maxlength="5000"
-            class="nexus-textarea"
+            class="textarea"
             style="width: 100%;"
           >{{ listing.description }}</textarea>
-          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
             10-5000 characters
           </small>
         </div>
@@ -89,7 +88,7 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
           {# Price Field #}
           <div>
-            <label for="price_xmr" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+            <label for="price_xmr" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
               Price (Atomic Units)
             </label>
             <input
@@ -100,17 +99,17 @@
               min="1"
               required
               value="{{ listing.price_xmr }}"
-              class="nexus-input"
+              class="input"
               style="width: 100%; font-family: monospace;"
             >
-            <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+            <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
               1 XMR = 1,000,000,000,000 atomic units
             </small>
           </div>
 
           {# Stock Field #}
           <div>
-            <label for="stock" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+            <label for="stock" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
               Stock
             </label>
             <input
@@ -121,10 +120,10 @@
               min="0"
               required
               value="{{ listing.stock }}"
-              class="nexus-input"
+              class="input"
               style="width: 100%;"
             >
-            <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+            <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
               Available quantity
             </small>
           </div>
@@ -132,21 +131,21 @@
 
         {# Images Field #}
         <div>
-          <label for="images" class="nexus-label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: var(--nexus-fg, #f9fafb); text-transform: uppercase; letter-spacing: 0.05em;">
+          <label for="images" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
             Product Images
           </label>
-          <div id="image-upload-container" data-listing-id="{{ listing.id }}" style="padding: 1.5rem; border: 2px dashed var(--nexus-glass-border, rgba(255, 255, 255, 0.1)); border-radius: 0.5rem; background: rgba(0, 0, 0, 0.2);"></div>
-          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--nexus-muted-fg, #9ca3af);">
+          <div id="image-upload-container" data-listing-id="{{ listing.id }}" style="padding: 1.5rem; border: 2px dashed hsl(var(--border)); border-radius: 0.5rem; background: rgba(0, 0, 0, 0.2);"></div>
+          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
             Upload one or more images (JPEG, PNG, GIF)
           </small>
         </div>
 
         {# Form Actions #}
-        <div style="display: flex; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--nexus-glass-border, rgba(255, 255, 255, 0.1));">
-          <a href="/listings/{{ listing.id }}" hx-boost="true" class="nexus-btn nexus-btn-secondary nexus-btn-lg" style="flex: 1;">
+        <div style="display: flex; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid hsl(var(--border));">
+          <a href="/listings/{{ listing.id }}" hx-boost="true" class="btn btn-secondary btn-lg" style="flex: 1;">
             Cancel
           </a>
-          <button type="submit" class="nexus-btn nexus-btn-primary nexus-btn-lg" style="flex: 1;">
+          <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">
             Update Listing →
           </button>
         </div>

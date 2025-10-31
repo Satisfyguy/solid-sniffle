@@ -319,8 +319,11 @@ pub async fn show_create_listing(tera: web::Data<Tera>, session: Session) -> imp
         ctx.insert("user_name", &username); // For nav template
         ctx.insert("logged_in", &true);
         ctx.insert("role", &"vendor");
+        ctx.insert("user_role", &"vendor");
+        ctx.insert("is_vendor", &true);
     } else {
         ctx.insert("logged_in", &false);
+        ctx.insert("is_vendor", &false);
     }
 
     // Add CSRF token for form submission and logout
@@ -354,15 +357,23 @@ pub async fn show_edit_listing(
         ctx.insert("logged_in", &true);
         if let Ok(Some(username)) = session.get::<String>("username") {
             ctx.insert("username", &username);
+            ctx.insert("user_name", &username);
         }
         if let Ok(Some(role)) = session.get::<String>("role") {
             ctx.insert("role", &role);
+            ctx.insert("user_role", &role);
+            ctx.insert("is_vendor", &(role == "vendor"));
             if role != "vendor" {
                 return HttpResponse::Forbidden().body("Only vendors can edit listings");
             }
+        } else {
+            ctx.insert("user_role", "buyer");
+            ctx.insert("is_vendor", &false);
         }
         uid
     } else {
+        ctx.insert("logged_in", &false);
+        ctx.insert("is_vendor", &false);
         return HttpResponse::Found()
             .append_header(("Location", "/login"))
             .finish();
@@ -414,6 +425,122 @@ pub async fn show_edit_listing(
     }
 }
 
+/// GET /vendor/listings - Vendor's listings management page (vendor only)
+///
+/// Displays all listings created by the authenticated vendor with management options.
+/// Provides quick stats, filters, and actions (edit, delete, toggle active status).
+///
+/// # Authentication
+/// - Requires active session with vendor role
+/// - Redirects to /login if not authenticated
+/// - Returns 403 Forbidden if user is not a vendor
+///
+/// # Returns
+/// - 200 OK: HTML page with vendor's listings
+/// - 302 Found: Redirect to /login (not authenticated)
+/// - 403 Forbidden: User is not a vendor
+/// - 500 Internal Server Error: Database or template error
+pub async fn show_vendor_listings(
+    tera: web::Data<Tera>,
+    pool: web::Data<DbPool>,
+    session: Session,
+) -> impl Responder {
+    use crate::models::listing::Listing;
+
+    // Check authentication and vendor role
+    let vendor_id = match session.get::<String>("user_id") {
+        Ok(Some(uid)) => uid,
+        _ => {
+            return HttpResponse::Found()
+                .append_header(("Location", "/login"))
+                .finish()
+        }
+    };
+
+    // Verify vendor role
+    if let Ok(Some(role)) = session.get::<String>("role") {
+        if role != "vendor" {
+            return HttpResponse::Forbidden()
+                .body("Access denied: Vendor role required");
+        }
+    } else {
+        return HttpResponse::Found()
+            .append_header(("Location", "/login"))
+            .finish();
+    }
+
+    let mut ctx = Context::new();
+
+    // Insert session data (required by base-marketplace.html)
+    if let Ok(Some(username)) = session.get::<String>("username") {
+        ctx.insert("username", &username);
+        ctx.insert("user_name", &username);
+        ctx.insert("logged_in", &true);
+        ctx.insert("role", &"vendor");
+        ctx.insert("user_role", &"vendor");
+        ctx.insert("is_vendor", &true);
+    } else {
+        ctx.insert("logged_in", &false);
+        ctx.insert("is_vendor", &false);
+    }
+
+    // Add CSRF token for actions
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
+
+    // Fetch vendor's listings from database
+    let mut conn = match pool.get() {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Database connection error: {}", e);
+            return HttpResponse::InternalServerError()
+                .body("Database connection error");
+        }
+    };
+
+    let vendor_id_clone = vendor_id.clone();
+    let listings_result = web::block(move || {
+        Listing::find_by_vendor(&mut conn, vendor_id_clone)
+    })
+    .await;
+
+    let listings = match listings_result {
+        Ok(Ok(l)) => l,
+        Ok(Err(e)) => {
+            error!("Error fetching vendor listings: {}", e);
+            Vec::new()
+        }
+        Err(e) => {
+            error!("Database query error: {}", e);
+            Vec::new()
+        }
+    };
+
+    // Calculate stats
+    let total_listings = listings.len();
+    let active_listings = listings.iter().filter(|l| l.status == "active").count();
+    let inactive_listings = total_listings - active_listings;
+    let total_stock: i32 = listings.iter().map(|l| l.stock).sum();
+
+    ctx.insert("listings", &listings);
+    ctx.insert("total_listings", &total_listings);
+    ctx.insert("active_listings", &active_listings);
+    ctx.insert("inactive_listings", &inactive_listings);
+    ctx.insert("total_stock", &total_stock);
+
+    // Render template
+    match tera.render("vendor/listings.html", &ctx) {
+        Ok(html) => HttpResponse::Ok()
+            .content_type("text/html; charset=utf-8")
+            .body(html),
+        Err(e) => {
+            error!("Template error rendering vendor listings: {}", e);
+            HttpResponse::InternalServerError()
+                .body(format!("Template error: {}", e))
+        }
+    }
+}
+
 /// GET /orders - Orders index page
 pub async fn show_orders(
     tera: web::Data<Tera>,
@@ -439,17 +566,28 @@ pub async fn show_orders(
     // Insert session data
     let user_role = if let Ok(Some(username)) = session.get::<String>("username") {
         ctx.insert("username", &username);
+        ctx.insert("user_name", &username); // For nav template
         ctx.insert("logged_in", &true);
 
         if let Ok(Some(role)) = session.get::<String>("role") {
             ctx.insert("role", &role);
+            ctx.insert("user_role", &role);
+            ctx.insert("is_vendor", &(role == "vendor"));
             Some(role)
         } else {
+            ctx.insert("user_role", "buyer");
+            ctx.insert("is_vendor", &false);
             None
         }
     } else {
+        ctx.insert("logged_in", &false);
+        ctx.insert("is_vendor", &false);
         None
     };
+
+    // Add CSRF token
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
 
     // Fetch orders from database
     let mut conn = match pool.get() {
