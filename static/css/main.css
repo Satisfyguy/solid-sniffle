@@ -325,10 +325,25 @@ body::before {
 }
 
 .hero-title {
-    font-size: clamp(3.5rem, 10vw, 9rem);
-    font-weight: 200;
-    line-height: 1;
-    letter-spacing: -0.02em;
+    font-size: 4.5rem; /* text-7xl */
+    font-weight: 200; /* font-extralight */
+    line-height: 1; /* leading-none */
+    letter-spacing: -0.02em; /* tracking-tight */
+}
+
+@media (min-width: 768px) {
+    .hero-title {
+        font-size: 6rem; /* md:text-8xl */
+    }
+}
+
+@media (min-width: 1024px) {
+    .hero-title {
+        font-size: 8rem; /* lg:text-9xl */
+    }
+    .hero-description-col {
+        margin-top: 4rem; /* lg:mt-16 */
+    }
 }
 
 .title-line {
@@ -348,12 +363,12 @@ body::before {
 }
 
 .description-text {
-    font-size: 0.875rem;
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.8);
-    line-height: 1.6;
-    border-left: 1px solid rgba(255, 255, 255, 0.2);
-    padding-left: 1.5rem;
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 300; /* font-light */
+    color: rgba(255, 255, 255, 0.8); /* text-foreground/80 */
+    line-height: 1.6; /* leading-relaxed */
+    border-left: 1px solid rgba(255, 255, 255, 0.2); /* border-l border-white/20 */
+    padding-left: 1.5rem; /* pl-6 */
 }
 
 /* Buttons */
@@ -370,7 +385,6 @@ body::before {
     font-weight: 300;
     cursor: pointer;
     transition: all 0.3s;
-    backdrop-filter: blur(4px);
 }
 
 .btn-ghost:hover {
@@ -403,14 +417,15 @@ body::before {
     display: flex;
     justify-content: center;
     align-items: flex-end;
+    margin-top: -2rem;
 }
 
 .bottom-text {
-    font-size: 0.875rem;
-    font-weight: 300;
-    color: rgba(255, 255, 255, 0.6);
-    line-height: 1.6;
-    max-width: 32rem;
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 300; /* font-light */
+    color: rgba(255, 255, 255, 0.6); /* text-foreground/60 */
+    line-height: 1.6; /* leading-relaxed */
+    max-width: 32rem; /* max-w-lg */
 }
 
 .cta-circle {
@@ -422,8 +437,8 @@ body::before {
 }
 
 .circle-content {
-    width: 8rem;
-    height: 8rem;
+    width: 8rem; /* w-32 */
+    height: 8rem; /* h-32 */
     border-radius: 50%;
     background-color: var(--color-accent);
     display: flex;
@@ -439,10 +454,10 @@ body::before {
 }
 
 .circle-text {
-    font-size: 0.875rem;
-    font-weight: 500;
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 500; /* font-medium */
     color: var(--color-background);
-    letter-spacing: 0.15em;
+    letter-spacing: 0.05em; /* tracking-wider */
 }
 
 .circle-glow {
@@ -451,7 +466,7 @@ body::before {
     border-radius: 50%;
     background-color: var(--color-accent);
     opacity: 0;
-    filter: blur(2rem);
+    filter: blur(1.5rem); /* blur-xl */
     transition: opacity 0.3s;
     z-index: 1;
 }
@@ -481,7 +496,7 @@ body::before {
 .container {
     max-width: 1280px;
     margin: 0 auto;
-    padding: 0 1.5rem;
+    padding: 8rem 1.5rem 0;
 }
 
 .listings-header {
@@ -680,5 +695,9 @@ body::before {
 
 .btn-create-listing:hover {
     background-color: #E6BF5A;
+}
+
+.smaller-title {
+    font-size: clamp(2.5rem, 8vw, 7rem) !important;
 }
 
