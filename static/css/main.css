@@ -195,6 +195,8 @@ body::before {
     right: 0;
     z-index: 50;
     backdrop-filter: blur(8px);
+    box-shadow: none !important;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .nav-container {
@@ -239,6 +241,7 @@ body::before {
     font-weight: 300;
     letter-spacing: 0.3em;
     color: var(--color-foreground);
+    text-decoration: none !important;
 }
 
 .icon-button {
@@ -384,6 +387,7 @@ body::before {
     font-weight: 300;
     cursor: pointer;
     transition: all 0.3s;
+    text-decoration: none !important;
 }
 
 .btn-ghost:hover {
