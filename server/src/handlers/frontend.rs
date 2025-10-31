@@ -10,12 +10,63 @@ use tracing::{error, info};
 use crate::db::DbPool;
 use crate::middleware::csrf::get_csrf_token;
 
-/// GET / - Homepage (redirects to listings)
-pub async fn index(_tera: web::Data<Tera>, _pool: web::Data<DbPool>, _session: Session) -> impl Responder {
-    // Redirect to listings page (NEXUS design homepage)
-    HttpResponse::Found()
-        .append_header(("Location", "/listings"))
-        .finish()
+
+/// GET /new-home - New V2 Homepage
+pub async fn new_index(tera: web::Data<Tera>, session: Session) -> impl Responder {
+    let mut ctx = Context::new();
+
+    // Add session data to context
+    if let Ok(Some(username)) = session.get::<String>("username") {
+        ctx.insert("username", &username);
+        ctx.insert("logged_in", &true);
+        if let Ok(Some(role)) = session.get::<String>("role") {
+            ctx.insert("role", &role);
+        } else {
+            ctx.insert("role", &"buyer");
+        }
+    } else {
+        ctx.insert("logged_in", &false);
+    }
+
+    // Add CSRF token for forms
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
+
+    match tera.render("v2_index.html", &ctx) {
+        Ok(html) => HttpResponse::Ok().content_type("text/html; charset=utf-8").body(html),
+        Err(e) => {
+            error!("Template error rendering new_index: {}", e);
+            HttpResponse::InternalServerError().body(format!("Template error: {}", e))
+        }
+    }
+}
+
+/// GET / - Homepage
+pub async fn index(tera: web::Data<Tera>, session: Session) -> impl Responder {
+    let mut ctx = Context::new();
+
+    // Add session data to context
+    if let Ok(Some(username)) = session.get::<String>("username") {
+        ctx.insert("username", &username);
+        ctx.insert("logged_in", &true);
+        if let Ok(Some(role)) = session.get::<String>("role") {
+            ctx.insert("role", &role);
+        } else {
+            ctx.insert("role", &"buyer");
+        }
+    } else {
+        ctx.insert("logged_in", &false);
+    }
+
+    // Add CSRF token for forms
+    let csrf_token = get_csrf_token(&session);
+        match tera.render("index.html", &ctx) {
+        Ok(html) => HttpResponse::Ok().content_type("text/html; charset=utf-8").body(html),
+        Err(e) => {
+            error!("Template error rendering index: {}", e);
+            HttpResponse::InternalServerError().body(format!("Template error: {}", e))
+        }
+    }
 }
 
 /// GET /login - Login page
@@ -86,9 +137,12 @@ use crate::models::user::User;
 struct ListingForTemplate {
     id: String,
     title: String,
-    price_xmr: i64,
-    status: String,
-    vendor_username: String,
+    description: String, // New
+    price: String, // New
+    vendor: String, // New
+    rating: f32, // New
+    sales: i32, // New
+    category: String, // New
     first_image_cid: Option<String>,
 }
 
@@ -172,9 +226,12 @@ pub async fn show_listings(
         listings_for_template.push(ListingForTemplate {
             id: listing.id,
             title: listing.title,
-            price_xmr: listing.price_xmr,
-            status: listing.status,
-            vendor_username,
+            description: "High-quality digital asset with complete anonymity".to_string(), // Mock
+            price: format!("{:.4} XMR", listing.price_xmr as f64 / 1_000_000_000_000.0),
+            vendor: vendor_username,
+            rating: 4.8, // Mock
+            sales: 142, // Mock
+            category: "Digital".to_string(), // Mock
             first_image_cid,
         });
     }
@@ -1316,3 +1373,105 @@ pub async fn show_cart(
         }
     }
 }
+
+/// GET /v2/listings - New Listings page
+pub async fn show_v2_listings(tera: web::Data<Tera>, session: Session) -> impl Responder {
+    let mut ctx = Context::new();
+
+    // Insert session data for base template
+    if let Ok(Some(username)) = session.get::<String>("username") {
+        ctx.insert("username", &username);
+        ctx.insert("user_name", &username);
+        ctx.insert("logged_in", &true);
+
+        if let Ok(Some(role)) = session.get::<String>("role") {
+            ctx.insert("role", &role);
+            ctx.insert("user_role", &role);
+            ctx.insert("is_vendor", &(role == "vendor"));
+        } else {
+            ctx.insert("user_role", &"buyer");
+            ctx.insert("is_vendor", &false);
+        }
+    } else {
+        ctx.insert("logged_in", &false);
+        ctx.insert("is_vendor", &false);
+        ctx.insert("user_role", &"guest");
+    }
+
+    // Add CSRF token
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
+
+    match tera.render("v2_listings.html", &ctx) {
+        Ok(html) => HttpResponse::Ok()
+            .content_type("text/html; charset=utf-8")
+            .body(html),
+        Err(e) => {
+            error!("Template error rendering v2_listings: {}", e);
+            HttpResponse::InternalServerError()
+                .body(format!("Template error: {}", e))
+        }
+    }
+}
+
+/// GET /fr/home - New V2 French Homepage
+pub async fn new_index_french(tera: web::Data<Tera>, session: Session) -> impl Responder {
+    let mut ctx = Context::new();
+
+    // Add session data to context
+    if let Ok(Some(username)) = session.get::<String>("username") {
+        ctx.insert("username", &username);
+        ctx.insert("logged_in", &true);
+        if let Ok(Some(role)) = session.get::<String>("role") {
+            ctx.insert("role", &role);
+        } else {
+            ctx.insert("role", &"buyer");
+        }
+    } else {
+        ctx.insert("logged_in", &false);
+    }
+
+    // Add CSRF token for forms
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
+
+    match tera.render("v2_index_french.html", &ctx) {
+        Ok(html) => HttpResponse::Ok().content_type("text/html; charset=utf-8").body(html),
+        Err(e) => {
+            error!("Template error rendering new_index_french: {}", e);
+            HttpResponse::InternalServerError().body(format!("Template error: {}", e))
+        }
+    }
+}
+
+/// GET /home2 - New Homepage
+pub async fn home2(tera: web::Data<Tera>, session: Session) -> impl Responder {
+    let mut ctx = Context::new();
+
+    // Add session data to context
+    if let Ok(Some(username)) = session.get::<String>("username") {
+        ctx.insert("username", &username);
+        ctx.insert("logged_in", &true);
+        if let Ok(Some(role)) = session.get::<String>("role") {
+            ctx.insert("role", &role);
+        } else {
+            ctx.insert("role", &"buyer");
+        }
+    } else {
+        ctx.insert("logged_in", &false);
+    }
+
+    // Add CSRF token for forms
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
+
+    match tera.render("home2.html", &ctx) {
+        Ok(html) => HttpResponse::Ok().content_type("text/html; charset=utf-8").body(html),
+        Err(e) => {
+            error!("Template error rendering home2: {}", e);
+            HttpResponse::InternalServerError().body(format!("Template error: {}", e))
+        }
+    }
+}
+
+

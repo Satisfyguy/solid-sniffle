@@ -86,6 +86,15 @@
   background-color: hsl(var(--muted));
 }
 
+.btn-light {
+  background-color: #FFFFFF;
+  color: hsl(var(--primary));
+}
+
+.btn-light:hover {
+  background-color: hsl(var(--muted));
+}
+
 /* Icon button */
 .btn-icon {
   padding: 0;

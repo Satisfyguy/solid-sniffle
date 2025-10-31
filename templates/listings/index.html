@@ -1,304 +1,57 @@
-{% extends "base-marketplace.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listings - Nexus Marketplace</title>
+    <meta name="description" content="Browse secure and anonymous listings on Nexus marketplace with multisig escrow protection">
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+    {% include "header.html" %}
 
-{% block title %}NEXUS — Secure Marketplace{% endblock %}
-
-{% block content %}
-
-<!-- Hero Section -->
-<section class="hero py-12 md:py-20">
-    <div class="container hero-grid">
-        <!-- Hero Content -->
-        <div class="hero-content animate-slide-up">
-            <div class="hero-badge">Financial Sovereignty</div>
-
-            <h1 class="hero-title">
-                Your Market.<br>
-                <span class="hero-title-muted">Your Keys.</span><br>
-                Your Privacy.
+    <main class="container">
+        <!-- Header -->
+        <div class="listings-header">
+            <h1 class="listings-title">
+                Explore <span class="text-accent">Listings</span>
             </h1>
-
-            <p class="hero-description">
-                Experience true freedom in commerce. NEXUS is the marketplace built on privacy,
-                powered by Monero, secured by multisig escrow.
+            <p class="listings-subtitle">
+                Discover our selection of verified products and services. All trades are protected by our 2/3 multisig escrow system.
             </p>
-
-            <div class="hero-actions">
-                <a href="#categories" class="btn btn-lg btn-primary">
-                    Explore Marketplace
-                    <svg class="lucide" viewBox="0 0 24 24">
-                        <line x1="5" y1="12" x2="19" y2="12"/>
-                        <polyline points="12 5 19 12 12 19"/>
-                    </svg>
-                </a>
-                <a href="#how-it-works" class="btn btn-lg btn-outline">Learn More</a>
-            </div>
         </div>
 
-        <!-- Hero Image -->
-        <div class="hero-image animate-fade-in">
-            <div class="aspect-video overflow-hidden rounded-2xl shadow-xl">
-                <div style="width: 100%; height: 100%; background: linear-gradient(135deg, hsl(215 28% 17%) 0%, hsl(215 28% 10%) 100%); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2); font-size: 4rem;">
-                    🔒
-                </div>
-            </div>
+        <!-- Filters -->
+        <div class="listings-filters">
+            <button class="btn-filter active">All</button>
+            <button class="btn-filter">Digital</button>
+            <button class="btn-filter">Services</button>
+            <button class="btn-filter">Software</button>
+            <button class="btn-filter">Hosting</button>
         </div>
-    </div>
-</section>
 
-<!-- Categories Section -->
-<section id="categories" class="section container">
-    <div class="section-header animate-slide-up">
-        <h2 class="section-title">Browse Categories</h2>
-        <p class="section-subtitle">Discover products across all categories</p>
-    </div>
-
-    <div class="grid lg:grid-cols-4 gap-6">
-        <!-- Audio -->
-        <a href="/categories/audio" class="category-card category-gray">
-            <div class="category-card-content">
-                <div>
-                    <p class="category-card-subtitle">Enjoy With</p>
-                    <h3 class="category-card-title">Audio</h3>
-                </div>
-                <button class="btn btn-sm" style="background-color: white; color: hsl(var(--primary)); width: fit-content;">
-                    Browse
-                    <svg class="lucide lucide-sm" viewBox="0 0 24 24">
-                        <line x1="5" y1="12" x2="19" y2="12"/>
-                        <polyline points="12 5 19 12 12 19"/>
-                    </svg>
-                </button>
-            </div>
-            <svg class="category-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
-                <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
-            </svg>
-        </a>
-
-        <!-- Wearables -->
-        <a href="/categories/wearables" class="category-card category-yellow">
-            <div class="category-card-content">
-                <div>
-                    <p class="category-card-subtitle">Life</p>
-                    <h3 class="category-card-title">Wearables</h3>
-                </div>
-                <button class="btn btn-sm" style="background-color: white; color: hsl(var(--primary)); width: fit-content;">
-                    Browse
-                    <svg class="lucide lucide-sm" viewBox="0 0 24 24">
-                        <line x1="5" y1="12" x2="19" y2="12"/>
-                        <polyline points="12 5 19 12 12 19"/>
-                    </svg>
-                </button>
-            </div>
-            <svg class="category-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="7"/>
-                <polyline points="12 9 12 12 13.5 13.5"/>
-                <path d="m16.51 17.35-.35 3.83a2 2 0 0 1-2 1.82H9.83a2 2 0 0 1-2-1.82l-.35-3.83m.01-10.7.35-3.83A2 2 0 0 1 9.83 1h4.35a2 2 0 0 1 2 1.82l.35 3.83"/>
-            </svg>
-        </a>
-
-        <!-- Devices -->
-        <a href="/categories/devices" class="category-card category-red">
-            <div class="category-card-content">
-                <div>
-                    <p class="category-card-subtitle">Head</p>
-                    <h3 class="category-card-title">Devices</h3>
-                </div>
-                <button class="btn btn-sm" style="background-color: white; color: hsl(var(--primary)); width: fit-content;">
-                    Browse
-                    <svg class="lucide lucide-sm" viewBox="0 0 24 24">
-                        <line x1="5" y1="12" x2="19" y2="12"/>
-                        <polyline points="12 5 19 12 12 19"/>
-                    </svg>
-                </button>
-            </div>
-            <svg class="category-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect width="20" height="14" x="2" y="3" rx="2"/>
-                <line x1="8" x2="16" y1="21" y2="21"/>
-                <line x1="12" x2="12" y1="17" y2="21"/>
-            </svg>
-        </a>
-
-        <!-- Gaming -->
-        <a href="/categories/gaming" class="category-card category-green">
-            <div class="category-card-content">
-                <div>
-                    <p class="category-card-subtitle">Best</p>
-                    <h3 class="category-card-title">Gaming</h3>
-                </div>
-                <button class="btn btn-sm" style="background-color: white; color: hsl(var(--primary)); width: fit-content;">
-                    Browse
-                    <svg class="lucide lucide-sm" viewBox="0 0 24 24">
-                        <line x1="5" y1="12" x2="19" y2="12"/>
-                        <polyline points="12 5 19 12 12 19"/>
-                    </svg>
-                </button>
-            </div>
-            <svg class="category-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="6" x2="10" y1="12" y2="12"/>
-                <line x1="8" x2="8" y1="10" y2="14"/>
-                <line x1="15" x2="15.01" y1="13" y2="13"/>
-                <line x1="18" x2="18.01" y1="11" y2="11"/>
-                <rect width="20" height="12" x="2" y="6" rx="2"/>
-            </svg>
-        </a>
-    </div>
-</section>
-
-<!-- Trust Section -->
-<section class="section section-muted">
-    <div class="container">
-        <div class="grid lg:grid-cols-4 gap-8">
-            <!-- 100% Monero -->
-            <div class="trust-badge">
-                <div class="trust-badge-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
-                    </svg>
-                </div>
-                <div class="trust-badge-content">
-                    <h4 class="trust-badge-title">100% Monero Payment</h4>
-                    <p class="trust-badge-description">Private cryptocurrency transactions</p>
-                </div>
-            </div>
-
-            <!-- 2/3 Multisig -->
-            <div class="trust-badge">
-                <div class="trust-badge-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
-                </div>
-                <div class="trust-badge-content">
-                    <h4 class="trust-badge-title">2/3 Multisig Escrow</h4>
-                    <p class="trust-badge-description">Your funds secured until delivery</p>
-                </div>
-            </div>
-
-            <!-- 24/7 Support -->
-            <div class="trust-badge">
-                <div class="trust-badge-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                </div>
-                <div class="trust-badge-content">
-                    <h4 class="trust-badge-title">24/7 Support</h4>
-                    <p class="trust-badge-description">We're here whenever you need us</p>
-                </div>
-            </div>
-
-            <!-- Non-Custodial -->
-            <div class="trust-badge">
-                <div class="trust-badge-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="8" cy="18" r="4"/>
-                        <path d="M12 18V2l7 4"/>
-                    </svg>
-                </div>
-                <div class="trust-badge-content">
-                    <h4 class="trust-badge-title">Non-Custodial</h4>
-                    <p class="trust-badge-description">You control your private keys</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Featured Products -->
-<section class="section container">
-    <div class="section-header">
-        <h2 class="section-title">Featured Products</h2>
-        <p class="section-subtitle">Hand-picked items from trusted vendors</p>
-    </div>
-
-    <div class="grid lg:grid-cols-4 gap-6">
-        {% if listings and listings | length > 0 %}
-            {% for listing in listings %}
-            <a href="/listings/{{ listing.id }}" class="product-card" hx-boost="true">
-                <div class="product-card-image">
-                    {% if listing.first_image_cid %}
-                        <img src="http://127.0.0.1:8081/ipfs/{{ listing.first_image_cid }}"
-                             alt="{{ listing.title }}">
-                        <div style="display: none; width: 100%; height: 100%; background: linear-gradient(135deg, #E0E0E0, #BDBDBD); align-items: center; justify-content: center; font-size: 4rem; color: #757575;">?</div>
-                    {% else %}
-                        <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #E0E0E0, #BDBDBD); display: flex; align-items: center; justify-content: center; font-size: 4rem; color: #757575;">?</div>
+        <!-- Listings Grid -->
+        <div class="listings-grid">
+            {% if listings and listings | length > 0 %}
+                {% for listing in listings %}
+                    {% include "listings/_listing-card.html" %}
+                {% endfor %}
+            {% else %}
+                <div class="no-listings-message">
+                    <h3>No Listings Yet</h3>
+                    <p>Be the first to create a listing on the marketplace!</p>
+                    {% if logged_in and role == "vendor" %}
+                        <a href="/listings/create" class="btn-create-listing">Create Your First Listing</a>
                     {% endif %}
-                    <div class="product-card-badge">
-                        <span class="badge badge-accent">Featured</span>
-                    </div>
                 </div>
-                <div class="product-card-content">
-                    <p class="product-card-category">{{ listing.category | default(value="General") }}</p>
-                    <h3 class="product-card-title">{{ listing.title }}</h3>
-                    <div class="product-card-footer">
-                        <div class="product-card-price">
-                            <span class="product-card-price-value">{{ listing.price_xmr }}</span>
-                            <span class="product-card-price-currency">XMR</span>
-                        </div>
-                        <button class="btn btn-sm btn-accent">
-                            <svg class="lucide lucide-sm" viewBox="0 0 24 24">
-                                <circle cx="8" cy="21" r="1"/>
-                                <circle cx="19" cy="21" r="1"/>
-                                <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
-                            </svg>
-                            View
-                        </button>
-                    </div>
-                </div>
-            </a>
-            {% endfor %}
-        {% else %}
-            <div class="text-center" style="grid-column: 1 / -1; padding: var(--space-16);">
-                <h3 style="font-size: var(--text-2xl); margin-bottom: var(--space-4);">No Listings Yet</h3>
-                <p style="color: hsl(var(--muted-foreground)); margin-bottom: var(--space-6);">Be the first to create a listing on the marketplace!</p>
-                {% if logged_in and role == "vendor" %}
-                <a href="/listings/create" class="btn btn-accent">Create Your First Listing</a>
-                {% endif %}
-            </div>
-        {% endif %}
-    </div>
-</section>
-
-<!-- How It Works -->
-<section id="how-it-works" class="section section-primary">
-    <div class="container">
-        <div class="section-header">
-            <h2 class="section-title">How It Works</h2>
-            <p class="section-subtitle">Simple, secure, private shopping in three steps</p>
+            {% endif %}
         </div>
+    </main>
 
-        <div class="grid lg:grid-cols-3 gap-12 max-w-5xl" style="margin: 0 auto;">
-            <div class="how-it-works-step">
-                <div class="how-it-works-number">1</div>
-                <h3 class="how-it-works-title">Browse & Select</h3>
-                <p class="how-it-works-description">
-                    Explore categories and choose products from verified vendors
-                </p>
-            </div>
-
-            <div class="how-it-works-step">
-                <div class="how-it-works-number">2</div>
-                <h3 class="how-it-works-title">Secure Payment</h3>
-                <p class="how-it-works-description">
-                    Pay with Monero. Funds held in 2/3 multisig escrow for protection
-                </p>
-            </div>
-
-            <div class="how-it-works-step">
-                <div class="how-it-works-number">3</div>
-                <h3 class="how-it-works-title">Receive & Confirm</h3>
-                <p class="how-it-works-description">
-                    Get your items, confirm delivery, and funds are released
-                </p>
-            </div>
-        </div>
-    </div>
-</section>
-
-{% endblock %}
-
-{% block scripts %}
-<script src="/static/js/listings.js"></script>
-{% endblock %}
+    <script src="/static/js/lucide.min.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+    <script src="/static/js/base.js"></script>
+</body>
+</html>

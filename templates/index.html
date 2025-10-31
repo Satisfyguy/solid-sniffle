@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus - Anonymous Marketplace</title>
+    <meta name="description" content="Trade anonymously with complete control. Nexus combines Tor anonymity with advanced multisig escrow.">
+    
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+    <!-- GEMINI-DEBUG-MARKER-V2 -->
+    {% include "header.html" %}
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <!-- Guide Lines -->
+        <div class="guide-lines">
+            <div class="guide-container">
+                <div class="guide-line guide-1"></div>
+                <div class="guide-line guide-2"></div>
+                <div class="guide-line guide-3"></div>
+                <div class="guide-line guide-4"></div>
+                <div class="guide-line guide-5"></div>
+            </div>
+        </div>
+
+        <!-- Main Hero Content -->
+        <div class="hero-content">
+            <div class="hero-grid">
+                <!-- Title -->
+                <div class="hero-title-col">
+                    <h2 class="hero-title">
+                        <span class="title-line">Trade</span>
+                        <span class="title-line accent">anonymously.</span>
+                        <span class="title-line">Keep control.</span>
+                    </h2>
+                </div>
+
+                <!-- Description -->
+                <div class="hero-description-col">
+                    <div class="description-content">
+                        <p class="description-text">
+                            Our platform combines Tor anonymity with an advanced escrow system. 
+                            You always retain full control of your funds. It's expert-level security, made simple.
+                        </p>
+                        
+                        <button class="btn-ghost" hx-get="/listings" hx-push-url="true">
+                            Explore Listings
+                            <i data-lucide="arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Section -->
+        <div class="hero-bottom">
+            <div class="hero-grid">
+                <!-- Bottom Text -->
+                <div class="bottom-text-col">
+                    <p class="bottom-text">
+                        At NEXUS, we offer a decentralized platform, from transaction to secure escrow.
+                    </p>
+                </div>
+
+                <!-- CTA Circle -->
+                <div class="bottom-cta-col">
+                    <button class="cta-circle">
+                        <div class="circle-content">
+                            <span class="circle-text">VIEW</span>
+                        </div>
+                        <div class="circle-glow"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>

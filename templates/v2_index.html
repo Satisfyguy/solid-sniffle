@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus - Anonymous Marketplace</title>
+    <meta name="description" content="Trade anonymously with complete control. Nexus combines Tor anonymity with advanced multisig escrow.">
+    
+    <!-- Local Fonts -->
+    <link rel="stylesheet" href="/static/vendor/inter/inter.css">
+    
+    <!-- Local HTMX -->
+    <script src="/static/vendor/htmx/htmx.min.js"></script>
+    
+    <!-- Local Lucide Icons -->
+    <script src="/static/vendor/lucide/lucide.min.js"></script>
+    
+    <link rel="stylesheet" href="/static/css/design_v2.css">
+</head>
+<body>
+    <!-- Navigation Header -->
+    <header class="header">
+        <nav class="nav-container">
+            <div class="nav-content">
+                <!-- Left - Navigation -->
+                <div class="nav-left">
+                    <a href="/listings" class="nav-link">Listings</a>
+                    {% if logged_in and role == "vendor" %}
+                    <a href="/listings/create" class="nav-link">Sell</a>
+                    {% endif %}
+                </div>
+
+                <!-- Center - Logo -->
+                <div class="nav-center">
+                    <a href="/new-home" class="logo-link"><h1 class="logo">NEXUS</h1></a>
+                </div>
+
+                <!-- Right - Actions -->
+                <div class="nav-right">
+                    <a href="/cart" class="icon-button" aria-label="Cart">
+                        <i data-lucide="shopping-cart"></i>
+                    </a>
+
+                    {% if logged_in %}
+                    <div class="user-menu-container">
+                        <button class="icon-button" id="user-menu-trigger" aria-label="Profile">
+                            <i data-lucide="user"></i>
+                        </button>
+                        <div class="user-menu-dropdown" id="user-menu-dropdown">
+                            <div class="dropdown-header">Signed in as <strong>{{ username }}</strong></div>
+                            <a href="/orders" class="dropdown-link">My Orders</a>
+                            <a href="/settings" class="dropdown-link">Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <form action="/logout" method="POST" style="margin:0;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <button type="submit" class="dropdown-link logout-button">Logout</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% else %}
+                    <a href="/login" class="nav-link">Login</a>
+                    <a href="/register" class="btn-ghost-sm">Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <!-- Guide Lines -->
+        <div class="guide-lines">
+            <div class="guide-container">
+                <div class="guide-line guide-1"></div>
+                <div class="guide-line guide-2"></div>
+                <div class="guide-line guide-3"></div>
+                <div class="guide-line guide-4"></div>
+                <div class="guide-line guide-5"></div>
+            </div>
+        </div>
+
+        <!-- Main Hero Content -->
+        <div class="hero-content">
+            <div class="hero-grid">
+                <!-- Title -->
+                <div class="hero-title-col">
+                    <h2 class="hero-title">
+                        <span class="title-line">Trade</span>
+                        <span class="title-line accent">anonymously.</span>
+                        <span class="title-line">Keep control.</span>
+                    </h2>
+                </div>
+
+                <!-- Description -->
+                <div class="hero-description-col">
+                    <div class="description-content">
+                        <p class="description-text">
+                            Our platform combines Tor's anonymity with an advanced escrow system. 
+                            You always maintain full control of your funds. It's expert-level security, made simple.
+                        </p>
+                        
+                        <button class="btn-ghost" hx-get="/v2/listings" hx-push-url="true">
+                            Explore listings
+                            <i data-lucide="arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Section -->
+        <div class="hero-bottom">
+            <div class="hero-grid">
+                <!-- Bottom Text -->
+                <div class="bottom-text-col">
+                    <p class="bottom-text">
+                        At NEXUS, we offer a decentralized platform, from transaction to secure escrow.
+                    </p>
+                </div>
+
+                <!-- CTA Circle -->
+                <div class="bottom-cta-col">
+                    <button class="cta-circle" hx-get="/v2/listings" hx-push-url="true">
+                        <div class="circle-content">
+                            <span class="circle-text">DISCOVER</span>
+                        </div>
+                        <div class="circle-glow"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // User menu toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const userMenuTrigger = document.getElementById('user-menu-trigger');
+            const userMenuDropdown = document.getElementById('user-menu-dropdown');
+
+            if (userMenuTrigger && userMenuDropdown) {
+                userMenuTrigger.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    userMenuDropdown.classList.toggle('active');
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!userMenuTrigger.contains(e.target) && !userMenuDropdown.contains(e.target)) {
+                        userMenuDropdown.classList.remove('active');
+                    }
+                });
+
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        userMenuDropdown.classList.remove('active');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

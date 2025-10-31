@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus - Anonymous Marketplace</title>
+    <meta name="description" content="Trade anonymously with complete control. Nexus combines Tor anonymity with advanced multisig escrow.">
+    
+    <!-- Local Fonts -->
+    <link rel="stylesheet" href="/static/vendor/inter/inter.css">
+    
+    <!-- Local HTMX -->
+    <script src="/static/vendor/htmx/htmx.min.js"></script>
+    
+    <!-- Local Lucide Icons -->
+    <script src="/static/vendor/lucide/lucide.min.js"></script>
+    
+    <link rel="stylesheet" href="/static/css/design_v2_french.css">
+</head>
+<body>
+    <!-- Navigation Header -->
+    <header class="header">
+        <nav class="nav-container">
+            <div class="nav-content">
+                <!-- Left - Navigation -->
+                <div class="nav-left">
+                    <a href="/listings" class="nav-link">Listings</a>
+                </div>
+
+                <!-- Center - Logo -->
+                <div class="nav-center">
+                    <h1 class="logo">NEXUS</h1>
+                </div>
+
+                <!-- Right - Actions -->
+                <div class="nav-right">
+                    <button class="icon-button" aria-label="Cart">
+                        <i data-lucide="shopping-cart"></i>
+                    </button>
+                    <button class="icon-button" aria-label="Profile">
+                        <i data-lucide="user"></i>
+                    </button>
+                    <button class="icon-button" aria-label="Menu">
+                        <i data-lucide="menu"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <!-- Guide Lines -->
+        <div class="guide-lines">
+            <div class="guide-container">
+                <div class="guide-line guide-1"></div>
+                <div class="guide-line guide-2"></div>
+                <div class="guide-line guide-3"></div>
+                <div class="guide-line guide-4"></div>
+                <div class="guide-line guide-5"></div>
+            </div>
+        </div>
+
+        <!-- Main Hero Content -->
+        <div class="hero-content">
+            <div class="hero-grid">
+                <!-- Title -->
+                <div class="hero-title-col">
+                    <h2 class="hero-title">
+                        <span class="title-line">Trade</span>
+                        <span class="title-line accent">anonymously.</span>
+                        <span class="title-line">Keep control.</span>
+                    </h2>
+                </div>
+
+                <!-- Description -->
+                <div class="hero-description-col">
+                    <div class="description-content">
+                        <p class="description-text">
+                            Notre plateforme combine l'anonymat de Tor avec un système d'entiercement (escrow) avancé. 
+                            Vous gardez toujours le contrôle total de vos fonds. C'est la sécurité de niveau expert, rendue simple.
+                        </p>
+                        
+                        <button class="btn-ghost" hx-get="/listings" hx-push-url="true">
+                            Explorer les listings
+                            <i data-lucide="arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Section -->
+        <div class="hero-bottom">
+            <div class="hero-grid">
+                <!-- Bottom Text -->
+                <div class="bottom-text-col">
+                    <p class="bottom-text">
+                        Chez NEXUS, nous offrons une plateforme décentralisée, de la transaction à l'entiercement sécurisé.
+                    </p>
+                </div>
+
+                <!-- CTA Circle -->
+                <div class="bottom-cta-col">
+                    <button class="cta-circle">
+                        <div class="circle-content">
+                            <span class="circle-text">VOIR</span>
+                        </div>
+                        <div class="circle-glow"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>

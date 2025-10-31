@@ -15,6 +15,7 @@ use server::middleware::{
     rate_limit::{global_rate_limiter, protected_rate_limiter},
     security_headers::SecurityHeaders,
 };
+use hex;
 use server::services::escrow::EscrowOrchestrator;
 use server::wallet_manager::WalletManager;
 use server::websocket::{WebSocketServer, WebSocketSession};
@@ -111,7 +112,7 @@ async fn main() -> Result<()> {
     let websocket_server = WebSocketServer::default().start();
 
     // 6. Initialize Wallet Manager with persistence and automatic recovery
-    let encryption_key = db_encryption_key.as_bytes().to_vec();
+    let encryption_key = hex::decode(&db_encryption_key).context("Failed to hex decode DB_ENCRYPTION_KEY")?;
     let wallet_manager = {
         let mut wm = WalletManager::new_with_persistence(
             vec![MoneroConfig::default()],
@@ -280,6 +281,7 @@ async fn main() -> Result<()> {
             // Static files (serve CSS, JS, images)
             .service(fs::Files::new("/static", "./static").show_files_listing())
             // Frontend routes (HTML pages)
+            .route("/new-home", web::get().to(frontend::new_index))
             .route("/", web::get().to(frontend::index))
             .route("/login", web::get().to(frontend::show_login))
             .route("/register", web::get().to(frontend::show_register))
@@ -301,6 +303,9 @@ async fn main() -> Result<()> {
             .route("/escrow/{id}", web::get().to(frontend::show_escrow))
             // Cart frontend route
             .route("/cart", web::get().to(frontend::show_cart))
+            // New V2 Listings route
+            .route("/v2/listings", web::get().to(frontend::show_v2_listings))
+            .route("/fr/home", web::get().to(frontend::new_index_french))
             // Reputation frontend routes
             .route("/vendor/{vendor_id}", web::get().to(frontend::vendor_profile))
             .route("/review/submit", web::get().to(frontend::submit_review_form))
