@@ -9,7 +9,7 @@ use actix_web_actors::ws;
 use anyhow::{Context, Result};
 use monero_marketplace_common::types::MoneroConfig;
 use server::db::create_pool;
-use server::handlers::{auth, escrow, frontend, listings, monitoring, multisig_challenge, orders, reputation, reputation_ipfs};
+use server::handlers::{auth, cart, escrow, frontend, listings, monitoring, multisig_challenge, orders, reputation, reputation_ipfs};
 use server::middleware::{
     admin_auth::AdminAuth,
     rate_limit::{global_rate_limiter, protected_rate_limiter},
@@ -299,6 +299,8 @@ async fn main() -> Result<()> {
             .route("/orders", web::get().to(frontend::show_orders))
             .route("/orders/{id}", web::get().to(frontend::show_order))
             .route("/escrow/{id}", web::get().to(frontend::show_escrow))
+            // Cart frontend route
+            .route("/cart", web::get().to(frontend::show_cart))
             // Reputation frontend routes
             .route("/vendor/{vendor_id}", web::get().to(frontend::vendor_profile))
             .route("/review/submit", web::get().to(frontend::submit_review_form))
@@ -394,7 +396,14 @@ async fn main() -> Result<()> {
                     .route(
                         "/reputation/export",
                         web::post().to(reputation_ipfs::export_to_ipfs),
-                    ),
+                    )
+                    // Cart endpoints
+                    .route("/cart/add", web::post().to(cart::add_to_cart))
+                    .route("/cart/remove", web::post().to(cart::remove_from_cart))
+                    .route("/cart/update", web::post().to(cart::update_cart))
+                    .route("/cart/clear", web::post().to(cart::clear_cart))
+                    .route("/cart", web::get().to(cart::get_cart))
+                    .route("/cart/count", web::get().to(cart::get_cart_count)),
             )
             // Admin-only endpoints (requires admin role)
             .service(

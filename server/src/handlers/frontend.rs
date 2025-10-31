@@ -1251,3 +1251,68 @@ pub async fn show_wallet_guide(tera: web::Data<Tera>, session: Session) -> impl 
     }
 }
 
+
+/// GET /cart - Shopping cart page
+///
+/// Displays the user's shopping cart with all items, quantities, and total.
+/// Cart is stored in session, so no authentication required (guest carts allowed).
+///
+/// # Returns
+/// - 200 OK: HTML cart page
+/// - 500 Internal Server Error: Template error
+pub async fn show_cart(
+    tera: web::Data<Tera>,
+    session: Session,
+) -> impl Responder {
+    use crate::models::cart::Cart;
+
+    let mut ctx = Context::new();
+
+    // Insert session data for base template
+    if let Ok(Some(username)) = session.get::<String>("username") {
+        ctx.insert("username", &username);
+        ctx.insert("user_name", &username);
+        ctx.insert("logged_in", &true);
+
+        if let Ok(Some(role)) = session.get::<String>("role") {
+            ctx.insert("role", &role);
+            ctx.insert("user_role", &role);
+            ctx.insert("is_vendor", &(role == "vendor"));
+        } else {
+            ctx.insert("user_role", &"buyer");
+            ctx.insert("is_vendor", &false);
+        }
+    } else {
+        ctx.insert("logged_in", &false);
+        ctx.insert("is_vendor", &false);
+        ctx.insert("user_role", &"guest");
+    }
+
+    // Add CSRF token
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
+
+    // Get cart from session
+    let cart = match session.get::<Cart>("cart") {
+        Ok(Some(c)) => c,
+        _ => Cart::new(),
+    };
+
+    // Insert cart data
+    ctx.insert("cart", &cart);
+    ctx.insert("cart_total_xmr", &cart.total_price_xmr());
+    ctx.insert("cart_count", &cart.item_count());
+    ctx.insert("cart_total_quantity", &cart.total_quantity());
+
+    // Render template
+    match tera.render("cart/index.html", &ctx) {
+        Ok(html) => HttpResponse::Ok()
+            .content_type("text/html; charset=utf-8")
+            .body(html),
+        Err(e) => {
+            error!("Template error rendering cart: {}", e);
+            HttpResponse::InternalServerError()
+                .body(format!("Template error: {}", e))
+        }
+    }
+}

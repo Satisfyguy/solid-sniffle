@@ -1,5 +1,6 @@
 pub mod airgap_dispute;
 pub mod auth;
+pub mod cart;
 pub mod escrow;
 pub mod frontend;
 pub mod listings;

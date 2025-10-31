@@ -2,6 +2,18 @@
 
 {% block title %}My Listings - NEXUS{% endblock %}
 
+{% block head %}
+<style>
+.listing-row {
+  border-bottom: 1px solid hsl(var(--border));
+  transition: background 0.2s;
+}
+.listing-row:hover {
+  background: hsl(var(--muted) / 0.2);
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="section container" style="padding-top: 2rem;">
   <div style="max-width: 1400px; margin: 0 auto;">
@@ -111,7 +123,7 @@
               </thead>
               <tbody>
                 {% for listing in listings %}
-                <tr style="border-bottom: 1px solid hsl(var(--border)); transition: background 0.2s;" onmouseover="this.style.background='hsl(var(--muted) / 0.2)'" onmouseout="this.style.background='transparent'">
+                <tr class="listing-row">
                   <td style="padding: 1rem;">
                     <div style="display: flex; align-items: center; gap: 1rem;">
                       <div style="width: 48px; height: 48px; border-radius: 8px; overflow: hidden; background: hsl(var(--muted)); flex-shrink: 0;">
