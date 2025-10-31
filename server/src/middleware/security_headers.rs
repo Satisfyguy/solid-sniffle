@@ -108,7 +108,7 @@ where
                      style-src 'self' 'unsafe-inline'; \
                      img-src 'self' data: http://127.0.0.1:8081; \
                      font-src 'self'; \
-                     connect-src 'self' ws://127.0.0.1:8080; \
+                     connect-src 'self' ws://127.0.0.1:8080 https://unpkg.com; \
                      frame-ancestors 'none'; \
                      base-uri 'self'; \
                      form-action 'self'",

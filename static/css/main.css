@@ -194,7 +194,6 @@ body::before {
     left: 0;
     right: 0;
     z-index: 50;
-    border-bottom: 1px solid var(--color-border);
     backdrop-filter: blur(8px);
 }
 
@@ -417,7 +416,7 @@ body::before {
     display: flex;
     justify-content: center;
     align-items: flex-end;
-    margin-top: -2rem;
+    margin-top: 0; /* Adjusted from -1rem */
 }
 
 .bottom-text {
