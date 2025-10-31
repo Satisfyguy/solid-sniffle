@@ -1474,4 +1474,54 @@ pub async fn home2(tera: web::Data<Tera>, session: Session) -> impl Responder {
     }
 }
 
+/// GET /profile - User profile page
+pub async fn show_profile(tera: web::Data<Tera>, session: Session) -> impl Responder {
+    // Require authentication
+    let user_id = match session.get::<String>("user_id") {
+        Ok(Some(uid)) => uid,
+        _ => {
+            return HttpResponse::Found()
+                .append_header(("Location", "/login"))
+                .finish();
+        }
+    };
 
+    let mut ctx = Context::new();
+
+    // Insert session data
+    if let Ok(Some(username)) = session.get::<String>("username") {
+        ctx.insert("username", &username);
+        ctx.insert("logged_in", &true);
+
+        if let Ok(Some(role)) = session.get::<String>("role") {
+            ctx.insert("role", &role);
+        } else {
+            ctx.insert("role", &"buyer");
+        }
+    } else {
+        // This case should be unreachable due to the guard above, but we'll handle it safely.
+        return HttpResponse::Found()
+            .append_header(("Location", "/login"))
+            .finish();
+    }
+
+    // Add CSRF token for forms
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
+
+    // TODO: Fetch user profile data from DB (username, pgp_key, bio, stats)
+    // For now, we use placeholder data in the template itself.
+
+    match tera.render("profile/index.html", &ctx) {
+        Ok(html) => {
+            info!("Rendered profile page for user {}", user_id);
+            HttpResponse::Ok()
+                .content_type("text/html; charset=utf-8")
+                .body(html)
+        }
+        Err(e) => {
+            error!("Template error rendering profile page: {}", e);
+            HttpResponse::InternalServerError().body(format!("Template error: {}", e))
+        }
+    }
+}

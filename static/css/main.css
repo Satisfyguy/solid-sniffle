@@ -209,7 +209,6 @@ body::before {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    position: relative;
 }
 
 .nav-left, .nav-right {
@@ -219,9 +218,8 @@ body::before {
 }
 
 .nav-center {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    flex-grow: 1;
+    text-align: center;
 }
 
 .nav-link {
@@ -253,13 +251,8 @@ body::before {
     transition: color 0.3s;
 }
 
-.icon-button:hover {
-    color: var(--color-accent);
-}
-
 .icon-button svg {
     width: 20px;
-    height: 20px;
     stroke-width: 1.5;
 }
 
