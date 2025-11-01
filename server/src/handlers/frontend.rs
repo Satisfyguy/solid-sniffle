@@ -4,11 +4,18 @@
 
 use actix_session::Session;
 use actix_web::{web, HttpResponse, Responder};
+use serde::Deserialize;
 use tera::{Context, Tera};
 use tracing::{error, info};
 
 use crate::db::DbPool;
 use crate::middleware::csrf::get_csrf_token;
+use crate::models::user::{NewUser, User};
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHasher, PasswordVerifier, SaltString},
+    Argon2,
+};
+use uuid::Uuid;
 
 
 /// GET /new-home - New V2 Homepage
@@ -69,10 +76,10 @@ pub async fn index(tera: web::Data<Tera>, session: Session) -> impl Responder {
     }
 }
 
-/// GET /login - Login page
-pub async fn show_login(tera: web::Data<Tera>, session: Session) -> impl Responder {
+/// GET /auth - Authentication page (Login & Register)
+pub async fn show_auth_page(tera: web::Data<Tera>, session: Session) -> impl Responder {
     // Redirect if already logged in
-    if let Ok(Some(_username)) = session.get::<String>("username") {
+    if session.get::<String>("username").unwrap_or(None).is_some() {
         return HttpResponse::Found()
             .append_header(("Location", "/"))
             .finish();
@@ -84,41 +91,195 @@ pub async fn show_login(tera: web::Data<Tera>, session: Session) -> impl Respond
     let csrf_token = get_csrf_token(&session);
     ctx.insert("csrf_token", &csrf_token);
 
-    match tera.render("auth/login.html", &ctx) {
+    match tera.render("auth/index.html", &ctx) {
         Ok(html) => HttpResponse::Ok()
             .content_type("text/html; charset=utf-8")
             .body(html),
         Err(e) => {
-            error!("Template error rendering login: {}", e);
+            error!("Template error rendering auth page: {}", e);
             HttpResponse::InternalServerError().body(format!("Template error: {}", e))
         }
     }
 }
 
-/// GET /register - Registration page
-pub async fn show_register(tera: web::Data<Tera>, session: Session) -> impl Responder {
-    // Redirect if already logged in
-    if let Ok(Some(_username)) = session.get::<String>("username") {
-        return HttpResponse::Found()
-            .append_header(("Location", "/"))
-            .finish();
-    }
+#[derive(Deserialize)]
+pub struct LoginForm {
+    username: String,
+    password: String,
+}
 
-    let mut ctx = Context::new();
+/// POST /auth/login - Handle user login
+pub async fn handle_login(
+    session: Session,
+    pool: web::Data<DbPool>,
+    form: web::Form<LoginForm>,
+) -> impl Responder {
+    info!("Login attempt for user: {}", form.username);
 
-    // Add CSRF token to template context
-    let csrf_token = get_csrf_token(&session);
-    ctx.insert("csrf_token", &csrf_token);
-
-    match tera.render("auth/register.html", &ctx) {
-        Ok(html) => HttpResponse::Ok()
-            .content_type("text/html; charset=utf-8")
-            .body(html),
+    let mut conn = match pool.get() {
+        Ok(conn) => conn,
         Err(e) => {
-            error!("Template error rendering register: {}", e);
-            HttpResponse::InternalServerError().body(format!("Template error: {}", e))
+            error!("Failed to get DB connection from pool: {}", e);
+            return HttpResponse::InternalServerError().body("Database error.");
+        }
+    };
+
+    let username = form.username.clone();
+    let password = form.password.clone();
+
+    // Find user by username in a blocking thread
+    let user_result = web::block(move || User::find_by_username(&mut conn, &username)).await;
+
+    let user = match user_result {
+        Ok(Ok(user)) => user,
+        _ => {
+            // User not found or DB error
+            info!("Login failed for user: {}. User not found or DB error.", &form.username);
+            // Redirect back to auth page, maybe with an error query param in a real app
+            return HttpResponse::Found()
+                .append_header(("Location", "/auth?error=invalid_credentials"))
+                .finish();
+        }
+    };
+
+    // Verify password in a blocking thread
+    let password_hash = user.password_hash.clone();
+    let password_verification = web::block(move || {
+        let parsed_hash = argon2::PasswordHash::new(&password_hash)
+            .map_err(|_| "Failed to parse password hash".to_string())?;
+        Argon2::default()
+            .verify_password(password.as_bytes(), &parsed_hash)
+            .map_err(|_| "Password verification failed".to_string())
+    }).await;
+
+    match password_verification {
+        Ok(Ok(())) => {
+            // Password is correct, create session
+            if session.insert("user_id", user.id).is_err()
+                || session.insert("username", user.username.clone()).is_err()
+                || session.insert("role", user.role).is_err()
+            {
+                error!("Failed to create session for user: {}", user.username);
+                return HttpResponse::InternalServerError().body("Failed to create session.");
+            }
+
+            info!("User {} logged in successfully.", user.username);
+            HttpResponse::Found()
+                .append_header(("Location", "/profile"))
+                .finish()
+        }
+        _ => {
+            // Password incorrect or verification error
+            info!("Login failed for user: {}. Incorrect password.", user.username);
+            HttpResponse::Found()
+                .append_header(("Location", "/auth?error=invalid_credentials"))
+                .finish()
         }
     }
+}
+
+#[derive(Deserialize)]
+pub struct RegisterForm {
+    username: String,
+    password: String,
+    password_confirm: String,
+    role: String,
+}
+
+/// POST /auth/register - Handle user registration
+pub async fn handle_register(
+    session: Session,
+    pool: web::Data<DbPool>,
+    form: web::Form<RegisterForm>,
+) -> impl Responder {
+    info!("Registration attempt for user: {} with role: {}", form.username, form.role);
+
+    // 1. Validate passwords match
+    if form.password != form.password_confirm {
+        // In a real app, you'd redirect back with an error message
+        return HttpResponse::BadRequest().body("Passwords do not match.");
+    }
+
+    // Clone username and role before moving `form` into the closure
+    let username_for_new_user = form.username.clone();
+    let role_for_new_user = form.role.clone();
+
+    // 2. Hash the password
+    let password_hash = match web::block(move || {
+        let salt = SaltString::generate(&mut OsRng);
+        let argon2 = Argon2::default();
+        argon2.hash_password(form.password.as_bytes(), &salt)
+            .map(|hash| hash.to_string())
+            .map_err(|e| e.to_string())
+    }).await {
+        Ok(Ok(hash)) => hash,
+        _ => {
+            error!("Failed to hash password during registration");
+            return HttpResponse::InternalServerError().body("Error processing registration.");
+        }
+    };
+
+    // 3. Create the new user
+    let new_user = NewUser {
+        id: Uuid::new_v4().to_string(),
+        username: username_for_new_user,
+        password_hash,
+        wallet_address: None,
+        wallet_id: None,
+        role: role_for_new_user,
+    };
+
+    let mut conn = match pool.get() {
+        Ok(conn) => conn,
+        Err(e) => {
+            error!("Failed to get DB connection from pool: {}", e);
+            return HttpResponse::InternalServerError().body("Database error.");
+        }
+    };
+
+    // Check if username already exists
+    let username_clone = new_user.username.clone();
+    let user_exists = web::block(move || User::find_by_username(&mut conn, &username_clone)).await;
+
+    if let Ok(Ok(_)) = user_exists {
+        return HttpResponse::BadRequest().body("Username already taken.");
+    }
+
+    // Re-acquire connection as it was moved
+    let mut conn = match pool.get() {
+        Ok(conn) => conn,
+        Err(e) => {
+            error!("Failed to get DB connection from pool: {}", e);
+            return HttpResponse::InternalServerError().body("Database error.");
+        }
+    };
+
+    let user = match web::block(move || User::create(&mut conn, new_user)).await {
+        Ok(Ok(user)) => user,
+        Ok(Err(e)) => {
+            error!("Failed to create user in database: {}", e);
+            return HttpResponse::InternalServerError().body("Failed to create user.");
+        }
+        Err(_) => {
+            error!("A web::block error occurred during user creation.");
+            return HttpResponse::InternalServerError().body("Internal server error.");
+        }
+    };
+
+    // 4. Create a session for the new user
+    if session.insert("user_id", user.id).is_err() 
+        || session.insert("username", user.username).is_err() 
+        || session.insert("role", user.role).is_err() {
+        error!("Failed to create session for new user");
+        return HttpResponse::InternalServerError().body("Failed to create session.");
+    }
+
+    info!("User successfully registered and session created.");
+
+    // 5. Redirect to profile page
+    HttpResponse::Found()
+        .append_header(("Location", "/profile"))
+        .finish()
 }
 
 /// POST /logout - Logout user
@@ -127,11 +288,11 @@ pub async fn logout(session: Session) -> impl Responder {
     info!("User logged out");
 
     HttpResponse::Found()
-        .append_header(("Location", "/login"))
+        .append_header(("Location", "/auth"))
         .finish()
 }
 
-use crate::models::user::User;
+
 
 #[derive(serde::Serialize)]
 struct ListingForTemplate {
@@ -365,7 +526,7 @@ pub async fn show_create_listing(tera: web::Data<Tera>, session: Session) -> imp
         }
     } else {
         return HttpResponse::Found()
-            .append_header(("Location", "/login"))
+            .append_header(("Location", "/auth"))
             .finish();
     }
 
@@ -432,7 +593,7 @@ pub async fn show_edit_listing(
         ctx.insert("logged_in", &false);
         ctx.insert("is_vendor", &false);
         return HttpResponse::Found()
-            .append_header(("Location", "/login"))
+            .append_header(("Location", "/auth"))
             .finish();
     };
 
@@ -489,12 +650,12 @@ pub async fn show_edit_listing(
 ///
 /// # Authentication
 /// - Requires active session with vendor role
-/// - Redirects to /login if not authenticated
+/// - Redirects to /auth if not authenticated
 /// - Returns 403 Forbidden if user is not a vendor
 ///
 /// # Returns
 /// - 200 OK: HTML page with vendor's listings
-/// - 302 Found: Redirect to /login (not authenticated)
+/// - 302 Found: Redirect to /auth (not authenticated)
 /// - 403 Forbidden: User is not a vendor
 /// - 500 Internal Server Error: Database or template error
 pub async fn show_vendor_listings(
@@ -509,7 +670,7 @@ pub async fn show_vendor_listings(
         Ok(Some(uid)) => uid,
         _ => {
             return HttpResponse::Found()
-                .append_header(("Location", "/login"))
+                .append_header(("Location", "/auth"))
                 .finish()
         }
     };
@@ -522,7 +683,7 @@ pub async fn show_vendor_listings(
         }
     } else {
         return HttpResponse::Found()
-            .append_header(("Location", "/login"))
+            .append_header(("Location", "/auth"))
             .finish();
     }
 
@@ -613,7 +774,7 @@ pub async fn show_orders(
         Ok(Some(uid)) => uid,
         _ => {
             return HttpResponse::Found()
-                .append_header(("Location", "/login"))
+                .append_header(("Location", "/auth"))
                 .finish()
         }
     };
@@ -761,7 +922,7 @@ pub async fn show_order(
         Ok(Some(uid)) => uid,
         _ => {
             return HttpResponse::Found()
-                .append_header(("Location", "/login"))
+                .append_header(("Location", "/auth"))
                 .finish()
         }
     };
@@ -917,7 +1078,7 @@ pub async fn show_escrow(
         Ok(Some(uid)) => uid,
         _ => {
             return HttpResponse::Found()
-                .append_header(("Location", "/login"))
+                .append_header(("Location", "/auth"))
                 .finish()
         }
     };
@@ -1096,7 +1257,7 @@ pub async fn submit_review_form(
     // Check authentication
     if session.get::<String>("username").unwrap_or(None).is_none() {
         return HttpResponse::Found()
-            .append_header(("Location", "/login"))
+            .append_header(("Location", "/auth"))
             .finish();
     }
 
@@ -1159,7 +1320,7 @@ pub async fn show_settings(
         Ok(Some(uid)) => uid,
         _ => {
             return HttpResponse::Found()
-                .append_header(("Location", "/login"))
+                .append_header(("Location", "/auth"))
                 .finish()
         }
     };
@@ -1231,7 +1392,7 @@ pub async fn show_wallet_settings(tera: web::Data<Tera>, session: Session) -> im
     // Require authentication
     if session.get::<String>("username").unwrap_or(None).is_none() {
         return HttpResponse::Found()
-            .append_header(("Location", "/login"))
+            .append_header(("Location", "/auth"))
             .finish();
     }
 
@@ -1321,7 +1482,7 @@ pub async fn show_cart(
     tera: web::Data<Tera>,
     session: Session,
 ) -> impl Responder {
-    use crate::models::cart::Cart;
+    use crate::models::cart::{Cart, CartItem};
 
     let mut ctx = Context::new();
 
@@ -1355,11 +1516,41 @@ pub async fn show_cart(
         _ => Cart::new(),
     };
 
-    // Insert cart data
-    ctx.insert("cart", &cart);
-    ctx.insert("cart_total_xmr", &cart.total_price_xmr());
+    // Prepare cart items for template
+    #[derive(serde::Serialize)]
+    struct CartItemForTemplate {
+        listing_id: String,
+        title: String,
+        vendor_username: String,
+        price: String, // Formatted price
+        quantity: i32,
+        image_cid: Option<String>,
+    }
+
+    let mut cart_items_for_template = Vec::new();
+    for item in &cart.items {
+        cart_items_for_template.push(CartItemForTemplate {
+            listing_id: item.listing_id.clone(),
+            title: item.title.clone(),
+            vendor_username: item.vendor_username.clone(),
+            price: format!("{:.4} XMR", item.unit_price_xmr as f64 / 1_000_000_000_000.0),
+            quantity: item.quantity,
+            image_cid: item.image_cid.clone(),
+        });
+    }
+
+    let total_xmr = cart.total_price_xmr();
+    let escrow_fee_xmr = total_xmr * 0.03; // 3% escrow fee
+    let final_total_xmr = total_xmr + escrow_fee_xmr;
+
+    ctx.insert("cart_items", &cart_items_for_template);
+    ctx.insert("total", &format!("{:.4} XMR", total_xmr));
+    ctx.insert("escrow_fee", &format!("{:.4} XMR", escrow_fee_xmr));
+    ctx.insert("final_total", &format!("{:.4} XMR", final_total_xmr));
     ctx.insert("cart_count", &cart.item_count());
     ctx.insert("cart_total_quantity", &cart.total_quantity());
+    ctx.insert("is_cart_empty", &cart.is_empty());
+
 
     // Render template
     match tera.render("cart/index.html", &ctx) {
@@ -1481,7 +1672,7 @@ pub async fn show_profile(tera: web::Data<Tera>, session: Session) -> impl Respo
         Ok(Some(uid)) => uid,
         _ => {
             return HttpResponse::Found()
-                .append_header(("Location", "/login"))
+                .append_header(("Location", "/auth"))
                 .finish();
         }
     };
@@ -1501,7 +1692,7 @@ pub async fn show_profile(tera: web::Data<Tera>, session: Session) -> impl Respo
     } else {
         // This case should be unreachable due to the guard above, but we'll handle it safely.
         return HttpResponse::Found()
-            .append_header(("Location", "/login"))
+            .append_header(("Location", "/auth"))
             .finish();
     }
 
