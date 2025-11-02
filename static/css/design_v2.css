@@ -452,3 +452,123 @@ body::before {
         margin-top: 2rem;
     }
 }
+
+/* ========================================
+   USER MENU DROPDOWN - Enhanced
+   ======================================== */
+
+/* Header Section */
+.user-menu-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.user-menu-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(201, 164, 69, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent);
+}
+
+.user-menu-avatar svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+}
+
+.user-menu-info {
+    flex: 1;
+}
+
+.user-menu-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-foreground);
+    margin-bottom: 0.125rem;
+}
+
+.user-menu-role {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: capitalize;
+}
+
+/* Links Section */
+.user-menu-links {
+    padding: 0.5rem 0;
+}
+
+.user-menu-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: var(--color-foreground);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 300;
+    transition: background-color 0.2s, color 0.2s;
+    width: 100%;
+    border: none;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+}
+
+.user-menu-link:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--color-accent);
+}
+
+.user-menu-link svg {
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+}
+
+/* Logout Form */
+.user-menu-logout-form {
+    margin: 0;
+}
+
+.user-menu-logout {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+    font-weight: 300;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.user-menu-logout:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #ef4444;
+}
+
+.user-menu-logout svg {
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+}
+
+/* Update dropdown to enhance appearance */
+.user-menu-dropdown {
+    min-width: 220px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}

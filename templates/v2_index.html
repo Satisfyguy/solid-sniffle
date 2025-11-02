@@ -22,6 +22,9 @@
     <!-- Navigation Header -->
     <header class="header">
         <div class="container header-container">
+            <!-- RED SQUARE TEST -->
+            <div style="width: 50px; height: 50px; background-color: red; position: absolute; top: 10px; left: 50%; z-index: 9999;"></div>
+
             <!-- Logo -->
             <div class="header-logo">
                 <a href="/" style="color: inherit; text-decoration: none;">NEXUS</a>
@@ -211,26 +214,29 @@
         // Initialize Lucide icons
         lucide.createIcons();
 
-        // User menu toggle
+        // User menu toggle (same logic as base.js)
         document.addEventListener('DOMContentLoaded', function() {
-            const userMenuTrigger = document.getElementById('user-menu-trigger');
+            const userMenuBtn = document.getElementById('user-menu-btn');
             const userMenuDropdown = document.getElementById('user-menu-dropdown');
 
-            if (userMenuTrigger && userMenuDropdown) {
-                userMenuTrigger.addEventListener('click', function(e) {
+            if (userMenuBtn && userMenuDropdown) {
+                userMenuBtn.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    userMenuDropdown.classList.toggle('active');
+                    const isOpen = userMenuDropdown.style.display === 'block';
+                    userMenuDropdown.style.display = isOpen ? 'none' : 'block';
                 });
 
+                // Close menu when clicking outside
                 document.addEventListener('click', function(e) {
-                    if (!userMenuTrigger.contains(e.target) && !userMenuDropdown.contains(e.target)) {
-                        userMenuDropdown.classList.remove('active');
+                    if (!e.target.closest('.user-menu-container')) {
+                        userMenuDropdown.style.display = 'none';
                     }
                 });
 
+                // Close menu on escape key
                 document.addEventListener('keydown', function(e) {
                     if (e.key === 'Escape') {
-                        userMenuDropdown.classList.remove('active');
+                        userMenuDropdown.style.display = 'none';
                     }
                 });
             }
