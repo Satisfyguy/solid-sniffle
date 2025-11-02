@@ -231,6 +231,69 @@
 
         /* mx-auto */
         .mx-auto { margin-left: auto; margin-right: auto; }
+
+        /* Role Selector */
+        .role-selector {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .role-option {
+            flex: 1;
+            position: relative;
+        }
+
+        .role-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .role-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            border: 1px solid var(--color-border);
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 150ms;
+            text-align: center;
+        }
+
+        .role-option input[type="radio"]:checked + .role-label {
+            border-color: var(--color-accent);
+            background-color: rgba(201, 164, 69, 0.1);
+        }
+
+        .role-label:hover {
+            border-color: rgba(201, 164, 69, 0.5);
+        }
+
+        .role-icon {
+            margin-bottom: 0.5rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .role-option input[type="radio"]:checked + .role-label .role-icon {
+            color: var(--color-accent);
+        }
+
+        .role-name {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--color-foreground);
+        }
+
+        .role-description {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 0.25rem;
+        }
     </style>
 </head>
 <body>
@@ -295,12 +358,12 @@
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
                         <div class="space-y-2">
-                            <label for="login-email" class="form-label">Email</label>
+                            <label for="login-username" class="form-label">Username</label>
                             <input
-                                id="login-email"
+                                id="login-username"
                                 name="username"
                                 type="text"
-                                placeholder="votre@email.com"
+                                placeholder="your_username"
                                 class="form-input"
                                 required
                             />
@@ -354,12 +417,12 @@
                         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
                         <div class="space-y-2">
-                            <label for="signup-email" class="form-label">Email</label>
+                            <label for="signup-username" class="form-label">Username</label>
                             <input
-                                id="signup-email"
+                                id="signup-username"
                                 name="username"
                                 type="text"
-                                placeholder="votre@email.com"
+                                placeholder="your_username"
                                 minlength="3"
                                 maxlength="50"
                                 class="form-input"
@@ -411,6 +474,50 @@
                             />
                         </div>
 
+                        <!-- Role Selector -->
+                        <div class="space-y-2">
+                            <label class="form-label">Account Type</label>
+                            <div class="role-selector">
+                                <div class="role-option">
+                                    <input
+                                        type="radio"
+                                        id="role-buyer"
+                                        name="role"
+                                        value="buyer"
+                                        checked
+                                        required
+                                    />
+                                    <label for="role-buyer" class="role-label">
+                                        <svg class="role-icon w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="9" cy="21" r="1"/>
+                                            <circle cx="20" cy="21" r="1"/>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                                        </svg>
+                                        <span class="role-name">Buyer</span>
+                                        <span class="role-description">Browse & purchase items</span>
+                                    </label>
+                                </div>
+                                <div class="role-option">
+                                    <input
+                                        type="radio"
+                                        id="role-seller"
+                                        name="role"
+                                        value="seller"
+                                        required
+                                    />
+                                    <label for="role-seller" class="role-label">
+                                        <svg class="role-icon w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/>
+                                            <path d="m3 9 2.45-4.9A2 2 0 0 1 7.24 3h9.52a2 2 0 0 1 1.8 1.1L21 9"/>
+                                            <path d="M12 3v6"/>
+                                        </svg>
+                                        <span class="role-name">Seller</span>
+                                        <span class="role-description">List & sell products</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Security Notice -->
                         <div class="security-notice">
                             <p class="text-xs font-light text-foreground/80 leading-relaxed">
@@ -420,8 +527,6 @@
                                 Your data is end-to-end encrypted. We store no personal information.
                             </p>
                         </div>
-
-                        <input type="hidden" name="role" value="buyer">
 
                         <button type="submit" class="btn-primary">
                             Create Account

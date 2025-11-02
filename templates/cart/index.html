@@ -322,8 +322,20 @@
                             Proceed to Checkout
                         </a>
                         {% else %}
-                        <a href="/login?redirect=/checkout" class="btn-checkout">
-                            Login to Checkout
+                        <!-- Onboarding-optimized message for anonymous users -->
+                        <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 4px; padding: 1rem; margin-bottom: 1rem;">
+                            <p style="font-size: 0.875rem; color: rgba(255, 255, 255, 0.7); margin-bottom: 0.5rem; font-weight: 300;">
+                                Create your account to complete purchase
+                            </p>
+                            <p style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); font-weight: 300;">
+                                ⚡ Takes only 30 seconds • No email required • Fully anonymous
+                            </p>
+                        </div>
+                        <a href="/register?redirect=/cart" class="btn-checkout">
+                            Create Account & Checkout →
+                        </a>
+                        <a href="/login?redirect=/cart" style="display: block; text-align: center; margin-top: 0.75rem; font-size: 0.875rem; color: rgba(255, 255, 255, 0.6); text-decoration: none; font-weight: 300;">
+                            Already have an account? Login
                         </a>
                         {% endif %}
 

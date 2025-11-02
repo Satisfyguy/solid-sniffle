@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil - Nexus Marketplace</title>
-    <meta name="description" content="Gérez votre profil et vos paramètres sur Nexus marketplace">
+    <title>Profile - Nexus Marketplace</title>
+    <meta name="description" content="Manage your profile and settings on Nexus marketplace">
     
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="/static/css/main.css">
@@ -207,10 +207,10 @@
       <!-- Header -->
       <div class="mb-12 space-y-4">
         <h1 class="text-5xl font-light tracking-tight">
-          Votre <span class="text-accent">Profil</span>
+          Your <span class="text-accent">Profile</span>
         </h1>
         <p class="text-muted-foreground max-w-2xl font-light">
-          Gérez vos informations personnelles et vos paramètres de sécurité.
+          Manage your personal information and security settings.
         </p>
       </div>
 
@@ -220,13 +220,13 @@
             <input type="radio" id="tab-profile" name="tabs" class="tab-radio" checked>
             <label for="tab-profile" class="tab-label">
                 <i data-lucide="user" class="h-4 w-4"></i>
-                Profil
+                Profile
             </label>
-            
+
             <input type="radio" id="tab-security" name="tabs" class="tab-radio">
             <label for="tab-security" class="tab-label">
                 <i data-lucide="shield" class="h-4 w-4"></i>
-                Sécurité
+                Security
             </label>
 
             <input type="radio" id="tab-notifications" name="tabs" class="tab-radio">
@@ -241,52 +241,52 @@
             <div class="space-y-6">
                 <div class="card">
                     <div class="card-header">
-                        <h3>Informations du compte</h3>
+                        <h3>Account Information</h3>
                         <p>
-                            Gérez vos informations personnelles et votre identité sur la plateforme
+                            Manage your personal information and identity on the platform
                         </p>
                     </div>
                     <div class="card-content space-y-6">
                         <div class="space-y-2">
-                            <label for="username" class="label">Nom d'utilisateur</label>
+                            <label for="username" class="label">Username</label>
                             <input id="username" placeholder="anonymous_user" class="input" />
                         </div>
-                        
+
                         <div class="space-y-2">
-                            <label for="pgp" class="label">Clé PGP publique</label>
+                            <label for="pgp" class="label">PGP Public Key</label>
                             <textarea id="pgp" class="input" placeholder="-----BEGIN PGP PUBLIC KEY BLOCK-----&#10;&#10;-----END PGP PUBLIC KEY BLOCK-----"></textarea>
                         </div>
 
                         <div class="space-y-2">
                             <label for="bio" class="label">Bio</label>
-                            <textarea id="bio" class="input" placeholder="Vendeur vérifiés depuis 2023..."></textarea>
+                            <textarea id="bio" class="input" placeholder="Verified seller since 2023..."></textarea>
                         </div>
 
                         <hr class="separator" />
 
                         <div class="flex justify-end">
-                            <button class="btn">Enregistrer les modifications</button>
+                            <button class="btn">Save Changes</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h3>Statistiques</h3>
-                        <p>Votre activité sur Nexus</p>
+                        <h3>Statistics</h3>
+                        <p>Your activity on Nexus</p>
                     </div>
                     <div class="card-content">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div class="space-y-1">
-                                <p class="text-sm text-muted-foreground font-light">Transactions complétées</p>
+                                <p class="text-sm text-muted-foreground font-light">Completed Transactions</p>
                                 <p class="text-3xl font-light text-accent">24</p>
                             </div>
                             <div class="space-y-1">
-                                <p class="text-sm text-muted-foreground font-light">Note moyenne</p>
+                                <p class="text-sm text-muted-foreground font-light">Average Rating</p>
                                 <p class="text-3xl font-light text-accent">4.9</p>
                             </div>
                             <div class="space-y-1">
-                                <p class="text-sm text-muted-foreground font-light">Membre depuis</p>
+                                <p class="text-sm text-muted-foreground font-light">Member Since</p>
                                 <p class="text-3xl font-light text-accent">2023</p>
                             </div>
                         </div>
@@ -300,55 +300,55 @@
             <div class="space-y-6">
                 <div class="card">
                     <div class="card-header">
-                        <h3>Authentification</h3>
-                        <p>Gérez vos méthodes d'authentification et sécurisez votre compte</p>
+                        <h3>Authentication</h3>
+                        <p>Manage your authentication methods and secure your account</p>
                     </div>
                     <div class="card-content space-y-6">
                         <div class="space-y-2">
-                            <label for="current-password" class="label">Mot de passe actuel</label>
+                            <label for="current-password" class="label">Current Password</label>
                             <input id="current-password" type="password" class="input" />
                         </div>
-                        
+
                         <div class="space-y-2">
-                            <label for="new-password" class="label">Nouveau mot de passe</label>
+                            <label for="new-password" class="label">New Password</label>
                             <input id="new-password" type="password" class="input" />
                         </div>
 
                         <div class="space-y-2">
-                            <label for="confirm-password" class="label">Confirmer le mot de passe</label>
+                            <label for="confirm-password" class="label">Confirm Password</label>
                             <input id="confirm-password" type="password" class="input" />
                         </div>
 
                         <hr class="separator" />
 
                         <div class="flex justify-end">
-                            <button class="btn">Modifier le mot de passe</button>
+                            <button class="btn">Change Password</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h3>Authentification à deux facteurs</h3>
-                        <p>Ajoutez une couche de sécurité supplémentaire à votre compte</p>
+                        <h3>Two-Factor Authentication</h3>
+                        <p>Add an additional layer of security to your account</p>
                     </div>
                     <div class="card-content space-y-4">
                         <div class="flex items-center justify-between">
                             <div class="space-y-0.5">
                                 <div class="flex items-center gap-2">
                                     <i data-lucide="key" class="h-4 w-4 text-muted-foreground"></i>
-                                    <span>2FA activée</span>
+                                    <span>2FA Enabled</span>
                                 </div>
-                                <p class="text-sm text-muted-foreground font-light">Protection supplémentaire via TOTP</p>
+                                <p class="text-sm text-muted-foreground font-light">Additional protection via TOTP</p>
                             </div>
                             <label class="switch"><input type="checkbox" checked><span class="slider round"></span></label>
                         </div>
-                        
+
                         <hr class="separator" />
-                        
+
                         <button class="btn btn-outline w-full">
                             <i data-lucide="lock" class="h-4 w-4 mr-2"></i>
-                            Configurer l'authentification
+                            Configure Authentication
                         </button>
                     </div>
                 </div>
@@ -356,13 +356,13 @@
                 <div class="card">
                     <div class="card-header">
                         <h3 class="text-xl font-light">Session</h3>
-                        <p class="font-light text-muted-foreground">Gérez votre connexion</p>
+                        <p class="font-light text-muted-foreground">Manage your connection</p>
                     </div>
                     <div class="card-content space-y-4">
                         <div class="flex items-center justify-between">
                             <div class="space-y-0.5">
-                                <span>Déconnexion</span>
-                                <p class="text-sm text-muted-foreground font-light">Se déconnecter de votre compte Nexus</p>
+                                <span>Logout</span>
+                                <p class="text-sm text-muted-foreground font-light">Log out of your Nexus account</p>
                             </div>
                             <form method="POST" action="/logout" class="inline-form">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -376,11 +376,11 @@
 
                 <div class="card bg-destructive/10 border-destructive/50">
                     <div class="card-header">
-                        <h3 class="text-xl font-light text-destructive">Zone de danger</h3>
-                        <p class="font-light text-destructive/80">Actions irréversibles sur votre compte</p>
+                        <h3 class="text-xl font-light text-destructive">Danger Zone</h3>
+                        <p class="font-light text-destructive/80">Irreversible actions on your account</p>
                     </div>
                     <div class="card-content">
-                        <button class="btn btn-destructive font-light">Supprimer le compte</button>
+                        <button class="btn btn-destructive font-light">Delete Account</button>
                     </div>
                 </div>
             </div>
@@ -390,14 +390,14 @@
         <div class="tab-content" id="content-notifications">
             <div class="card">
                 <div class="card-header">
-                    <h3>Préférences de notification</h3>
-                    <p>Choisissez comment vous souhaitez être notifié</p>
+                    <h3>Notification Preferences</h3>
+                    <p>Choose how you want to be notified</p>
                 </div>
                 <div class="card-content space-y-6">
                     <div class="flex items-center justify-between">
                         <div class="space-y-0.5">
-                            <span>Nouvelles transactions</span>
-                            <p class="text-sm text-muted-foreground font-light">Recevoir des notifications pour les nouvelles transactions</p>
+                            <span>New Transactions</span>
+                            <p class="text-sm text-muted-foreground font-light">Receive notifications for new transactions</p>
                         </div>
                         <label class="switch"><input type="checkbox" checked><span class="slider round"></span></label>
                     </div>
@@ -407,7 +407,7 @@
                     <div class="flex items-center justify-between">
                         <div class="space-y-0.5">
                             <span>Messages</span>
-                            <p class="text-sm text-muted-foreground font-light">Notifications pour les nouveaux messages</p>
+                            <p class="text-sm text-muted-foreground font-light">Notifications for new messages</p>
                         </div>
                         <label class="switch"><input type="checkbox" checked><span class="slider round"></span></label>
                     </div>
@@ -416,8 +416,8 @@
 
                     <div class="flex items-center justify-between">
                         <div class="space-y-0.5">
-                            <span>Escrow updates</span>
-                            <p class="text-sm text-muted-foreground font-light">Mises à jour sur l'état de vos escrows</p>
+                            <span>Escrow Updates</span>
+                            <p class="text-sm text-muted-foreground font-light">Updates on the status of your escrows</p>
                         </div>
                         <label class="switch"><input type="checkbox" checked><span class="slider round"></span></label>
                     </div>
@@ -427,7 +427,7 @@
                     <div class="flex items-center justify-between">
                         <div class="space-y-0.5">
                             <span>Newsletters</span>
-                            <p class="text-sm text-muted-foreground font-light">Recevoir des informations sur les nouveautés</p>
+                            <p class="text-sm text-muted-foreground font-light">Receive information about new features</p>
                         </div>
                         <label class="switch"><input type="checkbox"><span class="slider round"></span></label>
                     </div>

@@ -1179,3 +1179,51 @@ body::before {
 a[href="/cart"].icon-button::before {
     background-color: #C9A445;
 }
+
+/* ==============================================
+   Typewriter Effect
+   ============================================== */
+
+.typewriter-container {
+    margin-top: 1rem;
+    margin-left: 0.5rem;
+    min-height: 2rem;
+    display: flex;
+    align-items: center;
+}
+
+.typewriter-text {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--color-accent);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.typewriter-cursor {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.875rem;
+    color: var(--color-accent);
+    margin-left: 2px;
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    0%, 50% {
+        opacity: 1;
+    }
+    50.1%, 100% {
+        opacity: 0;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .typewriter-text {
+        font-size: 0.75rem;
+    }
+    .typewriter-cursor {
+        font-size: 0.75rem;
+    }
+}
