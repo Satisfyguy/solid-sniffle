@@ -314,6 +314,7 @@ async fn main() -> Result<()> {
             .route("/settings/wallet", web::get().to(frontend::show_wallet_settings))
             .route("/docs/wallet-setup", web::get().to(frontend::show_wallet_guide))
             .route("/profile", web::get().to(frontend::show_profile))
+            .route("/featured", web::get().to(frontend::show_featured))
             // API Routes
             .route("/api/health", web::get().to(health_check))
             // WebSocket route

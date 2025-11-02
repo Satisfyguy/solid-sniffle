@@ -1527,3 +1527,35 @@ pub async fn show_profile(tera: web::Data<Tera>, session: Session) -> impl Respo
         }
     }
 }
+
+/// GET /featured - Featured products page
+pub async fn show_featured(tera: web::Data<Tera>, session: Session) -> impl Responder {
+    let mut ctx = Context::new();
+
+    // Check if user is logged in
+    let logged_in = session.get::<String>("user_id").unwrap_or(None).is_some();
+    ctx.insert("logged_in", &logged_in);
+
+    if logged_in {
+        if let Ok(Some(username)) = session.get::<String>("username") {
+            ctx.insert("username", &username);
+        }
+        if let Ok(Some(role)) = session.get::<String>("role") {
+            ctx.insert("role", &role);
+        } else {
+            ctx.insert("role", &"buyer");
+        }
+    }
+
+    // Add CSRF token for forms
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
+
+    match tera.render("featured/index.html", &ctx) {
+        Ok(html) => HttpResponse::Ok().content_type("text/html; charset=utf-8").body(html),
+        Err(e) => {
+            error!("Template error rendering featured page: {}", e);
+            HttpResponse::InternalServerError().body(format!("Template error: {}", e))
+        }
+    }
+}
