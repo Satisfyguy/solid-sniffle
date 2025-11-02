@@ -5,6 +5,26 @@
  */
 
 /* ========================================
+   HEADER & NAVIGATION
+   ======================================== */
+
+.logo {
+  font-size: 1.25rem;
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  color: hsl(var(--foreground));
+  text-decoration: none !important;
+}
+
+.logo-link {
+  text-decoration: none !important;
+}
+
+.logo-link:hover .logo {
+  color: hsl(var(--foreground));
+}
+
+/* ========================================
    BUTTONS
    ======================================== */
 

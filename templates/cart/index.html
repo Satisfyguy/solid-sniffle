@@ -1,117 +1,350 @@
-{% extends "base-marketplace.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - NEXUS</title>
+    <meta name="description" content="Your secure shopping cart on NEXUS marketplace">
 
-{% block title %}Panier - NEXUS{% endblock %}
+    <!-- Main CSS (obligatoire) -->
+    <link rel="stylesheet" href="/static/css/main.css">
 
-{% block content %}
-<div class="cart-page-container">
-  <div class="cart-page-content">
+    <!-- Page-specific styles -->
+    <style>
+        /* Cart Page Container */
+        .cart-page {
+            min-height: 100vh;
+            padding-top: 6rem;
+            padding-bottom: 3rem;
+        }
 
-    {# Page Header #}
-    <div class="cart-header">
-      <h1 class="cart-title">Votre <span class="text-accent">Panier</span></h1>
-      <p class="cart-subtitle">Vérifiez vos articles avant de procéder au paiement sécurisé avec escrow multisig.</p>
-    </div>
+        /* Header Section */
+        .cart-header {
+            margin-bottom: 3rem;
+        }
 
-    {% if cart and cart.items and cart.items | length > 0 %}
-      <div class="cart-layout">
+        .cart-title {
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: -0.02em;
+            margin-bottom: 1rem;
+        }
 
-        {# Cart Items - Each item in its own card #}
-        <div class="cart-items-section">
-          {% for item in cart.items %}
-          <div class="card cart-item-card" data-listing-id="{{ item.listing_id }}">
-            <div class="cart-item-content">
-              {# Product Info #}
-              <div class="cart-item-info">
-                <h3 class="cart-item-title">{{ item.title }}</h3>
-                <p class="cart-item-vendor">
-                  Vendeur: {{ item.vendor_username }}
+        .text-accent {
+            color: var(--color-accent);
+        }
+
+        .cart-subtitle {
+            color: rgba(255, 255, 255, 0.6);
+            max-width: 42rem;
+            font-weight: 300;
+            line-height: 1.6;
+        }
+
+        /* Grid Layout */
+        .cart-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 1024px) {
+            .cart-grid {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        /* Cart Items Section */
+        .cart-items-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Cart Item Card */
+        .cart-item-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: border-color 0.3s;
+        }
+
+        .cart-item-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-title {
+            font-size: 1.125rem;
+            font-weight: 300;
+            margin-bottom: 0.25rem;
+        }
+
+        .cart-item-vendor {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 300;
+        }
+
+        .cart-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .cart-item-price {
+            font-size: 1.125rem;
+            font-weight: 300;
+            color: var(--color-accent);
+            white-space: nowrap;
+        }
+
+        .remove-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: color 0.3s;
+        }
+
+        .remove-btn:hover {
+            color: #ef4444;
+        }
+
+        /* Empty Cart */
+        .empty-cart {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 3rem;
+            text-align: center;
+        }
+
+        .empty-cart-icon {
+            width: 4rem;
+            height: 4rem;
+            margin: 0 auto 1rem;
+            color: rgba(255, 255, 255, 0.4);
+            stroke-width: 1;
+        }
+
+        .empty-cart-text {
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 300;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Summary Card */
+        .summary-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 1.5rem;
+            position: sticky;
+            top: 6rem;
+        }
+
+        .summary-title {
+            font-size: 1.25rem;
+            font-weight: 300;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            font-weight: 300;
+        }
+
+        .summary-label {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .summary-separator {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+
+        .summary-total {
+            font-size: 1.125rem;
+            margin-top: 1rem;
+        }
+
+        .summary-total-value {
+            color: var(--color-accent);
+        }
+
+        /* Buttons */
+        .btn-checkout {
+            width: 100%;
+            background: var(--color-accent);
+            color: #000;
+            border: none;
+            padding: 0.875rem 1.5rem;
+            border-radius: 2px;
+            font-size: 1rem;
+            font-weight: 400;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            margin-top: 1.5rem;
+            display: block;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-checkout:hover {
+            opacity: 0.9;
+        }
+
+        .btn-continue {
+            width: 100%;
+            background: transparent;
+            color: var(--color-foreground);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.875rem 1.5rem;
+            border-radius: 2px;
+            font-size: 1rem;
+            font-weight: 300;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 0.75rem;
+            display: block;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .btn-continue:hover {
+            border-color: var(--color-accent);
+            color: var(--color-accent);
+        }
+
+        /* Escrow Notice */
+        .escrow-notice {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .escrow-text {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 300;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- En-tête partagé (obligatoire) -->
+    {% include "header.html" %}
+
+    <!-- Contenu principal de la page -->
+    <main class="cart-page">
+        <div class="container mx-auto px-6">
+            <!-- Header -->
+            <div class="cart-header">
+                <h1 class="cart-title">
+                    Your <span class="text-accent">Cart</span>
+                </h1>
+                <p class="cart-subtitle">
+                    Review your items before proceeding to secure payment with multisig escrow.
                 </p>
-              </div>
-
-              {# Price and Remove Button #}
-              <div class="cart-item-actions">
-                <span class="cart-item-price">{{ item.unit_price_xmr * item.quantity | float / 1000000000000 }} XMR</span>
-                <button class="remove-item-btn" data-listing-id="{{ item.listing_id }}" aria-label="Supprimer">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6"/>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-
-        {# Order Summary Card #}
-        <div class="cart-summary-section">
-          <div class="card cart-summary-card">
-            <div class="cart-summary-header">
-              <h2 class="cart-summary-title">Récapitulatif</h2>
             </div>
 
-            <div class="cart-summary-content">
-              <div class="summary-lines">
-                <div class="summary-line">
-                  <span class="summary-label">Sous-total</span>
-                  <span class="summary-value" id="cart-subtotal">{{ cart_total_xmr }} XMR</span>
+            <div class="cart-grid">
+                <!-- Cart Items - Left Column -->
+                <div class="cart-items-section">
+                    {% if cart and cart.items and cart.items | length > 0 %}
+                        {% for item in cart.items %}
+                        <div class="cart-item-card" data-listing-id="{{ item.listing_id }}">
+                            <div class="cart-item-info">
+                                <h3 class="cart-item-title">{{ item.title }}</h3>
+                                <p class="cart-item-vendor">Seller: {{ item.vendor_username }}</p>
+                            </div>
+                            <div class="cart-item-actions">
+                                <span class="cart-item-price">{{ item.unit_price_xmr * item.quantity | float / 1000000000000 }} XMR</span>
+                                <button class="remove-btn" data-listing-id="{{ item.listing_id }}" aria-label="Remove item">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3 6 5 6 21 6"/>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Empty Cart State -->
+                        <div class="empty-cart">
+                            <svg class="empty-cart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="9" cy="21" r="1"/>
+                                <circle cx="20" cy="21" r="1"/>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                            </svg>
+                            <p class="empty-cart-text">Your cart is empty</p>
+                            <a href="/listings" class="btn-continue">Browse Listings</a>
+                        </div>
+                    {% endif %}
                 </div>
-                <div class="summary-line">
-                  <span class="summary-label">Frais d'escrow (3%)</span>
-                  <span class="summary-value" id="cart-escrow-fee">Calculating...</span>
+
+                <!-- Order Summary - Right Column -->
+                <div class="summary-section">
+                    <div class="summary-card">
+                        <h2 class="summary-title">Summary</h2>
+
+                        <div class="summary-line">
+                            <span class="summary-label">Subtotal</span>
+                            <span id="cart-subtotal">{{ cart_total_xmr }} XMR</span>
+                        </div>
+
+                        <div class="summary-line">
+                            <span class="summary-label">Escrow Fee (3%)</span>
+                            <span id="cart-escrow-fee">Calculating...</span>
+                        </div>
+
+                        <div class="summary-separator"></div>
+
+                        <div class="summary-line summary-total">
+                            <span>Total</span>
+                            <span class="summary-total-value" id="cart-total">{{ cart_total_xmr }} XMR</span>
+                        </div>
+
+                        {% if logged_in %}
+                        <a href="/checkout" class="btn-checkout">
+                            Proceed to Checkout
+                        </a>
+                        {% else %}
+                        <a href="/login?redirect=/checkout" class="btn-checkout">
+                            Login to Checkout
+                        </a>
+                        {% endif %}
+
+                        <a href="/listings" class="btn-continue">
+                            Continue Shopping
+                        </a>
+
+                        <div class="escrow-notice">
+                            <p class="escrow-text">
+                                2/3 multisig escrow protection. Your funds remain under your control until transaction completion.
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                <div class="summary-divider"></div>
-                <div class="summary-line summary-total">
-                  <span class="summary-label-total">Total</span>
-                  <span id="cart-total" class="summary-value-total">{{ cart_total_xmr }} XMR</span>
-                </div>
-              </div>
-
-              {% if logged_in %}
-                <a href="/checkout" class="btn-checkout">
-                  Procéder au paiement
-                </a>
-              {% else %}
-                <a href="/login?redirect=/checkout" class="btn-checkout">
-                  Se connecter pour payer
-                </a>
-              {% endif %}
-
-              <a href="/listings" class="btn-continue">
-                Continuer vos achats
-              </a>
-
-              <div class="escrow-notice">
-                <p class="escrow-description">
-                  Protection escrow multisig 2/3. Vos fonds restent sous votre contrôle jusqu'à la finalisation de la transaction.
-                </p>
-              </div>
             </div>
-          </div>
         </div>
+    </main>
 
-      </div>
-    {% else %}
-      {# Empty Cart State #}
-      <div class="card">
-        <div class="cart-empty">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="cart-empty-icon">
-            <circle cx="9" cy="21" r="1"/>
-            <circle cx="20" cy="21" r="1"/>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-          </svg>
-          <p class="cart-empty-text">Votre panier est vide</p>
-          <a href="/listings" class="btn-continue">
-            Explorer les listings
-          </a>
-        </div>
-      </div>
-    {% endif %}
-
-  </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script src="/static/js/cart.js"></script>
-{% endblock %}
+    <!-- Scripts de base (obligatoire, à la fin du body) -->
+    <script src="/static/js/lucide.min.js"></script>
+    <script src="/static/js/base.js"></script>
+    <script src="/static/js/cart.js"></script>
+</body>
+</html>
