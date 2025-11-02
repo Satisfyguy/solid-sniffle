@@ -1,442 +1,462 @@
-{% extends "base-nexus.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Setup Guide - Non-Custodial</title>
+    <meta name="description" content="Learn how to set up your non-custodial Monero wallet for secure trading.">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        /* General Layout */
+        .container { max-width: 1280px; margin: 0 auto; padding: 8rem 1.5rem 0; }
+        .docs-page { max-width: 900px; margin: 0 auto; }
 
-{% block title %}Wallet Setup Guide - Non-Custodial{% endblock %}
+        /* Header */
+        .docs-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .docs-header h1 {
+            margin: 0 0 1rem 0;
+            color: var(--color-accent);
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        .docs-header .subtitle {
+            font-size: 1.125rem;
+            color: hsl(var(--muted-foreground));
+        }
 
-{% block content %}
-<div class="container">
-    <div class="docs-page">
-        <!-- Header -->
-        <div class="docs-header">
-            <h1>📖 Complete Wallet Setup Guide</h1>
-            <p class="subtitle">Learn how to set up your non-custodial Monero wallet for secure trading</p>
-        </div>
+        /* Table of Contents */
+        .toc {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .toc h2 {
+            margin: 0 0 1rem 0;
+            font-size: 1.25rem;
+            color: hsl(var(--foreground));
+        }
+        .toc ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .toc li {
+            margin-bottom: 0.75rem;
+        }
+        .toc a {
+            color: var(--color-accent);
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
 
-        <!-- Table of Contents -->
-        <nav class="toc card">
-            <h2>Table of Contents</h2>
-            <ul>
-                <li><a href="#what-is-non-custodial">What is Non-Custodial?</a></li>
-                <li><a href="#prerequisites">Prerequisites</a></li>
-                <li><a href="#installation">Installation</a></li>
-                <li><a href="#testnet-setup">Testnet Setup</a></li>
-                <li><a href="#mainnet-setup">Mainnet Setup (Advanced)</a></li>
-                <li><a href="#troubleshooting">Troubleshooting</a></li>
-                <li><a href="#faq">FAQ</a></li>
-            </ul>
-        </nav>
+        /* Content Sections */
+        .docs-content section {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            scroll-margin-top: 2rem;
+        }
+        .docs-content h2 {
+            margin: 0 0 1rem 0;
+            color: hsl(var(--foreground));
+            font-size: 1.75rem;
+            font-weight: 600;
+        }
+        .docs-content h3 {
+            margin: 1.5rem 0 0.75rem 0;
+            color: hsl(var(--foreground));
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .docs-content p, .docs-content ul li {
+            color: hsl(var(--muted-foreground));
+            line-height: 1.6;
+        }
+        .docs-content strong { color: hsl(var(--foreground)); }
 
-        <!-- Content -->
-        <div class="docs-content">
-            <!-- Section 1 -->
-            <section id="what-is-non-custodial" class="card">
-                <h2>🔐 What is Non-Custodial?</h2>
-                <p><strong>Non-custodial</strong> means YOU control your private keys. The marketplace server NEVER has access to your funds.</p>
+        /* Comparison Boxes */
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .comparison-item {
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .comparison-item.good {
+            background: hsla(142, 76%, 36%, 0.1);
+            border: 1px solid hsla(142, 76%, 36%, 0.3);
+        }
+        .comparison-item.bad {
+            background: hsla(0, 84%, 60%, 0.1);
+            border: 1px solid hsla(0, 84%, 60%, 0.3);
+        }
+        .comparison-item h3 {
+            margin: 0 0 0.75rem 0;
+            font-size: 1.125rem;
+            color: hsl(var(--foreground));
+        }
+        .comparison-item ul {
+            list-style: disc;
+            padding-left: 1.25rem;
+        }
+        .comparison-item ul li { margin-bottom: 0.5rem; }
 
-                <div class="comparison">
-                    <div class="comparison-item good">
-                        <h3>✅ Non-Custodial (This Marketplace)</h3>
-                        <ul>
-                            <li>You control private keys</li>
-                            <li>Server can't steal funds</li>
-                            <li>No exit scam possible</li>
-                            <li>2-of-3 multisig escrow protection</li>
-                        </ul>
-                    </div>
-                    <div class="comparison-item bad">
-                        <h3>❌ Custodial (Centralized Exchanges)</h3>
-                        <ul>
-                            <li>Exchange controls your keys</li>
-                            <li>Risk of exchange hack</li>
-                            <li>Exit scams possible</li>
-                            <li>Funds can be frozen</li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
+        /* Code Blocks */
+        .code-block {
+            margin: 1rem 0;
+        }
+        .code-block h4 {
+            margin: 0 0 0.5rem 0;
+            color: hsl(var(--muted-foreground));
+            font-size: 0.875rem;
+        }
+        .code-block pre {
+            background: hsl(var(--background));
+            border: 1px solid hsl(var(--border));
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .code-block code {
+            color: var(--color-accent);
+            font-family: 'Courier New', monospace;
+        }
 
-            <!-- Section 2 -->
-            <section id="prerequisites" class="card">
-                <h2>📋 Prerequisites</h2>
+        /* Alerts */
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        .alert-warning {
+            background: hsla(45, 93%, 47%, 0.1);
+            border: 1px solid hsla(45, 93%, 47%, 0.3);
+            color: hsl(45, 93%, 47%);
+        }
+        .alert-danger {
+            background: hsla(0, 84%, 60%, 0.1);
+            border: 1px solid hsla(0, 84%, 60%, 0.3);
+            color: hsl(0, 84%, 60%);
+        }
+        .alert strong { color: inherit; }
+
+        /* Details/Summary (Accordion) */
+details {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: hsla(var(--background), 0.5);
+            border: 1px solid hsl(var(--border));
+            border-radius: 8px;
+        }
+        details summary {
+            cursor: pointer;
+            font-weight: 500;
+            color: hsl(var(--foreground));
+        }
+        details p, details ul {
+            margin-top: 0.75rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        /* Footer CTA */
+        .docs-footer {
+            background: linear-gradient(135deg, hsla(var(--accent), 0.1), hsla(var(--primary), 0.1));
+            border: 1px solid hsla(var(--accent), 0.3);
+            text-align: center;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-top: 3rem;
+        }
+        .docs-footer h2 {
+            margin: 0 0 0.5rem 0;
+            color: hsl(var(--foreground));
+            font-size: 1.75rem;
+            font-weight: 600;
+        }
+        .docs-footer p {
+            margin: 0 0 1.5rem 0;
+            color: hsl(var(--muted-foreground));
+        }
+
+        /* Buttons in Footer */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
+            color: hsl(var(--background));
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px hsla(var(--accent), 0.3);
+        }
+    </style>
+</head>
+<body>
+    {% include "header.html" %}
+
+    <main class="container">
+        <div class="docs-page">
+            <!-- Header -->
+            <div class="docs-header">
+                <h1>📖 Complete Wallet Setup Guide</h1>
+                <p class="subtitle">Learn how to set up your non-custodial Monero wallet for secure trading</p>
+            </div>
+
+            <!-- Table of Contents -->
+            <nav class="toc">
+                <h2>Table of Contents</h2>
                 <ul>
-                    <li>Linux, macOS, or Windows computer</li>
-                    <li>At least 50 GB free disk space (for blockchain sync)</li>
-                    <li>Reliable internet connection</li>
-                    <li>Basic command-line knowledge</li>
+                    <li><a href="#what-is-non-custodial">What is Non-Custodial?</a></li>
+                    <li><a href="#prerequisites">Prerequisites</a></li>
+                    <li><a href="#installation">Installation</a></li>
+                    <li><a href="#testnet-setup">Testnet Setup</a></li>
+                    <li><a href="#mainnet-setup">Mainnet Setup (Advanced)</a></li>
+                    <li><a href="#troubleshooting">Troubleshooting</a></li>
+                    <li><a href="#faq">FAQ</a></li>
                 </ul>
-            </section>
+            </nav>
 
-            <!-- Section 3 -->
-            <section id="installation" class="card">
-                <h2>💾 Installation</h2>
+            <!-- Content -->
+            <div class="docs-content">
+                <!-- Section 1 -->
+                <section id="what-is-non-custodial">
+                    <h2>🔐 What is Non-Custodial?</h2>
+                    <p><strong>Non-custodial</strong> means YOU control your private keys. The marketplace server NEVER has access to your funds.</p>
 
-                <h3>Step 1: Download Monero CLI</h3>
-                <p>Visit <a href="https://www.getmonero.org/downloads/" target="_blank" rel="noopener">getmonero.org/downloads</a> and download the appropriate version for your OS.</p>
+                    <div class="comparison">
+                        <div class="comparison-item good">
+                            <h3>✅ Non-Custodial (This Marketplace)</h3>
+                            <ul>
+                                <li>You control private keys</li>
+                                <li>Server can't steal funds</li>
+                                <li>No exit scam possible</li>
+                                <li>2-of-3 multisig escrow protection</li>
+                            </ul>
+                        </div>
+                        <div class="comparison-item bad">
+                            <h3>❌ Custodial (Centralized Exchanges)</h3>
+                            <ul>
+                                <li>Exchange controls your keys</li>
+                                <li>Risk of exchange hack</li>
+                                <li>Exit scams possible</li>
+                                <li>Funds can be frozen</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
 
-                <div class="code-block">
-                    <h4>Linux:</h4>
-                    <pre><code>$ wget https://downloads.getmonero.org/cli/linux64
+                <!-- Section 2 -->
+                <section id="prerequisites">
+                    <h2>📋 Prerequisites</h2>
+                    <ul>
+                        <li>Linux, macOS, or Windows computer</li>
+                        <li>At least 50 GB free disk space (for blockchain sync)</li>
+                        <li>Reliable internet connection</li>
+                        <li>Basic command-line knowledge</li>
+                    </ul>
+                </section>
+
+                <!-- Section 3 -->
+                <section id="installation">
+                    <h2>💾 Installation</h2>
+
+                    <h3>Step 1: Download Monero CLI</h3>
+                    <p>Visit <a href="https://www.getmonero.org/downloads/" target="_blank" rel="noopener">getmonero.org/downloads</a> and download the appropriate version for your OS.</p>
+
+                    <div class="code-block">
+                        <h4>Linux:</h4>
+                        <pre><code>$ wget https://downloads.getmonero.org/cli/linux64
 $ tar -xvf monero-linux-x64-*.tar.bz2
 $ cd monero-*/</code></pre>
-                </div>
+                    </div>
 
-                <div class="code-block">
-                    <h4>macOS:</h4>
-                    <pre><code>$ wget https://downloads.getmonero.org/cli/mac64
+                    <div class="code-block">
+                        <h4>macOS:</h4>
+                        <pre><code>$ wget https://downloads.getmonero.org/cli/mac64
 $ tar -xvf monero-mac-x64-*.tar.bz2
 $ cd monero-*/</code></pre>
-                </div>
+                    </div>
 
-                <h3>Step 2: Verify Hashes (Security)</h3>
-                <div class="alert alert-warning">
-                    <strong>⚠️ Important:</strong> Always verify file hashes to ensure authenticity!
-                </div>
-                <div class="code-block">
-                    <pre><code>$ sha256sum monero-*.tar.bz2
+                    <h3>Step 2: Verify Hashes (Security)</h3>
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Important:</strong> Always verify file hashes to ensure authenticity!
+                    </div>
+                    <div class="code-block">
+                        <pre><code>$ sha256sum monero-*.tar.bz2
 # Compare with official hash from getmonero.org</code></pre>
-                </div>
-            </section>
+                    </div>
+                </section>
 
-            <!-- Section 4 -->
-            <section id="testnet-setup" class="card">
-                <h2>🧪 Testnet Setup (Recommended for Learning)</h2>
+                <!-- Section 4 -->
+                <section id="testnet-setup">
+                    <h2>🧪 Testnet Setup (Recommended for Learning)</h2>
 
-                <h3>Step 1: Create Testnet Wallet</h3>
-                <div class="code-block">
-                    <pre><code>$ ./monero-wallet-cli --testnet
+                    <h3>Step 1: Create Testnet Wallet</h3>
+                    <div class="code-block">
+                        <pre><code>$ ./monero-wallet-cli --testnet
 # Follow prompts to create new wallet
 # Write down your 25-word seed phrase!</code></pre>
-                </div>
+                    </div>
 
-                <div class="alert alert-danger">
-                    <strong>🚨 CRITICAL:</strong> Write your seed phrase on PAPER. Never save it digitally!
-                </div>
+                    <div class="alert alert-danger">
+                        <strong>🚨 CRITICAL:</strong> Write your seed phrase on PAPER. Never save it digitally!
+                    </div>
 
-                <h3>Step 2: Start Wallet RPC</h3>
-                <div class="code-block">
-                    <pre><code>$ ./monero-wallet-rpc \
+                    <h3>Step 2: Start Wallet RPC</h3>
+                    <div class="code-block">
+                        <pre><code>$ ./monero-wallet-rpc \
   --testnet \
   --rpc-bind-port 18082 \
   --wallet-file ~/wallets/my_testnet_wallet \
   --password YOUR_WALLET_PASSWORD \
   --disable-rpc-login</code></pre>
-                </div>
+                    </div>
 
-                <p><strong>Leave this terminal window open!</strong> Your wallet RPC must be running to interact with the marketplace.</p>
+                    <p><strong>Leave this terminal window open!</strong> Your wallet RPC must be running to interact with the marketplace.</p>
 
-                <h3>Step 3: Get Testnet Coins</h3>
-                <p>Get free testnet XMR from faucets:</p>
-                <ul>
-                    <li><a href="https://testnet.xmr.ditatompel.com/" target="_blank">testnet.xmr.ditatompel.com</a></li>
-                    <li>Join #monero-dev IRC for testnet coins</li>
-                </ul>
+                    <h3>Step 3: Get Testnet Coins</h3>
+                    <p>Get free testnet XMR from faucets:</p>
+                    <ul>
+                        <li><a href="https://testnet.xmr.ditatompel.com/" target="_blank">testnet.xmr.ditatompel.com</a></li>
+                        <li>Join #monero-dev IRC for testnet coins</li>
+                    </ul>
 
-                <h3>Step 4: Register on Marketplace</h3>
-                <p>Go to <a href="/settings/wallet">Settings → Wallet</a> and register your RPC URL:</p>
-                <div class="code-block">
-                    <pre>RPC URL: http://127.0.0.1:18082/json_rpc
+                    <h3>Step 4: Register on Marketplace</h3>
+                    <p>Go to <a href="/settings/wallet">Settings → Wallet</a> and register your RPC URL:</p>
+                    <div class="code-block">
+                        <pre>RPC URL: http://127.0.0.1:18082/json_rpc
 Role: Buyer or Vendor</pre>
-                </div>
-            </section>
+                    </div>
+                </section>
 
-            <!-- Section 5 -->
-            <section id="mainnet-setup" class="card">
-                <h2>🔴 Mainnet Setup (Advanced - Real Money!)</h2>
+                <!-- Section 5 -->
+                <section id="mainnet-setup">
+                    <h2>🔴 Mainnet Setup (Advanced - Real Money!)</h2>
 
-                <div class="alert alert-danger">
-                    <strong>⚠️ WARNING:</strong> Mainnet uses REAL money. Only proceed if you understand the risks!
-                </div>
+                    <div class="alert alert-danger">
+                        <strong>⚠️ WARNING:</strong> Mainnet uses REAL money. Only proceed if you understand the risks!
+                    </div>
 
-                <h3>Step 1: Create Mainnet Wallet</h3>
-                <div class="code-block">
-                    <pre><code>$ ./monero-wallet-cli
+                    <h3>Step 1: Create Mainnet Wallet</h3>
+                    <div class="code-block">
+                        <pre><code>$ ./monero-wallet-cli
 # Follow prompts
 # BACKUP YOUR SEED PHRASE!!</code></pre>
-                </div>
+                    </div>
 
-                <h3>Step 2: Enable RPC Authentication (MANDATORY for mainnet)</h3>
-                <div class="code-block">
-                    <pre><code>$ ./monero-wallet-rpc \
+                    <h3>Step 2: Enable RPC Authentication (MANDATORY for mainnet)</h3>
+                    <div class="code-block">
+                        <pre><code>$ ./monero-wallet-rpc \
   --rpc-bind-port 18082 \
   --wallet-file ~/wallets/my_mainnet_wallet \
   --password YOUR_WALLET_PASSWORD \
   --rpc-login username:strong_password_here</code></pre>
-                </div>
+                    </div>
 
-                <h3>Step 3: Register on Marketplace</h3>
-                <p>Enter your RPC credentials when registering:</p>
-                <div class="code-block">
-                    <pre>RPC URL: http://127.0.0.1:18082/json_rpc
+                    <h3>Step 3: Register on Marketplace</h3>
+                    <p>Enter your RPC credentials when registering:</p>
+                    <div class="code-block">
+                        <pre>RPC URL: http://127.0.0.1:18082/json_rpc
 RPC Username: username
 RPC Password: strong_password_here</pre>
-                </div>
-            </section>
+                    </div>
+                </section>
 
-            <!-- Section 6 -->
-            <section id="troubleshooting" class="card">
-                <h2>🔧 Troubleshooting</h2>
+                <!-- Section 6 -->
+                <section id="troubleshooting">
+                    <h2>🔧 Troubleshooting</h2>
 
-                <details>
-                    <summary><strong>Error: "Failed to connect to wallet RPC"</strong></summary>
-                    <ul>
-                        <li>Ensure wallet RPC is running (check terminal)</li>
-                        <li>Verify RPC URL is correct: <code>http://127.0.0.1:18082/json_rpc</code></li>
-                        <li>Check firewall isn't blocking port 18082</li>
-                    </ul>
-                </details>
+                    <details>
+                        <summary><strong>Error: "Failed to connect to wallet RPC"</strong></summary>
+                        <ul>
+                            <li>Ensure wallet RPC is running (check terminal)</li>
+                            <li>Verify RPC URL is correct: <code>http://127.0.0.1:18082/json_rpc</code></li>
+                            <li>Check firewall isn't blocking port 18082</li>
+                        </ul>
+                    </details>
 
-                <details>
-                    <summary><strong>Error: "Invalid RPC URL format"</strong></summary>
-                    <ul>
-                        <li>URL MUST start with <code>http://127.0.0.1</code> (localhost only)</li>
-                        <li>URL MUST end with <code>/json_rpc</code></li>
-                        <li>Example: <code>http://127.0.0.1:18082/json_rpc</code></li>
-                    </ul>
-                </details>
+                    <details>
+                        <summary><strong>Error: "Invalid RPC URL format"</strong></summary>
+                        <ul>
+                            <li>URL MUST start with <code>http://127.0.0.1</code> (localhost only)</li>
+                            <li>URL MUST end with <code>/json_rpc</code></li>
+                            <li>Example: <code>http://127.0.0.1:18082/json_rpc</code></li>
+                        </ul>
+                    </details>
 
-                <details>
-                    <summary><strong>Wallet sync is very slow</strong></summary>
-                    <ul>
-                        <li>This is normal for Monero (privacy = slow sync)</li>
-                        <li>Use a remote node for faster sync (less private)</li>
-                        <li>Be patient - full sync can take 1-2 days</li>
-                    </ul>
-                </details>
-            </section>
+                    <details>
+                        <summary><strong>Wallet sync is very slow</strong></summary>
+                        <ul>
+                            <li>This is normal for Monero (privacy = slow sync)</li>
+                            <li>Use a remote node for faster sync (less private)</li>
+                            <li>Be patient - full sync can take 1-2 days</li>
+                        </ul>
+                    </details>
+                </section>
 
-            <!-- Section 7 -->
-            <section id="faq" class="card">
-                <h2>❓ Frequently Asked Questions</h2>
+                <!-- Section 7 -->
+                <section id="faq">
+                    <h2>❓ Frequently Asked Questions</h2>
 
-                <details>
-                    <summary><strong>Do I need to keep wallet RPC running all the time?</strong></summary>
-                    <p>Yes, whenever you want to trade on the marketplace. You can stop it when not trading.</p>
-                </details>
+                    <details>
+                        <summary><strong>Do I need to keep wallet RPC running all the time?</strong></summary>
+                        <p>Yes, whenever you want to trade on the marketplace. You can stop it when not trading.</p>
+                    </details>
 
-                <details>
-                    <summary><strong>Can the marketplace steal my funds?</strong></summary>
-                    <p>No. Mathematically impossible. You control your private keys, and escrow uses 2-of-3 multisig (server has only 1 key).</p>
-                </details>
+                    <details>
+                        <summary><strong>Can the marketplace steal my funds?</strong></summary>
+                        <p>No. Mathematically impossible. You control your private keys, and escrow uses 2-of-3 multisig (server has only 1 key).</p>
+                    </details>
 
-                <details>
-                    <summary><strong>What if I lose my seed phrase?</strong></summary>
-                    <p>Your funds are PERMANENTLY LOST. Always backup your seed phrase on paper!</p>
-                </details>
+                    <details>
+                        <summary><strong>What if I lose my seed phrase?</strong></summary>
+                        <p>Your funds are PERMANENTLY LOST. Always backup your seed phrase on paper!</p>
+                    </details>
 
-                <details>
-                    <summary><strong>Can I use a hardware wallet (Ledger/Trezor)?</strong></summary>
-                    <p>Not yet supported. Planned for future version.</p>
-                </details>
+                    <details>
+                        <summary><strong>Can I use a hardware wallet (Ledger/Trezor)?</strong></summary>
+                        <p>Not yet supported. Planned for future version.</p>
+                    </details>
 
-                <details>
-                    <summary><strong>Testnet vs Mainnet - which should I use?</strong></summary>
-                    <p>Start with testnet to learn. Use mainnet only when comfortable.</p>
-                </details>
-            </section>
+                    <details>
+                        <summary><strong>Testnet vs Mainnet - which should I use?</strong></summary>
+                        <p>Start with testnet to learn. Use mainnet only when comfortable.</p>
+                    </details>
+                </section>
+            </div>
+
+            <!-- Footer CTA -->
+            <div class="docs-footer">
+                <h2>Ready to Get Started?</h2>
+                <p>Set up your non-custodial wallet now and start trading securely.</p>
+                <a href="/settings/wallet" class="btn btn-primary">Configure Wallet →</a>
+            </div>
         </div>
+    </main>
 
-        <!-- Footer CTA -->
-        <div class="docs-footer card">
-            <h2>Ready to Get Started?</h2>
-            <p>Set up your non-custodial wallet now and start trading securely.</p>
-            <a href="/settings/wallet" class="btn btn-primary">Configure Wallet →</a>
-        </div>
-    </div>
-</div>
-
-<style>
-.docs-page {
-    max-width: 900px;
-    margin: 0 auto;
-}
-
-.docs-header {
-    text-align: center;
-    margin-bottom: 3rem;
-}
-
-.docs-header h1 {
-    margin: 0 0 1rem 0;
-    color: #00d9ff;
-}
-
-.docs-header .subtitle {
-    font-size: 1.125rem;
-    color: #9ca3af;
-}
-
-.toc {
-    background: rgba(20, 20, 20, 0.8);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.toc h2 {
-    margin: 0 0 1rem 0;
-    font-size: 1.25rem;
-    color: #f9fafb;
-}
-
-.toc ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.toc li {
-    margin-bottom: 0.75rem;
-}
-
-.toc a {
-    color: #00d9ff;
-    text-decoration: none;
-}
-
-.toc a:hover {
-    text-decoration: underline;
-}
-
-.docs-content section {
-    background: rgba(20, 20, 20, 0.8);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-    scroll-margin-top: 2rem;
-}
-
-.docs-content h2 {
-    margin: 0 0 1rem 0;
-    color: #f9fafb;
-}
-
-.docs-content h3 {
-    margin: 1.5rem 0 0.75rem 0;
-    color: #f9fafb;
-    font-size: 1.125rem;
-}
-
-.comparison {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin: 1.5rem 0;
-}
-
-.comparison-item {
-    padding: 1rem;
-    border-radius: 8px;
-}
-
-.comparison-item.good {
-    background: rgba(16, 185, 129, 0.1);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.comparison-item.bad {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.comparison-item h3 {
-    margin: 0 0 0.75rem 0;
-}
-
-.code-block {
-    margin: 1rem 0;
-}
-
-.code-block h4 {
-    margin: 0 0 0.5rem 0;
-    color: #9ca3af;
-    font-size: 0.875rem;
-}
-
-.code-block pre {
-    background: rgba(10, 10, 10, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 1rem;
-    overflow-x: auto;
-}
-
-.code-block code {
-    color: #00d9ff;
-    font-family: 'Courier New', monospace;
-}
-
-.alert {
-    padding: 1rem;
-    border-radius: 8px;
-    margin: 1rem 0;
-}
-
-.alert-warning {
-    background: rgba(245, 158, 11, 0.1);
-    border: 1px solid rgba(245, 158, 11, 0.3);
-    color: #f59e0b;
-}
-
-.alert-danger {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    color: #ef4444;
-}
-
-details {
-    margin: 1rem 0;
-    padding: 1rem;
-    background: rgba(10, 10, 10, 0.4);
-    border-radius: 8px;
-}
-
-details summary {
-    cursor: pointer;
-    font-weight: 500;
-    color: #f9fafb;
-}
-
-details p, details ul {
-    margin-top: 0.75rem;
-    color: #9ca3af;
-}
-
-.docs-footer {
-    background: linear-gradient(135deg, rgba(0, 217, 255, 0.1), rgba(124, 58, 237, 0.1));
-    border: 1px solid rgba(0, 217, 255, 0.3);
-    text-align: center;
-    padding: 2rem;
-}
-
-.docs-footer h2 {
-    margin: 0 0 0.5rem 0;
-    color: #f9fafb;
-}
-
-.docs-footer p {
-    margin: 0 0 1.5rem 0;
-    color: #9ca3af;
-}
-
-.btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, #00d9ff, #7c3aed);
-    color: #fff;
-    text-decoration: none;
-    border-radius: 8px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(0, 217, 255, 0.3);
-}
-</style>
-{% endblock %}
+    <script src="/static/js/lucide.min.js"></script>
+    <script src="/static/js/base.js"></script>
+    <script>
+      lucide.createIcons();
+    </script>
+</body>
+</html>

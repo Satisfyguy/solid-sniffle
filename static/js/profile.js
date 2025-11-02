@@ -1,24 +1,33 @@
-// Simple tab functionality for the profile page
 document.addEventListener('DOMContentLoaded', function() {
-    const tabsContainer = document.getElementById('profile-tabs');
+    // Initialize Lucide icons (only if not already done by base.js)
+    if (typeof lucide !== 'undefined' && !window.lucideInitialized) {
+        lucide.createIcons();
+        window.lucideInitialized = true;
+    }
+
+    const tabsContainer = document.querySelector('.tabs-container');
     if (tabsContainer) {
-        const triggers = tabsContainer.querySelectorAll('.tabs-trigger');
-        const contents = tabsContainer.querySelectorAll('.tabs-content');
-
-        triggers.forEach(trigger => {
-            trigger.addEventListener('click', function() {
-                // Deactivate all triggers and contents
-                triggers.forEach(t => t.classList.remove('active'));
-                contents.forEach(c => c.classList.remove('active'));
-
-                // Activate clicked trigger and corresponding content
-                this.classList.add('active');
-                const tabId = this.getAttribute('data-tab');
-                const content = document.getElementById(tabId);
-                if (content) {
-                    content.classList.add('active');
+        tabsContainer.addEventListener('change', function(event) {
+            if (event.target.classList.contains('tab-radio')) {
+                const tabId = event.target.id.replace('tab-', 'content-');
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                const activeContent = document.getElementById(tabId);
+                if (activeContent) {
+                    activeContent.style.display = 'block';
                 }
-            });
+            }
         });
+
+        // Set initial active tab content
+        const initialActiveTab = tabsContainer.querySelector('.tab-radio:checked');
+        if (initialActiveTab) {
+            const tabId = initialActiveTab.id.replace('tab-', 'content-');
+            const activeContent = document.getElementById(tabId);
+            if (activeContent) {
+                activeContent.style.display = 'block';
+            }
+        }
     }
 });

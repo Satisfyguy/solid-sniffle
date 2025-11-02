@@ -1,4 +1,4 @@
-<!-- Navigation Header -->
+            <!-- Navigation Header -->
             <header class="header">
                 <nav class="nav-container">
                     <div class="nav-content">
@@ -12,14 +12,26 @@
         
                         <!-- Right - Actions -->
                         <div class="nav-right">
+                            {% if logged_in %}
                             <a href="/profile" class="icon-button" aria-label="Profile">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A445" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                                            </a>
-                                                                    <a href="/cart" class="icon-button" aria-label="Cart">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A445" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                                                                    </a>                                                <button class="icon-button" aria-label="Menu">
-                                <i data-lucide="menu"></i>
-                            </button>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A445" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            </a>
+                            <a href="/cart" class="icon-button" aria-label="Cart">
+                                <i data-lucide="shopping-cart"></i>
+                            </a>
+                            <form method="POST" action="/logout" class="inline-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <button type="submit" class="icon-button" aria-label="Logout" title="Logout">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                        <polyline points="16 17 21 12 16 7"/>
+                                        <line x1="21" x2="9" y1="12" y2="12"/>
+                                    </svg>
+                                </button>
+                            </form>
+                            {% else %}
+                            <a href="/login" class="nav-link">Login</a>
+                            {% endif %}
                         </div>
                     </div>
                 </nav>

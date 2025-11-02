@@ -39,6 +39,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Initialize Lucide icons
-    lucide.createIcons();
+    // Initialize Lucide icons (if available and not already initialized)
+    if (typeof lucide !== 'undefined' && !window.lucideInitialized) {
+        lucide.createIcons();
+        window.lucideInitialized = true;
+    }
 });

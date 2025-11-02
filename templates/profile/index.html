@@ -1,186 +1,293 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - Nexus Marketplace</title>
-    <meta name="description" content="Manage your profile and settings on Nexus marketplace">
+    <title>Profil - Nexus Marketplace</title>
+    <meta name="description" content="Gérez votre profil et vos paramètres sur Nexus marketplace">
     
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="/static/css/main.css">
     <style>
-        /* High-fidelity recreation of shadcn/ui components and TailwindCSS utilities */
-
-        :root {
-            --card: 240 10% 3.9%;
-            --card-foreground: 0 0% 98%;
-            --muted-foreground: 240 5% 64.9%;
-            --accent: 48 96% 53%;
-            --border: 240 3.7% 15.9%;
-            --input: 240 3.7% 15.9%;
-            --destructive: 0 84.2% 60.2%;
-        }
-
-        /* Layout & Spacing */
-        .container { width: 100%; margin-left: auto; margin-right: auto; padding-left: 1.5rem; padding-right: 1.5rem; }
-        @media (min-width: 640px) { .container { max-width: 640px; } }
-        @media (min-width: 768px) { .container { max-width: 768px; } }
-        @media (min-width: 1024px) { .container { max-width: 1024px; } }
-        @media (min-width: 1280px) { .container { max-width: 1280px; } }
-
+        /* General Layout */
+        .container { max-width: 1280px; margin: 0 auto; padding: 8rem 1.5rem 0; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
         .pt-24 { padding-top: 6rem; }
         .pb-12 { padding-bottom: 3rem; }
         .mb-12 { margin-bottom: 3rem; }
         .space-y-4 > *:not([hidden]) ~ *:not([hidden]) { margin-top: 1rem; }
-        .space-y-8 > *:not([hidden]) ~ *:not([hidden]) { margin-top: 2rem; }
         .space-y-6 > *:not([hidden]) ~ *:not([hidden]) { margin-top: 1.5rem; }
-        .space-y-2 > *:not([hidden]) ~ *:not([hidden]) { margin-top: 0.5rem; }
-        .space-y-1 > *:not([hidden]) ~ *:not([hidden]) { margin-top: 0.25rem; }
-        .gap-2 { gap: 0.5rem; }
-        .gap-6 { gap: 1.5rem; }
-        .flex { display: flex; }
-        .items-center { align-items: center; }
-        .justify-end { justify-content: flex-end; }
-        .justify-between { justify-content: space-between; }
-        .grid { display: grid; }
-        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-        @media (min-width: 768px) { .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        .space-y-8 > *:not([hidden]) ~ *:not([hidden]) { margin-top: 2rem; }
 
-        /* Typography */
+        /* Header */
         .text-5xl { font-size: 3rem; line-height: 1; }
-        .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
-        .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
-        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
         .font-light { font-weight: 300; }
-        .font-mono { font-family: var(--font-mono); }
         .tracking-tight { letter-spacing: -0.025em; }
         .text-accent { color: hsl(var(--accent)); }
         .text-muted-foreground { color: hsl(var(--muted-foreground)); }
-        .text-destructive { color: hsl(var(--destructive)); }
+        .max-w-2xl { max-width: 42rem; }
+
+        /* Tabs */
+        .tabs-container .tab-radio { display: none; }
+        .tabs-container .tab-content { display: none; }
+        .tabs-container .tab-radio:checked + .tab-label + .tab-content { display: block; }
+
+        .tabs-list {
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 0.375rem;
+            padding: 0.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+        .tab-label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            transition: background-color 0.2s;
+            color: hsl(var(--muted-foreground));
+        }
+        .tab-label:hover { background-color: hsla(var(--muted), 0.5); }
+        .tabs-container .tab-radio:checked + .tab-label {
+            background-color: hsl(var(--card));
+            color: hsl(var(--card-foreground));
+            border-color: hsl(var(--border));
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .tab-label i { width: 1rem; height: 1rem; }
 
         /* Card Component */
-        .card { background-color: hsl(var(--card)); color: hsl(var(--card-foreground)); border: 1px solid hsl(var(--border)); border-radius: 0.5rem; }
-        .card-header { padding: 1.5rem; }
-        .card-header .card-title { margin: 0; font-size: 1.25rem; font-weight: 300; }
-        .card-header .card-description { margin: 0.25rem 0 0 0; font-size: 0.875rem; color: hsl(var(--muted-foreground)); font-weight: 300; }
-        .card-content { padding: 1.5rem; }
+        .card {
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 0.5rem;
+            color: hsl(var(--foreground));
+        }
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid hsl(var(--border));
+        }
+        .card-header h3 {
+            font-size: 1.25rem;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+        }
+        .card-header p {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+        .card-content {
+            padding: 1.5rem;
+        }
 
-        /* Tabs Component */
-        .tabs-list { display: inline-flex; align-items: center; justify-content: center; border-radius: 0.375rem; background-color: hsl(var(--card)); border: 1px solid hsl(var(--border)); padding: 0.25rem; }
-        .tabs-trigger { display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; border-radius: 0.25rem; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 300; color: hsl(var(--muted-foreground)); background: transparent; border: none; cursor: pointer; transition: all 0.2s ease-in-out; }
-        .tabs-trigger.active { background-color: var(--color-background); color: hsl(var(--card-foreground)); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .tabs-content { display: none; }
-        .tabs-content.active { display: block; }
+        /* Form Elements */
+        .label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 300;
+            color: hsl(var(--foreground));
+        }
+        .input, textarea {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid hsl(var(--border));
+            background-color: hsl(var(--input));
+            color: hsl(var(--foreground));
+            border-radius: 0.375rem;
+            font-weight: 300;
+        }
+        textarea {
+            min-height: 120px;
+            font-family: monospace;
+        }
+        .separator {
+            border-top: 1px solid hsl(var(--border));
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
 
-        /* Input & Label & Textarea */
-        .label { font-size: 0.875rem; font-weight: 300; }
-        .input, .textarea { display: flex; width: 100%; border-radius: 0.375rem; border: 1px solid hsl(var(--input)); background-color: transparent; padding: 0.5rem 0.75rem; font-size: 0.875rem; color: white; }
-        .textarea { min-height: 80px; }
+        /* Buttons */
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: hsl(var(--accent));
+            color: hsl(var(--accent-foreground));
+            border: none;
+        }
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid hsl(var(--border));
+            color: hsl(var(--foreground));
+        }
+        .btn-destructive {
+            background-color: hsl(var(--destructive));
+            color: hsl(var(--destructive-foreground));
+        }
 
-        /* Button Component */
-        .btn { display: inline-flex; align-items: center; justify-content: center; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; padding: 0.5rem 1rem; background-color: var(--color-accent); color: var(--color-background); border: none; cursor: pointer; }
-        .btn-destructive { background-color: hsl(var(--destructive)); color: white; }
-        .btn-outline { background-color: transparent; border: 1px solid hsl(var(--input)); color: white; }
+        /* Stats Grid */
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .gap-6 { gap: 1.5rem; }
+        .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
 
-        /* Separator Component */
-        .separator { border: 0; border-top: 1px solid hsl(var(--border)); margin: 1.5rem 0; }
-
-        /* Switch Component */
-        .switch-container { display: flex; align-items: center; }
-        .switch { position: relative; display: inline-block; width: 40px; height: 24px; }
+        /* Switch Toggle */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 38px;
+            height: 22px;
+        }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: hsl(var(--input)); transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: hsl(var(--input));
+            transition: .4s;
+            border-radius: 22px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
         input:checked + .slider { background-color: hsl(var(--accent)); }
         input:checked + .slider:before { transform: translateX(16px); }
 
-        /* Lucide Icons */
-        .h-4 { height: 1rem; }
-        .w-4 { width: 1rem; }
-        .mr-2 { margin-right: 0.5rem; }
+        /* Destructive Card */
+        .bg-destructive\/10 { background-color: hsla(var(--destructive), 0.1); }
+        .border-destructive\/50 { border-color: hsla(var(--destructive), 0.5); }
+        .text-destructive { color: hsl(var(--destructive)); }
+        .text-destructive\/80 { color: hsla(var(--destructive), 0.8); }
+
+        /* Logout Button */
+        .logout-btn {
+            background-color: var(--color-accent);
+            color: #000000;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 150ms;
+        }
+        .logout-btn:hover {
+            opacity: 0.85;
+        }
 
     </style>
 </head>
-<body class="bg-background text-foreground">
+<body>
     {% include "header.html" %}
     
-    <main class="container pt-24 pb-12">
+    <main class="container mx-auto px-6 pt-24 pb-12">
       <!-- Header -->
       <div class="mb-12 space-y-4">
         <h1 class="text-5xl font-light tracking-tight">
-          Your <span class="text-accent">Profile</span>
+          Votre <span class="text-accent">Profil</span>
         </h1>
         <p class="text-muted-foreground max-w-2xl font-light">
-          Manage your personal information and security settings.
+          Gérez vos informations personnelles et vos paramètres de sécurité.
         </p>
       </div>
 
-      <div id="profile-tabs" class="space-y-8">
+      <div class="tabs-container space-y-8">
         <!-- Tab Triggers -->
         <div class="tabs-list">
-            <button data-tab="profile" class="tabs-trigger active gap-2">
+            <input type="radio" id="tab-profile" name="tabs" class="tab-radio" checked>
+            <label for="tab-profile" class="tab-label">
                 <i data-lucide="user" class="h-4 w-4"></i>
-                Profile
-            </button>
-            <button data-tab="security" class="tabs-trigger gap-2">
+                Profil
+            </label>
+            
+            <input type="radio" id="tab-security" name="tabs" class="tab-radio">
+            <label for="tab-security" class="tab-label">
                 <i data-lucide="shield" class="h-4 w-4"></i>
-                Security
-            </button>
-            <button data-tab="notifications" class="tabs-trigger gap-2">
+                Sécurité
+            </label>
+
+            <input type="radio" id="tab-notifications" name="tabs" class="tab-radio">
+            <label for="tab-notifications" class="tab-label">
                 <i data-lucide="bell" class="h-4 w-4"></i>
                 Notifications
-            </button>
+            </label>
         </div>
 
         <!-- Profile Tab Content -->
-        <div id="profile" class="tabs-content active space-y-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Account Information</h3>
-                    <p class="card-description">Manage your personal information and identity on the platform.</p>
-                </div>
-                <div class="card-content space-y-6">
-                    <div class="space-y-2">
-                        <label for="username" class="label">Username</label>
-                        <input id="username" placeholder="anonymous_user" class="input font-light" />
+        <div class="tab-content" id="content-profile">
+            <div class="space-y-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Informations du compte</h3>
+                        <p>
+                            Gérez vos informations personnelles et votre identité sur la plateforme
+                        </p>
                     </div>
-                    
-                    <div class="space-y-2">
-                        <label for="pgp" class="label">Public PGP Key</label>
-                        <textarea id="pgp" class="textarea font-mono" style="min-height: 120px;" placeholder="-----BEGIN PGP PUBLIC KEY BLOCK-----&#10;&#10;-----END PGP PUBLIC KEY BLOCK-----"></textarea>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="bio" class="label">Bio</label>
-                        <textarea id="bio" class="textarea" placeholder="Verified vendor since 2023..."></textarea>
-                    </div>
-
-                    <div class="separator"></div>
-
-                    <div class="flex justify-end">
-                        <button class="btn">Save Changes</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Statistics</h3>
-                    <p class="card-description">Your activity on Nexus.</p>
-                </div>
-                <div class="card-content">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="space-y-1">
-                            <p class="text-sm text-muted-foreground font-light">Completed Transactions</p>
-                            <p class="text-3xl font-light text-accent">24</p>
+                    <div class="card-content space-y-6">
+                        <div class="space-y-2">
+                            <label for="username" class="label">Nom d'utilisateur</label>
+                            <input id="username" placeholder="anonymous_user" class="input" />
                         </div>
-                        <div class="space-y-1">
-                            <p class="text-sm text-muted-foreground font-light">Average Rating</p>
-                            <p class="text-3xl font-light text-accent">4.9</p>
+                        
+                        <div class="space-y-2">
+                            <label for="pgp" class="label">Clé PGP publique</label>
+                            <textarea id="pgp" class="input" placeholder="-----BEGIN PGP PUBLIC KEY BLOCK-----&#10;&#10;-----END PGP PUBLIC KEY BLOCK-----"></textarea>
                         </div>
-                        <div class="space-y-1">
-                            <p class="text-sm text-muted-foreground font-light">Member Since</p>
-                            <p class="text-3xl font-light text-accent">2023</p>
+
+                        <div class="space-y-2">
+                            <label for="bio" class="label">Bio</label>
+                            <textarea id="bio" class="input" placeholder="Vendeur vérifiés depuis 2023..."></textarea>
+                        </div>
+
+                        <hr class="separator" />
+
+                        <div class="flex justify-end">
+                            <button class="btn">Enregistrer les modifications</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Statistiques</h3>
+                        <p>Votre activité sur Nexus</p>
+                    </div>
+                    <div class="card-content">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="space-y-1">
+                                <p class="text-sm text-muted-foreground font-light">Transactions complétées</p>
+                                <p class="text-3xl font-light text-accent">24</p>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-sm text-muted-foreground font-light">Note moyenne</p>
+                                <p class="text-3xl font-light text-accent">4.9</p>
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-sm text-muted-foreground font-light">Membre depuis</p>
+                                <p class="text-3xl font-light text-accent">2023</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -188,142 +295,140 @@
         </div>
 
         <!-- Security Tab Content -->
-        <div id="security" class="tabs-content space-y-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Authentication</h3>
-                    <p class="card-description">Manage your authentication methods and secure your account.</p>
+        <div class="tab-content" id="content-security">
+            <div class="space-y-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Authentification</h3>
+                        <p>Gérez vos méthodes d'authentification et sécurisez votre compte</p>
+                    </div>
+                    <div class="card-content space-y-6">
+                        <div class="space-y-2">
+                            <label for="current-password" class="label">Mot de passe actuel</label>
+                            <input id="current-password" type="password" class="input" />
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="new-password" class="label">Nouveau mot de passe</label>
+                            <input id="new-password" type="password" class="input" />
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="confirm-password" class="label">Confirmer le mot de passe</label>
+                            <input id="confirm-password" type="password" class="input" />
+                        </div>
+
+                        <hr class="separator" />
+
+                        <div class="flex justify-end">
+                            <button class="btn">Modifier le mot de passe</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-content space-y-6">
-                    <div class="space-y-2">
-                        <label for="current-password" class="label">Current Password</label>
-                        <input id="current-password" type="password" class="input font-light" />
-                    </div>
-                    
-                    <div class="space-y-2">
-                        <label for="new-password" class="label">New Password</label>
-                        <input id="new-password" type="password" class="input font-light" />
-                    </div>
 
-                    <div class="space-y-2">
-                        <label for="confirm-password" class="label">Confirm New Password</label>
-                        <input id="confirm-password" type="password" class="input font-light" />
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Authentification à deux facteurs</h3>
+                        <p>Ajoutez une couche de sécurité supplémentaire à votre compte</p>
                     </div>
-
-                    <div class="separator"></div>
-
-                    <div class="flex justify-end">
-                        <button class="btn">Change Password</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Two-Factor Authentication</h3>
-                    <p class="card-description">Add an extra layer of security to your account.</p>
-                </div>
-                <div class="card-content space-y-4">
-                    <div class="flex items-center justify-between">
-                        <div class="space-y-0.5">
-                            <div class="flex items-center gap-2">
-                                <i data-lucide="key" class="h-4 w-4 text-muted-foreground"></i>
-                                <span class="font-light">2FA Enabled</span>
+                    <div class="card-content space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="space-y-0.5">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="key" class="h-4 w-4 text-muted-foreground"></i>
+                                    <span>2FA activée</span>
+                                </div>
+                                <p class="text-sm text-muted-foreground font-light">Protection supplémentaire via TOTP</p>
                             </div>
-                            <p class="text-sm text-muted-foreground font-light">Additional protection via TOTP.</p>
+                            <label class="switch"><input type="checkbox" checked><span class="slider round"></span></label>
                         </div>
-                        <div class="switch-container">
-                            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                        
+                        <hr class="separator" />
+                        
+                        <button class="btn btn-outline w-full">
+                            <i data-lucide="lock" class="h-4 w-4 mr-2"></i>
+                            Configurer l'authentification
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="text-xl font-light">Session</h3>
+                        <p class="font-light text-muted-foreground">Gérez votre connexion</p>
+                    </div>
+                    <div class="card-content space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="space-y-0.5">
+                                <span>Déconnexion</span>
+                                <p class="text-sm text-muted-foreground font-light">Se déconnecter de votre compte Nexus</p>
+                            </div>
+                            <form method="POST" action="/logout" class="inline-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <button type="submit" class="logout-btn">
+                                    Logout
+                                </button>
+                            </form>
                         </div>
                     </div>
-                    
-                    <div class="separator"></div>
-                    
-                    <button class="btn btn-outline" style="width: 100%;">
-                        <i data-lucide="lock" class="h-4 w-4 mr-2"></i>
-                        Configure Authentication
-                    </button>
                 </div>
-            </div>
 
-            <div class="card bg-destructive/10 border-destructive/50">
-                <div class="card-header">
-                    <h3 class="card-title text-xl font-light text-destructive">Danger Zone</h3>
-                    <p class="card-description font-light text-destructive/80">Irreversible actions on your account.</p>
-                </div>
-                <div class="card-content">
-                    <button class="btn btn-destructive font-light">Delete Account</button>
-                </div>
-            </div>
-
-            {% if logged_in %}
-            <div class="card bg-card border-border">
-                <div class="card-header">
-                    <h3 class="card-title text-xl font-light">Session Management</h3>
-                    <p class="card-description font-light text-muted-foreground">End your current session.</p>
-                </div>
-                <div class="card-content">
-                    <form action="/logout" method="post">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token | default(value='') }}">
-                        <button type="submit" class="btn btn-destructive font-light w-full">Logout</button>
-                    </form>
+                <div class="card bg-destructive/10 border-destructive/50">
+                    <div class="card-header">
+                        <h3 class="text-xl font-light text-destructive">Zone de danger</h3>
+                        <p class="font-light text-destructive/80">Actions irréversibles sur votre compte</p>
+                    </div>
+                    <div class="card-content">
+                        <button class="btn btn-destructive font-light">Supprimer le compte</button>
+                    </div>
                 </div>
             </div>
-            {% endif %}
         </div>
 
         <!-- Notifications Tab Content -->
-        <div id="notifications" class="tabs-content space-y-6">
+        <div class="tab-content" id="content-notifications">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Notification Preferences</h3>
-                    <p class="card-description">Choose how you wish to be notified.</p>
+                    <h3>Préférences de notification</h3>
+                    <p>Choisissez comment vous souhaitez être notifié</p>
                 </div>
                 <div class="card-content space-y-6">
                     <div class="flex items-center justify-between">
                         <div class="space-y-0.5">
-                            <span class="font-light">New Transactions</span>
-                            <p class="text-sm text-muted-foreground font-light">Receive notifications for new transactions.</p>
+                            <span>Nouvelles transactions</span>
+                            <p class="text-sm text-muted-foreground font-light">Recevoir des notifications pour les nouvelles transactions</p>
                         </div>
-                        <div class="switch-container">
-                            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-                        </div>
+                        <label class="switch"><input type="checkbox" checked><span class="slider round"></span></label>
                     </div>
 
-                    <div class="separator"></div>
+                    <hr class="separator" />
 
                     <div class="flex items-center justify-between">
                         <div class="space-y-0.5">
-                            <span class="font-light">Messages</span>
-                            <p class="text-sm text-muted-foreground font-light">Notifications for new messages.</p>
+                            <span>Messages</span>
+                            <p class="text-sm text-muted-foreground font-light">Notifications pour les nouveaux messages</p>
                         </div>
-                        <div class="switch-container">
-                            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-                        </div>
+                        <label class="switch"><input type="checkbox" checked><span class="slider round"></span></label>
                     </div>
 
-                    <div class="separator"></div>
+                    <hr class="separator" />
 
                     <div class="flex items-center justify-between">
                         <div class="space-y-0.5">
-                            <span class="font-light">Escrow Updates</span>
-                            <p class="text-sm text-muted-foreground font-light">Updates on the status of your escrows.</p>
+                            <span>Escrow updates</span>
+                            <p class="text-sm text-muted-foreground font-light">Mises à jour sur l'état de vos escrows</p>
                         </div>
-                        <div class="switch-container">
-                            <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-                        </div>
+                        <label class="switch"><input type="checkbox" checked><span class="slider round"></span></label>
                     </div>
 
-                    <div class="separator"></div>
+                    <hr class="separator" />
 
                     <div class="flex items-center justify-between">
                         <div class="space-y-0.5">
-                            <span class="font-light">Newsletters</span>
-                            <p class="text-sm text-muted-foreground font-light">Receive information about new features.</p>
+                            <span>Newsletters</span>
+                            <p class="text-sm text-muted-foreground font-light">Recevoir des informations sur les nouveautés</p>
                         </div>
-                        <div class="switch-container">
-                            <label class="switch"><input type="checkbox"><span class="slider"></span></label>
-                        </div>
+                        <label class="switch"><input type="checkbox"><span class="slider round"></span></label>
                     </div>
                 </div>
             </div>

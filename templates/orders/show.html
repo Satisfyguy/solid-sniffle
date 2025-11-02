@@ -1,369 +1,516 @@
-{% extends "base-marketplace.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order #{{ order.id | truncate(length=8, end="") }} - NEXUS</title>
+    <meta name="description" content="View details and manage your order on Nexus Marketplace.">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/order-escrow.css">
+    <style>
+        /* General Layout */
+        .order-detail-container { max-width: 1200px; margin: 0 auto; padding: 8rem 1.5rem 0; }
+        .order-detail-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .order-detail-layout { grid-template-columns: 1fr; } }
 
-{% block title %}Order #{{ order.id | truncate(length=8, end="") }} - NEXUS{% endblock %}
+        /* Back Button */
+        .back-nav { margin-bottom: 2rem; }
+        .btn-ghost {
+            background: transparent;
+            border: none;
+            color: var(--color-foreground);
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: color 0.3s;
+            text-decoration: none;
+        }
+        .btn-ghost:hover { color: var(--color-accent); }
+        .btn-ghost svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2; }
 
-{% block extra_css %}
-<link rel="stylesheet" href="/static/css/order-escrow.css">
-{% endblock %}
+        /* Card Component */
+        .card {
+            background-color: #242424;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            color: var(--color-foreground);
+        }
+        .card-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+        .card-content {
+            padding: 1rem;
+        }
 
-{% block content %}
-<div class="order-detail-container">
-    <!-- Back button -->
-    <div class="back-nav" style="margin-bottom: 2rem;">
-        <a href="/orders" class="btn btn-ghost" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Orders
-        </a>
-    </div>
+        /* Order Header */
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid hsl(var(--border));
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .order-header h1 { font-size: 1.5rem; font-weight: 600; margin: 0; }
+        .order-date { color: hsl(var(--muted-foreground)); font-size: 0.875rem; }
 
-    <div class="order-detail-layout">
-        <!-- Main Content -->
-        <div class="order-detail-main">
-            <div class="card">
-                <div class="card-header order-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 1rem; margin-bottom: 1.5rem;">
-                    <div>
-                        <h1>Order #{{ order.id | truncate(length=8, end="") }}</h1>
-                        <p class="order-date">Created {{ order.created_at | date(format="%Y-%m-%d %H:%M UTC") }}</p>
+        /* Badge */
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            background-color: hsl(var(--accent)); /* Default */
+            color: hsl(var(--background));
+        }
+        .badge-lg { font-size: 1rem; padding: 0.75rem 1.25rem; }
+        .badge-success { background-color: #22c55e; color: #1A1A1A; }
+        .badge-destructive { background-color: #ef4444; color: #1A1A1A; }
+        .badge-warning { background-color: #eab308; color: #1A1A1A; }
+
+        /* Sections */
+        .section h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; }
+        .specs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+        .spec-item { display: flex; flex-direction: column; }
+        .spec-label { font-size: 0.75rem; color: hsl(var(--muted-foreground)); text-transform: uppercase; }
+        .spec-value { font-size: 1rem; font-weight: 500; }
+        .spec-value.price { color: hsl(var(--accent)); }
+        .spec-value.price-value { font-size: 1.25rem; font-weight: 700; color: hsl(var(--accent)); }
+        .link { color: hsl(var(--accent)); text-decoration: none; }
+        .link:hover { text-decoration: underline; }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(255, 26, 92, 0.05);
+            border: 1px solid rgba(255, 26, 92, 0.2);
+            border-radius: 4px;
+            padding: 1rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+        .info-box svg { width: 20px; height: 20px; stroke: #ff1a5c; flex-shrink: 0; margin-top: 0.125rem; }
+        .info-box .info-title { color: #ff1a5c; font-weight: 600; margin-bottom: 0.25rem; }
+        .info-box .info-text { font-size: 0.875rem; color: hsl(var(--foreground)); }
+        .info-box small { font-size: 0.75rem; color: hsl(var(--muted-foreground)); }
+
+        /* Timeline */
+        .timeline { position: relative; padding-left: 1.5rem; }
+        .timeline:before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background-color: var(--color-border); }
+        .timeline-item { position: relative; margin-bottom: 1.5rem; padding-left: 1.5rem; }
+        .timeline-marker { position: absolute; left: -0.5rem; top: 0; width: 1rem; height: 1rem; border-radius: 50%; background-color: var(--color-border); border: 2px solid #242424; }
+        .timeline-item.completed .timeline-marker { background-color: hsl(var(--accent)); border-color: hsl(var(--accent)); }
+        .timeline-item.active .timeline-marker { background-color: hsl(var(--foreground)); border-color: hsl(var(--foreground)); }
+        .timeline-content h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .timeline-time { font-size: 0.75rem; color: hsl(var(--muted-foreground)); margin-bottom: 0.5rem; }
+        .timeline-desc { font-size: 0.875rem; color: hsl(var(--muted-foreground)); }
+
+        /* Sidebar Actions */
+        .action-card h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; }
+        .action-buttons button, .action-buttons a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            text-align: center;
+        }
+        .btn-primary { background-color: var(--color-accent); color: var(--color-background); border: none; }
+        .btn-success { background-color: #22c55e; color: #1A1A1A; border: none; }
+        .btn-destructive { background-color: #ef4444; color: #1A1A1A; border: none; }
+        .btn-secondary { background-color: transparent; border: 1px solid var(--color-border); color: var(--color-foreground); }
+
+        /* Escrow Funding Instructions */
+        #escrow-instructions h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: hsl(var(--accent)); }
+        .escrow-address-section, .escrow-amount-section { margin-bottom: 1rem; }
+        .escrow-address-label, .escrow-amount-label { font-size: 0.75rem; color: hsl(var(--muted-foreground)); text-transform: uppercase; margin-bottom: 0.5rem; }
+        #escrow-address, .escrow-amount-value { background: rgba(0, 0, 0, 0.3); border: 1px solid var(--color-border); padding: 0.75rem 1rem; border-radius: 4px; font-family: monospace; word-break: break-all; }
+        #copy-address-btn { background-color: hsl(var(--accent)); color: hsl(var(--background)); border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin-top: 0.5rem; }
+        .escrow-info-box { background: rgba(0, 0, 0, 0.2); border: 1px solid var(--color-border); padding: 1rem; border-radius: 4px; margin-top: 1rem; }
+        .escrow-info-box p { font-size: 0.875rem; color: hsl(var(--muted-foreground)); line-height: 1.5; }
+        .escrow-info-box p svg { margin-right: 0.5rem; color: hsl(var(--accent)); }
+        #dev-simulate-payment-btn { background-color: #eab308; color: #1A1A1A; border: none; padding: 0.75rem 1rem; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 1rem; }
+
+        /* Help Card */
+        .info-card h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; }
+        .help-list { list-style: none; padding: 0; margin: 0; }
+        .help-list li { margin-bottom: 0.5rem; font-size: 0.875rem; color: hsl(var(--muted-foreground)); }
+        .help-list li:before { content: '•'; color: hsl(var(--accent)); display: inline-block; width: 1em; margin-left: -1em; }
+
+        /* Lucide Icons */
+        .lucide { stroke: currentColor; stroke-width: 2; fill: none; }
+        .lucide-sm { width: 1rem; height: 1rem; stroke: currentColor; stroke-width: 2; fill: none; }
+
+    </style>
+</head>
+<body>
+    {% include "header.html" %}
+
+    <main class="order-detail-container">
+        <!-- Back button -->
+        <div class="back-nav">
+            <a href="/orders" class="btn btn-ghost">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Orders
+            </a>
+        </div>
+
+        <div class="order-detail-layout">
+            <!-- Main Content -->
+            <div class="order-detail-main">
+                <div class="card">
+                    <div class="card-header order-header">
+                        <div>
+                            <h1>Order #{{ order.id | truncate(length=8, end="") }}</h1>
+                            <p class="order-date">Created {{ order.created_at | date(format="%Y-%m-%d %H:%M UTC") }}</p>
+                        </div>
+                        {% if order.status == "pending" %}
+                            <span class="badge badge-lg">⏳ PENDING</span>
+                        {% elif order.status == "funded" %}
+                            <span class="badge badge-lg">💰 FUNDED</span>
+                        {% elif order.status == "shipped" %}
+                            <span class="badge badge-lg">📦 SHIPPED</span>
+                        {% elif order.status == "completed" %}
+                            <span class="badge badge-lg badge-success">✅ COMPLETED</span>
+                        {% elif order.status == "cancelled" %}
+                            <span class="badge badge-lg badge-destructive">❌ CANCELLED</span>
+                        {% elif order.status == "disputed" %}
+                            <span class="badge badge-lg badge-warning">⚠️ DISPUTED</span>
+                        {% elif order.status == "refunded" %}
+                            <span class="badge badge-lg">↩️ REFUNDED</span>
+                        {% else %}
+                            <span class="badge badge-lg">{{ order.status | upper }}</span>
+                        {% endif %}
                     </div>
-                    {% if order.status == "pending" %}
-                        <span class="badge badge-lg">⏳ PENDING</span>
-                    {% elif order.status == "funded" %}
-                        <span class="badge badge-lg">💰 FUNDED</span>
-                    {% elif order.status == "shipped" %}
-                        <span class="badge badge-lg">📦 SHIPPED</span>
-                    {% elif order.status == "completed" %}
-                        <span class="badge badge-lg badge-success">✅ COMPLETED</span>
-                    {% elif order.status == "cancelled" %}
-                        <span class="badge badge-lg badge-destructive">❌ CANCELLED</span>
-                    {% elif order.status == "disputed" %}
-                        <span class="badge badge-lg badge-warning">⚠️ DISPUTED</span>
-                    {% elif order.status == "refunded" %}
-                        <span class="badge badge-lg">↩️ REFUNDED</span>
-                    {% else %}
-                        <span class="badge badge-lg">{{ order.status | upper }}</span>
-                    {% endif %}
+
+                    <div class="card-content">
+                        <!-- Order Details -->
+                        <div class="section">
+                            <h2>Order Details</h2>
+                            <div class="specs-grid">
+                                <div class="spec-item">
+                                    <span class="spec-label">Listing</span>
+                                    <span class="spec-value">
+                                        <a href="/listings/{{ order.listing_id }}" class="link">{{ order.listing_title }}</a>
+                                    </span>
+                                </div>
+
+                                <div class="spec-item">
+                                    <span class="spec-label">Quantity</span>
+                                    <span class="spec-value">{{ order.quantity }} units</span>
+                                </div>
+
+                                <div class="spec-item">
+                                    <span class="spec-label">Unit Price</span>
+                                    <span class="spec-value price">{{ order.unit_price_xmr }} XMR</span>
+                                </div>
+
+                                <div class="spec-item">
+                                    <span class="spec-label">Total Amount</span>
+                                    <span class="spec-value price-value">{{ order.total_price_xmr }} XMR</span>
+                                </div>
+
+                                {% if role == "buyer" %}
+                                <div class="spec-item">
+                                    <span class="spec-label">Vendor</span>
+                                    <span class="spec-value">{{ order.vendor_username }}</span>
+                                </div>
+                                {% elif role == "vendor" %}
+                                <div class="spec-item">
+                                    <span class="spec-label">Buyer</span>
+                                    <span class="spec-value">{{ order.buyer_username }}</span>
+                                </div>
+                                {% endif %}
+
+                                {% if order.escrow_id %}
+                                <div class="spec-item">
+                                    <span class="spec-label">Escrow</span>
+                                    <span class="spec-value">
+                                        <a href="/escrow/{{ order.escrow_id }}" class="link">View Escrow Details</a>
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Delivery Address (Vendor only) -->
+                        {% if role == "vendor" %}
+                        <div class="section">
+                            <h2>🔒 Delivery Address (Confidential)</h2>
+                            {% if order.shipping_address %}
+                            <div class="info-box" style="background: rgba(255, 26, 92, 0.05); border: 1px solid rgba(255, 26, 92, 0.2);">
+                                <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--nexus-primary, #ff1a5c);">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <div>
+                                    <p class="info-title" style="color: var(--nexus-primary, #ff1a5c);">Shipping Address</p>
+                                    <p class="info-text" style="white-space: pre-wrap; font-family: monospace; color: var(--nexus-fg, #f9fafb); background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 4px; margin-top: 0.75rem;">{{ order.shipping_address }}</p>
+
+                                    {% if order.shipping_notes %}
+                                    <p class="info-title" style="color: var(--nexus-muted-fg, #9ca3af); margin-top: 1rem; font-size: 0.875rem;">Delivery Instructions:</p>
+                                    <p class="info-text" style="font-style: italic; color: var(--nexus-muted-fg, #9ca3af); margin-top: 0.5rem;">{{ order.shipping_notes }}</p>
+                                    {% endif %}
+
+                                    <small style="display: block; margin-top: 1rem; color: var(--nexus-muted-fg, #9ca3af); font-size: 0.75rem;">
+                                        ⚠️ This address is encrypted in the database and only visible to you and the buyer. Handle with care.
+                                    </small>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="info-box" style="background: rgba(234, 179, 8, 0.05); border: 1px solid rgba(234, 179, 8, 0.2);">
+                                <p style="color: rgba(234, 179, 8, 0.9);">⚠️ No shipping address provided (digital product or legacy order)</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Shipping Information (if shipped) -->
+                        {% if order.status == "shipped" or order.status == "completed" %}
+                        <div class="section">
+                            <h2>Shipping Information</h2>
+                            <div class="info-box">
+                                <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                </svg>
+                                <div>
+                                    <p class="info-title">Order Shipped</p>
+                                    <p class="info-text">The vendor has marked this order as shipped on {{ order.updated_at | date(format="%Y-%m-%d %H:%M") }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Order Timeline -->
+                        <div class="section">
+                            <h2>Order Timeline</h2>
+                            <div class="timeline" id="order-timeline">
+                                <!-- Created -->
+                                <div class="timeline-item completed">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h3 class="timeline-title">Order Created</h3>
+                                        <p class="timeline-time">{{ order.created_at | date(format="%Y-%m-%d %H:%M") }}</p>
+                                        <p class="timeline-desc">Order placed successfully</p>
+                                    </div>
+                                </div>
+
+                                <!-- Funded -->
+                                <div class="timeline-item {% if order.status == 'funded' or order.status == 'shipped' or order.status == 'completed' %}completed{% elif order.status == 'pending' %}active{% endif %}">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h3 class="timeline-title">Escrow Funded</h3>
+                                        {% if order.funded_at %}
+                                        <p class="timeline-time">{{ order.funded_at | date(format="%Y-%m-%d %H:%M") }}</p>
+                                        <p class="timeline-desc">Buyer funded the escrow</p>
+                                        {% else %}
+                                        <p class="timeline-desc">Awaiting buyer to fund escrow</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Shipped -->
+                                <div class="timeline-item {% if order.status == 'shipped' or order.status == 'completed' %}completed{% elif order.status == 'funded' %}active{% endif %}">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h3 class="timeline-title">Order Shipped</h3>
+                                        {% if order.shipped_at %}
+                                        <p class="timeline-time">{{ order.shipped_at | date(format="%Y-%m-%d %H:%M") }}</p>
+                                        <p class="timeline-desc">Vendor shipped the order</p>
+                                        {% else %}
+                                        <p class="timeline-desc">Awaiting vendor to ship</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Completed -->
+                                <div class="timeline-item {% if order.status == 'completed' %}completed{% elif order.status == 'shipped' %}active{% endif %}">
+                                    <div class="timeline-marker"></div>
+                                    <div class="timeline-content">
+                                        <h3 class="timeline-title">Order Completed</h3>
+                                        {% if order.completed_at %}
+                                        <p class="timeline-time">{{ order.completed_at | date(format="%Y-%m-%d %H:%M") }}</p>
+                                        <p class="timeline-desc">Buyer confirmed receipt</p>
+                                        {% else %}
+                                        <p class="timeline-desc">Awaiting buyer confirmation</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="card-content">
-                    <!-- Order Details -->
-                    <div class="section">
-                        <h2>Order Details</h2>
-                        <div class="specs-grid">
-                            <div class="spec-item">
-                                <span class="spec-label">Listing</span>
-                                <span class="spec-value">
-                                    <a href="/listings/{{ order.listing_id }}" class="link">{{ order.listing_title }}</a>
-                                </span>
+                <!-- Sidebar: Actions -->
+                <div class="order-detail-sidebar">
+                    <div class="card action-card">
+                        <h2>Actions</h2>
+
+                        <div id="action-result"></div>
+
+                        <div class="action-buttons">
+                            {% if role == "vendor" and order.status == "funded" %}
+                            <button
+                                class="btn btn-primary btn-block"
+                                hx-post="/api/orders/{{ order.id }}/ship"
+                                hx-target="#action-result"
+                                hx-swap="innerHTML"
+                                hx-confirm="Are you sure you want to mark this order as shipped?"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                </svg>
+                                Mark as Shipped
+                            </button>
+                            {% endif %}
+
+                            {% if role == "buyer" and order.status == "shipped" %}
+                            <button
+                                class="btn btn-success btn-block"
+                                hx-post="/api/orders/{{ order.id }}/complete"
+                                hx-target="#action-result"
+                                hx-swap="innerHTML"
+                                hx-confirm="Confirm you have received the order in good condition?"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Confirm Receipt
+                            </button>
+                            {% endif %}
+
+                            {% if (role == "buyer" or role == "vendor") and (order.status == "funded" or order.status == "shipped") %}
+                            <button
+                                class="btn btn-destructive btn-block"
+                                hx-post="/api/orders/{{ order.id }}/dispute"
+                                hx-target="#action-result"
+                                hx-swap="innerHTML"
+                                hx-confirm="Are you sure you want to open a dispute for this order?"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                Open Dispute
+                            </button>
+                            {% endif %}
+
+                            {% if order.status == "pending" and role == "buyer" %}
+                            <!-- Fund Escrow Button -->
+                            <button
+                                id="fund-escrow-btn"
+                                class="btn btn-primary btn-block"
+                                style="margin-bottom: 15px;"
+                            >
+                                <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                💰 Fund Escrow ({{ order.total_price_xmr }} XMR)
+                            </button>
+
+                            <!-- Escrow Funding Instructions -->
+                            <div id="escrow-instructions">
+                                <h3>🔒 ESCROW PAYMENT</h3>
+                                <div class="escrow-address-section">
+                                    <p class="escrow-address-label">ESCROW ADDRESS:</p>
+                                    <div id="escrow-address">Initializing...</div>
+                                    <button id="copy-address-btn">
+                                        📋 COPY ADDRESS
+                                    </button>
+                                </div>
+                                <div class="escrow-amount-section">
+                                    <p class="escrow-amount-label">AMOUNT TO SEND:</p>
+                                    <div class="escrow-amount-value">
+                                        {{ order.total_price_xmr }} XMR
+                                    </div>
+                                </div>
+                                <div class="escrow-info-box">
+                                    <p>
+                                        ✓ Send EXACTLY {{ order.total_price_xmr }} XMR to the escrow address above<br>
+                                        ✓ Funds are secured in 2-of-3 multisig<br>
+                                        ✓ Released to vendor only after you confirm receipt
+                                    </p>
+                                </div>
+
+                                <!-- DEV: Simulate Payment Button -->
+                                <button id="dev-simulate-payment-btn">
+                                    🧪 DEV: SIMULATE PAYMENT (TESTNET ONLY)
+                                </button>
+
+                                <div id="payment-status"></div>
                             </div>
 
-                            <div class="spec-item">
-                                <span class="spec-label">Quantity</span>
-                                <span class="spec-value">{{ order.quantity }} units</span>
-                            </div>
-
-                            <div class="spec-item">
-                                <span class="spec-label">Unit Price</span>
-                                <span class="spec-value price">{{ order.unit_price_xmr }} XMR</span>
-                            </div>
-
-                            <div class="spec-item">
-                                <span class="spec-label">Total Amount</span>
-                                <span class="spec-value price-value">{{ order.total_price_xmr }} XMR</span>
-                            </div>
-
-                            {% if role == "buyer" %}
-                            <div class="spec-item">
-                                <span class="spec-label">Vendor</span>
-                                <span class="spec-value">{{ order.vendor_username }}</span>
-                            </div>
-                            {% elif role == "vendor" %}
-                            <div class="spec-item">
-                                <span class="spec-label">Buyer</span>
-                                <span class="spec-value">{{ order.buyer_username }}</span>
-                            </div>
+                            <button
+                                class="btn btn-secondary btn-block"
+                                hx-post="/api/orders/{{ order.id }}/cancel"
+                                hx-target="#action-result"
+                                hx-swap="innerHTML"
+                                hx-confirm="Are you sure you want to cancel this order?"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Cancel Order
+                            </button>
                             {% endif %}
 
                             {% if order.escrow_id %}
-                            <div class="spec-item">
-                                <span class="spec-label">Escrow</span>
-                                <span class="spec-value">
-                                    <a href="/escrow/{{ order.escrow_id }}" class="link">View Escrow Details</a>
-                                </span>
-                            </div>
+                            <a
+                                href="/escrow/{{ order.escrow_id }}"
+                                class="btn btn-secondary btn-block"
+                                style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; margin-bottom: 1rem; text-decoration: none;"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
+                                View Escrow Details
+                            </a>
                             {% endif %}
                         </div>
                     </div>
 
-                    <!-- Delivery Address (Vendor only) -->
-                    {% if role == "vendor" %}
-                    <div class="section">
-                        <h2>🔒 Delivery Address (Confidential)</h2>
-                        {% if order.shipping_address %}
-                        <div class="info-box" style="background: rgba(255, 26, 92, 0.05); border: 1px solid rgba(255, 26, 92, 0.2);">
-                            <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--nexus-primary, #ff1a5c);">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            <div style="flex: 1;">
-                                <p class="info-title" style="color: var(--nexus-primary, #ff1a5c);">Shipping Address</p>
-                                <p class="info-text" style="white-space: pre-wrap; font-family: monospace; color: var(--nexus-fg, #f9fafb); background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 4px; margin-top: 0.75rem;">{{ order.shipping_address }}</p>
-
-                                {% if order.shipping_notes %}
-                                <p class="info-title" style="color: var(--nexus-muted-fg, #9ca3af); margin-top: 1rem; font-size: 0.875rem;">Delivery Instructions:</p>
-                                <p class="info-text" style="font-style: italic; color: var(--nexus-muted-fg, #9ca3af); margin-top: 0.5rem;">{{ order.shipping_notes }}</p>
-                                {% endif %}
-
-                                <small style="display: block; margin-top: 1rem; color: var(--nexus-muted-fg, #9ca3af); font-size: 0.75rem;">
-                                    ⚠️ This address is encrypted in the database and only visible to you and the buyer. Handle with care.
-                                </small>
-                            </div>
-                        </div>
-                        {% else %}
-                        <div class="info-box" style="background: rgba(234, 179, 8, 0.05); border: 1px solid rgba(234, 179, 8, 0.2);">
-                            <p style="color: rgba(234, 179, 8, 0.9);">⚠️ No shipping address provided (digital product or legacy order)</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-
-                    <!-- Shipping Information (if shipped) -->
-                    {% if order.status == "shipped" or order.status == "completed" %}
-                    <div class="section">
-                        <h2>Shipping Information</h2>
-                        <div class="info-box">
-                            <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-                            </svg>
-                            <div>
-                                <p class="info-title">Order Shipped</p>
-                                <p class="info-text">The vendor has marked this order as shipped on {{ order.updated_at | date(format="%Y-%m-%d %H:%M") }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <!-- Order Timeline -->
-                    <div class="section">
-                        <h2>Order Timeline</h2>
-                        <div class="timeline" id="order-timeline">
-                            <!-- Created -->
-                            <div class="timeline-item completed">
-                                <div class="timeline-marker"></div>
-                                <div class="timeline-content">
-                                    <h3 class="timeline-title">Order Created</h3>
-                                    <p class="timeline-time">{{ order.created_at | date(format="%Y-%m-%d %H:%M") }}</p>
-                                    <p class="timeline-desc">Order placed successfully</p>
-                                </div>
-                            </div>
-
-                            <!-- Funded -->
-                            <div class="timeline-item {% if order.status == 'funded' or order.status == 'shipped' or order.status == 'completed' %}completed{% elif order.status == 'pending' %}active{% endif %}">
-                                <div class="timeline-marker"></div>
-                                <div class="timeline-content">
-                                    <h3 class="timeline-title">Escrow Funded</h3>
-                                    {% if order.funded_at %}
-                                    <p class="timeline-time">{{ order.funded_at | date(format="%Y-%m-%d %H:%M") }}</p>
-                                    <p class="timeline-desc">Buyer funded the escrow</p>
-                                    {% else %}
-                                    <p class="timeline-desc">Awaiting buyer to fund escrow</p>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <!-- Shipped -->
-                            <div class="timeline-item {% if order.status == 'shipped' or order.status == 'completed' %}completed{% elif order.status == 'funded' %}active{% endif %}">
-                                <div class="timeline-marker"></div>
-                                <div class="timeline-content">
-                                    <h3 class="timeline-title">Order Shipped</h3>
-                                    {% if order.shipped_at %}
-                                    <p class="timeline-time">{{ order.shipped_at | date(format="%Y-%m-%d %H:%M") }}</p>
-                                    <p class="timeline-desc">Vendor shipped the order</p>
-                                    {% else %}
-                                    <p class="timeline-desc">Awaiting vendor to ship</p>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <!-- Completed -->
-                            <div class="timeline-item {% if order.status == 'completed' %}completed{% elif order.status == 'shipped' %}active{% endif %}">
-                                <div class="timeline-marker"></div>
-                                <div class="timeline-content">
-                                    <h3 class="timeline-title">Order Completed</h3>
-                                    {% if order.completed_at %}
-                                    <p class="timeline-time">{{ order.completed_at | date(format="%Y-%m-%d %H:%M") }}</p>
-                                    <p class="timeline-desc">Buyer confirmed receipt</p>
-                                    {% else %}
-                                    <p class="timeline-desc">Awaiting buyer confirmation</p>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Help Card -->
+                    <div class="card info-card">
+                        <h2>Need Help?</h2>
+                        <p>If you encounter any issues with this order, you can:</p>
+                        <ul class="help-list">
+                            {% if role == "buyer" %}
+                            <li>Wait for the vendor to ship</li>
+                            <li>Open a dispute if there's a problem</li>
+                            <li>Contact support for assistance</li>
+                            {% elif role == "vendor" %}
+                            <li>Mark the order as shipped when ready</li>
+                            <li>Open a dispute if there's a problem</li>
+                            <li>Contact support for assistance</li>
+                            {% endif %}
+                        </ul>
                     </div>
                 </div>
             </div>
+
+            <!-- WebSocket live updates and order actions -->
+            <div id="order-data" data-order-id="{{ order.id }}"></div>
         </div>
+    </main>
 
-        <!-- Sidebar: Actions -->
-        <div class="order-detail-sidebar">
-            <div class="card action-card">
-                <h2>Actions</h2>
-
-                <div id="action-result"></div>
-
-                <div class="action-buttons">
-                    {% if role == "vendor" and order.status == "funded" %}
-                    <button
-                        class="btn btn-primary btn-block"
-                        hx-post="/api/orders/{{ order.id }}/ship"
-                        hx-target="#action-result"
-                        hx-swap="innerHTML"
-                        hx-confirm="Are you sure you want to mark this order as shipped?"
-                        style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; margin-bottom: 1rem;"
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-                        </svg>
-                        Mark as Shipped
-                    </button>
-                    {% endif %}
-
-                    {% if role == "buyer" and order.status == "shipped" %}
-                    <button
-                        class="btn btn-success btn-block"
-                        hx-post="/api/orders/{{ order.id }}/complete"
-                        hx-target="#action-result"
-                        hx-swap="innerHTML"
-                        hx-confirm="Confirm you have received the order in good condition?"
-                        style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; margin-bottom: 1rem;"
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Confirm Receipt
-                    </button>
-                    {% endif %}
-
-                    {% if (role == "buyer" or role == "vendor") and (order.status == "funded" or order.status == "shipped") %}
-                    <button
-                        class="btn btn-destructive btn-block"
-                        hx-post="/api/orders/{{ order.id }}/dispute"
-                        hx-target="#action-result"
-                        hx-swap="innerHTML"
-                        hx-confirm="Are you sure you want to open a dispute for this order?"
-                        style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; margin-bottom: 1rem;"
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        Open Dispute
-                    </button>
-                    {% endif %}
-
-                    {% if order.status == "pending" and role == "buyer" %}
-                    <!-- Fund Escrow Button -->
-                    <button
-                        id="fund-escrow-btn"
-                        class="btn btn-primary btn-block"
-                        style="margin-bottom: 15px;"
-                    >
-                        <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                        💰 Fund Escrow ({{ order.total_price_xmr }} XMR)
-                    </button>
-
-                    <!-- Escrow Funding Instructions -->
-                    <div id="escrow-instructions">
-                        <h3>🔒 ESCROW PAYMENT</h3>
-                        <div class="escrow-address-section">
-                            <p class="escrow-address-label">ESCROW ADDRESS:</p>
-                            <div id="escrow-address">Initializing...</div>
-                            <button id="copy-address-btn">
-                                📋 COPY ADDRESS
-                            </button>
-                        </div>
-                        <div class="escrow-amount-section">
-                            <p class="escrow-amount-label">AMOUNT TO SEND:</p>
-                            <div class="escrow-amount-value">
-                                {{ order.total_price_xmr }} XMR
-                            </div>
-                        </div>
-                        <div class="escrow-info-box">
-                            <p>
-                                ✓ Send EXACTLY {{ order.total_price_xmr }} XMR to the escrow address above<br>
-                                ✓ Funds are secured in 2-of-3 multisig<br>
-                                ✓ Released to vendor only after you confirm receipt
-                            </p>
-                        </div>
-
-                        <!-- DEV: Simulate Payment Button -->
-                        <button id="dev-simulate-payment-btn">
-                            🧪 DEV: SIMULATE PAYMENT (TESTNET ONLY)
-                        </button>
-
-                        <div id="payment-status"></div>
-                    </div>
-
-                    <button
-                        class="btn btn-secondary btn-block"
-                        hx-post="/api/orders/{{ order.id }}/cancel"
-                        hx-target="#action-result"
-                        hx-swap="innerHTML"
-                        hx-confirm="Are you sure you want to cancel this order?"
-                        style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; margin-bottom: 1rem;"
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        Cancel Order
-                    </button>
-                    {% endif %}
-
-                    {% if order.escrow_id %}
-                    <a
-                        href="/escrow/{{ order.escrow_id }}"
-                        class="btn btn-secondary btn-block"
-                        style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; margin-bottom: 1rem; text-decoration: none;"
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                        View Escrow Details
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Help Card -->
-            <div class="card info-card">
-                <h2>Need Help?</h2>
-                <p>If you encounter any issues with this order, you can:</p>
-                <ul class="help-list">
-                    {% if role == "buyer" %}
-                    <li>Wait for the vendor to ship</li>
-                    <li>Open a dispute if there's a problem</li>
-                    <li>Contact support for assistance</li>
-                    {% elif role == "vendor" %}
-                    <li>Mark the order as shipped when ready</li>
-                    <li>Open a dispute if there's a problem</li>
-                    <li>Contact support for assistance</li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- WebSocket live updates and order actions -->
-<div id="order-data" data-order-id="{{ order.id }}"></div>
-
-<!-- Fund Escrow Script -->
-<script src="/static/js/fund-escrow.js"></script>
-
-<!-- Order Actions Script (includes WebSocket) -->
-<script src="/static/js/order-actions.js"></script>
-{% endblock %}
+    <script src="/static/js/lucide.min.js"></script>
+    <script src="/static/js/base.js"></script>
+    <script src="/static/js/fund-escrow.js"></script>
+    <script src="/static/js/order-actions.js"></script>
+    <script>
+      lucide.createIcons();
+    </script>
+</body>
+</html>

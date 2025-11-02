@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Tabs</title>
+    <style>
+        :root {
+            --color-background: #1A1A1A;
+            --color-foreground: #FFFFFF;
+            --color-accent: #C9A445;
+            --color-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-foreground);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 28rem;
+            width: 100%;
+        }
+
+        .tabs-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 0.25rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab-trigger {
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            border-radius: 0.375rem;
+            background-color: transparent;
+            color: rgba(255, 255, 255, 0.5);
+            border: none;
+            cursor: pointer;
+            transition: all 150ms;
+        }
+
+        .tab-trigger.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--color-foreground);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 2rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 0.5rem;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--color-accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; margin-bottom: 2rem; font-weight: 300; letter-spacing: 0.3em;">NEXUS</h1>
+
+        <!-- Tabs List -->
+        <div class="tabs-list">
+            <button
+                id="tab-login"
+                type="button"
+                class="tab-trigger active"
+                onclick="switchTab('login')"
+            >
+                Connexion
+            </button>
+            <button
+                id="tab-signup"
+                type="button"
+                class="tab-trigger"
+                onclick="switchTab('signup')"
+            >
+                Inscription
+            </button>
+        </div>
+
+        <!-- Login Tab Content -->
+        <div id="content-login" class="tab-content active">
+            <h2>Connexion</h2>
+            <p>Ceci est le contenu de la tab de connexion.</p>
+            <input type="email" placeholder="votre@email.com" style="width: 100%; padding: 0.5rem; margin: 1rem 0;">
+            <input type="password" placeholder="••••••••" style="width: 100%; padding: 0.5rem; margin: 1rem 0;">
+            <button style="background-color: var(--color-accent); color: #000; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; width: 100%;">
+                Se connecter
+            </button>
+        </div>
+
+        <!-- Signup Tab Content -->
+        <div id="content-signup" class="tab-content">
+            <h2>Inscription</h2>
+            <p>Ceci est le contenu de la tab d'inscription.</p>
+            <input type="email" placeholder="votre@email.com" style="width: 100%; padding: 0.5rem; margin: 1rem 0;">
+            <input type="password" placeholder="••••••••" style="width: 100%; padding: 0.5rem; margin: 1rem 0;">
+            <input type="password" placeholder="Confirmer" style="width: 100%; padding: 0.5rem; margin: 1rem 0;">
+            <button style="background-color: var(--color-accent); color: #000; border: none; padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; width: 100%;">
+                Créer un compte
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function switchTab(tab) {
+            console.log('Switching to tab:', tab);
+
+            // Update buttons
+            document.querySelectorAll('.tab-trigger').forEach(btn => {
+                btn.classList.remove('active');
+                console.log('Removed active from button:', btn.id);
+            });
+            const activeButton = document.getElementById('tab-' + tab);
+            if (activeButton) {
+                activeButton.classList.add('active');
+                console.log('Added active to button:', activeButton.id);
+            }
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+                console.log('Removed active from content:', content.id);
+            });
+            const activeContent = document.getElementById('content-' + tab);
+            if (activeContent) {
+                activeContent.classList.add('active');
+                console.log('Added active to content:', activeContent.id);
+            }
+        }
+
+        // Test on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded');
+            console.log('Login button:', document.getElementById('tab-login'));
+            console.log('Signup button:', document.getElementById('tab-signup'));
+            console.log('Login content:', document.getElementById('content-login'));
+            console.log('Signup content:', document.getElementById('content-signup'));
+        });
+    </script>
+</body>
+</html>

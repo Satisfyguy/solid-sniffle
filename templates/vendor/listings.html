@@ -1,215 +1,298 @@
-{% extends "base-marketplace.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Listings - NEXUS</title>
+    <meta name="description" content="Manage your product catalog and inventory on Nexus Marketplace.">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        /* General Layout */
+        .container { max-width: 1400px; margin: 0 auto; padding: 8rem 1.5rem 0; }
+        .section { padding-top: 2rem; }
+        .section-header { margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; }
+        .section-title { font-size: 2rem; font-weight: 700; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.1em; margin: 0; }
+        .section-subtitle { margin-top: 0.5rem; color: hsl(var(--muted-foreground)); font-size: 0.875rem; }
 
-{% block title %}My Listings - NEXUS{% endblock %}
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background-color: var(--color-accent);
+            color: var(--color-background);
+            border: none;
+        }
+        .btn-primary { background-color: var(--color-accent); color: var(--color-background); }
+        .btn-lg { font-size: 1rem; padding: 0.75rem 1.5rem; }
+        .btn-secondary { background-color: transparent; border: 1px solid var(--color-border); color: var(--color-foreground); }
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
+        .btn-ghost { background: transparent; border: none; color: var(--color-foreground); }
 
-{% block head %}
-<style>
-.listing-row {
-  border-bottom: 1px solid hsl(var(--border));
-  transition: background 0.2s;
-}
-.listing-row:hover {
-  background: hsl(var(--muted) / 0.2);
-}
-</style>
-{% endblock %}
+        /* Card Component */
+        .card {
+            background-color: #242424;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            color: var(--color-foreground);
+        }
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid hsl(var(--border));
+        }
+        .card-content {
+            padding: 1.5rem;
+        }
 
-{% block content %}
-<div class="section container" style="padding-top: 2rem;">
-  <div style="max-width: 1400px; margin: 0 auto;">
+        /* Stats Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stats-card-item { padding: 1.5rem; }
+        .stats-card-item > div { display: flex; justify-content: space-between; align-items: start; }
+        .stats-card-item p { margin: 0; }
+        .stats-card-item .label { font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+        .stats-card-item .value { font-size: 2rem; font-weight: 700; color: hsl(var(--foreground)); }
+        .stats-card-item .icon-container { padding: 0.75rem; background: hsla(var(--primary), 0.1); border-radius: 8px; }
+        .stats-card-item .icon-container svg { width: 24px; height: 24px; stroke: hsl(var(--primary)); stroke-width: 2; }
+        .stats-card-item .value.active-color { color: hsl(142, 76%, 36%); }
+        .stats-card-item .icon-container.active-bg { background: hsla(142, 76%, 36%, 0.1); }
+        .stats-card-item .icon-container.active-stroke { stroke: hsl(142, 76%, 36%); }
+        .stats-card-item .value.inactive-color { color: hsl(var(--muted-foreground)); }
+        .stats-card-item .icon-container.inactive-bg { background: hsla(var(--muted), 0.5); }
+        .stats-card-item .icon-container.inactive-stroke { stroke: hsl(var(--muted-foreground)); }
 
-    {# Page Header with Stats #}
-    <div class="section-header" style="margin-bottom: 2rem;">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
-        <div>
-          <h1 class="section-title">My Listings</h1>
-          <p class="section-subtitle">Manage your product catalog and inventory</p>
+        /* Listings Table */
+        table { width: 100%; border-collapse: collapse; }
+        thead tr { border-bottom: 1px solid hsl(var(--border)); background: hsla(var(--muted), 0.3); }
+        th { padding: 1rem; text-align: left; font-size: 0.875rem; font-weight: 600; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em; }
+        tbody tr.listing-row { border-bottom: 1px solid hsl(var(--border)); transition: background 0.2s; }
+        tbody tr.listing-row:hover { background: hsla(var(--muted), 0.2); }
+        td { padding: 1rem; }
+        td .product-info { display: flex; align-items: center; gap: 1rem; }
+        td .product-image-container { width: 48px; height: 48px; border-radius: 8px; overflow: hidden; background: hsl(var(--muted)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        td .product-image-container img { width: 100%; height: 100%; object-fit: cover; }
+        td .product-image-container svg { width: 24px; height: 24px; stroke: hsl(var(--muted-foreground)); stroke-width: 2; }
+        td .product-title { font-weight: 600; color: hsl(var(--foreground)); text-decoration: none; display: block; margin-bottom: 0.25rem; }
+        td .product-id { font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin: 0; }
+        td .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background-color: hsla(var(--muted), 0.5); color: hsl(var(--foreground)); }
+        td .price { font-family: monospace; font-weight: 600; }
+        td .stock-status { font-weight: 600; }
+        td .stock-status.in-stock { color: hsl(142, 76%, 36%); }
+        td .stock-status.out-of-stock { color: hsl(0, 84%, 60%); }
+        td .status-badge { display: inline-flex; align-items: center; gap: 0.25rem; }
+        td .status-badge .status-dot { width: 6px; height: 6px; background: currentColor; border-radius: 50%; }
+        td .status-badge.active { color: hsl(142, 76%, 36%); }
+        td .status-badge.inactive { color: hsl(var(--muted-foreground)); }
+        td .actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+
+        /* No Listings Message */
+        .no-listings-message {
+            text-align: center;
+            padding: 4rem 2rem;
+            border: 1px dashed var(--color-border);
+            border-radius: 4px;
+            margin-top: 2rem;
+        }
+        .no-listings-message svg { width: 64px; height: 64px; stroke: hsl(var(--muted-foreground)); stroke-width: 1.5; margin: 0 auto 1.5rem; }
+        .no-listings-message h3 { font-size: 1.25rem; font-weight: 600; color: hsl(var(--foreground)); margin-bottom: 0.5rem; }
+        .no-listings-message p { color: hsl(var(--muted-foreground)); margin-bottom: 1.5rem; }
+
+    </style>
+</head>
+<body>
+    {% include "header.html" %}
+
+    <main class="container">
+        <div class="section container">
+          <div style="max-width: 1400px; margin: 0 auto;">
+
+            {# Page Header with Stats #}
+            <div class="section-header">
+              <div>
+                <h1 class="section-title">My Listings</h1>
+                <p class="section-subtitle">Manage your product catalog and inventory</p>
+              </div>
+              <a href="/listings/create" class="btn btn-primary btn-lg">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 5v14m-7-7h14"/>
+                </svg>
+                Create New Listing
+              </a>
+            </div>
+
+            {# Stats Cards #}
+            <div class="stats-grid">
+              {# Total Listings #}
+              <div class="card stats-card-item">
+                <div>
+                  <p class="label">Total Listings</p>
+                  <p class="value">{{ total_listings }}</p>
+                </div>
+                <div class="icon-container">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <path d="M3 9V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4"/>
+                  </svg>
+                </div>
+              </div>
+
+              {# Active Listings #}
+              <div class="card stats-card-item">
+                <div>
+                  <p class="label">Active</p>
+                  <p class="value active-color">{{ active_listings }}</p>
+                </div>
+                <div class="icon-container active-bg">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="active-stroke">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                </div>
+              </div>
+
+              {# Inactive Listings #}
+              <div class="card stats-card-item">
+                <div>
+                  <p class="label">Inactive</p>
+                  <p class="value inactive-color">{{ inactive_listings }}</p>
+                </div>
+                <div class="icon-container inactive-bg">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inactive-stroke">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="15" y1="9" x2="9" y2="15"/>
+                    <line x1="9" y1="9" x2="15" y2="15"/>
+                  </svg>
+                </div>
+              </div>
+
+              {# Total Stock #}
+              <div class="card stats-card-item">
+                <div>
+                  <p class="label">Total Stock</p>
+                  <p class="value">{{ total_stock }}</p>
+                </div>
+                <div class="icon-container">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {# Listings Table #}
+            <div class="card">
+              <div class="card-header">
+                <h2>Your Products</h2>
+              </div>
+
+              <div class="card-content" style="padding: 0;">
+                {% if listings and listings | length > 0 %}
+                  <div style="overflow-x: auto;">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Product</th>
+                          <th>Category</th>
+                          <th style="text-align: right;">Price</th>
+                          <th style="text-align: center;">Stock</th>
+                          <th style="text-align: center;">Status</th>
+                          <th style="text-align: right;">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for listing in listings %}
+                        <tr class="listing-row">
+                          <td>
+                            <div class="product-info">
+                              <div class="product-image-container">
+                                {% if listing.image_ipfs_cid %}
+                                  <img src="/api/listings/{{ listing.id }}/images/{{ listing.image_ipfs_cid }}"
+                                       alt="{{ listing.title }}">
+                                {% else %}
+                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <polyline points="21 15 16 10 5 21"/>
+                                  </svg>
+                                {% endif %}
+                              </div>
+                              <div>
+                                <a href="/listings/{{ listing.id }}" class="product-title">
+                                  {{ listing.title }}
+                                </a>
+                                <p class="product-id">ID: {{ listing.id | truncate(length=8, end="") }}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <span class="badge">{{ listing.category | title }}</span>
+                          </td>
+                          <td class="price">
+                            {{ listing.price_xmr }} XMR
+                          </td>
+                          <td style="text-align: center;">
+                            {% if listing.stock > 0 %}
+                              <span class="stock-status in-stock">{{ listing.stock }}</span>
+                            {% else %}
+                              <span class="stock-status out-of-stock">Out of stock</span>
+                            {% endif %}
+                          </td>
+                          <td style="text-align: center;">
+                            {% if listing.status == "active" %}
+                              <span class="badge status-badge active">
+                                <span class="status-dot"></span>
+                                Active
+                              </span>
+                            {% else %}
+                              <span class="badge status-badge inactive">
+                                <span class="status-dot"></span>
+                                {{ listing.status | title }}
+                              </span>
+                            {% endif %}
+                          </td>
+                          <td class="actions">
+                            <a href="/listings/{{ listing.id }}/edit" class="btn btn-secondary btn-sm">
+                              Edit
+                            </a>
+                            <a href="/listings/{{ listing.id }}" class="btn btn-ghost btn-sm">
+                              View
+                            </a>
+                          </td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                {% else %}
+                  <div class="no-listings-message">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                      <path d="M3 9V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4"/>
+                    </svg>
+                    <h3>No listings yet</h3>
+                    <p>Create your first listing to start selling on NEXUS</p>
+                    <a href="/listings/create" class="btn btn-primary">
+                      Create Your First Listing
+                    </a>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+          </div>
         </div>
-        <a href="/listings/create" class="btn btn-primary btn-lg">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 5v14m-7-7h14"/>
-          </svg>
-          Create New Listing
-        </a>
-      </div>
-    </div>
+    </main>
 
-    {# Stats Cards #}
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-      {# Total Listings #}
-      <div class="card" style="padding: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: start;">
-          <div>
-            <p style="font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Total Listings</p>
-            <p style="font-size: 2rem; font-weight: 700; color: hsl(var(--foreground)); margin: 0;">{{ total_listings }}</p>
-          </div>
-          <div style="padding: 0.75rem; background: hsl(var(--primary) / 0.1); border-radius: 8px;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" stroke-width="2">
-              <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-              <path d="M3 9V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4"/>
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {# Active Listings #}
-      <div class="card" style="padding: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: start;">
-          <div>
-            <p style="font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Active</p>
-            <p style="font-size: 2rem; font-weight: 700; color: hsl(142, 76%, 36%); margin: 0;">{{ active_listings }}</p>
-          </div>
-          <div style="padding: 0.75rem; background: hsl(142, 76%, 36% / 0.1); border-radius: 8px;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="hsl(142, 76%, 36%)" stroke-width="2">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-              <polyline points="22 4 12 14.01 9 11.01"/>
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {# Inactive Listings #}
-      <div class="card" style="padding: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: start;">
-          <div>
-            <p style="font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Inactive</p>
-            <p style="font-size: 2rem; font-weight: 700; color: hsl(var(--muted-foreground)); margin: 0;">{{ inactive_listings }}</p>
-          </div>
-          <div style="padding: 0.75rem; background: hsl(var(--muted) / 0.5); border-radius: 8px;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--muted-foreground))" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="15" y1="9" x2="9" y2="15"/>
-              <line x1="9" y1="9" x2="15" y2="15"/>
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {# Total Stock #}
-      <div class="card" style="padding: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: start;">
-          <div>
-            <p style="font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Total Stock</p>
-            <p style="font-size: 2rem; font-weight: 700; color: hsl(var(--foreground)); margin: 0;">{{ total_stock }}</p>
-          </div>
-          <div style="padding: 0.75rem; background: hsl(var(--primary) / 0.1); border-radius: 8px;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" stroke-width="2">
-              <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
-            </svg>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {# Listings Table #}
-    <div class="card">
-      <div class="card-header" style="border-bottom: 1px solid hsl(var(--border)); padding: 1.5rem;">
-        <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0;">Your Products</h2>
-      </div>
-
-      <div class="card-content" style="padding: 0;">
-        {% if listings and listings | length > 0 %}
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse;">
-              <thead>
-                <tr style="border-bottom: 1px solid hsl(var(--border)); background: hsl(var(--muted) / 0.3);">
-                  <th style="padding: 1rem; text-align: left; font-size: 0.875rem; font-weight: 600; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em;">Product</th>
-                  <th style="padding: 1rem; text-align: left; font-size: 0.875rem; font-weight: 600; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em;">Category</th>
-                  <th style="padding: 1rem; text-align: right; font-size: 0.875rem; font-weight: 600; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em;">Price</th>
-                  <th style="padding: 1rem; text-align: center; font-size: 0.875rem; font-weight: 600; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em;">Stock</th>
-                  <th style="padding: 1rem; text-align: center; font-size: 0.875rem; font-weight: 600; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em;">Status</th>
-                  <th style="padding: 1rem; text-align: right; font-size: 0.875rem; font-weight: 600; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.05em;">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for listing in listings %}
-                <tr class="listing-row">
-                  <td style="padding: 1rem;">
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                      <div style="width: 48px; height: 48px; border-radius: 8px; overflow: hidden; background: hsl(var(--muted)); flex-shrink: 0;">
-                        {% if listing.image_ipfs_cid %}
-                          <img src="/api/listings/{{ listing.id }}/images/{{ listing.image_ipfs_cid }}"
-                               alt="{{ listing.title }}"
-                               style="width: 100%; height: 100%; object-fit: cover;">
-                        {% else %}
-                          <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: hsl(var(--muted-foreground));">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                              <circle cx="8.5" cy="8.5" r="1.5"/>
-                              <polyline points="21 15 16 10 5 21"/>
-                            </svg>
-                          </div>
-                        {% endif %}
-                      </div>
-                      <div>
-                        <a href="/listings/{{ listing.id }}" style="font-weight: 600; color: hsl(var(--foreground)); text-decoration: none; display: block; margin-bottom: 0.25rem;">
-                          {{ listing.title }}
-                        </a>
-                        <p style="font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin: 0;">ID: {{ listing.id | truncate(length=8, end="") }}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td style="padding: 1rem;">
-                    <span class="badge">{{ listing.category | title }}</span>
-                  </td>
-                  <td style="padding: 1rem; text-align: right; font-family: monospace; font-weight: 600;">
-                    {{ listing.price_xmr }} XMR
-                  </td>
-                  <td style="padding: 1rem; text-align: center;">
-                    {% if listing.stock > 0 %}
-                      <span style="font-weight: 600; color: hsl(142, 76%, 36%);">{{ listing.stock }}</span>
-                    {% else %}
-                      <span style="font-weight: 600; color: hsl(0, 84%, 60%);">Out of stock</span>
-                    {% endif %}
-                  </td>
-                  <td style="padding: 1rem; text-align: center;">
-                    {% if listing.status == "active" %}
-                      <span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 0.25rem;">
-                        <span style="width: 6px; height: 6px; background: currentColor; border-radius: 50%;"></span>
-                        Active
-                      </span>
-                    {% else %}
-                      <span class="badge" style="display: inline-flex; align-items: center; gap: 0.25rem;">
-                        <span style="width: 6px; height: 6px; background: currentColor; border-radius: 50%;"></span>
-                        {{ listing.status | title }}
-                      </span>
-                    {% endif %}
-                  </td>
-                  <td style="padding: 1rem; text-align: right;">
-                    <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
-                      <a href="/listings/{{ listing.id }}/edit" class="btn btn-secondary btn-sm" style="text-decoration: none;">
-                        Edit
-                      </a>
-                      <a href="/listings/{{ listing.id }}" class="btn btn-ghost btn-sm" style="text-decoration: none;">
-                        View
-                      </a>
-                    </div>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <div style="text-align: center; padding: 4rem 2rem;">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--muted-foreground))" stroke-width="1.5" style="margin: 0 auto 1.5rem;">
-              <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-              <path d="M3 9V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4"/>
-            </svg>
-            <h3 style="font-size: 1.25rem; font-weight: 600; color: hsl(var(--foreground)); margin-bottom: 0.5rem;">No listings yet</h3>
-            <p style="color: hsl(var(--muted-foreground)); margin-bottom: 1.5rem;">Create your first listing to start selling on NEXUS</p>
-            <a href="/listings/create" class="btn btn-primary">
-              Create Your First Listing
-            </a>
-          </div>
-        {% endif %}
-      </div>
-    </div>
-
-  </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script src="/static/js/base.js"></script>
-{% endblock %}
+    <script src="/static/js/lucide.min.js"></script>
+    <script src="/static/js/base.js"></script>
+    <script>
+      lucide.createIcons();
+    </script>
+</body>
+</html>

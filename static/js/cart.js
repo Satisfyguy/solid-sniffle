@@ -92,7 +92,7 @@
 
             if (data.success) {
                 // Remove item element from DOM
-                const itemElement = document.querySelector(`.cart-item[data-listing-id="${listingId}"]`);
+                const itemElement = document.querySelector(`.cart-item-card[data-listing-id="${listingId}"]`);
                 if (itemElement) {
                     itemElement.remove();
                 }
@@ -146,33 +146,40 @@
     function recalculateTotals(cart) {
         // Update item totals
         cart.items.forEach(item => {
-            const itemElement = document.querySelector(`.cart-item[data-listing-id="${item.listing_id}"]`);
+            const itemElement = document.querySelector(`.cart-item-card[data-listing-id="${item.listing_id}"]`);
             if (itemElement) {
-                const totalElement = itemElement.querySelector('.item-total');
-                if (totalElement) {
+                const priceElement = itemElement.querySelector('.cart-item-price');
+                if (priceElement) {
                     const itemTotal = (item.unit_price_xmr * item.quantity) / 1000000000000;
-                    totalElement.textContent = itemTotal.toFixed(12) + ' XMR';
-                }
-
-                // Update quantity input
-                const quantityInput = itemElement.querySelector('.quantity-input');
-                if (quantityInput && parseInt(quantityInput.value) !== item.quantity) {
-                    quantityInput.value = item.quantity;
+                    priceElement.textContent = itemTotal.toFixed(12) + ' XMR';
                 }
             }
         });
 
         // Calculate and update cart totals
-        const totalXmr = cart.items.reduce((sum, item) => {
+        const subtotal = cart.items.reduce((sum, item) => {
             return sum + (item.unit_price_xmr * item.quantity);
         }, 0) / 1000000000000;
 
+        const escrowFee = subtotal * 0.03;
+        const totalWithFee = subtotal * 1.03;
         const totalQuantity = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
-        // Update total display
+        // Update subtotal display
+        const subtotalElements = document.querySelectorAll('.summary-value');
+        if (subtotalElements.length > 0) {
+            subtotalElements[0].textContent = subtotal.toFixed(12) + ' XMR';
+        }
+
+        // Update escrow fee display
+        if (subtotalElements.length > 1) {
+            subtotalElements[1].textContent = escrowFee.toFixed(12) + ' XMR';
+        }
+
+        // Update total display (with escrow fee)
         const cartTotalElement = document.getElementById('cart-total');
         if (cartTotalElement) {
-            cartTotalElement.textContent = totalXmr.toFixed(12) + ' XMR';
+            cartTotalElement.textContent = totalWithFee.toFixed(12) + ' XMR';
         }
 
         // Update summary (if exists in template variable scope)
@@ -181,13 +188,43 @@
             if (el.dataset.cartSummary === 'quantity') {
                 el.textContent = totalQuantity;
             } else if (el.dataset.cartSummary === 'total') {
-                el.textContent = totalXmr.toFixed(12) + ' XMR';
+                el.textContent = totalWithFee.toFixed(12) + ' XMR';
             }
         });
     }
 
+    // Calculate escrow fee and total on page load
+    function calculateEscrowFee() {
+        const subtotalElement = document.getElementById('cart-subtotal');
+        if (!subtotalElement) return;
+
+        const subtotalText = subtotalElement.textContent.trim();
+        const subtotalMatch = subtotalText.match(/([\d.]+)\s*XMR/);
+
+        if (subtotalMatch) {
+            const subtotal = parseFloat(subtotalMatch[1]);
+            const escrowFee = subtotal * 0.03;
+            const total = subtotal + escrowFee;
+
+            // Update escrow fee
+            const escrowElement = document.getElementById('cart-escrow-fee');
+            if (escrowElement) {
+                escrowElement.textContent = escrowFee.toFixed(12) + ' XMR';
+            }
+
+            // Update total
+            const totalElement = document.getElementById('cart-total');
+            if (totalElement) {
+                totalElement.textContent = total.toFixed(12) + ' XMR';
+            }
+        }
+    }
+
     // Event handlers
     document.addEventListener('DOMContentLoaded', function() {
+        // Calculate escrow fee and total on page load
+        calculateEscrowFee();
+
         // Quantity decrease buttons
         document.querySelectorAll('.quantity-decrease').forEach(button => {
             button.addEventListener('click', function() {
@@ -236,7 +273,7 @@
         });
 
         // Remove item buttons
-        document.querySelectorAll('.remove-item').forEach(button => {
+        document.querySelectorAll('.remove-item-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const listingId = this.dataset.listingId;
                 removeItem(listingId);

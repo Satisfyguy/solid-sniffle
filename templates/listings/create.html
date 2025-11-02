@@ -1,194 +1,304 @@
-{% extends "base-marketplace.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Listing - NEXUS</title>
+    <meta name="description" content="Add a new product to the marketplace.">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <style>
+        /* Basic styling for card and form elements to match the overall theme */
+        .card {
+            background-color: #242424;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            color: var(--color-foreground);
+        }
+        .card-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+        .card-content {
+            padding: 1rem;
+        }
+        .label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: hsl(var(--foreground));
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .input, .textarea, .select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--color-border);
+            background-color: #1A1A1A;
+            color: var(--color-foreground);
+            border-radius: 4px;
+        }
+        .textarea {
+            min-height: 120px;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-primary {
+            background-color: var(--color-accent);
+            color: var(--color-background);
+        }
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--color-border);
+            color: var(--color-foreground);
+        }
+        .btn-lg {
+            font-size: 1rem;
+            padding: 0.75rem 1.5rem;
+        }
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 8rem 1.5rem 0;
+        }
+        .nexus-breadcrumb-list {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .nexus-breadcrumb-item {
+            display: flex;
+            align-items: center;
+        }
+        .nexus-breadcrumb-link {
+            color: var(--color-foreground);
+            text-decoration: none;
+        }
+        .nexus-breadcrumb-separator {
+            margin: 0 0.5rem;
+            color: var(--color-foreground);
+        }
+        .nexus-breadcrumb-current {
+            color: var(--color-accent);
+        }
+        small {
+            display: block;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: hsl(var(--muted-foreground));
+        }
+        #image-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        #image-preview img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid var(--color-border);
+        }
+    </style>
+</head>
+<body>
+    {% include "header.html" %}
 
-{% block title %}Create Listing - NEXUS{% endblock %}
+    <main class="container">
+        {# Breadcrumb Navigation #}
+        <nav aria-label="Breadcrumb" style="max-width: 900px; margin: 0 auto; padding: 1.5rem 1.5rem 0;">
+          <ol style="display: flex; align-items: center; gap: 0.5rem; list-style: none; padding: 0; margin: 0; font-size: 0.875rem; color: hsl(var(--muted-foreground));">
+            <li>
+              <a href="/" hx-boost="true" style="color: hsl(var(--foreground)); text-decoration: none; transition: color 0.2s;">Home</a>
+              <span style="margin-left: 0.5rem; color: hsl(var(--muted-foreground));">/</span>
+            </li>
+            <li>
+              <a href="/listings" hx-boost="true" style="color: hsl(var(--foreground)); text-decoration: none; transition: color 0.2s;">Listings</a>
+              <span style="margin-left: 0.5rem; color: hsl(var(--muted-foreground));">/</span>
+            </li>
+            <li style="color: hsl(var(--primary)); font-weight: 500;" aria-current="page">
+              Create
+            </li>
+          </ol>
+        </nav>
 
-{% block content %}
+        {# Form Container #}
+        <div class="section container" style="padding-top: 2rem; max-width: 900px;">
+          <div class="card">
+            <div class="card-header" style="text-align: center; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+              <h1 class="section-title" style="margin: 0;">
+                Create New Listing
+              </h1>
+              <p class="section-subtitle" style="margin-top: 0.5rem;">
+                Add a new product to the marketplace
+              </p>
+            </div>
 
-{# Breadcrumb Navigation #}
-<nav aria-label="Breadcrumb" style="max-width: 900px; margin: 0 auto; padding: 1.5rem 1.5rem 0;">
-  <ol style="display: flex; align-items: center; gap: 0.5rem; list-style: none; padding: 0; margin: 0; font-size: 0.875rem; color: hsl(var(--muted-foreground));">
-    <li>
-      <a href="/" hx-boost="true" style="color: hsl(var(--foreground)); text-decoration: none; transition: color 0.2s;">Home</a>
-      <span style="margin-left: 0.5rem; color: hsl(var(--muted-foreground));">/</span>
-    </li>
-    <li>
-      <a href="/listings" hx-boost="true" style="color: hsl(var(--foreground)); text-decoration: none; transition: color 0.2s;">Listings</a>
-      <span style="margin-left: 0.5rem; color: hsl(var(--muted-foreground));">/</span>
-    </li>
-    <li style="color: hsl(var(--primary)); font-weight: 500;" aria-current="page">
-      Create
-    </li>
-  </ol>
-</nav>
+            <div class="card-content">
+              <form id="create-listing-form" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 2rem;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
-{# Form Container #}
-<div class="section container" style="padding-top: 2rem; max-width: 900px;">
-  <div class="card">
-    <div class="card-header" style="text-align: center; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 1.5rem; margin-bottom: 2rem;">
-      <h1 class="section-title" style="margin: 0;">
-        Create New Listing
-      </h1>
-      <p class="section-subtitle" style="margin-top: 0.5rem;">
-        Add a new product to the marketplace
-      </p>
-    </div>
+                {# Title Field #}
+                <div>
+                  <label for="title" class="label">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    placeholder="Product title"
+                    required
+                    minlength="3"
+                    maxlength="200"
+                    class="input"
+                  >
+                  <small>
+                    3-200 characters
+                  </small>
+                </div>
 
-    <div class="card-content">
-      <form id="create-listing-form" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 2rem;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                {# Description Field #}
+                <div>
+                  <label for="description" class="label">
+                    Description
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    placeholder="Describe your product in detail..."
+                    rows="6"
+                    required
+                    minlength="10"
+                    maxlength="5000"
+                    class="textarea"
+                  ></textarea>
+                  <small>
+                    10-5000 characters
+                  </small>
+                </div>
 
-        {# Title Field #}
-        <div>
-          <label for="title" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
-            Title
-          </label>
-          <input
-            type="text"
-            id="title"
-            name="title"
-            placeholder="Product title"
-            required
-            minlength="3"
-            maxlength="200"
-            class="input"
-            style="width: 100%;"
-          >
-          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
-            3-200 characters
-          </small>
-        </div>
+                {# Category Field #}
+                <div>
+                  <label for="category" class="label">
+                    Category
+                  </label>
+                  <select
+                    id="category"
+                    name="category"
+                    required
+                    class="select"
+                  >
+                    <option value="">Select a category...</option>
+                    <option value="digital">💻 Digital Goods</option>
+                    <option value="physical">📦 Physical Goods</option>
+                    <option value="services">🛠️ Services</option>
+                    <option value="vpn">🔒 VPN & Privacy</option>
+                    <option value="hosting">🌐 Web Hosting</option>
+                    <option value="software">⚙️ Software & Tools</option>
+                    <option value="tutorials">📚 Tutorials & Guides</option>
+                    <option value="accounts">👤 Accounts & Subscriptions</option>
+                    <option value="other">🔹 Other</option>
+                  </select>
+                  <small>
+                    Select the category that best matches your product
+                  </small>
+                </div>
 
-        {# Description Field #}
-        <div>
-          <label for="description" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
-            Description
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            placeholder="Describe your product in detail..."
-            rows="6"
-            required
-            minlength="10"
-            maxlength="5000"
-            class="textarea"
-            style="width: 100%;"
-          ></textarea>
-          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
-            10-5000 characters
-          </small>
-        </div>
+                {# Price and Stock Grid #}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                  {# Price Field #}
+                  <div>
+                    <label for="price_xmr" class="label">
+                      Price (Atomic Units)
+                    </label>
+                    <input
+                      type="number"
+                      id="price_xmr"
+                      name="price_xmr"
+                      placeholder="0"
+                      min="1"
+                      required
+                      class="input"
+                      style="font-family: monospace;"
+                    >
+                    <small>
+                      1 XMR = 1,000,000,000,000 atomic units
+                    </small>
+                  </div>
 
-        {# Category Field #}
-        <div>
-          <label for="category" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
-            Category
-          </label>
-          <select
-            id="category"
-            name="category"
-            required
-            class="input"
-            style="width: 100%;"
-          >
-            <option value="">Select a category...</option>
-            <option value="digital">💻 Digital Goods</option>
-            <option value="physical">📦 Physical Goods</option>
-            <option value="services">🛠️ Services</option>
-            <option value="vpn">🔒 VPN & Privacy</option>
-            <option value="hosting">🌐 Web Hosting</option>
-            <option value="software">⚙️ Software & Tools</option>
-            <option value="tutorials">📚 Tutorials & Guides</option>
-            <option value="accounts">👤 Accounts & Subscriptions</option>
-            <option value="other">🔹 Other</option>
-          </select>
-          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
-            Select the category that best matches your product
-          </small>
-        </div>
+                  {# Stock Field #}
+                  <div>
+                    <label for="stock" class="label">
+                      Stock
+                    </label>
+                    <input
+                      type="number"
+                      id="stock"
+                      name="stock"
+                      placeholder="0"
+                      min="0"
+                      required
+                      class="input"
+                    >
+                    <small>
+                      Available quantity
+                    </small>
+                  </div>
+                </div>
 
-        {# Price and Stock Grid #}
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-          {# Price Field #}
-          <div>
-            <label for="price_xmr" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
-              Price (Atomic Units)
-            </label>
-            <input
-              type="number"
-              id="price_xmr"
-              name="price_xmr"
-              placeholder="0"
-              min="1"
-              required
-              class="input"
-              style="width: 100%; font-family: monospace;"
-            >
-            <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
-              1 XMR = 1,000,000,000,000 atomic units
-            </small>
+                {# Images Field #}
+                <div>
+                  <label for="images" class="label">
+                    Product Images
+                  </label>
+                  <input
+                    type="file"
+                    id="images"
+                    name="images"
+                    accept="image/jpeg,image/png,image/gif"
+                    multiple
+                    class="input"
+                  >
+                  <small>
+                    Upload one or more images (JPEG, PNG, GIF) - Max 10 images, 5MB each
+                  </small>
+                  <div id="image-preview"></div>
+                </div>
+
+                {# Form Actions #}
+                <div style="display: flex; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid hsl(var(--border));">
+                  <a href="/listings" hx-boost="true" class="btn btn-secondary btn-lg" style="flex: 1; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+                    Cancel
+                  </a>
+                  <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">
+                    Create Listing →
+                  </button>
+                </div>
+              </form>
+
+              {# Response Container #}
+              <div id="listing-result" style="margin-top: 1.5rem;"></div>
+            </div>
           </div>
-
-          {# Stock Field #}
-          <div>
-            <label for="stock" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
-              Stock
-            </label>
-            <input
-              type="number"
-              id="stock"
-              name="stock"
-              placeholder="0"
-              min="0"
-              required
-              class="input"
-              style="width: 100%;"
-            >
-            <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
-              Available quantity
-            </small>
-          </div>
         </div>
+    </main>
 
-        {# Images Field #}
-        <div>
-          <label for="images" class="label" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; font-weight: 600; color: hsl(var(--foreground)); text-transform: uppercase; letter-spacing: 0.05em;">
-            Product Images
-          </label>
-          <input
-            type="file"
-            id="images"
-            name="images"
-            accept="image/jpeg,image/png,image/gif"
-            multiple
-            class="input"
-            style="width: 100%;"
-          >
-          <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: hsl(var(--muted-foreground));">
-            Upload one or more images (JPEG, PNG, GIF) - Max 10 images, 5MB each
-          </small>
-          <div id="image-preview" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; margin-top: 1rem;"></div>
-        </div>
-
-        {# Form Actions #}
-        <div style="display: flex; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid hsl(var(--border));">
-          <a href="/listings" hx-boost="true" class="btn btn-secondary btn-lg" style="flex: 1; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
-            Cancel
-          </a>
-          <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">
-            Create Listing →
-          </button>
-        </div>
-      </form>
-
-      {# Response Container #}
-      <div id="listing-result" style="margin-top: 1.5rem;"></div>
-    </div>
-  </div>
-</div>
-
-{% endblock %}
-
-{% block scripts %}
-<script src="/static/js/create-listing.js" defer></script>
-{% endblock %}
+    <script src="/static/js/lucide.min.js"></script>
+    <script src="/static/js/base.js"></script>
+    <script src="/static/js/create-listing.js" defer></script>
+    <script>
+      lucide.createIcons();
+    </script>
+</body>
+</html>

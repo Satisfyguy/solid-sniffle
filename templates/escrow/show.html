@@ -1,289 +1,441 @@
-{% extends "base-nexus.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escrow #{{ escrow.id | truncate(length=8, end="") }} - Monero Marketplace</title>
+    <meta name="description" content="View details of your 2-of-3 multisig escrow on Nexus Marketplace.">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/order-escrow.css">
+    <style>
+        /* General Layout */
+        .escrow-detail-container { max-width: 1200px; margin: 0 auto; padding: 8rem 1.5rem 0; }
+        .escrow-detail-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .escrow-detail-layout { grid-template-columns: 1fr; } }
 
-{% block title %}Escrow #{{ escrow.id | truncate(length=8, end="") }} - Monero Marketplace{% endblock %}
-
-{% block content %}
-<div class="escrow-detail-container">
-    <!-- Back button -->
-    <div class="back-nav">
-        <a href="/orders/{{ escrow.order_id }}" class="btn-link">
-            <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Order
-        </a>
-    </div>
-
-    <div class="escrow-detail-layout">
-        <!-- Main Content -->
-        <div class="escrow-detail-main">
-            <div class="card">
-                <div class="escrow-header">
-                    <div>
-                        <h1>Escrow #{{ escrow.id | truncate(length=8, end="") }}</h1>
-                        <p class="escrow-subtitle">2-of-3 Multisig Escrow</p>
-                    </div>
-                    <span class="badge badge-{{ escrow.status }} badge-lg">{{ escrow.status }}</span>
-                </div>
-
-                <!-- Escrow Amount -->
-                <div class="escrow-amount-card">
-                    <div class="amount-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <span class="amount-label">Escrow Amount</span>
-                        <span class="amount-value">{{ escrow.amount_xmr }} XMR</span>
-                        <span class="amount-atomic">{{ escrow.amount_atomic }} atomic units</span>
-                    </div>
-                </div>
-
-                <!-- Premium Multisig Timeline -->
-                <div class="section">
-                    <h2>Escrow Process</h2>
-                    <div class="escrow-timeline" id="escrow-timeline">
-
-                        <!-- Step 1: Initiated -->
-                        <div class="escrow-step {% if escrow.status != 'pending' %}completed{% else %}active{% endif %}">
-                            <div class="step-marker">
-                                <div class="step-number">1</div>
-                                {% if escrow.status != 'pending' %}
-                                <svg class="step-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                                {% endif %}
-                            </div>
-                            <div class="step-content">
-                                <h3 class="step-title">Escrow Initiated</h3>
-                                <p class="step-desc">3 multisig wallets created (Buyer, Vendor, Arbiter)</p>
-                                <p class="step-time">{{ escrow.created_at | date(format="%Y-%m-%d %H:%M") }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Step 2: Multisig Setup -->
-                        <div class="escrow-step {% if escrow.status == 'funded' or escrow.status == 'released' or escrow.status == 'refunded' %}completed{% elif escrow.status == 'awaiting_funding' %}active{% endif %}">
-                            <div class="step-marker">
-                                <div class="step-number">2</div>
-                                {% if escrow.status == 'funded' or escrow.status == 'released' or escrow.status == 'refunded' %}
-                                <svg class="step-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                                {% endif %}
-                            </div>
-                            <div class="step-content">
-                                <h3 class="step-title">Multisig Setup Complete</h3>
-                                <p class="step-desc">All parties exchanged multisig info (prepare + make)</p>
-                                {% if escrow.multisig_address %}
-                                <div class="monero-address-box">
-                                    <span class="address-label">Multisig Address:</span>
-                                    <code class="monero-address">{{ escrow.multisig_address }}</code>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Step 3: Funded -->
-                        <div class="escrow-step {% if escrow.status == 'funded' or escrow.status == 'released' or escrow.status == 'refunded' %}completed{% elif escrow.status == 'awaiting_funding' %}active{% endif %}">
-                            <div class="step-marker">
-                                <div class="step-number">3</div>
-                                {% if escrow.status == 'funded' or escrow.status == 'released' or escrow.status == 'refunded' %}
-                                <svg class="step-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                                {% endif %}
-                            </div>
-                            <div class="step-content">
-                                <h3 class="step-title">Escrow Funded</h3>
-                                <p class="step-desc">Buyer sent {{ escrow.amount_xmr }} XMR to multisig address</p>
-                                {% if escrow.funded_at %}
-                                <p class="step-time">{{ escrow.funded_at | date(format="%Y-%m-%d %H:%M") }}</p>
-                                {% if escrow.funding_txid %}
-                                <div class="tx-box">
-                                    <span class="tx-label">Transaction ID:</span>
-                                    <code class="tx-hash">{{ escrow.funding_txid }}</code>
-                                </div>
-                                {% endif %}
-                                {% else %}
-                                <div class="waiting-box">
-                                    <svg class="waiting-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span>Awaiting buyer to fund escrow</span>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Step 4: Released or Refunded -->
-                        <div class="escrow-step {% if escrow.status == 'released' or escrow.status == 'refunded' %}completed{% elif escrow.status == 'funded' %}active{% endif %}">
-                            <div class="step-marker">
-                                <div class="step-number">4</div>
-                                {% if escrow.status == 'released' or escrow.status == 'refunded' %}
-                                <svg class="step-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                                {% endif %}
-                            </div>
-                            <div class="step-content">
-                                {% if escrow.status == 'released' %}
-                                <h3 class="step-title">Funds Released to Vendor</h3>
-                                <p class="step-desc">2-of-3 signatures: Buyer + Arbiter confirmed</p>
-                                <p class="step-time">{{ escrow.released_at | date(format="%Y-%m-%d %H:%M") }}</p>
-                                {% if escrow.release_txid %}
-                                <div class="tx-box">
-                                    <span class="tx-label">Release Transaction:</span>
-                                    <code class="tx-hash">{{ escrow.release_txid }}</code>
-                                </div>
-                                {% endif %}
-                                {% elif escrow.status == 'refunded' %}
-                                <h3 class="step-title">Funds Refunded to Buyer</h3>
-                                <p class="step-desc">2-of-3 signatures: Vendor + Arbiter confirmed</p>
-                                <p class="step-time">{{ escrow.refunded_at | date(format="%Y-%m-%d %H:%M") }}</p>
-                                {% if escrow.refund_txid %}
-                                <div class="tx-box">
-                                    <span class="tx-label">Refund Transaction:</span>
-                                    <code class="tx-hash">{{ escrow.refund_txid }}</code>
-                                </div>
-                                {% endif %}
-                                {% else %}
-                                <h3 class="step-title">Awaiting Resolution</h3>
-                                <p class="step-desc">Pending buyer confirmation or dispute resolution</p>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- Participants -->
-                <div class="section">
-                    <h2>Participants</h2>
-                    <div class="participants-grid">
-                        <div class="participant-card">
-                            <div class="participant-icon buyer">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3>Buyer</h3>
-                                <p>{{ escrow.buyer_username }}</p>
-                            </div>
-                        </div>
-
-                        <div class="participant-card">
-                            <div class="participant-icon vendor">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3>Vendor</h3>
-                                <p>{{ escrow.vendor_username }}</p>
-                            </div>
-                        </div>
-
-                        <div class="participant-card">
-                            <div class="participant-icon arbiter">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3>Arbiter</h3>
-                                <p>{{ escrow.arbiter_username }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sidebar -->
-        <div class="escrow-detail-sidebar">
-            <!-- Security Info -->
-            <div class="card security-card">
-                <h2>Security Features</h2>
-                <ul class="security-list">
-                    <li>
-                        <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                        <span>2-of-3 Multisig Protection</span>
-                    </li>
-                    <li>
-                        <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                        <span>Monero Privacy Features</span>
-                    </li>
-                    <li>
-                        <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                        <span>Neutral Arbiter Resolution</span>
-                    </li>
-                    <li>
-                        <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                        <span>Testnet Only (v0.2.6)</span>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- How It Works -->
-            <div class="card info-card">
-                <h2>How 2-of-3 Multisig Works</h2>
-                <p class="info-text">
-                    This escrow uses a 2-of-3 multisig wallet, meaning any 2 out of 3 parties (Buyer, Vendor, Arbiter) must sign to move funds.
-                </p>
-                <h3>Scenarios:</h3>
-                <ul class="scenario-list">
-                    <li><strong>Happy Path:</strong> Buyer + Vendor sign → Funds released to vendor</li>
-                    <li><strong>Refund:</strong> Buyer + Arbiter sign → Funds returned to buyer</li>
-                    <li><strong>Dispute:</strong> Arbiter decides based on evidence</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- WebSocket for live escrow updates -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const escrowId = '{{ escrow.id }}';
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(wsProtocol + '//' + window.location.host + '/ws/');
-
-    ws.onopen = function() {
-        console.log('WebSocket connected for escrow updates');
-        ws.send(JSON.stringify({
-            type: 'subscribe',
-            channel: 'escrow:' + escrowId
-        }));
-    };
-
-    ws.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        if (data.type === 'escrow_update' && data.escrow_id === escrowId) {
-            console.log('Escrow status updated:', data.status);
-            // Reload page to show updated escrow status
-            location.reload();
+        /* Back Button */
+        .back-nav { margin-bottom: 2rem; }
+        .btn-link {
+            background: transparent;
+            border: none;
+            color: var(--color-foreground);
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: color 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-    };
+        .btn-link:hover { color: var(--color-accent); }
+        .btn-link svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2; }
 
-    ws.onerror = function(error) {
-        console.error('WebSocket error:', error);
-    };
+        /* Card Component */
+        .card {
+            background-color: #242424;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            color: var(--color-foreground);
+        }
+        .card-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+        .card-content {
+            padding: 1rem;
+        }
 
-    ws.onclose = function() {
-        console.log('WebSocket disconnected');
-        // Reconnect after 5 seconds
-        setTimeout(() => location.reload(), 5000);
-    };
-});
-</script>
-{% endblock %}
+        /* Escrow Header */
+        .escrow-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid hsl(var(--border));
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .escrow-header h1 { font-size: 1.5rem; font-weight: 600; margin: 0; }
+        .escrow-subtitle { color: hsl(var(--muted-foreground)); font-size: 0.875rem; }
+
+        /* Badge */
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            background-color: hsl(var(--accent)); /* Default */
+            color: hsl(var(--background));
+        }
+        .badge-lg { font-size: 1rem; padding: 0.75rem 1.25rem; }
+        .badge-pending { background-color: #eab308; color: #1A1A1A; }
+        .badge-funded { background-color: #22c55e; color: #1A1A1A; }
+        .badge-released { background-color: #00d9ff; color: #1A1A1A; }
+        .badge-refunded { background-color: #ef4444; color: #1A1A1A; }
+
+        /* Escrow Amount Card */
+        .escrow-amount-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: hsla(var(--accent), 0.1);
+            border: 1px solid hsla(var(--accent), 0.3);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .amount-icon svg { width: 2.5rem; height: 2.5rem; stroke: hsl(var(--accent)); }
+        .amount-label { font-size: 0.875rem; color: hsl(var(--muted-foreground)); text-transform: uppercase; }
+        .amount-value { font-size: 1.75rem; font-weight: 700; color: hsl(var(--accent)); display: block; }
+        .amount-atomic { font-size: 0.875rem; color: hsl(var(--muted-foreground)); }
+
+        /* Escrow Timeline */
+        .section h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; }
+        .escrow-timeline { position: relative; padding-left: 2rem; }
+        .escrow-timeline:before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background-color: var(--color-border); }
+        .escrow-step { position: relative; margin-bottom: 2rem; }
+        .step-marker { position: absolute; left: -2rem; top: 0; width: 2.5rem; height: 2.5rem; border-radius: 50%; background-color: var(--color-border); display: flex; align-items: center; justify-content: center; }
+        .step-number { font-weight: 700; color: hsl(var(--foreground)); }
+        .escrow-step.completed .step-marker { background-color: hsl(var(--accent)); }
+        .escrow-step.completed .step-number { display: none; }
+        .escrow-step.completed .step-check { display: block; color: hsl(var(--background)); width: 1.5rem; height: 1.5rem; }
+        .step-check { display: none; }
+        .escrow-step.active .step-marker { background-color: hsl(var(--primary)); }
+        .escrow-step.active .step-number { color: hsl(var(--background)); }
+
+        .step-content h3 { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .step-desc { font-size: 0.875rem; color: hsl(var(--muted-foreground)); }
+        .step-time { font-size: 0.75rem; color: hsl(var(--muted-foreground)); margin-top: 0.5rem; }
+
+        .monero-address-box, .tx-box {
+            background: hsla(var(--background), 0.5);
+            border: 1px solid hsl(var(--border));
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin-top: 0.75rem;
+            word-break: break-all;
+        }
+        .address-label, .tx-label { font-size: 0.75rem; color: hsl(var(--muted-foreground)); text-transform: uppercase; display: block; margin-bottom: 0.25rem; }
+        .monero-address, .tx-hash { font-family: monospace; font-size: 0.875rem; color: hsl(var(--foreground)); }
+
+        .waiting-box {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: hsla(45, 93%, 47%, 0.1);
+            border: 1px solid hsla(45, 93%, 47%, 0.3);
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin-top: 0.75rem;
+            color: hsl(45, 93%, 47%);
+        }
+        .waiting-icon { width: 1.25rem; height: 1.25rem; stroke: currentColor; }
+
+        /* Participants */
+        .participants-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+        .participant-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: hsla(var(--background), 0.5);
+            border: 1px solid hsl(var(--border));
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .participant-icon {
+            width: 2.5rem; height: 2.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        }
+        .participant-icon.buyer { background: hsla(var(--accent), 0.1); }
+        .participant-icon.buyer svg { stroke: hsl(var(--accent)); width: 1.5rem; height: 1.5rem; }
+        .participant-icon.vendor { background: hsla(142, 76%, 36%, 0.1); }
+        .participant-icon.vendor svg { stroke: hsl(142, 76%, 36%); width: 1.5rem; height: 1.5rem; }
+        .participant-icon.arbiter { background: hsla(var(--primary), 0.1); }
+        .participant-icon.arbiter svg { stroke: hsl(var(--primary)); width: 1.5rem; height: 1.5rem; }
+        .participant-card h3 { font-size: 1rem; font-weight: 600; margin: 0; }
+        .participant-card p { font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin: 0; }
+
+        /* Sidebar Security Card */
+        .security-card h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; }
+        .security-list { list-style: none; padding: 0; margin: 0; }
+        .security-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+        .security-list .check-icon { width: 1.25rem; height: 1.25rem; color: hsl(var(--accent)); }
+
+        /* Sidebar How It Works Card */
+        .info-card h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; }
+        .info-card p { font-size: 0.875rem; color: hsl(var(--muted-foreground)); line-height: 1.6; margin-bottom: 1rem; }
+        .info-card h3 { font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        .scenario-list { list-style: disc; padding-left: 1.25rem; }
+        .scenario-list li { font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin-bottom: 0.5rem; }
+
+    </style>
+</head>
+<body>
+    {% include "header.html" %}
+
+    <main class="escrow-detail-container">
+        <!-- Back button -->
+        <div class="back-nav">
+            <a href="/orders/{{ escrow.order_id }}" class="btn-link">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Order
+            </a>
+        </div>
+
+        <div class="escrow-detail-layout">
+            <!-- Main Content -->
+            <div class="escrow-detail-main">
+                <div class="card">
+                    <div class="escrow-header">
+                        <div>
+                            <h1>Escrow #{{ escrow.id | truncate(length=8, end="") }}</h1>
+                            <p class="escrow-subtitle">2-of-3 Multisig Escrow</p>
+                        </div>
+                        <span class="badge badge-{{ escrow.status }} badge-lg">{{ escrow.status }}</span>
+                    </div>
+
+                    <!-- Escrow Amount -->
+                    <div class="escrow-amount-card">
+                        <div class="amount-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="amount-label">Escrow Amount</span>
+                            <span class="amount-value">{{ escrow.amount_xmr }} XMR</span>
+                            <span class="amount-atomic">{{ escrow.amount_atomic }} atomic units</span>
+                        </div>
+                    </div>
+
+                    <!-- Premium Multisig Timeline -->
+                    <div class="section">
+                        <h2>Escrow Process</h2>
+                        <div class="escrow-timeline" id="escrow-timeline">
+
+                            <!-- Step 1: Initiated -->
+                            <div class="escrow-step {% if escrow.status != 'pending' %}completed{% else %}active{% endif %}">
+                                <div class="step-marker">
+                                    <div class="step-number">1</div>
+                                    {% if escrow.status != 'pending' %}
+                                    <svg class="step-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                    {% endif %}
+                                </div>
+                                <div class="step-content">
+                                    <h3 class="step-title">Escrow Initiated</h3>
+                                    <p class="step-desc">3 multisig wallets created (Buyer, Vendor, Arbiter)</p>
+                                    <p class="step-time">{{ escrow.created_at | date(format="%Y-%m-%d %H:%M") }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Step 2: Multisig Setup -->
+                            <div class="escrow-step {% if escrow.status == 'funded' or escrow.status == 'released' or escrow.status == 'refunded' %}completed{% elif escrow.status == 'awaiting_funding' %}active{% endif %}">
+                                <div class="step-marker">
+                                    <div class="step-number">2</div>
+                                    {% if escrow.status == 'funded' or escrow.status == 'released' or escrow.status == 'refunded' %}
+                                    <svg class="step-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                    {% endif %}
+                                </div>
+                                <div class="step-content">
+                                    <h3 class="step-title">Multisig Setup Complete</h3>
+                                    <p class="step-desc">All parties exchanged multisig info (prepare + make)</p>
+                                    {% if escrow.multisig_address %}
+                                    <div class="monero-address-box">
+                                        <span class="address-label">Multisig Address:</span>
+                                        <code class="monero-address">{{ escrow.multisig_address }}</code>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Step 3: Funded -->
+                            <div class="escrow-step {% if escrow.status == 'funded' or escrow.status == 'released' or escrow.status == 'refunded' %}completed{% elif escrow.status == 'awaiting_funding' %}active{% endif %}">
+                                <div class="step-marker">
+                                    <div class="step-number">3</div>
+                                    {% if escrow.status == 'funded' or escrow.status == 'released' or escrow.status == 'refunded' %}
+                                    <svg class="step-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                    {% endif %}
+                                </div>
+                                <div class="step-content">
+                                    <h3 class="step-title">Escrow Funded</h3>
+                                    <p class="step-desc">Buyer sent {{ escrow.amount_xmr }} XMR to multisig address</p>
+                                    {% if escrow.funded_at %}
+                                    <p class="step-time">{{ escrow.funded_at | date(format="%Y-%m-%d %H:%M") }}</p>
+                                    {% if escrow.funding_txid %}
+                                    <div class="tx-box">
+                                        <span class="tx-label">Transaction ID:</span>
+                                        <code class="tx-hash">{{ escrow.funding_txid }}</code>
+                                    </div>
+                                    {% endif %}
+                                    {% else %}
+                                    <div class="waiting-box">
+                                        <svg class="waiting-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>Awaiting buyer to fund escrow</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Step 4: Released or Refunded -->
+                            <div class="escrow-step {% if escrow.status == 'released' or escrow.status == 'refunded' %}completed{% elif escrow.status == 'funded' %}active{% endif %}">
+                                <div class="step-marker">
+                                    <div class="step-number">4</div>
+                                    {% if escrow.status == 'released' or escrow.status == 'refunded' %}
+                                    <svg class="step-check" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                    {% endif %}
+                                </div>
+                                <div class="step-content">
+                                    {% if escrow.status == 'released' %}
+                                    <h3 class="step-title">Funds Released to Vendor</h3>
+                                    <p class="step-desc">2-of-3 signatures: Buyer + Arbiter confirmed</p>
+                                    <p class="step-time">{{ escrow.released_at | date(format="%Y-%m-%d %H:%M") }}</p>
+                                    {% if escrow.release_txid %}
+                                    <div class="tx-box">
+                                        <span class="tx-label">Release Transaction:</span>
+                                        <code class="tx-hash">{{ escrow.release_txid }}</code>
+                                    </div>
+                                    {% endif %}
+                                    {% elif escrow.status == 'refunded' %}
+                                    <h3 class="step-title">Funds Refunded to Buyer</h3>
+                                    <p class="step-desc">2-of-3 signatures: Vendor + Arbiter confirmed</p>
+                                    <p class="step-time">{{ escrow.refunded_at | date(format="%Y-%m-%d %H:%M") }}</p>
+                                    {% if escrow.refund_txid %}
+                                    <div class="tx-box">
+                                        <span class="tx-label">Refund Transaction:</span>
+                                        <code class="tx-hash">{{ escrow.refund_txid }}</code>
+                                    </div>
+                                    {% endif %}
+                                    {% else %}
+                                    <h3 class="step-title">Awaiting Resolution</h3>
+                                    <p class="step-desc">Pending buyer confirmation or dispute resolution</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Participants -->
+                    <div class="section">
+                        <h2>Participants</h2>
+                        <div class="participants-grid">
+                            <div class="participant-card">
+                                <div class="participant-icon buyer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3>Buyer</h3>
+                                    <p>{{ escrow.buyer_username }}</p>
+                                </div>
+                            </div>
+
+                            <div class="participant-card">
+                                <div class="participant-icon vendor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3>Vendor</h3>
+                                    <p>{{ escrow.vendor_username }}</p>
+                                </div>
+                            </div>
+
+                            <div class="participant-card">
+                                <div class="participant-icon arbiter">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3>Arbiter</h3>
+                                    <p>{{ escrow.arbiter_username }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="escrow-detail-sidebar">
+                <!-- Security Info -->
+                <div class="card security-card">
+                    <h2>Security Features</h2>
+                    <ul class="security-list">
+                        <li>
+                            <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            <span>2-of-3 Multisig Protection</span>
+                        </li>
+                        <li>
+                            <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            <span>Monero Privacy Features</span>
+                        </li>
+                        <li>
+                            <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            <span>Neutral Arbiter Resolution</span>
+                        </li>
+                        <li>
+                            <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            <span>Testnet Only (v0.2.6)</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- How It Works -->
+                <div class="card info-card">
+                    <h2>How 2-of-3 Multisig Works</h2>
+                    <p class="info-text">
+                        This escrow uses a 2-of-3 multisig wallet, meaning any 2 out of 3 parties (Buyer, Vendor, Arbiter) must sign to move funds.
+                    </p>
+                    <h3>Scenarios:</h3>
+                    <ul class="scenario-list">
+                        <li><strong>Happy Path:</strong> Buyer + Vendor sign → Funds released to vendor</li>
+                        <li><strong>Refund:</strong> Buyer + Arbiter sign → Funds returned to buyer</li>
+                        <li><strong>Dispute:</strong> Arbiter decides based on evidence</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- WebSocket for live escrow updates -->
+        <div id="order-data" data-order-id="{{ escrow.id }}"></div>
+    </main>
+
+    <script src="/static/js/lucide.min.js"></script>
+    <script src="/static/js/base.js"></script>
+    <script src="/static/js/escrow-websocket.js"></script>
+    <script>
+      lucide.createIcons();
+    </script>
+</body>
+</html>

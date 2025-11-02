@@ -11,28 +11,28 @@
      COLOR PALETTE (HSL for easy theming)
      ======================================== */
 
-  /* Background & Foreground */
-  --background: 0 0% 100%;
-  --foreground: 215 25% 15%;
+  /* Background & Foreground - DARK THEME */
+  --background: 0 0% 10%;
+  --foreground: 0 0% 100%;
 
   /* Primary (Dark blue-gray for trust) */
   --primary: 215 28% 17%;
   --primary-foreground: 0 0% 100%;
 
-  /* Accent (Red for CTAs - action color) */
-  --accent: 0 72% 60%;
-  --accent-foreground: 0 0% 100%;
+  /* Accent (Yellow/Gold for CTAs) */
+  --accent: 45 65% 55%;
+  --accent-foreground: 0 0% 0%;
 
-  /* Muted (Light backgrounds) */
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
+  /* Muted (Dark backgrounds) */
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 60%;
 
   /* Card */
-  --card: 0 0% 100%;
-  --card-foreground: 215 25% 15%;
+  --card: 0 0% 12%;
+  --card-foreground: 0 0% 100%;
 
   /* Border */
-  --border: 214 32% 91%;
+  --border: 0 0% 20%;
 
   /* Category colors (vibrant gradients) */
   --category-red: 0 91% 59%;

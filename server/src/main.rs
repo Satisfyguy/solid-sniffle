@@ -283,9 +283,9 @@ async fn main() -> Result<()> {
             // Frontend routes (HTML pages)
             .route("/new-home", web::get().to(frontend::new_index))
             .route("/", web::get().to(frontend::index))
-            .route("/auth", web::get().to(frontend::show_auth_page))
-            .route("/auth/login", web::post().to(frontend::handle_login))
-            .route("/auth/register", web::post().to(frontend::handle_register))            .route("/logout", web::post().to(frontend::logout))
+            .route("/login", web::get().to(frontend::show_login))
+            .route("/register", web::get().to(frontend::show_register))
+            .route("/logout", web::post().to(frontend::logout))
             .route("/listings", web::get().to(frontend::show_listings))
             .route(
                 "/listings/new",

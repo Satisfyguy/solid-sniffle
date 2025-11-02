@@ -4,252 +4,443 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Authentication - Nexus</title>
+    <meta name="description" content="Login or create an account on Nexus Marketplace.">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="/static/css/main.css">
     <style>
-        :root {
-            --input: var(--color-border);
-            --ring: var(--color-accent);
-            --background: #1A1A1A;
-            --foreground: #FFFFFF;
-            --primary: var(--color-accent);
-            --primary-foreground: var(--color-background);
-            --card: #242424;
-            --card-foreground: var(--color-foreground);
-            --muted: var(--color-border);
-            --muted-foreground: rgba(255, 255, 255, 0.6);
-            --accent: var(--color-accent);
-            --accent-foreground: var(--color-background);
-            --border: var(--color-border);
+        /* Reset & Base */
+        * { box-sizing: border-box; }
 
-            /* Adjust top for fixed header height (approx 4rem + some margin) */
-            --header-height: 4rem;
-            --return-link-top: calc(var(--header-height) + 1rem); /* 1rem below header */
-        }
-
-        /* Replicating key Tailwind spacing and layout utilities for Auth page */
-        .p-6 { padding: 1.5rem; }
-        .mb-12 { margin-bottom: 3rem; }
-        .mb-8 { margin-bottom: 2rem; }
-        .mb-6 { margin-bottom: 1.5rem; }
-        .mb-2 { margin-bottom: 0.5rem; }
-        .mt-12 { margin-top: 3rem; }
-        .gap-2 { gap: 0.5rem; }
+        /* Layout Classes */
         .min-h-screen { min-height: 100vh; }
-        .w-full { width: 100%; }
-        .max-w-md { max-width: 28rem; }
-        .relative { position: relative; }
-        .z-10 { z-index: 10; }
-        .z-50 { z-index: 50; }
-        .fixed { position: fixed; }
-        .left-8 { left: 2rem; }
-        .text-sm { font-size: 0.875rem; }
-        .font-light { font-weight: 300; }
-        .text-2xl { font-size: 1.5rem; }
-        .tracking-\[0\.3em\] { letter-spacing: 0.3em; }
-        .text-center { text-align: center; }
-        .inline-block { display: inline-block; }
-        .leading-relaxed { line-height: 1.625; }
-
-        .space-y-6 > *:not([hidden]) ~ *:not([hidden]) { margin-top: 1.5rem; }
-        .space-y-2 > *:not([hidden]) ~ *:not([hidden]) { margin-top: 0.5rem; }
-
-        /* Flex utilities for body and main content */
         .flex { display: flex; }
-        .flex-col { flex-direction: column; }
-        .flex-grow { flex-grow: 1; }
         .items-center { align-items: center; }
         .justify-center { justify-content: center; }
+        .relative { position: relative; }
+        .fixed { position: fixed; }
+        .absolute { position: absolute; }
+        .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+        .top-0 { top: 0; }
+        .bottom-0 { bottom: 0; }
+        .left-0 { left: 0; }
+        .right-0 { right: 0; }
+        .top-8 { top: 2rem; }
+        .left-8 { left: 2rem; }
+        .left-1\/4 { left: 25%; }
+        .left-1\/2 { left: 50%; }
+        .left-3\/4 { left: 75%; }
 
-        /* Custom Input & Select Style */
-        .input, .select {
+        /* Z-index */
+        .z-10 { z-index: 10; }
+        .z-50 { z-index: 50; }
+
+        /* Spacing */
+        .p-6 { padding: 1.5rem; }
+        .p-4 { padding: 1rem; }
+        .gap-2 { gap: 0.5rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-8 { margin-bottom: 2rem; }
+        .mb-12 { margin-bottom: 3rem; }
+        .mt-12 { margin-top: 3rem; }
+        .mr-2 { margin-right: 0.5rem; }
+        .space-y-2 > *:not([hidden]) ~ *:not([hidden]) { margin-top: 0.5rem; }
+        .space-y-6 > *:not([hidden]) ~ *:not([hidden]) { margin-top: 1.5rem; }
+
+        /* Width */
+        .w-full { width: 100%; }
+        .w-px { width: 1px; }
+        .w-4 { width: 1rem; }
+        .w-5 { width: 1.25rem; }
+        .max-w-md { max-width: 28rem; }
+        .max-w-7xl { max-width: 80rem; }
+
+        /* Height */
+        .h-full { height: 100%; }
+        .h-4 { height: 1rem; }
+        .h-5 { height: 1.25rem; }
+
+        /* Display */
+        .inline-block { display: inline-block; }
+        .inline { display: inline; }
+        .pointer-events-none { pointer-events: none; }
+        .hidden { display: none; }
+
+        /* Typography */
+        .text-center { text-align: center; }
+        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+        .text-xs { font-size: 0.75rem; line-height: 1rem; }
+        .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+        .font-light { font-weight: 300; }
+        .font-medium { font-weight: 500; }
+        .tracking-\[0\.3em\] { letter-spacing: 0.3em; }
+        .leading-relaxed { line-height: 1.625; }
+
+        /* Colors */
+        .text-accent { color: var(--color-accent); }
+        .text-foreground\/40 { color: rgba(255, 255, 255, 0.4); }
+        .text-foreground\/60 { color: rgba(255, 255, 255, 0.6); }
+        .text-foreground\/80 { color: rgba(255, 255, 255, 0.8); }
+        .bg-white\/5 { background-color: rgba(255, 255, 255, 0.05); }
+        .bg-accent\/10 { background-color: rgba(201, 164, 69, 0.1); }
+        .border-accent\/30 { border-color: rgba(201, 164, 69, 0.3); }
+
+        /* Border */
+        .border { border-width: 1px; }
+        .border-input { border-color: var(--color-border); }
+        .rounded-sm { border-radius: 0.125rem; }
+        .rounded-md { border-radius: 0.375rem; }
+        .rounded-lg { border-radius: 0.5rem; }
+
+        /* Transitions */
+        .transition-colors { transition-property: color, background-color, border-color; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+
+        /* Guide Lines */
+        .guide-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Return Link */
+        .return-link {
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            transition: color 150ms;
+        }
+        .return-link:hover { color: var(--color-accent); }
+
+        /* Tabs */
+        .tabs-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 0.25rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab-trigger {
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            border-radius: 0.375rem;
+            background-color: transparent;
+            color: rgba(255, 255, 255, 0.5);
+            border: none;
+            cursor: pointer;
+            transition: all 150ms;
+        }
+
+        .tab-trigger.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--color-foreground);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Form Elements */
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            line-height: 1.25rem;
+            color: var(--color-foreground);
+        }
+
+        .form-input {
             display: flex;
             height: 2.5rem;
             width: 100%;
-            border-radius: 2px;
-            border: 1px solid var(--input);
-            background-color: transparent;
+            border-radius: 0.375rem;
+            border: 1px solid var(--color-border);
+            background-color: rgba(255, 255, 255, 0.05);
             padding: 0.5rem 0.75rem;
             font-size: 0.875rem;
-            transition: all 0.2s ease;
-            color: var(--foreground);
-        }
-        
-        .select {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m6 9 6 6 6-6'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 1rem;
+            line-height: 1.25rem;
+            color: var(--color-foreground);
+            transition: all 150ms;
         }
 
-        .input:focus, .select:focus {
-            outline: none;
-            border-color: var(--ring);
-            box-shadow: 0 0 0 1px var(--ring);
+        .form-input:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 2px var(--color-accent);
+            border-color: var(--color-accent);
         }
 
-        .input::placeholder { color: var(--muted-foreground); }
-
-        /* Custom Label Style */
-        .label { font-size: 0.875rem; font-weight: 300; }
-
-        /* Custom Tabs Style */
-        .tabs-list {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            width: 100%;
-            background-color: #242424;
-            border-radius: 2px;
-            padding: 0.25rem;
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
         }
 
-        .tabs-trigger {
+        /* Password Toggle */
+        .password-toggle {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.4);
+            transition: color 150ms;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .password-toggle:hover { color: rgba(255, 255, 255, 0.8); }
+
+        /* Button */
+        .btn-primary {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            white-space: nowrap;
-            border-radius: 1px;
+            width: 100%;
+            height: 2.5rem;
             padding: 0.5rem 1rem;
             font-size: 0.875rem;
-            font-weight: 300;
-            color: var(--muted-foreground);
-            background-color: transparent;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            background-color: var(--color-accent);
+            color: #000000;
             border: none;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 150ms;
         }
 
-        .tabs-trigger[data-state="active"] {
-            background-color: var(--background);
-            color: var(--foreground);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        .btn-primary:hover {
+            opacity: 0.85;
+            transform: translateY(-1px);
         }
 
-        .tabs-content { display: none; }
-        .tabs-content[data-state="active"] { display: block; }
+        /* Security Notice Box */
+        .security-notice {
+            background-color: rgba(201, 164, 69, 0.1);
+            border: 1px solid rgba(201, 164, 69, 0.3);
+            border-radius: 0.125rem;
+            padding: 1rem;
+        }
 
+        /* Link Hover */
+        .link-hover:hover { color: var(--color-accent); }
+
+        /* mx-auto */
+        .mx-auto { margin-left: auto; margin-right: auto; }
     </style>
 </head>
-<body class="bg-background text-foreground flex flex-col min-h-screen">
-    
-    {% include "header.html" %}
-
-    <main class="flex-grow flex items-center justify-center p-6 relative">
-        <!-- Using the guide lines from main.css -->
-
-        <div class="guide-lines">
-            <div class="guide-container">
-                <div class="guide-line guide-1"></div>
-                <div class="guide-line guide-2"></div>
-                <div class="guide-line guide-3"></div>
-                <div class="guide-line guide-4"></div>
-                <div class="guide-line guide-5"></div>
+<body>
+    <div class="min-h-screen flex items-center justify-center p-6 relative">
+        <!-- Guide Lines -->
+        <div class="fixed inset-0 pointer-events-none">
+            <div class="max-w-7xl mx-auto h-full relative">
+                <div class="guide-line left-0"></div>
+                <div class="guide-line left-1/4"></div>
+                <div class="guide-line left-1/2"></div>
+                <div class="guide-line left-3/4"></div>
+                <div class="guide-line right-0"></div>
             </div>
         </div>
 
-        <a href="/" class="fixed left-8 text-sm font-light z-50" style="top: var(--return-link-top); color: var(--muted-foreground); text-decoration: none; transition: color 0.2s ease;">
+        <!-- Back to Home -->
+        <a href="/" class="fixed top-8 left-8 text-sm font-light return-link z-50">
             ← Back
         </a>
 
+        <!-- Auth Container -->
         <div class="w-full max-w-md relative z-10">
+            <!-- Logo & Title -->
             <div class="text-center mb-12">
-                <div class="flex items-center justify-center gap-2 mb-2" style="color: var(--accent);">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <a href="/" class="inline-block mb-6">
+                    <h1 class="text-2xl font-light tracking-[0.3em]" style="color: #FFFFFF;">NEXUS</h1>
+                </a>
+                <div class="flex items-center justify-center gap-2 text-accent mb-2">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                    </svg>
                     <p class="text-sm font-light">Secure Authentication</p>
                 </div>
-                <p class="text-sm font-light" style="color: var(--muted-foreground);">
+                <p class="text-sm font-light text-foreground/60">
                     Access the anonymous marketplace
                 </p>
             </div>
 
-            <div id="auth-tabs">
-                <div class="tabs-list mb-8">
-                    <button class="tabs-trigger" data-state="active" data-tab="login">Log In</button>
-                    <button class="tabs-trigger" data-tab="signup">Sign Up</button>
+            <!-- Auth Tabs -->
+            <div class="w-full">
+                <!-- Tabs List -->
+                <div class="tabs-list">
+                    <button
+                        id="tab-login"
+                        type="button"
+                        class="tab-trigger active"
+                    >
+                        Login
+                    </button>
+                    <button
+                        id="tab-signup"
+                        type="button"
+                        class="tab-trigger"
+                    >
+                        Sign Up
+                    </button>
                 </div>
 
-                <div id="login" class="tabs-content" data-state="active">
-                    <form action="/auth/login" method="post" class="space-y-6">
+                <!-- Login Tab Content -->
+                <div id="content-login" class="tab-content active">
+                    <form hx-post="/api/auth/login" hx-target="body" class="space-y-6">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
                         <div class="space-y-2">
-                            <label for="login-username" class="label">Username</label>
-                            <input id="login-username" name="username" type="text" placeholder="Your username" class="input" required>
+                            <label for="login-email" class="form-label">Email</label>
+                            <input
+                                id="login-email"
+                                name="username"
+                                type="text"
+                                placeholder="votre@email.com"
+                                class="form-input"
+                                required
+                            />
                         </div>
 
                         <div class="space-y-2">
-                            <label for="login-password" class="label">Password</label>
+                            <label for="login-password" class="form-label">Password</label>
                             <div class="relative">
-                                <input id="login-password" name="password" type="password" placeholder="••••••••" class="input" required>
-                                <button type="button" class="password-toggle-btn" data-input-id="login-password" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted-foreground);">
-                                    <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    <svg class="eye-closed" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                                <input
+                                    id="login-password"
+                                    name="password"
+                                    type="password"
+                                    placeholder="••••••••"
+                                    class="form-input"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    class="password-toggle"
+                                    aria-label="Toggle password visibility"
+                                >
+                                    <svg class="eye-icon w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                    <svg class="eye-off-icon w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                                        <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                                        <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                                        <line x1="2" x2="22" y1="2" y2="22"/>
+                                    </svg>
                                 </button>
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">Log In</button>
+                        <button type="submit" class="btn-primary">
+                            Sign In
+                        </button>
 
-                        <p class="text-center text-sm" style="color: var(--muted-foreground);">
-                            <a href="#" style="color: inherit; text-decoration: none; transition: color 0.2s ease;">
+                        <p class="text-center text-sm text-foreground/60">
+                            <a href="#" class="transition-colors link-hover">
                                 Forgot password?
                             </a>
                         </p>
                     </form>
                 </div>
 
-                <div id="signup" class="tabs-content">
-                    <form action="/auth/register" method="post" class="space-y-6">
+                <!-- Signup Tab Content -->
+                <div id="content-signup" class="tab-content">
+                    <form hx-post="/api/auth/register" hx-target="body" class="space-y-6">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
                         <div class="space-y-2">
-                            <label for="signup-username" class="label">Username</label>
-                            <input id="signup-username" name="username" type="text" placeholder="Choose a username" class="input" required>
+                            <label for="signup-email" class="form-label">Email</label>
+                            <input
+                                id="signup-email"
+                                name="username"
+                                type="text"
+                                placeholder="votre@email.com"
+                                minlength="3"
+                                maxlength="50"
+                                class="form-input"
+                                required
+                            />
                         </div>
 
                         <div class="space-y-2">
-                            <label for="signup-password" class="label">Password</label>
-                             <div class="relative">
-                                <input id="signup-password" name="password" type="password" placeholder="••••••••" class="input" required>
-                                <button type="button" class="password-toggle-btn" data-input-id="signup-password" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted-foreground);">
-                                    <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    <svg class="eye-closed" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                            <label for="signup-password" class="form-label">Password</label>
+                            <div class="relative">
+                                <input
+                                    id="signup-password"
+                                    name="password"
+                                    type="password"
+                                    placeholder="••••••••"
+                                    minlength="8"
+                                    maxlength="128"
+                                    class="form-input"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    class="password-toggle"
+                                    aria-label="Toggle password visibility"
+                                >
+                                    <svg class="eye-icon w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                    <svg class="eye-off-icon w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                                        <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                                        <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                                        <line x1="2" x2="22" y1="2" y2="22"/>
+                                    </svg>
                                 </button>
                             </div>
                         </div>
 
                         <div class="space-y-2">
-                            <label for="signup-confirm" class="label">Confirm Password</label>
-                            <input id="signup-confirm" name="password_confirm" type="password" placeholder="••••••••" class="input" required>
+                            <label for="signup-confirm" class="form-label">Confirm Password</label>
+                            <input
+                                id="signup-confirm"
+                                name="confirm_password"
+                                type="password"
+                                placeholder="••••••••"
+                                class="form-input"
+                                required
+                            />
                         </div>
 
-                        <div class="space-y-2">
-                            <label for="signup-role" class="label">I am a</label>
-                            <select id="signup-role" name="role" class="select" required>
-                                <option value="buyer">Buyer</option>
-                                <option value="vendor">Seller</option>
-                            </select>
-                        </div>
-
-                        <div style="background-color: rgba(201, 164, 69, 0.1); border: 1px solid rgba(201, 164, 69, 0.3); border-radius: 2px; padding: 1rem;">
-                            <p class="text-xs font-light leading-relaxed" style="color: rgba(255,255,255,0.8);">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline mr-2" style="color: var(--accent); display: inline; margin-right: 0.5rem;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                                Your data is end-to-end encrypted. We do not store any personal information.
+                        <!-- Security Notice -->
+                        <div class="security-notice">
+                            <p class="text-xs font-light text-foreground/80 leading-relaxed">
+                                <svg class="w-4 h-4 inline mr-2 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                                </svg>
+                                Your data is end-to-end encrypted. We store no personal information.
                             </p>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">Create Account</button>
+                        <input type="hidden" name="role" value="buyer">
+
+                        <button type="submit" class="btn-primary">
+                            Create Account
+                        </button>
                     </form>
                 </div>
             </div>
 
+            <!-- Security Notice -->
             <div class="mt-12 text-center">
-                <p class="text-xs font-light leading-relaxed" style="color: rgba(255,255,255,0.4);">
+                <p class="text-xs font-light text-foreground/40 leading-relaxed">
                     Connect via Tor for maximum anonymity.<br />
-                    Non-custodial 2/3 multisig escrow.
+                    Non-custodial 2-of-3 multisig escrow.
                 </p>
             </div>
         </div>
-    </main>
+    </div>
 
-    <script src="/static/js/auth.js" defer></script>
+    <script src="/static/js/htmx.min.js"></script>
+    <script src="/static/js/auth-tabs.js"></script>
 </body>
 </html>
