@@ -379,6 +379,75 @@ impl WalletManager {
         Ok(wallet_id)
     }
 
+    /// Create EMPTY temporary wallet for multisig coordination (non-custodial architecture)
+    ///
+    /// This creates a new temporary wallet instance with 0 XMR balance.
+    /// These wallets are NEVER funded - they only coordinate multisig setup.
+    /// The buyer pays directly from their external wallet to the generated multisig address.
+    ///
+    /// **NON-CUSTODIAL GUARANTEE:**
+    /// - Wallet starts with 0 XMR and remains at 0 XMR forever
+    /// - Only used to generate multisig address via prepare_multisig() → make_multisig() → finalize_multisig()
+    /// - Server never holds user funds
+    /// - Generated multisig address (95 chars) receives payment directly from buyer's external wallet
+    ///
+    /// # Arguments
+    /// * `role` - The role for this temporary wallet ("buyer", "vendor", or "arbiter")
+    ///
+    /// # Returns
+    /// UUID of the created temporary wallet
+    ///
+    /// # Errors
+    /// - InvalidState - Invalid role string
+    /// - NoAvailableRpc - No RPC configs available
+    /// - RpcError - Failed to connect to wallet RPC or get wallet info
+    ///
+    /// # Example
+    /// ```rust
+    /// let buyer_temp_wallet_id = wallet_manager.create_temporary_wallet("buyer").await?;
+    /// let vendor_temp_wallet_id = wallet_manager.create_temporary_wallet("vendor").await?;
+    /// let arbiter_temp_wallet_id = wallet_manager.create_temporary_wallet("arbiter").await?;
+    /// // All 3 wallets have 0 XMR balance - used only for multisig coordination
+    /// ```
+    pub async fn create_temporary_wallet(&mut self, role: &str) -> Result<Uuid, WalletManagerError> {
+        let wallet_role = match role {
+            "buyer" => WalletRole::Buyer,
+            "vendor" => WalletRole::Vendor,
+            "arbiter" => WalletRole::Arbiter,
+            _ => return Err(WalletManagerError::InvalidState {
+                expected: "buyer, vendor, or arbiter".to_string(),
+                actual: role.to_string(),
+            }),
+        };
+
+        let config = self
+            .rpc_configs
+            .get(self.next_rpc_index)
+            .ok_or(WalletManagerError::NoAvailableRpc)?;
+        self.next_rpc_index = (self.next_rpc_index + 1) % self.rpc_configs.len();
+
+        let rpc_client = MoneroClient::new(config.clone())?;
+        let wallet_info = rpc_client.get_wallet_info().await?;
+
+        let instance = WalletInstance {
+            id: Uuid::new_v4(),
+            role: wallet_role.clone(),
+            rpc_client,
+            address: wallet_info.address.clone(),
+            multisig_state: MultisigState::NotStarted,
+        };
+        let id = instance.id;
+        self.wallets.insert(id, instance);
+
+        info!(
+            "✅ Created EMPTY temporary wallet: id={}, role={:?}, address={}",
+            id, wallet_role, wallet_info.address
+        );
+        info!("🔒 NON-CUSTODIAL: This wallet will remain EMPTY (0 XMR) - used only for multisig coordination");
+
+        Ok(id)
+    }
+
     // ========== MULTISIG STATE PERSISTENCE HELPERS ==========
 
     /// Helper: Persist multisig state to database

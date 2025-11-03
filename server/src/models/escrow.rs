@@ -30,6 +30,10 @@ pub struct Escrow {
     pub multisig_state_json: Option<String>,
     pub multisig_updated_at: i32,
     pub recovery_mode: String,
+    // Non-custodial architecture: Server creates 3 EMPTY temporary wallets for multisig coordination
+    pub buyer_temp_wallet_id: Option<String>,
+    pub vendor_temp_wallet_id: Option<String>,
+    pub arbiter_temp_wallet_id: Option<String>,
 }
 
 #[derive(Insertable)]

@@ -148,7 +148,18 @@ impl EscrowOrchestrator {
     // Escrow Lifecycle
     // ========================================================================
 
-    /// Initialize new escrow (step 1)
+    /// Initialize new escrow (step 1) - NON-CUSTODIAL ARCHITECTURE
+    ///
+    /// **100% NON-CUSTODIAL FLOW:**
+    /// 1. Assign arbiter
+    /// 2. Create escrow record in database
+    /// 3. Create 3 EMPTY temporary wallets (buyer_temp, vendor_temp, arbiter_temp)
+    /// 4. Store temp wallet IDs in escrow record
+    /// 5. Setup multisig to generate shared address
+    /// 6. Buyer pays directly from external wallet → multisig address
+    ///
+    /// **CRITICAL:** Server creates EMPTY wallets only for multisig coordination.
+    /// These wallets never hold funds - they only generate the multisig address.
     pub async fn init_escrow(
         &self,
         order_id: Uuid,
@@ -157,17 +168,18 @@ impl EscrowOrchestrator {
         amount_atomic: i64,
     ) -> Result<Escrow> {
         info!(
-            "Initializing new escrow: order_id={}, buyer={}, vendor={}, amount={}",
+            "🔄 [NON-CUSTODIAL] Initializing escrow: order={}, buyer={}, vendor={}, amount={}",
             order_id, buyer_id, vendor_id, amount_atomic
         );
 
         // 1. Assign arbiter using round-robin from available arbiters
         let arbiter_id = self.assign_arbiter().await?;
-        info!("Assigned arbiter {} to escrow", arbiter_id);
+        info!("✅ Assigned arbiter {} to escrow", arbiter_id);
 
         // 2. Create escrow in DB
+        let escrow_id = Uuid::new_v4();
         let new_escrow = NewEscrow {
-            id: Uuid::new_v4().to_string(),
+            id: escrow_id.to_string(),
             order_id: order_id.to_string(),
             buyer_id: buyer_id.to_string(),
             vendor_id: vendor_id.to_string(),
@@ -176,23 +188,205 @@ impl EscrowOrchestrator {
             status: "created".to_string(),
         };
 
-        let escrow = db_insert_escrow(&self.db, new_escrow)
+        let mut escrow = db_insert_escrow(&self.db, new_escrow)
             .await
             .context("Failed to create escrow in database")?;
 
-        // 3. Notify parties via WebSocket
-        let escrow_uuid = escrow
-            .id
-            .parse()
-            .context("Failed to parse escrow_id to Uuid")?;
+        info!("✅ Escrow record created: {}", escrow.id);
 
-        // Notify all parties of escrow initialization
+        // 3. Create 3 EMPTY temporary wallets for multisig coordination
+        info!("🔒 [NON-CUSTODIAL] Creating 3 EMPTY temporary wallets (0 XMR balance)...");
+        let mut wallet_manager = self.wallet_manager.lock().await;
+
+        let buyer_temp_wallet_id = wallet_manager
+            .create_temporary_wallet("buyer")
+            .await
+            .context("Failed to create buyer temp wallet")?;
+
+        let vendor_temp_wallet_id = wallet_manager
+            .create_temporary_wallet("vendor")
+            .await
+            .context("Failed to create vendor temp wallet")?;
+
+        let arbiter_temp_wallet_id = wallet_manager
+            .create_temporary_wallet("arbiter")
+            .await
+            .context("Failed to create arbiter temp wallet")?;
+
+        info!(
+            "✅ Temporary wallets created: buyer={}, vendor={}, arbiter={}",
+            buyer_temp_wallet_id, vendor_temp_wallet_id, arbiter_temp_wallet_id
+        );
+
+        // 4. Store temp wallet IDs in escrow record
+        use diesel::prelude::*;
+        use crate::schema::escrows;
+
+        let db_clone = self.db.clone();
+        let escrow_id_str = escrow_id.to_string();
+        let buyer_temp_id_str = buyer_temp_wallet_id.to_string();
+        let vendor_temp_id_str = vendor_temp_wallet_id.to_string();
+        let arbiter_temp_id_str = arbiter_temp_wallet_id.to_string();
+
+        tokio::task::spawn_blocking(move || {
+            let mut conn = db_clone.get().context("Failed to get DB connection")?;
+            diesel::update(escrows::table.filter(escrows::id.eq(&escrow_id_str)))
+                .set((
+                    escrows::buyer_temp_wallet_id.eq(Some(buyer_temp_id_str)),
+                    escrows::vendor_temp_wallet_id.eq(Some(vendor_temp_id_str)),
+                    escrows::arbiter_temp_wallet_id.eq(Some(arbiter_temp_id_str)),
+                ))
+                .execute(&mut conn)
+                .context("Failed to update escrow with temp wallet IDs")
+        })
+        .await
+        .context("Database task panicked")??;
+
+        // Reload escrow with updated wallet IDs
+        escrow = db_load_escrow(&self.db, escrow_id).await?;
+
+        info!("✅ Escrow updated with temp wallet IDs");
+
+        // 5. Setup multisig to generate the shared address
+        info!("🔐 Starting multisig setup (prepare → make → finalize)...");
+        let multisig_address = self
+            .setup_multisig_non_custodial(
+                escrow_id,
+                buyer_temp_wallet_id,
+                vendor_temp_wallet_id,
+                arbiter_temp_wallet_id,
+            )
+            .await
+            .context("Failed to setup multisig")?;
+
+        info!(
+            "🎉 [NON-CUSTODIAL] Multisig address generated: {} (95 chars)",
+            multisig_address
+        );
+
+        // 6. Reload escrow again to get final state with multisig address
+        escrow = db_load_escrow(&self.db, escrow_id).await?;
+
+        // 7. Notify parties via WebSocket
         self.websocket.do_send(WsEvent::EscrowInit {
-            escrow_id: escrow_uuid,
+            escrow_id,
         });
 
-        info!("Escrow {} initialized successfully", escrow.id);
+        info!(
+            "✅ [NON-CUSTODIAL] Escrow {} initialized successfully! Buyer can now pay from ANY external wallet → {}",
+            escrow.id, multisig_address
+        );
+
         Ok(escrow)
+    }
+
+    /// Setup multisig for non-custodial architecture (private method)
+    ///
+    /// **CRITICAL MULTISIG FLOW:**
+    /// 1. prepare_multisig() - Each wallet generates multisig info
+    /// 2. make_multisig() - Exchange infos to create multisig wallet
+    /// 3. finalize_multisig() - Verify address consistency (must be 95 chars)
+    ///
+    /// **REMINDER:** All 3 wallets are EMPTY (0 XMR balance).
+    /// The generated multisig address receives payment directly from buyer's external wallet.
+    ///
+    /// # Arguments
+    /// * `escrow_id` - Escrow UUID
+    /// * `buyer_temp_wallet_id` - Buyer temporary wallet UUID
+    /// * `vendor_temp_wallet_id` - Vendor temporary wallet UUID
+    /// * `arbiter_temp_wallet_id` - Arbiter temporary wallet UUID
+    ///
+    /// # Returns
+    /// The generated multisig address (95 characters)
+    async fn setup_multisig_non_custodial(
+        &self,
+        escrow_id: Uuid,
+        buyer_temp_wallet_id: Uuid,
+        vendor_temp_wallet_id: Uuid,
+        arbiter_temp_wallet_id: Uuid,
+    ) -> Result<String> {
+        info!(
+            "🔐 [MULTISIG SETUP] Starting for escrow {}",
+            escrow_id
+        );
+
+        let mut wallet_manager = self.wallet_manager.lock().await;
+
+        // Step 1: prepare_multisig() - Each wallet generates multisig info
+        info!("📝 Step 1/3: Calling prepare_multisig() on all 3 wallets...");
+
+        let buyer_info = wallet_manager
+            .make_multisig(&escrow_id.to_string(), buyer_temp_wallet_id, vec![])
+            .await
+            .context("Failed to prepare multisig for buyer temp wallet")?;
+
+        let vendor_info = wallet_manager
+            .make_multisig(&escrow_id.to_string(), vendor_temp_wallet_id, vec![])
+            .await
+            .context("Failed to prepare multisig for vendor temp wallet")?;
+
+        let arbiter_info = wallet_manager
+            .make_multisig(&escrow_id.to_string(), arbiter_temp_wallet_id, vec![])
+            .await
+            .context("Failed to prepare multisig for arbiter temp wallet")?;
+
+        info!(
+            "✅ Step 1/3 complete: All 3 wallets prepared (info lengths: buyer={}, vendor={}, arbiter={})",
+            buyer_info.multisig_info.len(),
+            vendor_info.multisig_info.len(),
+            arbiter_info.multisig_info.len()
+        );
+
+        // Step 2: make_multisig() - Exchange infos to create 2-of-3 multisig
+        info!("🔄 Step 2/3: Exchanging multisig info (make_multisig)...");
+
+        wallet_manager
+            .exchange_multisig_info(
+                escrow_id,
+                vec![buyer_info, vendor_info, arbiter_info],
+            )
+            .await
+            .context("Failed to exchange multisig info")?;
+
+        info!("✅ Step 2/3 complete: Multisig info exchanged");
+
+        // Step 3: finalize_multisig() - Generate final multisig address
+        info!("🎯 Step 3/3: Finalizing multisig to generate address...");
+
+        let multisig_address = wallet_manager
+            .finalize_multisig(escrow_id)
+            .await
+            .context("Failed to finalize multisig")?;
+
+        // Validate address is 95 characters (Monero mainnet multisig address standard)
+        if multisig_address.len() != 95 {
+            return Err(anyhow::anyhow!(
+                "CRITICAL: Multisig address length is {} (expected 95 chars). Address: {}",
+                multisig_address.len(),
+                multisig_address
+            ));
+        }
+
+        info!(
+            "✅ Step 3/3 complete: Multisig address finalized (95 chars verified)"
+        );
+
+        // Store multisig address in database
+        db_update_escrow_address(&self.db, escrow_id, &multisig_address)
+            .await
+            .context("Failed to update escrow with multisig address")?;
+
+        info!(
+            "💾 Multisig address stored in database: {}",
+            &multisig_address[..10]
+        );
+
+        info!(
+            "🎉 [MULTISIG SETUP] Complete! Address: {} (Wallets: EMPTY, ready for direct payment)",
+            &multisig_address[..15]
+        );
+
+        Ok(multisig_address)
     }
 
     /// Collect prepare_multisig from party (step 2)

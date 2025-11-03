@@ -148,16 +148,26 @@ impl BlockchainMonitor {
             &multisig_address[..10]
         );
 
-        // Get the buyer wallet ID to check balance
-        let buyer_wallet_id = escrow
-            .buyer_id
+        // Get the buyer TEMPORARY wallet ID to check balance
+        // CRITICAL: Use buyer_temp_wallet_id (the EMPTY temporary wallet), NOT buyer_id (user ID)
+        let buyer_temp_wallet_id = escrow
+            .buyer_temp_wallet_id
+            .ok_or_else(|| anyhow::anyhow!(
+                "Escrow {} missing buyer_temp_wallet_id (non-custodial architecture required)",
+                escrow_id
+            ))?
             .parse::<Uuid>()
-            .context("Failed to parse buyer_id as Uuid")?;
+            .context("Failed to parse buyer_temp_wallet_id as Uuid")?;
+
+        info!(
+            "🔍 [NON-CUSTODIAL] Checking balance of buyer temp wallet: {}",
+            buyer_temp_wallet_id
+        );
 
         // Query blockchain for wallet balance
         let wallet_manager = self.wallet_manager.lock().await;
         let (total_balance, unlocked_balance) = wallet_manager
-            .get_balance(buyer_wallet_id)
+            .get_balance(buyer_temp_wallet_id)
             .await
             .context("Failed to get wallet balance")?;
 

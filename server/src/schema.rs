@@ -22,6 +22,9 @@ diesel::table! {
         multisig_state_json -> Nullable<Text>,
         multisig_updated_at -> Integer,
         recovery_mode -> Text,
+        buyer_temp_wallet_id -> Nullable<Text>,
+        vendor_temp_wallet_id -> Nullable<Text>,
+        arbiter_temp_wallet_id -> Nullable<Text>,
     }
 }
 
@@ -98,6 +101,18 @@ diesel::table! {
 }
 
 diesel::table! {
+    wallet_address_history (id) {
+        id -> Text,
+        user_id -> Text,
+        old_address -> Nullable<Text>,
+        new_address -> Text,
+        changed_at -> Integer,
+        ip_address -> Nullable<Text>,
+        user_agent -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
     wallet_rpc_configs (wallet_id) {
         wallet_id -> Nullable<Text>,
         escrow_id -> Text,
@@ -116,6 +131,7 @@ diesel::joinable!(escrows -> orders (order_id));
 diesel::joinable!(listings -> users (vendor_id));
 diesel::joinable!(orders -> listings (listing_id));
 diesel::joinable!(transactions -> escrows (escrow_id));
+diesel::joinable!(wallet_address_history -> users (user_id));
 diesel::joinable!(wallet_rpc_configs -> escrows (escrow_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
@@ -125,5 +141,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     reviews,
     transactions,
     users,
+    wallet_address_history,
     wallet_rpc_configs,
 );
