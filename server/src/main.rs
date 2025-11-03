@@ -278,6 +278,7 @@ async fn main() -> Result<()> {
             .app_data(web::Data::new(websocket_server.clone()))
             .app_data(web::Data::new(tera.clone()))
             .app_data(web::Data::new(ipfs_client.clone()))
+            .app_data(web::Data::new(encryption_key.clone()))
             // Static files (serve CSS, JS, images)
             .service(fs::Files::new("/static", "./static").show_files_listing())
             // Frontend routes (HTML pages)

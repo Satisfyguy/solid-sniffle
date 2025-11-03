@@ -41,17 +41,17 @@ class CheckoutFlow {
 
         // Start appropriate flow based on state
         if (!this.escrowId || !this.orderId) {
-            console.log('[Checkout] New checkout - showing shipping address form...');
+            console.log('[Checkout] New checkout initiated');
             // Show shipping form (it's already visible by default)
             document.getElementById('shipping-address-form')?.style.removeProperty('display');
         } else if (this.escrowStatus === 'created' || this.escrowStatus === 'funded') {
-            console.log('[Checkout] Escrow exists, showing payment instructions...');
+            console.log('[Checkout] Escrow exists, showing payment instructions');
             // Hide shipping form, show payment
             document.getElementById('shipping-address-form').style.display = 'none';
             this.showPaymentInstructions();
             this.startPaymentMonitoring();
         } else if (this.escrowStatus === 'active') {
-            console.log('[Checkout] Payment confirmed!');
+            console.log('[Checkout] Payment confirmed');
             // Hide shipping form, show confirmation
             document.getElementById('shipping-address-form').style.display = 'none';
             this.showPaymentConfirmed();
@@ -85,7 +85,7 @@ class CheckoutFlow {
      * Submit shipping address
      */
     async submitShippingAddress() {
-        console.log('[Checkout] Submitting shipping address...');
+        console.log('[Checkout] Processing delivery information');
 
         // Gather form data
         const streetAddress = document.getElementById('street-address')?.value;
@@ -133,7 +133,7 @@ class CheckoutFlow {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                console.log('[Checkout] Order created with shipping address:', data.order_id);
+                console.log('[Checkout] Order created:', data.order_id);
                 this.orderId = data.order_id;
 
                 // Hide shipping form
@@ -141,7 +141,7 @@ class CheckoutFlow {
                 if (shippingForm) shippingForm.style.display = 'none';
 
                 // Show notification
-                this.showNotification('Adresse de livraison enregistrée', 'success');
+                this.showNotification('Informations enregistrées', 'success');
 
                 // Proceed to escrow initialization
                 await this.createOrderAndInitEscrow();

@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
 
+use crate::crypto::encryption::{decrypt_field, encrypt_field};
 use crate::db::DbPool;
 use crate::middleware::csrf::validate_csrf_token;
 use crate::models::cart::Cart;
@@ -114,6 +115,7 @@ pub async fn create_order_from_cart(
     http_req: HttpRequest,
     req: web::Json<CreateOrderFromCartRequest>,
     websocket: web::Data<Addr<WebSocketServer>>,
+    encryption_key: web::Data<Vec<u8>>,
 ) -> impl Responder {
     // SECURITY: Validate CSRF token
     let csrf_token = http_req
@@ -207,9 +209,18 @@ pub async fn create_order_from_cart(
         }));
     }
 
-    // TODO: Implement field-level encryption for shipping address
-    // For now, store directly (DB already encrypted with SQLCipher)
-    // Future: Use AES-256-GCM from crate::crypto::encryption
+    // SECURITY: Field-level AES-256-GCM encryption for shipping address
+    // Only the vendor can decrypt this address using the same encryption key
+    // Database is also encrypted at rest with SQLCipher (defense in depth)
+    let encrypted_address = match encrypt_field(&req.shipping_address, &encryption_key) {
+        Ok(encrypted_bytes) => base64::encode(&encrypted_bytes),
+        Err(e) => {
+            tracing::error!("Failed to encrypt shipping address: {}", e);
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Failed to encrypt shipping address"
+            }));
+        }
+    };
 
     // Get database connection for order creation
     let mut conn = match pool.get() {
@@ -230,7 +241,7 @@ pub async fn create_order_from_cart(
         escrow_id: None, // Set when escrow is initialized
         status: OrderStatus::Pending.as_str().to_string(),
         total_xmr,
-        shipping_address: Some(req.shipping_address.clone()),
+        shipping_address: Some(encrypted_address),
         shipping_notes: req.shipping_notes.clone(),
     };
 
@@ -308,6 +319,7 @@ pub async fn create_order(
     http_req: HttpRequest,
     req: web::Json<CreateOrderRequest>,
     websocket: web::Data<Addr<WebSocketServer>>,
+    encryption_key: web::Data<Vec<u8>>,
 ) -> impl Responder {
     // SECURITY: Validate CSRF token
     let csrf_token = http_req
@@ -417,6 +429,17 @@ pub async fn create_order(
         }));
     }
 
+    // SECURITY: Field-level AES-256-GCM encryption for shipping address
+    let encrypted_address = match encrypt_field(&req.shipping_address, &encryption_key) {
+        Ok(encrypted_bytes) => base64::encode(&encrypted_bytes),
+        Err(e) => {
+            tracing::error!("Failed to encrypt shipping address: {}", e);
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Failed to encrypt shipping address"
+            }));
+        }
+    };
+
     // SECURITY: Use database transaction to atomically create order and reserve stock
     // This prevents race conditions where multiple buyers could order the same stock
     let order_result = conn.transaction::<Order, diesel::result::Error, _>(|conn| {
@@ -437,7 +460,7 @@ pub async fn create_order(
             escrow_id: None, // Set when escrow is created
             status: OrderStatus::Pending.as_str().to_string(),
             total_xmr,
-            shipping_address: Some(req.shipping_address.clone()),
+            shipping_address: Some(encrypted_address),
             shipping_notes: req.shipping_notes.clone(),
         };
 
