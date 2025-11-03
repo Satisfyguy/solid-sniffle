@@ -340,7 +340,7 @@ async fn main() -> Result<()> {
             // Single scope ensures shared rate limit quota across all protected operations
             .service(
                 web::scope("/api")
-                    // .wrap(protected_rate_limiter()) // TEMPORAIREMENT DÉSACTIVÉ
+                    .wrap(protected_rate_limiter())
                     // Listings
                     .service(listings::create_listing)
                     .service(listings::create_listing_with_images)

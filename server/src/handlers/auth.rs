@@ -509,31 +509,55 @@ pub async fn update_wallet_address(
             );
 
             if is_htmx {
-                // Return updated wallet display HTML + success message with copy button
+                // Return updated wallet display HTML + success message with copy button + QR code
                 let html = format!(
                     r#"<div class="alert alert-success" style="padding: 1rem; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 4px; color: #22c55e; margin-bottom: 1rem;">
                         ✅ Wallet address updated successfully!
                     </div>
                     <div class="wallet-address-display" style="margin-top: 1rem; padding: 1rem; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px;">
-                        <label class="label" style="color: hsl(142, 76%, 60%); display: block; margin-bottom: 0.5rem;">
+                        <label class="label" style="color: hsl(142, 76%, 60%); display: block; margin-bottom: 0.75rem;">
                             ✅ Current Wallet Address
                         </label>
-                        <div style="display: flex; gap: 0.75rem; align-items: center;">
-                            <div class="address-text" style="flex: 1; font-family: monospace; font-size: 0.8125rem; color: hsl(142, 76%, 70%); word-break: break-all; line-height: 1.6;">
-                                {}
+                        <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <div class="address-text" style="font-family: monospace; font-size: 0.8125rem; color: hsl(142, 76%, 70%); word-break: break-all; line-height: 1.6; margin-bottom: 0.75rem;">
+                                    {}
+                                </div>
+                                <button
+                                    type="button"
+                                    onclick="navigator.clipboard.writeText('{}'); this.innerHTML='✓ Copied'; setTimeout(() => this.innerHTML='📋 Copy Address', 2000);"
+                                    style="padding: 0.5rem 1rem; background: rgba(34, 197, 94, 0.2); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 4px; color: hsl(142, 76%, 70%); cursor: pointer; font-size: 0.875rem; white-space: nowrap; transition: all 0.2s;"
+                                    onmouseover="this.style.background='rgba(34, 197, 94, 0.3)'"
+                                    onmouseout="this.style.background='rgba(34, 197, 94, 0.2)'"
+                                    title="Copy address to clipboard"
+                                >
+                                    📋 Copy Address
+                                </button>
                             </div>
-                            <button
-                                type="button"
-                                onclick="navigator.clipboard.writeText('{}'); this.innerHTML='✓ Copied'; setTimeout(() => this.innerHTML='📋 Copy', 2000);"
-                                style="padding: 0.5rem 1rem; background: rgba(34, 197, 94, 0.2); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 4px; color: hsl(142, 76%, 70%); cursor: pointer; font-size: 0.875rem; white-space: nowrap; transition: all 0.2s;"
-                                onmouseover="this.style.background='rgba(34, 197, 94, 0.3)'"
-                                onmouseout="this.style.background='rgba(34, 197, 94, 0.2)'"
-                                title="Copy address to clipboard"
-                            >
-                                📋 Copy
-                            </button>
+                            <div style="flex-shrink: 0;">
+                                <canvas id="qr-code-canvas" style="border: 4px solid rgba(34, 197, 94, 0.3); border-radius: 8px; background: white; padding: 8px;"></canvas>
+                                <script>
+                                    (function() {{
+                                        const canvas = document.getElementById('qr-code-canvas');
+                                        if (canvas && typeof QRCode !== 'undefined') {{
+                                            QRCode.toCanvas(canvas, '{}', {{
+                                                width: 150,
+                                                margin: 1,
+                                                color: {{
+                                                    dark: '#000000',
+                                                    light: '#FFFFFF'
+                                                }}
+                                            }});
+                                        }}
+                                    }})();
+                                </script>
+                            </div>
                         </div>
+                        <p style="margin-top: 0.75rem; font-size: 0.75rem; color: hsl(142, 76%, 60%); opacity: 0.8;">
+                            💡 Scan this QR code with your Monero wallet to send payments
+                        </p>
                     </div>"#,
+                    wallet_addr_for_display,
                     wallet_addr_for_display,
                     wallet_addr_for_display
                 );
