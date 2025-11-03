@@ -760,6 +760,7 @@ pub async fn show_order(
     pool: web::Data<DbPool>,
     session: Session,
     order_id: web::Path<String>,
+    encryption_key: web::Data<Vec<u8>>,
 ) -> impl Responder {
     use crate::models::listing::Listing;
     use crate::models::order::Order;
@@ -871,6 +872,42 @@ pub async fn show_order(
         _ => "Unknown".to_string(),
     };
 
+    // Decrypt shipping address for vendor view
+    // SECURITY: Only vendor needs to see plaintext address for shipping
+    // Buyer sees their own address (no need for encrypted display)
+    use crate::crypto::encryption::decrypt_field;
+    use base64::{Engine as _, engine::general_purpose};
+
+    let decrypted_shipping_address = if order.vendor_id == user_id {
+        // Vendor viewing order - decrypt the address
+        match &order.shipping_address {
+            Some(encrypted_base64) => {
+                // Decode base64 to bytes
+                match general_purpose::STANDARD.decode(encrypted_base64) {
+                    Ok(encrypted_bytes) => {
+                        // Decrypt using AES-256-GCM
+                        match decrypt_field(&encrypted_bytes, &encryption_key) {
+                            Ok(plaintext) => Some(plaintext),
+                            Err(e) => {
+                                tracing::error!("Failed to decrypt shipping address for vendor: {}", e);
+                                Some("[Decryption Error - Contact Support]".to_string())
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        tracing::error!("Failed to decode base64 shipping address: {}", e);
+                        Some("[Invalid Address Format]".to_string())
+                    }
+                }
+            }
+            None => None,
+        }
+    } else {
+        // Buyer viewing order - keep encrypted (or could decrypt for them too)
+        // For now, showing encrypted string to buyer (they know their own address)
+        order.shipping_address.clone()
+    };
+
     // Create enriched order data for template
     let order_data = serde_json::json!({
         "id": order.id,
@@ -891,7 +928,7 @@ pub async fn show_order(
         "funded_at": None::<String>,
         "shipped_at": None::<String>,
         "completed_at": None::<String>,
-        "shipping_address": order.shipping_address,
+        "shipping_address": decrypted_shipping_address,
         "shipping_notes": order.shipping_notes,
     });
 

@@ -8,6 +8,7 @@
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="/static/css/main.css">
     <link rel="stylesheet" href="/static/css/order-escrow.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
         /* General Layout */
         .order-detail-container { max-width: 1200px; margin: 0 auto; padding: 8rem 1.5rem 0; }
@@ -363,6 +364,7 @@
                         <div class="action-buttons">
                             {% if role == "vendor" and order.status == "funded" %}
                             <button
+                                id="ship-order-btn"
                                 class="btn btn-primary btn-block"
                                 hx-post="/api/orders/{{ order.id }}/ship"
                                 hx-target="#action-result"
@@ -508,5 +510,22 @@
     <script src="/static/js/lucide.min.js"></script>
     <script src="/static/js/base.js"></script>
     <script src="/static/js/fund-escrow.js"></script>
-    <script src="/static/js/order-actions.js"></script></body>
+    <script src="/static/js/order-actions.js"></script>
+
+    <!-- CSP-compliant HTMX event handler for ship order button -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const shipBtn = document.getElementById('ship-order-btn');
+            if (shipBtn) {
+                // Listen for HTMX afterRequest event (CSP-safe)
+                shipBtn.addEventListener('htmx:afterRequest', function(event) {
+                    if (event.detail.successful) {
+                        // Reload page after successful shipping
+                        window.location.reload();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
 </html>

@@ -491,7 +491,11 @@ pub async fn update_wallet_address(
             );
 
             if is_htmx {
-                Ok(HttpResponse::Ok().content_type("text/html").body(""))
+                Ok(HttpResponse::Ok().content_type("text/html").body(
+                    r#"<div class="alert alert-success" style="padding: 1rem; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 4px; color: #22c55e; margin-bottom: 1rem;">
+                        ✅ Wallet address updated successfully! Refresh the page to see the update.
+                    </div>"#
+                ))
             } else {
                 Ok(HttpResponse::Ok().json(serde_json::json!({
                     "message": "Wallet address updated successfully"
