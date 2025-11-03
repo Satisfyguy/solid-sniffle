@@ -159,40 +159,101 @@ pub async fn create_order_from_cart(
         }));
     }
 
-    // Get cart from session
-    let mut cart = match session.get::<Cart>("cart") {
-        Ok(Some(c)) => c,
-        _ => {
-            return HttpResponse::BadRequest().json(serde_json::json!({
-                "error": "Cart is empty"
+    // Get database connection early for both modes
+    let mut conn = match pool.get() {
+        Ok(conn) => conn,
+        Err(_) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Database connection failed"
             }))
         }
     };
 
-    if cart.is_empty() {
-        return HttpResponse::BadRequest().json(serde_json::json!({
-            "error": "Cart is empty"
-        }));
-    }
+    // Handle different checkout modes
+    let (vendor_id, listing_id, total_xmr, quantity) = if req.checkout_mode == "listing" {
+        // Single listing mode (Buy Now)
+        let listing_id_from_session = match session.get::<String>("checkout_listing_id") {
+            Ok(Some(id)) => id,
+            _ => {
+                return HttpResponse::BadRequest().json(serde_json::json!({
+                    "error": "No listing selected for checkout"
+                }))
+            }
+        };
 
-    // For now, only support single-vendor carts (all items from same vendor)
-    // TODO: Support multi-vendor carts with separate orders per vendor
-    let vendor_id = &cart.items[0].vendor_id;
-    if !cart.items.iter().all(|item| &item.vendor_id == vendor_id) {
-        return HttpResponse::BadRequest().json(serde_json::json!({
-            "error": "Multi-vendor carts not yet supported. Please checkout items from one vendor at a time."
-        }));
-    }
+        // Fetch listing
+        let listing = match Listing::find_by_id(&mut conn, listing_id_from_session.clone()) {
+            Ok(l) => l,
+            Err(_) => {
+                return HttpResponse::NotFound().json(serde_json::json!({
+                    "error": "Listing not found"
+                }))
+            }
+        };
 
-    // Prevent self-purchasing
-    if vendor_id == &buyer_id {
-        return HttpResponse::BadRequest().json(serde_json::json!({
-            "error": "Cannot purchase your own listings"
-        }));
-    }
+        // Validate listing is active
+        if listing.status != "active" {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "This listing is not available for purchase"
+            }));
+        }
 
-    // Calculate total from cart items
-    let total_xmr = cart.total_price();
+        // Check stock (quantity = 1 for Buy Now)
+        if listing.stock < 1 {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "This item is out of stock"
+            }));
+        }
+
+        // Prevent self-purchasing
+        if listing.vendor_id == buyer_id {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "Cannot purchase your own listing"
+            }));
+        }
+
+        // Clear listing_id from session after retrieving
+        let _ = session.remove("checkout_listing_id");
+
+        (listing.vendor_id.clone(), listing.id.clone(), listing.price_xmr, 1)
+    } else {
+        // Cart mode (existing logic)
+        let mut cart = match session.get::<Cart>("cart") {
+            Ok(Some(c)) => c,
+            _ => {
+                return HttpResponse::BadRequest().json(serde_json::json!({
+                    "error": "Cart is empty"
+                }))
+            }
+        };
+
+        if cart.is_empty() {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "Cart is empty"
+            }));
+        }
+
+        // For now, only support single-vendor carts
+        // TODO: Support multi-vendor carts with separate orders per vendor
+        let vendor_id = cart.items[0].vendor_id.clone();
+        if !cart.items.iter().all(|item| &item.vendor_id == &vendor_id) {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "Multi-vendor carts not yet supported. Please checkout items from one vendor at a time."
+            }));
+        }
+
+        // Prevent self-purchasing
+        if vendor_id == buyer_id {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "Cannot purchase your own listings"
+            }));
+        }
+
+        let total_xmr = cart.total_price();
+        let listing_id = cart.items[0].listing_id.clone();
+
+        (vendor_id, listing_id, total_xmr, cart.total_quantity())
+    };
 
     // SECURITY: Validate total is positive and reasonable
     if total_xmr <= 0 {
@@ -222,22 +283,12 @@ pub async fn create_order_from_cart(
         }
     };
 
-    // Get database connection for order creation
-    let mut conn = match pool.get() {
-        Ok(conn) => conn,
-        Err(_) => {
-            return HttpResponse::InternalServerError().json(serde_json::json!({
-                "error": "Database connection failed"
-            }))
-        }
-    };
-
-    // Create the order
+    // Create the order (conn already acquired at line 163)
     let new_order = NewOrder {
         id: Uuid::new_v4().to_string(),
         buyer_id: buyer_id.clone(),
         vendor_id: vendor_id.clone(),
-        listing_id: cart.items[0].listing_id.clone(), // Use first item's listing for now
+        listing_id: listing_id.clone(), // From tuple (cart or listing mode)
         escrow_id: None, // Set when escrow is initialized
         status: OrderStatus::Pending.as_str().to_string(),
         total_xmr,
@@ -256,15 +307,19 @@ pub async fn create_order_from_cart(
     };
 
     tracing::info!(
-        "Order created successfully from cart: id={}, buyer={}, vendor={}, total={} piconeros",
-        order.id, order.buyer_id, order.vendor_id, order.total_xmr
+        "Order created successfully: id={}, buyer={}, vendor={}, total={} piconeros, mode={}",
+        order.id, order.buyer_id, order.vendor_id, order.total_xmr, req.checkout_mode
     );
 
-    // Clear the cart in session
-    cart.clear();
-    if let Err(e) = session.insert("cart", &cart) {
-        tracing::warn!("Failed to clear cart in session after order creation: {}", e);
-        // Don't fail the request, order was created successfully
+    // Clear the cart in session ONLY if this was a cart checkout (not Buy Now)
+    if req.checkout_mode == "cart" {
+        if let Ok(Some(mut cart)) = session.get::<Cart>("cart") {
+            cart.clear();
+            if let Err(e) = session.insert("cart", &cart) {
+                tracing::warn!("Failed to clear cart in session after order creation: {}", e);
+                // Don't fail the request, order was created successfully
+            }
+        }
     }
 
     // Send WebSocket notification to vendor

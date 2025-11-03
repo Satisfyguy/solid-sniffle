@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - Nexus Marketplace</title>
-    <meta name="description" content="Finalisez votre commande avec protection escrow multisig 2/3 Monero">
+    <meta name="description" content="Complete your order with 2/3 multisig Monero escrow protection">
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="/static/css/main.css">
 </head>
@@ -15,7 +15,7 @@
         <!-- Back Button -->
         <a href="/cart" class="back-button">
             <i data-lucide="arrow-left"></i>
-            <span>Retour au panier</span>
+            <span>Back to Cart</span>
         </a>
 
         <div class="checkout-wrapper">
@@ -48,10 +48,10 @@
                         <div class="checkout-card-header">
                             <h2 class="checkout-card-title">
                                 <i data-lucide="map-pin" class="inline-icon"></i>
-                                Adresse de Livraison
+                                Shipping Address
                             </h2>
                             <p class="checkout-card-description">
-                                Saisissez l'adresse où vous souhaitez recevoir votre commande
+                                Enter the address where you want to receive your order
                             </p>
                         </div>
                         <div class="checkout-card-content">
@@ -59,41 +59,41 @@
                                 <div class="form-group">
                                     <label for="street-address" class="checkout-label">
                                         <i data-lucide="home" class="inline-icon-sm"></i>
-                                        Adresse complète
+                                        Full Address
                                     </label>
                                     <input
                                         type="text"
                                         id="street-address"
                                         name="street_address"
                                         class="checkout-input"
-                                        placeholder="123 Rue Exemple"
+                                        placeholder="123 Example Street"
                                         required>
                                 </div>
 
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label for="city" class="checkout-label">
-                                            Ville
+                                            City
                                         </label>
                                         <input
                                             type="text"
                                             id="city"
                                             name="city"
                                             class="checkout-input"
-                                            placeholder="Paris"
+                                            placeholder="New York"
                                             required>
                                     </div>
 
                                     <div class="form-group">
                                         <label for="postal-code" class="checkout-label">
-                                            Code postal
+                                            Postal Code
                                         </label>
                                         <input
                                             type="text"
                                             id="postal-code"
                                             name="postal_code"
                                             class="checkout-input"
-                                            placeholder="75001"
+                                            placeholder="10001"
                                             required>
                                     </div>
                                 </div>
@@ -101,44 +101,44 @@
                                 <div class="form-group">
                                     <label for="country" class="checkout-label">
                                         <i data-lucide="globe" class="inline-icon-sm"></i>
-                                        Pays
+                                        Country
                                     </label>
                                     <input
                                         type="text"
                                         id="country"
                                         name="country"
                                         class="checkout-input"
-                                        placeholder="France"
+                                        placeholder="United States"
                                         required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="shipping-notes" class="checkout-label">
                                         <i data-lucide="message-square" class="inline-icon-sm"></i>
-                                        Instructions de livraison (optionnel)
+                                        Shipping Instructions (optional)
                                     </label>
                                     <textarea
                                         id="shipping-notes"
                                         name="shipping_notes"
                                         class="checkout-input checkout-textarea"
-                                        placeholder="Sonnez 3 fois, code d'accès 1234, etc."
+                                        placeholder="Ring 3 times, access code 1234, etc."
                                         rows="3"></textarea>
                                 </div>
 
                                 <div class="checkout-notice info">
                                     <i data-lucide="shield" class="checkout-notice-icon"></i>
                                     <div class="checkout-notice-content">
-                                        <p class="checkout-notice-title">Confidentialité garantie</p>
+                                        <p class="checkout-notice-title">Privacy Guaranteed</p>
                                         <p class="checkout-notice-text">
-                                            Votre adresse est chiffrée avec AES-256-GCM avant stockage. Seul le vendeur peut la déchiffrer.
-                                            Base de données également chiffrée (SQLCipher) pour une protection en profondeur.
+                                            Your address is encrypted with AES-256-GCM before storage. Only the vendor can decrypt it.
+                                            Database also encrypted (SQLCipher) for defense-in-depth protection.
                                         </p>
                                     </div>
                                 </div>
 
                                 <button type="submit" class="btn-checkout-primary" id="submit-shipping-btn">
                                     <i data-lucide="arrow-right"></i>
-                                    <span>Continuer vers le paiement</span>
+                                    <span>Continue to Payment</span>
                                 </button>
                             </form>
                         </div>
@@ -387,10 +387,39 @@
                 <div class="checkout-sidebar">
                     <div class="checkout-summary-card">
                         <div class="checkout-summary-header">
-                            <h3 class="checkout-summary-title">Résumé de la commande</h3>
+                            <h3 class="checkout-summary-title">Order Summary</h3>
                         </div>
                         <div class="checkout-summary-content">
-                            {% if cart %}
+                            {% if listing %}
+                            <!-- Listing Mode (Buy Now) -->
+                            <div class="checkout-summary-item">
+                                <div class="checkout-summary-product">
+                                    {% if listing.images_ipfs_cids %}
+                                    {% set images = listing.images_ipfs_cids | json_decode %}
+                                    {% if images and images | length > 0 %}
+                                    <div class="checkout-summary-image">
+                                        <img src="/api/listings/{{ listing.id }}/images/{{ images[0] }}" alt="{{ listing.title }}">
+                                    </div>
+                                    {% else %}
+                                    <div class="checkout-summary-image checkout-summary-image-placeholder">
+                                        <i data-lucide="package"></i>
+                                    </div>
+                                    {% endif %}
+                                    {% else %}
+                                    <div class="checkout-summary-image checkout-summary-image-placeholder">
+                                        <i data-lucide="package"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div class="checkout-summary-details">
+                                        <p class="checkout-summary-name">{{ listing.title }}</p>
+                                        <p class="checkout-summary-quantity">Quantity: 1</p>
+                                        <p class="checkout-summary-price" data-price="{{ listing.price_xmr }}">
+                                            {{ listing.price_xmr }} piconeros
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% elif cart %}
                             <!-- Cart Mode -->
                             {% for item in cart.items %}
                             <div class="checkout-summary-item">
@@ -406,7 +435,7 @@
                                     {% endif %}
                                     <div class="checkout-summary-details">
                                         <p class="checkout-summary-name">{{ item.title }}</p>
-                                        <p class="checkout-summary-quantity">Quantité: {{ item.quantity }}</p>
+                                        <p class="checkout-summary-quantity">Quantity: {{ item.quantity }}</p>
                                         <p class="checkout-summary-price" data-price="{{ item.unit_price_xmr }}">
                                             {{ item.unit_price_xmr }} piconeros
                                         </p>
@@ -422,8 +451,8 @@
                                         <i data-lucide="package"></i>
                                     </div>
                                     <div class="checkout-summary-details">
-                                        <p class="checkout-summary-name">Commande #{{ order.id | truncate(length=8, end="...") }}</p>
-                                        <p class="checkout-summary-quantity">Quantité: 1</p>
+                                        <p class="checkout-summary-name">Order #{{ order.id | truncate(length=8, end="...") }}</p>
+                                        <p class="checkout-summary-quantity">Quantity: 1</p>
                                     </div>
                                 </div>
                             </div>
@@ -431,7 +460,7 @@
 
                             <div class="checkout-summary-breakdown">
                                 <div class="checkout-summary-row">
-                                    <span class="checkout-summary-label">Sous-total</span>
+                                    <span class="checkout-summary-label">Subtotal</span>
                                     <span class="checkout-summary-value monero-amount">
                                         {% if cart %}
                                         {{ cart_total_xmr }} XMR
@@ -444,15 +473,15 @@
                                 </div>
                                 <div class="checkout-summary-row">
                                     <span class="checkout-summary-label">
-                                        Frais escrow
-                                        <i data-lucide="help-circle" class="help-icon-sm" title="2% pour protection multisig"></i>
+                                        Escrow Fee
+                                        <i data-lucide="help-circle" class="help-icon-sm" title="2% for multisig protection"></i>
                                     </span>
                                     <span class="checkout-summary-value monero-amount">~0.000200000000 XMR</span>
                                 </div>
                                 <div class="checkout-summary-row">
                                     <span class="checkout-summary-label">
-                                        Frais réseau
-                                        <i data-lucide="help-circle" class="help-icon-sm" title="Frais de transaction Monero"></i>
+                                        Network Fee
+                                        <i data-lucide="help-circle" class="help-icon-sm" title="Monero transaction fee"></i>
                                     </span>
                                     <span class="checkout-summary-value monero-amount">~0.000100000000 XMR</span>
                                 </div>

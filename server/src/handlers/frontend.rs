@@ -1633,9 +1633,44 @@ pub async fn show_checkout(
     } else if let Some(ref listing_id) = query.listing_id {
         // Single listing checkout (create temporary order context)
         info!("Checkout for single listing: {}", listing_id);
+
+        // Fetch listing data
+        let mut conn = match pool.get() {
+            Ok(c) => c,
+            Err(e) => {
+                error!("Database connection error: {}", e);
+                return HttpResponse::InternalServerError().body("Database connection failed");
+            }
+        };
+
+        let listing = match Listing::find_by_id(&mut conn, listing_id.clone()) {
+            Ok(l) => l,
+            Err(e) => {
+                error!("Failed to fetch listing {}: {}", listing_id, e);
+                return HttpResponse::NotFound().body("Listing not found");
+            }
+        };
+
+        // Check if listing is active
+        if listing.status != "active" {
+            warn!("Attempted checkout for inactive listing: {}", listing_id);
+            return HttpResponse::BadRequest().body("This listing is not available for purchase");
+        }
+
+        // Store listing_id in session for order creation
+        if let Err(e) = session.insert("checkout_listing_id", listing_id) {
+            error!("Failed to store listing_id in session: {}", e);
+        }
+
+        ctx.insert("listing", &listing);
         ctx.insert("listing_id", listing_id);
-        ctx.insert("checkout_mode", &"single_listing");
-        None // Will create order on payment
+        ctx.insert("checkout_mode", &"listing");
+
+        // Calculate total (quantity = 1 for Buy Now)
+        let total_xmr = listing.price_as_xmr();
+        ctx.insert("cart_total_xmr", &total_xmr);
+
+        None // Will create order on shipping submission
     } else {
         // Cart checkout
         info!("Checkout from cart");
