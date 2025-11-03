@@ -414,13 +414,14 @@ pub async fn logout(session: Session) -> Result<HttpResponse, ApiError> {
     if let Some(user_id) = user_id {
         info!(
             user_id = %user_id,
-            "User logged out successfully"
+            "User logged out successfully, redirecting to homepage"
         );
     }
 
-    Ok(HttpResponse::Ok().json(serde_json::json!({
-        "message": "Logged out successfully"
-    })))
+    // Redirect to homepage instead of returning JSON
+    Ok(HttpResponse::Found()
+        .append_header(("Location", "/"))
+        .finish())
 }
 
 /// POST /api/settings/update-wallet - Update user's Monero wallet address
