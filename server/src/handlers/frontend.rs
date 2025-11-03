@@ -1620,6 +1620,10 @@ pub async fn show_checkout(
     let csrf_token = get_csrf_token(&session);
     ctx.insert("csrf_token", &csrf_token);
 
+    // Initialize default values
+    ctx.insert("cart_total_xmr", &0.0);
+    ctx.insert("checkout_mode", &"cart");
+
     // 2. Determine checkout source: order_id, listing_id, or cart
     let order_id = if let Some(ref oid) = query.order_id {
         // Direct order ID provided (from "Buy Now" or existing order)

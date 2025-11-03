@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - Nexus Marketplace</title>
-    <meta name="description" content="Finalisez votre commande avec protection escrow multisig">
+    <meta name="description" content="Finalisez votre commande avec protection escrow multisig 2/3 Monero">
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="/static/css/main.css">
 </head>
@@ -22,157 +22,338 @@
             <!-- Header -->
             <div class="checkout-header">
                 <h1 class="checkout-title">
-                    Finaliser la <span class="checkout-title-accent">commande</span>
+                    Checkout <span class="checkout-title-accent">Sécurisé</span>
                 </h1>
                 <p class="checkout-subtitle">
-                    Transaction sécurisée par escrow multisig 2/3
+                    Transaction non-custodial avec escrow multisig 2/3 Monero
                 </p>
             </div>
 
-            <!-- Steps Indicator -->
-            <div class="checkout-steps">
-                <div class="checkout-step">
-                    <div class="checkout-step-circle active">
-                        <i data-lucide="check-circle-2"></i>
-                    </div>
-                    <div class="checkout-step-line active"></div>
-                </div>
-                <div class="checkout-step">
-                    <div class="checkout-step-circle" id="step-2-circle">2</div>
-                    <div class="checkout-step-line" id="step-2-line"></div>
-                </div>
-                <div class="checkout-step">
-                    <div class="checkout-step-circle" id="step-3-circle">3</div>
-                </div>
-            </div>
+            <!-- Hidden Data for JavaScript -->
+            <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+            {% if order %}
+            <input type="hidden" id="order-id" value="{{ order.id }}">
+            {% endif %}
+            {% if escrow %}
+            <input type="hidden" id="escrow-id" value="{{ escrow.id }}">
+            <input type="hidden" id="escrow-status" value="{{ escrow.status }}">
+            {% endif %}
+            <input type="hidden" id="wallet-registered" value="{% if wallet_registered %}true{% else %}false{% endif %}">
+            <input type="hidden" id="checkout-mode" value="{{ checkout_mode | default(value='cart') }}">
 
             <div class="checkout-grid">
                 <!-- Main Form -->
                 <div class="checkout-main">
-                    <!-- Step 1: Delivery Info -->
-                    <div class="checkout-card" id="step-1">
+                    <!-- Step 0: Wallet Registration (if not registered) -->
+                    {% if not wallet_registered %}
+                    <div class="checkout-card" id="wallet-registration">
                         <div class="checkout-card-header">
-                            <h2 class="checkout-card-title">Informations de livraison</h2>
+                            <h2 class="checkout-card-title">
+                                <i data-lucide="wallet" class="inline-icon"></i>
+                                Configuration Wallet Non-Custodial
+                            </h2>
                             <p class="checkout-card-description">
-                                Ces informations sont chiffrées et ne seront partagées qu'avec le vendeur
+                                Vous contrôlez vos clés privées. Le marketplace ne peut JAMAIS accéder à vos fonds.
                             </p>
                         </div>
                         <div class="checkout-card-content">
-                            <div class="checkout-form-row">
-                                <div class="checkout-form-field">
-                                    <label for="username" class="checkout-label">Nom d'utilisateur</label>
-                                    <input type="text" id="username" class="checkout-input" placeholder="anonymous_user">
-                                </div>
-                                <div class="checkout-form-field">
-                                    <label for="contact" class="checkout-label">Contact chiffré</label>
-                                    <input type="text" id="contact" class="checkout-input" placeholder="PGP Key ID">
-                                </div>
-                            </div>
-
-                            <div class="checkout-form-field">
-                                <label for="delivery" class="checkout-label">Instructions de livraison</label>
-                                <input type="text" id="delivery" class="checkout-input" placeholder="Instructions spéciales (optionnel)">
-                            </div>
-
-                            <div class="checkout-notice">
-                                <i data-lucide="shield" class="checkout-notice-icon"></i>
-                                <div class="checkout-notice-content">
-                                    <p class="checkout-notice-title">Protection Escrow</p>
-                                    <p class="checkout-notice-text">
-                                        Vos fonds sont sécurisés dans un escrow multisig 2/3. Ils ne seront libérés qu'après confirmation de réception.
+                            <div class="wallet-status-box inactive">
+                                <i data-lucide="alert-circle" class="wallet-status-icon"></i>
+                                <div class="wallet-status-content">
+                                    <p class="wallet-status-title">Aucun wallet enregistré</p>
+                                    <p class="wallet-status-text">
+                                        Vous devez connecter votre wallet RPC Monero pour continuer
                                     </p>
                                 </div>
                             </div>
 
-                            <button class="btn-checkout-primary" id="step-1-next">
-                                Continuer vers le paiement
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Step 2: Payment Method -->
-                    <div class="checkout-card" id="step-2" style="display: none;">
-                        <div class="checkout-card-header">
-                            <h2 class="checkout-card-title">Méthode de paiement</h2>
-                            <p class="checkout-card-description">
-                                Sélectionnez votre crypto-monnaie préférée
-                            </p>
-                        </div>
-                        <div class="checkout-card-content">
-                            <div class="checkout-payment-options">
-                                <label class="checkout-payment-option">
-                                    <input type="radio" name="payment" value="btc" checked>
-                                    <div class="checkout-payment-content">
-                                        <span class="checkout-payment-name">Bitcoin (BTC)</span>
-                                        <span class="checkout-payment-badge">Recommandé</span>
-                                    </div>
-                                </label>
-                                <label class="checkout-payment-option">
-                                    <input type="radio" name="payment" value="xmr">
-                                    <div class="checkout-payment-content">
-                                        <span class="checkout-payment-name">Monero (XMR)</span>
-                                    </div>
-                                </label>
-                                <label class="checkout-payment-option">
-                                    <input type="radio" name="payment" value="eth">
-                                    <div class="checkout-payment-content">
-                                        <span class="checkout-payment-name">Ethereum (ETH)</span>
-                                    </div>
-                                </label>
-                            </div>
-
-                            <div class="checkout-form-field">
-                                <label for="wallet" class="checkout-label">Adresse de portefeuille</label>
-                                <input type="text" id="wallet" class="checkout-input checkout-input-mono" placeholder="bc1q...">
-                                <p class="checkout-field-hint">
-                                    Cette adresse sera utilisée pour les remboursements éventuels
-                                </p>
-                            </div>
-
-                            <div class="checkout-button-group">
-                                <button class="btn-checkout-secondary" id="step-2-back">
-                                    Retour
-                                </button>
-                                <button class="btn-checkout-primary" id="step-2-next">
-                                    Continuer
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Step 3: Confirmation -->
-                    <div class="checkout-card" id="step-3" style="display: none;">
-                        <div class="checkout-card-header">
-                            <h2 class="checkout-card-title">Confirmation</h2>
-                            <p class="checkout-card-description">
-                                Vérifiez les détails de votre commande
-                            </p>
-                        </div>
-                        <div class="checkout-card-content">
-                            <div class="checkout-total-box">
-                                <span class="checkout-total-label">Total</span>
-                                <span class="checkout-total-value">0.05 BTC</span>
-                            </div>
-
-                            <div class="checkout-escrow-box">
-                                <div class="checkout-escrow-header">
-                                    <i data-lucide="lock" class="checkout-escrow-icon"></i>
-                                    <span class="checkout-escrow-title">Adresse Escrow Multisig</span>
+                            <div class="wallet-form" id="wallet-form">
+                                <div class="checkout-form-field">
+                                    <label for="rpc-url" class="checkout-label">
+                                        URL du Wallet RPC
+                                        <span class="label-required">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="rpc-url"
+                                        class="checkout-input checkout-input-mono"
+                                        placeholder="http://127.0.0.1:18082/json_rpc"
+                                        value="http://127.0.0.1:18082/json_rpc">
+                                    <p class="checkout-field-hint">
+                                        <i data-lucide="info"></i>
+                                        Doit pointer vers votre instance locale de monero-wallet-rpc
+                                    </p>
                                 </div>
-                                <input type="text" value="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" readonly class="checkout-input checkout-input-mono">
-                                <p class="checkout-escrow-instructions">
-                                    Envoyez exactement <strong class="checkout-escrow-amount">0.05 BTC</strong> à cette adresse.
-                                    Les fonds seront bloqués jusqu'à confirmation de livraison.
+
+                                <div class="checkout-form-row">
+                                    <div class="checkout-form-field">
+                                        <label for="rpc-user" class="checkout-label">
+                                            RPC Username (optionnel)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="rpc-user"
+                                            class="checkout-input"
+                                            placeholder="Laissez vide si aucune authentification">
+                                    </div>
+                                    <div class="checkout-form-field">
+                                        <label for="rpc-password" class="checkout-label">
+                                            RPC Password (optionnel)
+                                        </label>
+                                        <input
+                                            type="password"
+                                            id="rpc-password"
+                                            class="checkout-input"
+                                            placeholder="Laissez vide si aucune authentification">
+                                    </div>
+                                </div>
+
+                                <div class="checkout-notice">
+                                    <i data-lucide="shield-check" class="checkout-notice-icon"></i>
+                                    <div class="checkout-notice-content">
+                                        <p class="checkout-notice-title">Sécurité Garantie</p>
+                                        <p class="checkout-notice-text">
+                                            Vos clés privées restent sur VOTRE machine. Le marketplace se connecte uniquement via RPC pour signer les transactions multisig.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <button class="btn-checkout-primary" id="register-wallet-btn">
+                                    <i data-lucide="link"></i>
+                                    <span>Connecter mon wallet</span>
+                                </button>
+                            </div>
+
+                            <div class="checkout-help-box">
+                                <p class="help-title">
+                                    <i data-lucide="help-circle"></i>
+                                    Comment configurer mon wallet RPC?
+                                </p>
+                                <a href="/docs/wallet-setup" target="_blank" class="help-link">
+                                    Consulter le guide complet →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Step 1: Escrow Initialization (after wallet registration) -->
+                    <div class="checkout-card" id="escrow-init" style="{% if not wallet_registered %}display:none;{% elif escrow_exists %}display:none;{% endif %}">
+                        <div class="checkout-card-header">
+                            <h2 class="checkout-card-title">
+                                <i data-lucide="lock" class="inline-icon"></i>
+                                Initialisation Escrow Multisig
+                            </h2>
+                            <p class="checkout-card-description">
+                                Création du wallet multisig 2/3 (Vous + Vendeur + Arbitre)
+                            </p>
+                        </div>
+                        <div class="checkout-card-content">
+                            <div class="multisig-progress">
+                                <div class="progress-step" id="step-prepare">
+                                    <div class="progress-icon">
+                                        <i data-lucide="loader"></i>
+                                    </div>
+                                    <div class="progress-content">
+                                        <p class="progress-title">Préparation multisig</p>
+                                        <p class="progress-text">Génération des informations multisig...</p>
+                                    </div>
+                                </div>
+
+                                <div class="progress-step" id="step-make">
+                                    <div class="progress-icon">
+                                        <i data-lucide="loader"></i>
+                                    </div>
+                                    <div class="progress-content">
+                                        <p class="progress-title">Création wallet partagé</p>
+                                        <p class="progress-text">Construction du wallet 2-of-3...</p>
+                                    </div>
+                                </div>
+
+                                <div class="progress-step" id="step-sync-r1">
+                                    <div class="progress-icon">
+                                        <i data-lucide="loader"></i>
+                                    </div>
+                                    <div class="progress-content">
+                                        <p class="progress-title">Synchronisation (round 1)</p>
+                                        <p class="progress-text">Échange d'informations de sync...</p>
+                                    </div>
+                                </div>
+
+                                <div class="progress-step" id="step-sync-r2">
+                                    <div class="progress-icon">
+                                        <i data-lucide="loader"></i>
+                                    </div>
+                                    <div class="progress-content">
+                                        <p class="progress-title">Synchronisation (round 2)</p>
+                                        <p class="progress-text">Finalisation du wallet multisig...</p>
+                                    </div>
+                                </div>
+
+                                <div class="progress-step" id="step-verify">
+                                    <div class="progress-icon">
+                                        <i data-lucide="loader"></i>
+                                    </div>
+                                    <div class="progress-content">
+                                        <p class="progress-title">Vérification</p>
+                                        <p class="progress-text">Contrôle de cohérence du wallet...</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="checkout-notice info">
+                                <i data-lucide="clock" class="checkout-notice-icon"></i>
+                                <div class="checkout-notice-content">
+                                    <p class="checkout-notice-text">
+                                        Ce processus est automatique et prend généralement 10-30 secondes.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Payment Instructions (once escrow is ready) -->
+                    <div class="checkout-card" id="payment-instructions" style="{% if not escrow_exists %}display:none;{% elif escrow.status == 'active' %}display:none;{% endif %}">
+                        <div class="checkout-card-header">
+                            <h2 class="checkout-card-title">
+                                <i data-lucide="send" class="inline-icon"></i>
+                                Envoyer le Paiement
+                            </h2>
+                            <p class="checkout-card-description">
+                                Envoyez le montant exact à l'adresse multisig escrow ci-dessous
+                            </p>
+                        </div>
+                        <div class="checkout-card-content">
+                            <div class="payment-info-grid">
+                                <div class="payment-info-item">
+                                    <span class="payment-info-label">Type d'escrow:</span>
+                                    <span class="payment-info-value">
+                                        <i data-lucide="users" class="inline-icon-sm"></i>
+                                        2-of-3 Multisig
+                                    </span>
+                                </div>
+                                <div class="payment-info-item">
+                                    <span class="payment-info-label">Participants:</span>
+                                    <span class="payment-info-value">Vous + Vendeur + Arbitre</span>
+                                </div>
+                            </div>
+
+                            <div class="multisig-address-box">
+                                <label for="multisig-address" class="checkout-label">
+                                    <i data-lucide="lock" class="inline-icon-sm"></i>
+                                    Adresse Multisig Escrow
+                                </label>
+                                <div class="address-input-group">
+                                    <input
+                                        type="text"
+                                        id="multisig-address"
+                                        class="checkout-input checkout-input-mono checkout-input-address"
+                                        value="{% if escrow and escrow.multisig_address %}{{ escrow.multisig_address }}{% else %}Génération en cours...{% endif %}"
+                                        readonly>
+                                    <button class="btn-copy" id="copy-address-btn" {% if not escrow or not escrow.multisig_address %}disabled{% endif %}>
+                                        <i data-lucide="copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="amount-box">
+                                <label class="checkout-label">Montant exact à envoyer:</label>
+                                <div class="amount-display">
+                                    <span class="amount-xmr" id="amount-xmr" data-amount="{% if escrow %}{{ escrow.amount }}{% else %}0{% endif %}">
+                                        {% if escrow %}{{ escrow.amount }}{% else %}0{% endif %}
+                                    </span>
+                                    <span class="amount-currency">XMR</span>
+                                </div>
+                                <p class="amount-atomic">
+                                    (<span id="amount-atomic">{% if escrow %}{{ escrow.amount }}{% else %}0{% endif %}</span> piconeros)
                                 </p>
                             </div>
 
-                            <div class="checkout-button-group">
-                                <button class="btn-checkout-secondary" id="step-3-back">
-                                    Retour
-                                </button>
-                                <button class="btn-checkout-primary" id="step-3-confirm">
-                                    Confirmer la commande
-                                </button>
+                            <div class="checkout-notice warning">
+                                <i data-lucide="alert-triangle" class="checkout-notice-icon"></i>
+                                <div class="checkout-notice-content">
+                                    <p class="checkout-notice-title">Important</p>
+                                    <p class="checkout-notice-text">
+                                        Envoyez EXACTEMENT le montant indiqué. Un montant différent retardera le traitement de votre commande.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="security-box">
+                                <div class="security-header">
+                                    <i data-lucide="shield" class="security-icon"></i>
+                                    <h4 class="security-title">Protection Escrow</h4>
+                                </div>
+                                <ul class="security-list">
+                                    <li>
+                                        <i data-lucide="check" class="check-icon"></i>
+                                        Les fonds sont bloqués dans le wallet multisig
+                                    </li>
+                                    <li>
+                                        <i data-lucide="check" class="check-icon"></i>
+                                        Libération nécessite 2 signatures sur 3
+                                    </li>
+                                    <li>
+                                        <i data-lucide="check" class="check-icon"></i>
+                                        Vous + Arbitre = Release vers vendeur
+                                    </li>
+                                    <li>
+                                        <i data-lucide="check" class="check-icon"></i>
+                                        Vendeur + Arbitre = Refund vers vous
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="payment-status" id="payment-status">
+                                <div class="status-icon">
+                                    <i data-lucide="clock"></i>
+                                </div>
+                                <div class="status-content">
+                                    <p class="status-title">En attente de paiement</p>
+                                    <p class="status-text">Nous surveillons la blockchain...</p>
+                                    <div class="status-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" id="confirmations-progress"></div>
+                                        </div>
+                                        <p class="progress-label">
+                                            <span id="confirmations-count">0</span>/10 confirmations
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Payment Confirmed -->
+                    <div class="checkout-card success" id="payment-confirmed" style="{% if not escrow or escrow.status != 'active' %}display:none;{% endif %}">
+                        <div class="checkout-card-header">
+                            <div class="success-icon-large">
+                                <i data-lucide="check-circle"></i>
+                            </div>
+                            <h2 class="checkout-card-title">Paiement Confirmé!</h2>
+                            <p class="checkout-card-description">
+                                Votre commande est maintenant en cours de traitement
+                            </p>
+                        </div>
+                        <div class="checkout-card-content">
+                            <div class="order-next-steps">
+                                <h3 class="next-steps-title">Prochaines étapes:</h3>
+                                <ol class="next-steps-list">
+                                    <li>Le vendeur prépare votre commande</li>
+                                    <li>Vous recevrez une notification lors de l'expédition</li>
+                                    <li>Confirmez la réception pour libérer les fonds</li>
+                                </ol>
+                            </div>
+
+                            <div class="order-actions">
+                                <a href="{% if order %}/orders/{{ order.id }}{% else %}#{% endif %}" class="btn-checkout-primary">
+                                    <i data-lucide="package"></i>
+                                    <span>Voir ma commande</span>
+                                </a>
+                                <a href="/listings" class="btn-checkout-secondary">
+                                    <i data-lucide="shopping-bag"></i>
+                                    <span>Continuer mes achats</span>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -182,48 +363,105 @@
                 <div class="checkout-sidebar">
                     <div class="checkout-summary-card">
                         <div class="checkout-summary-header">
-                            <h3 class="checkout-summary-title">Résumé</h3>
+                            <h3 class="checkout-summary-title">Résumé de la commande</h3>
                         </div>
                         <div class="checkout-summary-content">
+                            {% if cart %}
+                            <!-- Cart Mode -->
+                            {% for item in cart.items %}
+                            <div class="checkout-summary-item">
+                                <div class="checkout-summary-product">
+                                    {% if item.image_cid %}
+                                    <div class="checkout-summary-image">
+                                        <img src="/api/listings/{{ item.listing_id }}/images/{{ item.image_cid }}" alt="{{ item.title }}">
+                                    </div>
+                                    {% else %}
+                                    <div class="checkout-summary-image checkout-summary-image-placeholder">
+                                        <i data-lucide="package"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div class="checkout-summary-details">
+                                        <p class="checkout-summary-name">{{ item.title }}</p>
+                                        <p class="checkout-summary-quantity">Quantité: {{ item.quantity }}</p>
+                                        <p class="checkout-summary-price" data-price="{{ item.price_xmr }}">
+                                            {{ item.price_xmr }} piconeros
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% elif order %}
+                            <!-- Order Mode -->
                             <div class="checkout-summary-item">
                                 <div class="checkout-summary-product">
                                     <div class="checkout-summary-image checkout-summary-image-placeholder">
                                         <i data-lucide="package"></i>
                                     </div>
                                     <div class="checkout-summary-details">
-                                        <p class="checkout-summary-name">Premium Digital Asset</p>
+                                        <p class="checkout-summary-name">Commande #{{ order.id | truncate(length=8, end="...") }}</p>
                                         <p class="checkout-summary-quantity">Quantité: 1</p>
                                     </div>
                                 </div>
                             </div>
+                            {% endif %}
 
                             <div class="checkout-summary-breakdown">
                                 <div class="checkout-summary-row">
                                     <span class="checkout-summary-label">Sous-total</span>
-                                    <span class="checkout-summary-value">0.05 BTC</span>
+                                    <span class="checkout-summary-value monero-amount">
+                                        {% if cart %}
+                                        {{ cart_total_xmr }} XMR
+                                        {% elif order %}
+                                        {{ order.total_xmr }} piconeros
+                                        {% else %}
+                                        0 piconeros
+                                        {% endif %}
+                                    </span>
                                 </div>
                                 <div class="checkout-summary-row">
-                                    <span class="checkout-summary-label">Frais escrow</span>
-                                    <span class="checkout-summary-value">0.001 BTC</span>
+                                    <span class="checkout-summary-label">
+                                        Frais escrow
+                                        <i data-lucide="help-circle" class="help-icon-sm" title="2% pour protection multisig"></i>
+                                    </span>
+                                    <span class="checkout-summary-value monero-amount">~0.000200000000 XMR</span>
                                 </div>
                                 <div class="checkout-summary-row">
-                                    <span class="checkout-summary-label">Frais réseau</span>
-                                    <span class="checkout-summary-value">0.0005 BTC</span>
+                                    <span class="checkout-summary-label">
+                                        Frais réseau
+                                        <i data-lucide="help-circle" class="help-icon-sm" title="Frais de transaction Monero"></i>
+                                    </span>
+                                    <span class="checkout-summary-value monero-amount">~0.000100000000 XMR</span>
                                 </div>
                                 <div class="checkout-summary-total">
                                     <span class="checkout-summary-total-label">Total</span>
-                                    <span class="checkout-summary-total-value">0.0515 BTC</span>
+                                    <span class="checkout-summary-total-value monero-amount" id="total-xmr">
+                                        {% if cart %}
+                                        {{ cart_total_xmr }} XMR
+                                        {% elif order %}
+                                        {{ order.total_xmr }} piconeros
+                                        {% else %}
+                                        0 piconeros
+                                        {% endif %}
+                                    </span>
                                 </div>
                             </div>
 
                             <div class="checkout-summary-security">
+                                <div class="checkout-security-badge monero">
+                                    <img src="/static/img/monero-logo.svg" alt="Monero" class="crypto-logo">
+                                    <span>Monero (XMR) uniquement</span>
+                                </div>
                                 <div class="checkout-security-item">
                                     <i data-lucide="shield" class="checkout-security-icon"></i>
                                     <span class="checkout-security-text">Escrow multisig 2/3</span>
                                 </div>
                                 <div class="checkout-security-item">
                                     <i data-lucide="lock" class="checkout-security-icon"></i>
-                                    <span class="checkout-security-text">Anonymat complet via Tor</span>
+                                    <span class="checkout-security-text">Non-custodial (vos clés)</span>
+                                </div>
+                                <div class="checkout-security-item">
+                                    <i data-lucide="eye-off" class="checkout-security-icon"></i>
+                                    <span class="checkout-security-text">Anonymat total via Tor</span>
                                 </div>
                             </div>
                         </div>
