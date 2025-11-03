@@ -126,8 +126,8 @@ pub async fn register(
 
     let mut conn = pool.get().map_err(|e| ApiError::Internal(e.to_string()))?;
 
-    // 1. Check if username exists
-    let req_username = req.username.clone();
+    // 1. Check if username exists (normalize to lowercase for case-insensitive comparison)
+    let req_username = req.username.to_lowercase();
     let username_exists =
         web::block(move || User::username_exists(&mut conn, &req_username)).await??;
     if username_exists {
@@ -149,11 +149,11 @@ pub async fn register(
     })
     .await??;
 
-    // 3. Create user
+    // 3. Create user (use normalized lowercase username)
     let mut conn = pool.get().map_err(|e| ApiError::Internal(e.to_string()))?;
     let new_user = NewUser {
         id: Uuid::new_v4().to_string(),
-        username: req.username.clone(),
+        username: req.username.to_lowercase(),  // Store lowercase for case-insensitive login
         password_hash,
         wallet_address: req.wallet_address.clone(),
         wallet_id: None,
@@ -259,7 +259,7 @@ pub async fn login(
         };
     }
 
-    let username = req.username.clone();
+    let username = req.username.to_lowercase();  // Normalize to lowercase for case-insensitive login
     let password = req.password.clone();
 
     // 2. Find user by username
@@ -476,6 +476,7 @@ pub async fn update_wallet_address(
     let mut conn = pool.get().map_err(|e| ApiError::Internal(e.to_string()))?;
 
     let wallet_addr = req.wallet_address.clone();
+    let wallet_addr_for_display = wallet_addr.clone(); // Clone for later use in HTML response
     let uid = user_id.clone();
 
     info!("DEBUG: Attempting to update wallet for user_id: {}", uid);
@@ -508,11 +509,22 @@ pub async fn update_wallet_address(
             );
 
             if is_htmx {
-                Ok(HttpResponse::Ok().content_type("text/html").body(
+                // Return updated wallet display HTML + success message
+                let html = format!(
                     r#"<div class="alert alert-success" style="padding: 1rem; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 4px; color: #22c55e; margin-bottom: 1rem;">
-                        ✅ Wallet address updated successfully! Refresh the page to see the update.
-                    </div>"#
-                ))
+                        ✅ Wallet address updated successfully!
+                    </div>
+                    <div class="wallet-address-display" style="margin-top: 1rem;">
+                        <label class="label" style="color: hsl(142, 76%, 60%);">
+                            ✅ Current Wallet Address
+                        </label>
+                        <div class="address-text" style="font-family: monospace; font-size: 0.8125rem; color: hsl(142, 76%, 70%); word-break: break-all; line-height: 1.6;">
+                            {}
+                        </div>
+                    </div>"#,
+                    wallet_addr_for_display
+                );
+                Ok(HttpResponse::Ok().content_type("text/html").body(html))
             } else {
                 Ok(HttpResponse::Ok().json(serde_json::json!({
                     "message": "Wallet address updated successfully"

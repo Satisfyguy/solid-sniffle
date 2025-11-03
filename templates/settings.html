@@ -195,20 +195,8 @@
             </div>
 
             <div class="card-content">
-              <form
-                hx-post="/api/settings/update-wallet"
-                hx-target="#wallet-result"
-                hx-swap="innerHTML"
-                hx-indicator=".htmx-indicator"
-                hx-disabled-elt="find button[type='submit']"
-                role="form"
-                aria-label="Update wallet address form"
-                style="display: flex; flex-direction: column; gap: 1.5rem;"
-              >
-                <!-- CSRF Token -->
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}" aria-hidden="true">
-
-                <!-- Current Wallet Address (if set) -->
+              <!-- Current Wallet Address Display (Updated via HTMX) -->
+              <div id="wallet-result" style="margin-bottom: 1.5rem;">
                 {% if wallet_address %}
                 <div class="wallet-address-display">
                   <label class="label">
@@ -235,6 +223,20 @@
                   </div>
                 </div>
                 {% endif %}
+              </div>
+
+              <form
+                hx-post="/api/settings/update-wallet"
+                hx-target="#wallet-result"
+                hx-swap="innerHTML"
+                hx-indicator=".htmx-indicator"
+                hx-disabled-elt="find button[type='submit']"
+                role="form"
+                aria-label="Update wallet address form"
+                style="display: flex; flex-direction: column; gap: 1.5rem;"
+              >
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}" aria-hidden="true">
 
                 <!-- New Wallet Address Input -->
                 <div>
@@ -271,9 +273,6 @@
                   <span class="htmx-indicator" aria-hidden="true">→</span>
                 </button>
               </form>
-
-              <!-- Response Container -->
-              <div id="wallet-result" style="margin-top: 1.5rem;"></div>
             </div>
           </div>
           {% endif %}

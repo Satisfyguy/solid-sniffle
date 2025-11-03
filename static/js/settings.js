@@ -16,23 +16,9 @@ document.body.addEventListener('htmx:afterRequest', function(event) {
         );
       }
 
-      resultDiv.innerHTML = `
-        <div class="nexus-alert nexus-alert-success" style="padding: 1rem; border-radius: 8px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); color: hsl(142, 76%, 60%); display: flex; align-items: center; gap: 0.75rem;">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-          </svg>
-          <div>
-            <strong style="display: block; margin-bottom: 0.25rem;">Wallet Address Updated</strong>
-            <small>Your payment address has been saved. You can now mark orders as shipped.</small>
-          </div>
-        </div>
-      `;
-
-      // Reload page after 2 seconds to show updated address
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      // HTMX already updates #wallet-result with the new address from backend
+      // No need to manually set innerHTML or reload the page
+      // The backend returns the complete HTML with success message + new address
     } else {
       // Error handling with toast
       const errorMessage = event.detail.xhr?.responseText || 'Failed to update wallet address';
