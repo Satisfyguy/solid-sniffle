@@ -4,6 +4,7 @@ use actix_session::Session;
 use actix_web::{web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use crate::db::db_load_escrow;
+use url::Url;
 use uuid::Uuid;
 use validator::Validate;
 
@@ -21,7 +22,7 @@ use crate::services::escrow::EscrowOrchestrator;
 #[derive(Debug, Deserialize, Validate)]
 pub struct RegisterWalletRpcRequest {
     /// Client's wallet RPC URL (e.g., "http://127.0.0.1:18082/json_rpc" or "http://abc123.onion:18082/json_rpc")
-    #[validate(url(message = "Invalid RPC URL format"))]
+    #[validate(custom = "validate_rpc_url")]
     #[validate(length(min = 10, max = 500, message = "RPC URL must be 10-500 characters"))]
     pub rpc_url: String,
 
@@ -47,6 +48,29 @@ fn validate_client_role(role: &str) -> Result<(), validator::ValidationError> {
         )),
         _ => Err(validator::ValidationError::new("invalid_role")),
     }
+}
+
+/// Validate RPC URL: only allow localhost or .onion (no public URLs)
+fn validate_rpc_url(url: &str) -> Result<(), validator::ValidationError> {
+    let parsed = Url::parse(url)
+        .map_err(|_| validator::ValidationError::new("invalid_url"))?;
+
+    let host = parsed.host_str()
+        .ok_or_else(|| validator::ValidationError::new("no_host"))?;
+
+    // Only allow localhost, 127.x.x.x, or .onion addresses
+    let is_localhost = host.starts_with("127.")
+        || host.eq("localhost")
+        || host.starts_with("::1");
+    let is_onion = host.ends_with(".onion");
+
+    if !is_localhost && !is_onion {
+        return Err(validator::ValidationError::new(
+            "rpc_url_must_be_local_or_onion"
+        ));
+    }
+
+    Ok(())
 }
 
 /// Response for successful wallet registration
