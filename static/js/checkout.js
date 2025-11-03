@@ -79,6 +79,12 @@ class CheckoutFlow {
         if (copyBtn) {
             copyBtn.addEventListener('click', () => this.copyMultisigAddress());
         }
+
+        // DEV: Simulate payment button
+        const devSimulateBtn = document.getElementById('dev-simulate-payment-btn');
+        if (devSimulateBtn) {
+            devSimulateBtn.addEventListener('click', () => this.devSimulatePayment());
+        }
     }
 
     /**
@@ -165,6 +171,77 @@ class CheckoutFlow {
             if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i data-lucide="arrow-right"></i><span>Continuer vers le paiement</span>';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
+    }
+
+    /**
+     * DEV: Simulate payment (for testing without blockchain)
+     */
+    async devSimulatePayment() {
+        console.log('[DEV] Simulating payment...');
+
+        if (!this.orderId) {
+            this.showNotification('Erreur: Aucune commande en cours', 'error');
+            return;
+        }
+
+        try {
+            // Disable button
+            const btn = document.getElementById('dev-simulate-payment-btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i data-lucide="loader" class="animate-spin"></i><span>Simulation en cours...</span>';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+
+            // Call dev-simulate-payment endpoint
+            const response = await fetch(`/api/orders/${this.orderId}/dev-simulate-payment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': this.csrfToken
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                console.log('[DEV] Payment simulated successfully');
+
+                // Hide dev section
+                const devSection = document.getElementById('dev-simulate-section');
+                if (devSection) devSection.style.display = 'none';
+
+                // Show payment confirmed
+                this.showNotification('✅ Paiement simulé avec succès!', 'success');
+
+                // Update to show payment confirmed state
+                setTimeout(() => {
+                    this.showPaymentConfirmed();
+                }, 1000);
+
+            } else {
+                console.error('[DEV] Payment simulation failed:', data);
+                this.showNotification(data.error || 'Échec de la simulation', 'error');
+
+                // Re-enable button
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i data-lucide="zap"></i><span>DEV: Simuler le Paiement</span>';
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
+            }
+        } catch (error) {
+            console.error('[DEV] Simulation error:', error);
+            this.showNotification('Erreur lors de la simulation', 'error');
+
+            // Re-enable button
+            const btn = document.getElementById('dev-simulate-payment-btn');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="zap"></i><span>DEV: Simuler le Paiement</span>';
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             }
         }

@@ -130,7 +130,8 @@
                                     <div class="checkout-notice-content">
                                         <p class="checkout-notice-title">Confidentialité garantie</p>
                                         <p class="checkout-notice-text">
-                                            Votre adresse sera chiffrée (AES-256-GCM) et uniquement visible par le vendeur de cette commande.
+                                            Votre adresse est chiffrée avec AES-256-GCM avant stockage. Seul le vendeur peut la déchiffrer.
+                                            Base de données également chiffrée (SQLCipher) pour une protection en profondeur.
                                         </p>
                                     </div>
                                 </div>
@@ -308,6 +309,23 @@
                                         Vendeur + Arbitre = Refund vers vous
                                     </li>
                                 </ul>
+                            </div>
+
+                            <!-- DEV ONLY: Simulate Payment Button -->
+                            <div class="dev-actions" id="dev-simulate-section" style="margin-top: 1.5rem;">
+                                <div class="checkout-notice info" style="background: #1a1a2e; border-color: #ffd700;">
+                                    <i data-lucide="flask" class="checkout-notice-icon" style="color: #ffd700;"></i>
+                                    <div class="checkout-notice-content">
+                                        <p class="checkout-notice-title" style="color: #ffd700;">Mode Développement</p>
+                                        <p class="checkout-notice-text">
+                                            Simulez le paiement pour tester le flow complet sans attendre les confirmations blockchain.
+                                        </p>
+                                    </div>
+                                </div>
+                                <button class="btn-checkout-primary" id="dev-simulate-payment-btn" style="background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); color: #1a1a2e;">
+                                    <i data-lucide="zap"></i>
+                                    <span>DEV: Simuler le Paiement</span>
+                                </button>
                             </div>
 
                             <div class="payment-status" id="payment-status">
