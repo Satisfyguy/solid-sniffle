@@ -303,6 +303,8 @@ async fn main() -> Result<()> {
             .route("/escrow/{id}", web::get().to(frontend::show_escrow))
             // Cart frontend route
             .route("/cart", web::get().to(frontend::show_cart))
+            // Checkout frontend route
+            .route("/checkout", web::get().to(frontend::show_checkout))
             // New V2 Listings route
             .route("/v2/listings", web::get().to(frontend::show_v2_listings))
             .route("/fr/home", web::get().to(frontend::new_index_french))

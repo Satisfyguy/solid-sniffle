@@ -1,32 +1,43 @@
-<div class="listing-card">
-    <div class="listing-card-header">
-        <div class="listing-card-badges">
-            <span class="badge">{{ listing.category }}</span>
-        </div>
-        <div class="listing-card-rating">
-            <i data-lucide="star"></i>
-            <span>{{ listing.rating }}</span>
-        </div>
-    </div>
-    <div class="listing-card-content">
-        <h3 class="listing-card-title">{{ listing.title }}</h3>
-        <p class="listing-card-description">{{ listing.description }}</p>
-        <div class="listing-card-info">
-            <div class="info-item">
-                <span>Vendor</span>
-                <span>{{ listing.vendor }}</span>
+<a href="/listings/{{ listing.id }}" class="listing-card-link">
+    <div class="listing-card">
+        <!-- Product Image -->
+        {% if listing.first_image_cid %}
+            <div class="listing-card-image">
+                <img src="/api/listings/{{ listing.id }}/images/{{ listing.first_image_cid }}"
+                     alt="{{ listing.title }}"
+                     loading="lazy">
+                <div class="listing-card-image-overlay">
+                    <div class="listing-card-badges">
+                        <span class="badge badge-category">{{ listing.category }}</span>
+                    </div>
+                    <div class="listing-card-rating">
+                        <i data-lucide="star" class="star-filled"></i>
+                        <span>{{ listing.rating }}</span>
+                    </div>
+                </div>
             </div>
-            <div class="info-item">
-                <span>Sales</span>
-                <span>{{ listing.sales }}</span>
+        {% endif %}
+
+        <div class="listing-card-content">
+            <h3 class="listing-card-title">{{ listing.title }}</h3>
+            <p class="listing-card-description">{{ listing.description | truncate(length=100) }}</p>
+            <div class="listing-card-info">
+                <div class="info-item">
+                    <span>Vendor</span>
+                    <span>{{ listing.vendor }}</span>
+                </div>
+                <div class="info-item">
+                    <span>Category</span>
+                    <span>{{ listing.category }}</span>
+                </div>
             </div>
         </div>
+        <div class="listing-card-footer">
+            <span class="listing-card-price">{{ listing.price }}</span>
+            <button class="btn-add-to-cart" data-listing-id="{{ listing.id }}">
+                <i data-lucide="shopping-cart"></i>
+                <span>Add</span>
+            </button>
+        </div>
     </div>
-    <div class="listing-card-footer">
-        <span class="listing-card-price">{{ listing.price }}</span>
-        <button class="btn-add-to-cart">
-            <i data-lucide="shopping-cart"></i>
-            <span>Add to Cart</span>
-        </button>
-    </div>
-</div>
+</a>

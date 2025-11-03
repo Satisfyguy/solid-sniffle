@@ -4,11 +4,16 @@
 
 use actix_session::Session;
 use actix_web::{web, HttpResponse, Responder};
+use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 use tera::{Context, Tera};
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 use crate::db::DbPool;
 use crate::middleware::csrf::get_csrf_token;
+use crate::models::escrow::Escrow;
+use crate::models::order::Order;
+use crate::models::cart::Cart;
 
 
 /// GET /new-home - New V2 Homepage
@@ -1555,6 +1560,199 @@ pub async fn show_featured(tera: web::Data<Tera>, session: Session) -> impl Resp
         Ok(html) => HttpResponse::Ok().content_type("text/html; charset=utf-8").body(html),
         Err(e) => {
             error!("Template error rendering featured page: {}", e);
+            HttpResponse::InternalServerError().body(format!("Template error: {}", e))
+        }
+    }
+}
+
+/// Query parameters for checkout page
+#[derive(Debug, Deserialize)]
+pub struct CheckoutQuery {
+    /// Direct order ID (if coming from "Buy Now")
+    pub order_id: Option<String>,
+    /// Listing ID (if coming from product page for single item checkout)
+    pub listing_id: Option<String>,
+}
+
+/// GET /checkout - Checkout page with multisig escrow integration
+///
+/// This page orchestrates the complete 2/3 multisig Monero escrow flow:
+/// 1. Verify user authentication and wallet registration
+/// 2. Create or retrieve order from cart/listing
+/// 3. Check existing escrow status
+/// 4. Display appropriate UI state (wallet registration, escrow init, payment, etc.)
+pub async fn show_checkout(
+    tera: web::Data<Tera>,
+    pool: web::Data<DbPool>,
+    session: Session,
+    query: web::Query<CheckoutQuery>,
+) -> impl Responder {
+    let mut ctx = Context::new();
+
+    // 1. Require authentication
+    let user_id = match session.get::<String>("user_id") {
+        Ok(Some(uid)) => uid,
+        _ => {
+            warn!("Unauthenticated user attempted to access checkout");
+            return HttpResponse::Found()
+                .append_header(("Location", "/login"))
+                .finish();
+        }
+    };
+
+    // Insert session data for base template
+    if let Ok(Some(username)) = session.get::<String>("username") {
+        ctx.insert("username", &username);
+        ctx.insert("user_name", &username);
+        ctx.insert("logged_in", &true);
+
+        if let Ok(Some(role)) = session.get::<String>("role") {
+            ctx.insert("role", &role);
+            ctx.insert("user_role", &role);
+            ctx.insert("is_vendor", &(role == "vendor"));
+        } else {
+            ctx.insert("user_role", &"buyer");
+            ctx.insert("is_vendor", &false);
+        }
+    }
+
+    // Add CSRF token for forms
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
+
+    // 2. Determine checkout source: order_id, listing_id, or cart
+    let order_id = if let Some(ref oid) = query.order_id {
+        // Direct order ID provided (from "Buy Now" or existing order)
+        info!("Checkout for existing order: {}", oid);
+        Some(oid.clone())
+    } else if let Some(ref listing_id) = query.listing_id {
+        // Single listing checkout (create temporary order context)
+        info!("Checkout for single listing: {}", listing_id);
+        ctx.insert("listing_id", listing_id);
+        ctx.insert("checkout_mode", &"single_listing");
+        None // Will create order on payment
+    } else {
+        // Cart checkout
+        info!("Checkout from cart");
+        ctx.insert("checkout_mode", &"cart");
+
+        // Get cart from session
+        let cart = match session.get::<Cart>("cart") {
+            Ok(Some(c)) if !c.items.is_empty() => c,
+            _ => {
+                warn!("Empty cart on checkout");
+                return HttpResponse::Found()
+                    .append_header(("Location", "/cart"))
+                    .finish();
+            }
+        };
+
+        ctx.insert("cart", &cart);
+        ctx.insert("cart_total_xmr", &cart.total_price_xmr());
+        None // Will create order on init-escrow
+    };
+
+    // 3. If order_id exists, fetch order and escrow data
+    if let Some(oid) = order_id {
+        let mut conn = match pool.get() {
+            Ok(c) => c,
+            Err(e) => {
+                error!("Database connection error: {}", e);
+                return HttpResponse::InternalServerError().body("Database error");
+            }
+        };
+
+        // Fetch order
+        let order_id_clone = oid.clone();
+        let order_result = web::block(move || Order::find_by_id(&mut conn, order_id_clone)).await;
+
+        match order_result {
+            Ok(Ok(order)) => {
+                // Verify user is buyer
+                if order.buyer_id != user_id {
+                    warn!("User {} attempted to checkout order {} owned by {}", user_id, order.id, order.buyer_id);
+                    return HttpResponse::Forbidden().body("You can only checkout your own orders");
+                }
+
+                ctx.insert("order", &order);
+                ctx.insert("order_id", &order.id);
+                ctx.insert("checkout_mode", &"existing_order");
+
+                // Check if escrow exists for this order
+                if let Some(ref escrow_id) = order.escrow_id {
+                    let mut conn2 = match pool.get() {
+                        Ok(c) => c,
+                        Err(e) => {
+                            error!("Database connection error: {}", e);
+                            return HttpResponse::InternalServerError().body("Database error");
+                        }
+                    };
+
+                    let escrow_id_clone = escrow_id.clone();
+                    let escrow_result = web::block(move || Escrow::find_by_id(&mut conn2, escrow_id_clone)).await;
+
+                    if let Ok(Ok(escrow)) = escrow_result {
+                        info!("Existing escrow found: {} (status: {})", escrow.id, escrow.status);
+                        ctx.insert("escrow", &escrow);
+                        ctx.insert("escrow_exists", &true);
+
+                        // Pass multisig address if available
+                        if let Some(ref addr) = escrow.multisig_address {
+                            ctx.insert("multisig_address", addr);
+                        }
+                    } else {
+                        ctx.insert("escrow_exists", &false);
+                    }
+                } else {
+                    ctx.insert("escrow_exists", &false);
+                }
+            }
+            Ok(Err(e)) => {
+                error!("Order not found: {}", e);
+                return HttpResponse::NotFound().body("Order not found");
+            }
+            Err(e) => {
+                error!("Database query error: {}", e);
+                return HttpResponse::InternalServerError().body("Database error");
+            }
+        }
+    }
+
+    // 4. Check wallet registration status
+    let mut conn_wallet = match pool.get() {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Database connection error: {}", e);
+            return HttpResponse::InternalServerError().body("Database error");
+        }
+    };
+
+    let user_id_clone = user_id.clone();
+    let user_result = web::block(move || {
+        use crate::models::user::User;
+        User::find_by_id(&mut conn_wallet, user_id_clone)
+    }).await;
+
+    match user_result {
+        Ok(Ok(user)) => {
+            let wallet_registered = user.wallet_address.is_some();
+            ctx.insert("wallet_registered", &wallet_registered);
+
+            if let Some(ref addr) = user.wallet_address {
+                ctx.insert("user_wallet_address", addr);
+            }
+        }
+        _ => {
+            warn!("Could not fetch user wallet status");
+            ctx.insert("wallet_registered", &false);
+        }
+    }
+
+    // Render template
+    match tera.render("checkout/index.html", &ctx) {
+        Ok(html) => HttpResponse::Ok().content_type("text/html; charset=utf-8").body(html),
+        Err(e) => {
+            error!("Template error rendering checkout page: {}", e);
             HttpResponse::InternalServerError().body(format!("Template error: {}", e))
         }
     }

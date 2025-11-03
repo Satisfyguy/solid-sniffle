@@ -1,4 +1,4 @@
-// Listings Page - Add to Cart functionality
+// Product Detail Page - Add to Cart functionality
 
 // Add to cart function
 async function addToCart(listingId) {
@@ -74,16 +74,14 @@ document.head.appendChild(style);
 
 // Initialize event listeners when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Add to cart buttons (multiple on listings page)
-    const addToCartButtons = document.querySelectorAll('.btn-add-to-cart');
-    addToCartButtons.forEach(button => {
-        button.addEventListener('click', function(event) {
-            event.preventDefault();
-            event.stopPropagation();
+    // Add to cart button
+    const addToCartBtn = document.querySelector('.btn-product-cart');
+    if (addToCartBtn) {
+        addToCartBtn.addEventListener('click', function() {
             const listingId = this.getAttribute('data-listing-id');
             if (listingId) {
                 addToCart(listingId);
             }
         });
-    });
+    }
 });

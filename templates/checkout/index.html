@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Nexus Marketplace</title>
+    <meta name="description" content="Finalisez votre commande avec protection escrow multisig">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+    {% include "header.html" %}
+
+    <main class="checkout-container">
+        <!-- Back Button -->
+        <a href="/cart" class="back-button">
+            <i data-lucide="arrow-left"></i>
+            <span>Retour au panier</span>
+        </a>
+
+        <div class="checkout-wrapper">
+            <!-- Header -->
+            <div class="checkout-header">
+                <h1 class="checkout-title">
+                    Finaliser la <span class="checkout-title-accent">commande</span>
+                </h1>
+                <p class="checkout-subtitle">
+                    Transaction sécurisée par escrow multisig 2/3
+                </p>
+            </div>
+
+            <!-- Steps Indicator -->
+            <div class="checkout-steps">
+                <div class="checkout-step">
+                    <div class="checkout-step-circle active">
+                        <i data-lucide="check-circle-2"></i>
+                    </div>
+                    <div class="checkout-step-line active"></div>
+                </div>
+                <div class="checkout-step">
+                    <div class="checkout-step-circle" id="step-2-circle">2</div>
+                    <div class="checkout-step-line" id="step-2-line"></div>
+                </div>
+                <div class="checkout-step">
+                    <div class="checkout-step-circle" id="step-3-circle">3</div>
+                </div>
+            </div>
+
+            <div class="checkout-grid">
+                <!-- Main Form -->
+                <div class="checkout-main">
+                    <!-- Step 1: Delivery Info -->
+                    <div class="checkout-card" id="step-1">
+                        <div class="checkout-card-header">
+                            <h2 class="checkout-card-title">Informations de livraison</h2>
+                            <p class="checkout-card-description">
+                                Ces informations sont chiffrées et ne seront partagées qu'avec le vendeur
+                            </p>
+                        </div>
+                        <div class="checkout-card-content">
+                            <div class="checkout-form-row">
+                                <div class="checkout-form-field">
+                                    <label for="username" class="checkout-label">Nom d'utilisateur</label>
+                                    <input type="text" id="username" class="checkout-input" placeholder="anonymous_user">
+                                </div>
+                                <div class="checkout-form-field">
+                                    <label for="contact" class="checkout-label">Contact chiffré</label>
+                                    <input type="text" id="contact" class="checkout-input" placeholder="PGP Key ID">
+                                </div>
+                            </div>
+
+                            <div class="checkout-form-field">
+                                <label for="delivery" class="checkout-label">Instructions de livraison</label>
+                                <input type="text" id="delivery" class="checkout-input" placeholder="Instructions spéciales (optionnel)">
+                            </div>
+
+                            <div class="checkout-notice">
+                                <i data-lucide="shield" class="checkout-notice-icon"></i>
+                                <div class="checkout-notice-content">
+                                    <p class="checkout-notice-title">Protection Escrow</p>
+                                    <p class="checkout-notice-text">
+                                        Vos fonds sont sécurisés dans un escrow multisig 2/3. Ils ne seront libérés qu'après confirmation de réception.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button class="btn-checkout-primary" id="step-1-next">
+                                Continuer vers le paiement
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Payment Method -->
+                    <div class="checkout-card" id="step-2" style="display: none;">
+                        <div class="checkout-card-header">
+                            <h2 class="checkout-card-title">Méthode de paiement</h2>
+                            <p class="checkout-card-description">
+                                Sélectionnez votre crypto-monnaie préférée
+                            </p>
+                        </div>
+                        <div class="checkout-card-content">
+                            <div class="checkout-payment-options">
+                                <label class="checkout-payment-option">
+                                    <input type="radio" name="payment" value="btc" checked>
+                                    <div class="checkout-payment-content">
+                                        <span class="checkout-payment-name">Bitcoin (BTC)</span>
+                                        <span class="checkout-payment-badge">Recommandé</span>
+                                    </div>
+                                </label>
+                                <label class="checkout-payment-option">
+                                    <input type="radio" name="payment" value="xmr">
+                                    <div class="checkout-payment-content">
+                                        <span class="checkout-payment-name">Monero (XMR)</span>
+                                    </div>
+                                </label>
+                                <label class="checkout-payment-option">
+                                    <input type="radio" name="payment" value="eth">
+                                    <div class="checkout-payment-content">
+                                        <span class="checkout-payment-name">Ethereum (ETH)</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="checkout-form-field">
+                                <label for="wallet" class="checkout-label">Adresse de portefeuille</label>
+                                <input type="text" id="wallet" class="checkout-input checkout-input-mono" placeholder="bc1q...">
+                                <p class="checkout-field-hint">
+                                    Cette adresse sera utilisée pour les remboursements éventuels
+                                </p>
+                            </div>
+
+                            <div class="checkout-button-group">
+                                <button class="btn-checkout-secondary" id="step-2-back">
+                                    Retour
+                                </button>
+                                <button class="btn-checkout-primary" id="step-2-next">
+                                    Continuer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Confirmation -->
+                    <div class="checkout-card" id="step-3" style="display: none;">
+                        <div class="checkout-card-header">
+                            <h2 class="checkout-card-title">Confirmation</h2>
+                            <p class="checkout-card-description">
+                                Vérifiez les détails de votre commande
+                            </p>
+                        </div>
+                        <div class="checkout-card-content">
+                            <div class="checkout-total-box">
+                                <span class="checkout-total-label">Total</span>
+                                <span class="checkout-total-value">0.05 BTC</span>
+                            </div>
+
+                            <div class="checkout-escrow-box">
+                                <div class="checkout-escrow-header">
+                                    <i data-lucide="lock" class="checkout-escrow-icon"></i>
+                                    <span class="checkout-escrow-title">Adresse Escrow Multisig</span>
+                                </div>
+                                <input type="text" value="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" readonly class="checkout-input checkout-input-mono">
+                                <p class="checkout-escrow-instructions">
+                                    Envoyez exactement <strong class="checkout-escrow-amount">0.05 BTC</strong> à cette adresse.
+                                    Les fonds seront bloqués jusqu'à confirmation de livraison.
+                                </p>
+                            </div>
+
+                            <div class="checkout-button-group">
+                                <button class="btn-checkout-secondary" id="step-3-back">
+                                    Retour
+                                </button>
+                                <button class="btn-checkout-primary" id="step-3-confirm">
+                                    Confirmer la commande
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary Sidebar -->
+                <div class="checkout-sidebar">
+                    <div class="checkout-summary-card">
+                        <div class="checkout-summary-header">
+                            <h3 class="checkout-summary-title">Résumé</h3>
+                        </div>
+                        <div class="checkout-summary-content">
+                            <div class="checkout-summary-item">
+                                <div class="checkout-summary-product">
+                                    <div class="checkout-summary-image checkout-summary-image-placeholder">
+                                        <i data-lucide="package"></i>
+                                    </div>
+                                    <div class="checkout-summary-details">
+                                        <p class="checkout-summary-name">Premium Digital Asset</p>
+                                        <p class="checkout-summary-quantity">Quantité: 1</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="checkout-summary-breakdown">
+                                <div class="checkout-summary-row">
+                                    <span class="checkout-summary-label">Sous-total</span>
+                                    <span class="checkout-summary-value">0.05 BTC</span>
+                                </div>
+                                <div class="checkout-summary-row">
+                                    <span class="checkout-summary-label">Frais escrow</span>
+                                    <span class="checkout-summary-value">0.001 BTC</span>
+                                </div>
+                                <div class="checkout-summary-row">
+                                    <span class="checkout-summary-label">Frais réseau</span>
+                                    <span class="checkout-summary-value">0.0005 BTC</span>
+                                </div>
+                                <div class="checkout-summary-total">
+                                    <span class="checkout-summary-total-label">Total</span>
+                                    <span class="checkout-summary-total-value">0.0515 BTC</span>
+                                </div>
+                            </div>
+
+                            <div class="checkout-summary-security">
+                                <div class="checkout-security-item">
+                                    <i data-lucide="shield" class="checkout-security-icon"></i>
+                                    <span class="checkout-security-text">Escrow multisig 2/3</span>
+                                </div>
+                                <div class="checkout-security-item">
+                                    <i data-lucide="lock" class="checkout-security-icon"></i>
+                                    <span class="checkout-security-text">Anonymat complet via Tor</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="/static/js/lucide.min.js"></script>
+    <script src="/static/js/checkout.js"></script>
+    <script src="/static/js/base.js"></script>
+</body>
+</html>
