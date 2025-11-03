@@ -1058,8 +1058,9 @@ pub async fn init_escrow(
             match Order::set_escrow(&mut conn, order_id_str, escrow.id.clone()) {
                 Ok(_) => {
                     tracing::info!("Escrow initialized for order {}: escrow_id={}", order.id, escrow.id);
-                    
+
                     HttpResponse::Ok().json(serde_json::json!({
+                        "success": true,
                         "escrow_id": escrow.id,
                         "escrow_address": escrow.multisig_address.unwrap_or_else(|| "Pending".to_string()),
                         "amount": order.total_xmr,

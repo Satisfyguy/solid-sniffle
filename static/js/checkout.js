@@ -281,6 +281,12 @@ class CheckoutFlow {
                 this.escrowId = data.escrow_id;
                 this.escrowStatus = data.status;
 
+                // Show escrow-init section before simulating progress
+                const escrowInitSection = document.getElementById('escrow-init');
+                if (escrowInitSection) {
+                    escrowInitSection.style.display = 'block';
+                }
+
                 // Show progress through multisig setup
                 this.simulateMultisigProgress();
             } else {
@@ -371,15 +377,21 @@ class CheckoutFlow {
                 console.log('[Checkout] Escrow status:', data);
                 this.escrowStatus = data.status;
 
-                if (data.multisig_address) {
-                    // Escrow ready for payment
-                    document.getElementById('escrow-init').style.display = 'none';
+                // Show payment instructions even if address is "Pending" (for DEV mode)
+                if (data.multisig_address || data.status === 'created') {
+                    // Hide escrow init progress
+                    const escrowInitSection = document.getElementById('escrow-init');
+                    if (escrowInitSection) {
+                        escrowInitSection.style.display = 'none';
+                    }
+
+                    // Show payment instructions
                     this.showPaymentInstructions();
                     this.startPaymentMonitoring();
 
-                    // Update multisig address in UI
+                    // Update multisig address in UI (even if "Pending")
                     const addressInput = document.getElementById('multisig-address');
-                    if (addressInput) {
+                    if (addressInput && data.multisig_address) {
                         addressInput.value = data.multisig_address;
                     }
 
@@ -389,9 +401,9 @@ class CheckoutFlow {
                         amountEl.textContent = (data.amount / 1000000000000).toFixed(12);
                     }
 
-                    // Enable copy button
+                    // Enable copy button only if address is real (not "Pending")
                     const copyBtn = document.getElementById('copy-address-btn');
-                    if (copyBtn) {
+                    if (copyBtn && data.multisig_address && data.multisig_address !== 'Pending') {
                         copyBtn.disabled = false;
                     }
                 }

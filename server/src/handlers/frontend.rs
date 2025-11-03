@@ -13,6 +13,7 @@ use tracing::{error, info, warn};
 use crate::db::DbPool;
 use crate::middleware::csrf::get_csrf_token;
 use crate::models::escrow::Escrow;
+use crate::models::listing::Listing;
 use crate::models::order::Order;
 use crate::models::cart::Cart;
 

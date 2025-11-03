@@ -15,8 +15,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get order ID from current URL (/orders/{id})
     const orderId = window.location.pathname.split('/').pop();
 
-    // Get CSRF token from meta tag or cookie
+    // Get CSRF token from hidden input, meta tag, or cookie
     function getCsrfToken() {
+        // First, try to get from hidden input (checkout flow)
+        const hiddenInput = document.getElementById('csrf-token');
+        if (hiddenInput && hiddenInput.value) {
+            return hiddenInput.value;
+        }
+
+        // Second, try meta tag
         const meta = document.querySelector('meta[name="csrf-token"]');
         if (meta) {
             return meta.getAttribute('content');
@@ -31,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        console.error('CSRF token not found');
+        console.error('CSRF token not found in hidden input, meta tag, or cookie');
         return null;
     }
 
