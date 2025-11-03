@@ -3,6 +3,7 @@
 use actix_session::Session;
 use actix_web::{web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
+use crate::db::db_load_escrow;
 use uuid::Uuid;
 use validator::Validate;
 
@@ -451,6 +452,23 @@ pub async fn refund_funds(
         }
     };
 
+    // Load escrow to verify requester is vendor or arbiter
+    let escrow = match db_load_escrow(&_pool, escrow_id).await {
+        Ok(e) => e,
+        Err(_) => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "Escrow not found"
+            }))
+        }
+    };
+
+    // Verify user is vendor or arbiter
+    if user_id.to_string() != escrow.vendor_id && user_id.to_string() != escrow.arbiter_id {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Only vendor or arbiter can refund"
+        }));
+    }
+
     // Refund funds via orchestrator
     match escrow_orchestrator
         .refund_funds(escrow_id, user_id, payload.buyer_address.clone())
@@ -625,6 +643,23 @@ pub async fn resolve_dispute(
             }));
         }
     };
+
+    // Load escrow to verify requester is the assigned arbiter
+    let escrow = match db_load_escrow(&_pool, escrow_id).await {
+        Ok(e) => e,
+        Err(_) => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "Escrow not found"
+            }))
+        }
+    };
+
+    // Verify user is the assigned arbiter
+    if user_id.to_string() != escrow.arbiter_id {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Only the assigned arbiter can resolve disputes"
+        }));
+    }
 
     // Resolve dispute via orchestrator
     match escrow_orchestrator

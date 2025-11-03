@@ -102,8 +102,12 @@ async fn main() -> Result<()> {
     // IMPORTANT: In production, load from secure environment variable
     // This should be a 64-byte cryptographically random key
     let session_secret = env::var("SESSION_SECRET_KEY").unwrap_or_else(|_| {
-        tracing::warn!("SESSION_SECRET_KEY not set, using development key - NOT FOR PRODUCTION");
-        "development_key_do_not_use_in_production_minimum_64_bytes_required".to_string()
+        if cfg!(debug_assertions) {
+            tracing::warn!("SESSION_SECRET_KEY not set, using development key (dev mode only)");
+            "development_key_do_not_use_in_production_minimum_64_bytes_required".to_string()
+        } else {
+            panic!("❌ FATAL: SESSION_SECRET_KEY environment variable MUST be set in production!");
+        }
     });
 
     let secret_key = Key::from(session_secret.as_bytes());
@@ -174,7 +178,20 @@ async fn main() -> Result<()> {
         
         if arbiter_exists.is_none() {
             info!("No arbiter found, creating system arbiter...");
-            let password = "arbiter_system_2024";
+
+            // Generate random 16-character password
+            use rand::Rng;
+            let mut rng = rand::thread_rng();
+            let password: String = (0..16)
+                .map(|_| {
+                    let idx = rng.gen_range(0..62);
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                        .chars()
+                        .nth(idx)
+                        .unwrap()
+                })
+                .collect();
+
             let salt = SaltString::generate(&mut OsRng);
             let argon2 = Argon2::default();
             let password_hash = argon2
@@ -196,7 +213,11 @@ async fn main() -> Result<()> {
                 .await
                 .context("Failed to create arbiter")??;
             
-            info!("✅ System arbiter created successfully (username: arbiter_system, password: arbiter_system_2024)");
+            info!("⚠️  ✅ System arbiter created successfully");
+            info!("📋 SAVE THIS IMMEDIATELY - Arbiter credentials:");
+            info!("   Username: arbiter_system");
+            info!("   Password: {}", password);
+            info!("⚠️  This password will NOT be shown again. Change it immediately after first login.");
         } else {
             info!("System arbiter already exists");
         }

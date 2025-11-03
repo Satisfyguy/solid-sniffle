@@ -79,6 +79,28 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show payment instructions
             if (data.escrow_address && data.escrow_address !== 'Pending') {
                 escrowAddressSpan.textContent = data.escrow_address;
+
+                // Generate QR code for the escrow address
+                const qrCanvas = document.getElementById('escrow-qr-code');
+                if (qrCanvas && typeof QRCode !== 'undefined') {
+                    QRCode.toCanvas(qrCanvas, data.escrow_address, {
+                        width: 180,
+                        margin: 1,
+                        color: {
+                            dark: '#000000',
+                            light: '#FFFFFF'
+                        }
+                    }, function(error) {
+                        if (error) {
+                            console.error('QR Code generation error:', error);
+                            qrCanvas.style.display = 'none';
+                        } else {
+                            console.log('QR Code generated successfully for escrow address');
+                        }
+                    });
+                } else {
+                    console.warn('QRCode library not loaded or canvas not found');
+                }
             } else {
                 escrowAddressSpan.textContent = 'Address generation in progress... Please wait.';
             }

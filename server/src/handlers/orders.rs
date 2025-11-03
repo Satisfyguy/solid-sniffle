@@ -11,7 +11,7 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::crypto::encryption::{decrypt_field, encrypt_field};
-use crate::db::DbPool;
+use crate::db::{DbPool, db_load_escrow};
 use crate::middleware::csrf::validate_csrf_token;
 use crate::models::cart::Cart;
 use crate::models::listing::Listing;
@@ -1331,6 +1331,22 @@ pub async fn cancel_order(
                 }))
             }
         };
+
+        // Load escrow and verify buyer is the one cancelling
+        let escrow = match db_load_escrow(&pool, escrow_uuid).await {
+            Ok(e) => e,
+            Err(_) => {
+                return HttpResponse::BadRequest().json(serde_json::json!({
+                    "error": "Escrow not found"
+                }))
+            }
+        };
+
+        if escrow.buyer_id != user_id.to_string() {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": "Only the buyer can cancel this order"
+            }));
+        }
 
         // Get buyer's wallet address for refund
         let buyer = match User::find_by_id(&mut conn, order.buyer_id.clone()) {

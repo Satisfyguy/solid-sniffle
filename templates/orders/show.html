@@ -425,13 +425,24 @@
                             <!-- Escrow Funding Instructions -->
                             <div id="escrow-instructions">
                                 <h3>🔒 ESCROW PAYMENT</h3>
-                                <div class="escrow-address-section">
-                                    <p class="escrow-address-label">ESCROW ADDRESS:</p>
-                                    <div id="escrow-address">Initializing...</div>
-                                    <button id="copy-address-btn">
-                                        📋 COPY ADDRESS
-                                    </button>
+
+                                <div style="display: grid; grid-template-columns: 1fr auto; gap: 1.5rem; margin-bottom: 1.5rem;">
+                                    <!-- Left: Address & Copy Button -->
+                                    <div class="escrow-address-section">
+                                        <p class="escrow-address-label">ESCROW ADDRESS:</p>
+                                        <div id="escrow-address">Initializing...</div>
+                                        <button id="copy-address-btn">
+                                            📋 COPY ADDRESS
+                                        </button>
+                                    </div>
+
+                                    <!-- Right: QR Code -->
+                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                                        <canvas id="escrow-qr-code" style="border: 4px solid var(--color-border); border-radius: 8px; background: white; padding: 8px;"></canvas>
+                                        <p style="font-size: 0.75rem; color: hsl(var(--muted-foreground)); text-align: center;">Scan to pay</p>
+                                    </div>
                                 </div>
+
                                 <div class="escrow-amount-section">
                                     <p class="escrow-amount-label">AMOUNT TO SEND:</p>
                                     <div class="escrow-amount-value">
@@ -509,6 +520,8 @@
 
     <script src="/static/js/lucide.min.js"></script>
     <script src="/static/js/base.js"></script>
+    <!-- QRCode.js library for generating payment QR codes -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="/static/js/fund-escrow.js"></script>
     <script src="/static/js/order-actions.js"></script>
 
