@@ -6,7 +6,6 @@ class CheckoutFlow {
         this.orderId = null;
         this.escrowId = null;
         this.escrowStatus = null;
-        this.walletRegistered = false;
         this.checkoutMode = 'cart';
         this.ws = null;
         this.paymentPoll = null;
@@ -16,21 +15,19 @@ class CheckoutFlow {
      * Initialize checkout flow
      */
     async init() {
-        console.log('[Checkout] Initializing checkout flow...');
+        console.log('[Checkout] Initializing simplified checkout flow...');
 
         // Get data from hidden inputs
         this.csrfToken = document.getElementById('csrf-token')?.value;
         this.orderId = document.getElementById('order-id')?.value;
         this.escrowId = document.getElementById('escrow-id')?.value;
         this.escrowStatus = document.getElementById('escrow-status')?.value;
-        this.walletRegistered = document.getElementById('wallet-registered')?.value === 'true';
         this.checkoutMode = document.getElementById('checkout-mode')?.value || 'cart';
 
         console.log('[Checkout] Config:', {
             orderId: this.orderId,
             escrowId: this.escrowId,
             escrowStatus: this.escrowStatus,
-            walletRegistered: this.walletRegistered,
             checkoutMode: this.checkoutMode
         });
 
@@ -43,10 +40,7 @@ class CheckoutFlow {
         }
 
         // Start appropriate flow based on state
-        if (!this.walletRegistered) {
-            console.log('[Checkout] Waiting for wallet registration...');
-            // Show wallet registration form (already visible in template)
-        } else if (!this.escrowId || !this.orderId) {
+        if (!this.escrowId || !this.orderId) {
             console.log('[Checkout] Creating order and initializing escrow...');
             await this.createOrderAndInitEscrow();
         } else if (this.escrowStatus === 'created' || this.escrowStatus === 'funded') {
@@ -66,82 +60,10 @@ class CheckoutFlow {
      * Setup event listeners
      */
     setupEventListeners() {
-        // Wallet registration button
-        const registerBtn = document.getElementById('register-wallet-btn');
-        if (registerBtn) {
-            registerBtn.addEventListener('click', () => this.registerWallet());
-        }
-
         // Copy address button
         const copyBtn = document.getElementById('copy-address-btn');
         if (copyBtn) {
             copyBtn.addEventListener('click', () => this.copyMultisigAddress());
-        }
-    }
-
-    /**
-     * Register wallet RPC
-     */
-    async registerWallet() {
-        const rpcUrl = document.getElementById('rpc-url')?.value;
-        const rpcUser = document.getElementById('rpc-user')?.value;
-        const rpcPassword = document.getElementById('rpc-password')?.value;
-
-        if (!rpcUrl) {
-            this.showNotification('Veuillez entrer l\'URL du wallet RPC', 'error');
-            return;
-        }
-
-        console.log('[Checkout] Registering wallet RPC:', rpcUrl);
-
-        const registerBtn = document.getElementById('register-wallet-btn');
-        const originalHtml = registerBtn.innerHTML;
-        registerBtn.disabled = true;
-        registerBtn.innerHTML = '<i data-lucide="loader" class="animate-spin"></i><span>Connexion...</span>';
-
-        try {
-            const response = await fetch('/api/escrow/register-wallet-rpc', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': this.csrfToken
-                },
-                body: JSON.stringify({
-                    rpc_url: rpcUrl,
-                    rpc_user: rpcUser || null,
-                    rpc_password: rpcPassword || null,
-                    role: 'buyer'
-                })
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                console.log('[Checkout] Wallet registered successfully:', data.wallet_address);
-                this.showNotification('Wallet connecté avec succès!', 'success');
-                this.walletRegistered = true;
-
-                // Hide wallet registration, show escrow init
-                document.getElementById('wallet-registration').style.display = 'none';
-                document.getElementById('escrow-init').style.display = 'block';
-
-                // Start escrow initialization
-                await this.createOrderAndInitEscrow();
-            } else {
-                console.error('[Checkout] Wallet registration failed:', data);
-                this.showNotification(data.message || 'Échec de la connexion au wallet', 'error');
-                registerBtn.disabled = false;
-                registerBtn.innerHTML = originalHtml;
-            }
-        } catch (error) {
-            console.error('[Checkout] Wallet registration error:', error);
-            this.showNotification('Erreur réseau lors de la connexion au wallet', 'error');
-            registerBtn.disabled = false;
-            registerBtn.innerHTML = originalHtml;
-        }
-
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
         }
     }
 

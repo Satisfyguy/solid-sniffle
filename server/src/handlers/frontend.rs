@@ -6,6 +6,7 @@ use actix_session::Session;
 use actix_web::{web, HttpResponse, Responder};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::error::Error as StdError;
 use tera::{Context, Tera};
 use tracing::{error, info, warn};
 
@@ -1722,42 +1723,12 @@ pub async fn show_checkout(
         }
     }
 
-    // 4. Check wallet registration status
-    let mut conn_wallet = match pool.get() {
-        Ok(c) => c,
-        Err(e) => {
-            error!("Database connection error: {}", e);
-            return HttpResponse::InternalServerError().body("Database error");
-        }
-    };
-
-    let user_id_clone = user_id.clone();
-    let user_result = web::block(move || {
-        use crate::models::user::User;
-        User::find_by_id(&mut conn_wallet, user_id_clone)
-    }).await;
-
-    match user_result {
-        Ok(Ok(user)) => {
-            let wallet_registered = user.wallet_address.is_some();
-            ctx.insert("wallet_registered", &wallet_registered);
-
-            if let Some(ref addr) = user.wallet_address {
-                ctx.insert("user_wallet_address", addr);
-            }
-        }
-        _ => {
-            warn!("Could not fetch user wallet status");
-            ctx.insert("wallet_registered", &false);
-        }
-    }
-
     // Render template
     match tera.render("checkout/index.html", &ctx) {
         Ok(html) => HttpResponse::Ok().content_type("text/html; charset=utf-8").body(html),
         Err(e) => {
-            error!("Template error rendering checkout page: {}", e);
-            HttpResponse::InternalServerError().body(format!("Template error: {}", e))
+            error!("Template error rendering checkout page: {:#?}", e);
+            HttpResponse::InternalServerError().body(format!("Template error: {:#?}", e))
         }
     }
 }

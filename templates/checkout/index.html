@@ -38,107 +38,13 @@
             <input type="hidden" id="escrow-id" value="{{ escrow.id }}">
             <input type="hidden" id="escrow-status" value="{{ escrow.status }}">
             {% endif %}
-            <input type="hidden" id="wallet-registered" value="{% if wallet_registered %}true{% else %}false{% endif %}">
             <input type="hidden" id="checkout-mode" value="{{ checkout_mode | default(value='cart') }}">
 
             <div class="checkout-grid">
                 <!-- Main Form -->
                 <div class="checkout-main">
-                    <!-- Step 0: Wallet Registration (if not registered) -->
-                    {% if not wallet_registered %}
-                    <div class="checkout-card" id="wallet-registration">
-                        <div class="checkout-card-header">
-                            <h2 class="checkout-card-title">
-                                <i data-lucide="wallet" class="inline-icon"></i>
-                                Configuration Wallet Non-Custodial
-                            </h2>
-                            <p class="checkout-card-description">
-                                Vous contrôlez vos clés privées. Le marketplace ne peut JAMAIS accéder à vos fonds.
-                            </p>
-                        </div>
-                        <div class="checkout-card-content">
-                            <div class="wallet-status-box inactive">
-                                <i data-lucide="alert-circle" class="wallet-status-icon"></i>
-                                <div class="wallet-status-content">
-                                    <p class="wallet-status-title">Aucun wallet enregistré</p>
-                                    <p class="wallet-status-text">
-                                        Vous devez connecter votre wallet RPC Monero pour continuer
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="wallet-form" id="wallet-form">
-                                <div class="checkout-form-field">
-                                    <label for="rpc-url" class="checkout-label">
-                                        URL du Wallet RPC
-                                        <span class="label-required">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="rpc-url"
-                                        class="checkout-input checkout-input-mono"
-                                        placeholder="http://127.0.0.1:18082/json_rpc"
-                                        value="http://127.0.0.1:18082/json_rpc">
-                                    <p class="checkout-field-hint">
-                                        <i data-lucide="info"></i>
-                                        Doit pointer vers votre instance locale de monero-wallet-rpc
-                                    </p>
-                                </div>
-
-                                <div class="checkout-form-row">
-                                    <div class="checkout-form-field">
-                                        <label for="rpc-user" class="checkout-label">
-                                            RPC Username (optionnel)
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="rpc-user"
-                                            class="checkout-input"
-                                            placeholder="Laissez vide si aucune authentification">
-                                    </div>
-                                    <div class="checkout-form-field">
-                                        <label for="rpc-password" class="checkout-label">
-                                            RPC Password (optionnel)
-                                        </label>
-                                        <input
-                                            type="password"
-                                            id="rpc-password"
-                                            class="checkout-input"
-                                            placeholder="Laissez vide si aucune authentification">
-                                    </div>
-                                </div>
-
-                                <div class="checkout-notice">
-                                    <i data-lucide="shield-check" class="checkout-notice-icon"></i>
-                                    <div class="checkout-notice-content">
-                                        <p class="checkout-notice-title">Sécurité Garantie</p>
-                                        <p class="checkout-notice-text">
-                                            Vos clés privées restent sur VOTRE machine. Le marketplace se connecte uniquement via RPC pour signer les transactions multisig.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <button class="btn-checkout-primary" id="register-wallet-btn">
-                                    <i data-lucide="link"></i>
-                                    <span>Connecter mon wallet</span>
-                                </button>
-                            </div>
-
-                            <div class="checkout-help-box">
-                                <p class="help-title">
-                                    <i data-lucide="help-circle"></i>
-                                    Comment configurer mon wallet RPC?
-                                </p>
-                                <a href="/docs/wallet-setup" target="_blank" class="help-link">
-                                    Consulter le guide complet →
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <!-- Step 1: Escrow Initialization (after wallet registration) -->
-                    <div class="checkout-card" id="escrow-init" style="{% if not wallet_registered %}display:none;{% elif escrow_exists %}display:none;{% endif %}">
+                    <!-- Step 1: Escrow Initialization -->
+                    <div class="checkout-card" id="escrow-init" style="{% if escrow_exists %}display:none;{% endif %}">
                         <div class="checkout-card-header">
                             <h2 class="checkout-card-title">
                                 <i data-lucide="lock" class="inline-icon"></i>
@@ -383,8 +289,8 @@
                                     <div class="checkout-summary-details">
                                         <p class="checkout-summary-name">{{ item.title }}</p>
                                         <p class="checkout-summary-quantity">Quantité: {{ item.quantity }}</p>
-                                        <p class="checkout-summary-price" data-price="{{ item.price_xmr }}">
-                                            {{ item.price_xmr }} piconeros
+                                        <p class="checkout-summary-price" data-price="{{ item.unit_price_xmr }}">
+                                            {{ item.unit_price_xmr }} piconeros
                                         </p>
                                     </div>
                                 </div>
