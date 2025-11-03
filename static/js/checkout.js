@@ -330,9 +330,16 @@ class CheckoutFlow {
      */
     updateMultisigProgress(step, status) {
         const stepEl = document.getElementById(`step-${step}`);
-        if (!stepEl) return;
+        if (!stepEl) {
+            console.warn(`[Checkout] Step element not found: step-${step}`);
+            return;
+        }
 
         const icon = stepEl.querySelector('.progress-icon i');
+        if (!icon) {
+            console.warn(`[Checkout] Icon element not found in step-${step}`);
+            return;
+        }
 
         stepEl.classList.remove('pending', 'complete');
         stepEl.classList.add(status);
