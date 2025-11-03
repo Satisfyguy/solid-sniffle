@@ -353,6 +353,7 @@ async fn main() -> Result<()> {
                     .service(listings::get_listing_image)
                     .service(listings::remove_listing_image)
                     // Orders
+                    .service(orders::create_order_from_cart)
                     .service(orders::create_order)
                     .service(orders::get_pending_count)
                     .service(orders::list_orders)

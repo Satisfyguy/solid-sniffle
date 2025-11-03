@@ -12,6 +12,7 @@ use validator::Validate;
 
 use crate::db::DbPool;
 use crate::middleware::csrf::validate_csrf_token;
+use crate::models::cart::Cart;
 use crate::models::listing::Listing;
 use crate::models::order::{NewOrder, Order, OrderStatus};
 use crate::models::user::User;
@@ -26,6 +27,18 @@ pub struct CreateOrderRequest {
 
     #[validate(range(min = 1, message = "Quantity must be at least 1"))]
     pub quantity: i32,
+
+    #[validate(length(min = 10, max = 500, message = "Shipping address must be between 10 and 500 characters"))]
+    pub shipping_address: String,
+
+    #[validate(length(max = 200, message = "Shipping notes must be 200 characters or less"))]
+    pub shipping_notes: Option<String>,
+}
+
+/// Request body for creating a new order from cart
+#[derive(Debug, Deserialize, Validate)]
+pub struct CreateOrderFromCartRequest {
+    pub checkout_mode: String, // "cart" | "listing"
 
     #[validate(length(min = 10, max = 500, message = "Shipping address must be between 10 and 500 characters"))]
     pub shipping_address: String,
@@ -86,6 +99,200 @@ fn get_user_id_from_session(session: &Session) -> Result<String, HttpResponse> {
                 "error": "Not authenticated"
             }))
         })
+}
+
+/// POST /api/orders/create - Create a new order from cart
+///
+/// Creates a new order from the buyer's cart with encrypted shipping address.
+/// This is the main checkout endpoint used by the frontend.
+///
+/// Requires authentication as a buyer.
+#[post("/orders/create")]
+pub async fn create_order_from_cart(
+    pool: web::Data<DbPool>,
+    session: Session,
+    http_req: HttpRequest,
+    req: web::Json<CreateOrderFromCartRequest>,
+    websocket: web::Data<Addr<WebSocketServer>>,
+) -> impl Responder {
+    // SECURITY: Validate CSRF token
+    let csrf_token = http_req
+        .headers()
+        .get("X-CSRF-Token")
+        .and_then(|h| h.to_str().ok())
+        .unwrap_or("");
+
+    if !validate_csrf_token(&session, csrf_token) {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Invalid or missing CSRF token"
+        }));
+    }
+
+    // Validate input
+    if let Err(e) = req.validate() {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": format!("Validation error: {}", e)
+        }));
+    }
+
+    // Get authenticated user (buyer)
+    let buyer_id = match get_user_id_from_session(&session) {
+        Ok(id) => id,
+        Err(response) => return response,
+    };
+
+    // SECURITY: Verify user has buyer role
+    let user_role = match session.get::<String>("role") {
+        Ok(Some(role)) => role,
+        _ => {
+            return HttpResponse::Forbidden().json(serde_json::json!({
+                "error": "Buyer role required to create orders"
+            }))
+        }
+    };
+
+    if user_role != "buyer" {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "Only buyers can create orders"
+        }));
+    }
+
+    // Get cart from session
+    let mut cart = match session.get::<Cart>("cart") {
+        Ok(Some(c)) => c,
+        _ => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "Cart is empty"
+            }))
+        }
+    };
+
+    if cart.is_empty() {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Cart is empty"
+        }));
+    }
+
+    // For now, only support single-vendor carts (all items from same vendor)
+    // TODO: Support multi-vendor carts with separate orders per vendor
+    let vendor_id = &cart.items[0].vendor_id;
+    if !cart.items.iter().all(|item| &item.vendor_id == vendor_id) {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Multi-vendor carts not yet supported. Please checkout items from one vendor at a time."
+        }));
+    }
+
+    // Prevent self-purchasing
+    if vendor_id == &buyer_id {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Cannot purchase your own listings"
+        }));
+    }
+
+    // Calculate total from cart items
+    let total_xmr = cart.total_price();
+
+    // SECURITY: Validate total is positive and reasonable
+    if total_xmr <= 0 {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Invalid order total"
+        }));
+    }
+
+    // SECURITY: Check maximum order value (e.g., 10,000 XMR = 10^16 piconeros)
+    const MAX_ORDER_VALUE: i64 = 10_000_000_000_000_000; // 10,000 XMR
+    if total_xmr > MAX_ORDER_VALUE {
+        return HttpResponse::BadRequest().json(serde_json::json!({
+            "error": "Order total exceeds maximum allowed value"
+        }));
+    }
+
+    // TODO: Implement field-level encryption for shipping address
+    // For now, store directly (DB already encrypted with SQLCipher)
+    // Future: Use AES-256-GCM from crate::crypto::encryption
+
+    // Get database connection for order creation
+    let mut conn = match pool.get() {
+        Ok(conn) => conn,
+        Err(_) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Database connection failed"
+            }))
+        }
+    };
+
+    // Create the order
+    let new_order = NewOrder {
+        id: Uuid::new_v4().to_string(),
+        buyer_id: buyer_id.clone(),
+        vendor_id: vendor_id.clone(),
+        listing_id: cart.items[0].listing_id.clone(), // Use first item's listing for now
+        escrow_id: None, // Set when escrow is initialized
+        status: OrderStatus::Pending.as_str().to_string(),
+        total_xmr,
+        shipping_address: Some(req.shipping_address.clone()),
+        shipping_notes: req.shipping_notes.clone(),
+    };
+
+    let order = match Order::create(&mut conn, new_order) {
+        Ok(order) => order,
+        Err(e) => {
+            tracing::error!("Failed to create order: {}", e);
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Failed to create order"
+            }))
+        }
+    };
+
+    tracing::info!(
+        "Order created successfully from cart: id={}, buyer={}, vendor={}, total={} piconeros",
+        order.id, order.buyer_id, order.vendor_id, order.total_xmr
+    );
+
+    // Clear the cart in session
+    cart.clear();
+    if let Err(e) = session.insert("cart", &cart) {
+        tracing::warn!("Failed to clear cart in session after order creation: {}", e);
+        // Don't fail the request, order was created successfully
+    }
+
+    // Send WebSocket notification to vendor
+    let vendor_uuid = match Uuid::parse_str(&order.vendor_id) {
+        Ok(uuid) => uuid,
+        Err(_) => {
+            tracing::error!("Invalid vendor UUID: {}", order.vendor_id);
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Internal error"
+            }));
+        }
+    };
+
+    let order_uuid = match Uuid::parse_str(&order.id) {
+        Ok(uuid) => uuid,
+        Err(_) => {
+            tracing::error!("Invalid order UUID: {}", order.id);
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": "Internal error"
+            }));
+        }
+    };
+
+    websocket.do_send(NotifyUser {
+        user_id: vendor_uuid,
+        event: WsEvent::OrderStatusChanged {
+            order_id: order_uuid,
+            new_status: "pending".to_string(),
+        },
+    });
+
+    tracing::info!("Sent order notification to vendor {}", vendor_uuid);
+
+    HttpResponse::Created().json(serde_json::json!({
+        "success": true,
+        "order_id": order.id,
+        "total_xmr": order.total_xmr,
+        "message": "Order created successfully"
+    }))
 }
 
 /// POST /api/orders - Create a new order

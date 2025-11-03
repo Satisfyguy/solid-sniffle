@@ -41,14 +41,19 @@ class CheckoutFlow {
 
         // Start appropriate flow based on state
         if (!this.escrowId || !this.orderId) {
-            console.log('[Checkout] Creating order and initializing escrow...');
-            await this.createOrderAndInitEscrow();
+            console.log('[Checkout] New checkout - showing shipping address form...');
+            // Show shipping form (it's already visible by default)
+            document.getElementById('shipping-address-form')?.style.removeProperty('display');
         } else if (this.escrowStatus === 'created' || this.escrowStatus === 'funded') {
             console.log('[Checkout] Escrow exists, showing payment instructions...');
+            // Hide shipping form, show payment
+            document.getElementById('shipping-address-form').style.display = 'none';
             this.showPaymentInstructions();
             this.startPaymentMonitoring();
         } else if (this.escrowStatus === 'active') {
             console.log('[Checkout] Payment confirmed!');
+            // Hide shipping form, show confirmation
+            document.getElementById('shipping-address-form').style.display = 'none';
             this.showPaymentConfirmed();
         }
 
@@ -60,10 +65,108 @@ class CheckoutFlow {
      * Setup event listeners
      */
     setupEventListeners() {
+        // Shipping form submission
+        const shippingForm = document.getElementById('shipping-form');
+        if (shippingForm) {
+            shippingForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.submitShippingAddress();
+            });
+        }
+
         // Copy address button
         const copyBtn = document.getElementById('copy-address-btn');
         if (copyBtn) {
             copyBtn.addEventListener('click', () => this.copyMultisigAddress());
+        }
+    }
+
+    /**
+     * Submit shipping address
+     */
+    async submitShippingAddress() {
+        console.log('[Checkout] Submitting shipping address...');
+
+        // Gather form data
+        const streetAddress = document.getElementById('street-address')?.value;
+        const city = document.getElementById('city')?.value;
+        const postalCode = document.getElementById('postal-code')?.value;
+        const country = document.getElementById('country')?.value;
+        const shippingNotes = document.getElementById('shipping-notes')?.value;
+
+        if (!streetAddress || !city || !postalCode || !country) {
+            this.showNotification('Veuillez remplir tous les champs obligatoires', 'error');
+            return;
+        }
+
+        // Format address as JSON
+        const shippingAddress = {
+            street: streetAddress,
+            city: city,
+            postal_code: postalCode,
+            country: country
+        };
+
+        try {
+            // Disable submit button
+            const submitBtn = document.getElementById('submit-shipping-btn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i data-lucide="loader" class="animate-spin"></i><span>Traitement...</span>';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+
+            // Create order with shipping address
+            const response = await fetch('/api/orders/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': this.csrfToken
+                },
+                body: JSON.stringify({
+                    checkout_mode: this.checkoutMode,
+                    shipping_address: JSON.stringify(shippingAddress),
+                    shipping_notes: shippingNotes || null
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                console.log('[Checkout] Order created with shipping address:', data.order_id);
+                this.orderId = data.order_id;
+
+                // Hide shipping form
+                const shippingForm = document.getElementById('shipping-address-form');
+                if (shippingForm) shippingForm.style.display = 'none';
+
+                // Show notification
+                this.showNotification('Adresse de livraison enregistrée', 'success');
+
+                // Proceed to escrow initialization
+                await this.createOrderAndInitEscrow();
+            } else {
+                console.error('[Checkout] Order creation failed:', data);
+                this.showNotification(data.message || 'Échec de la création de commande', 'error');
+
+                // Re-enable button
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i data-lucide="arrow-right"></i><span>Continuer vers le paiement</span>';
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
+            }
+        } catch (error) {
+            console.error('[Checkout] Shipping address submission error:', error);
+            this.showNotification('Erreur lors de l\'enregistrement de l\'adresse', 'error');
+
+            // Re-enable button
+            const submitBtn = document.getElementById('submit-shipping-btn');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i data-lucide="arrow-right"></i><span>Continuer vers le paiement</span>';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
         }
     }
 
@@ -76,15 +179,10 @@ class CheckoutFlow {
         // Show escrow init UI
         document.getElementById('escrow-init')?.style.removeProperty('display');
 
-        // Step 1: Create order if needed
+        // Step 1: Create order if needed (already created with shipping address)
         if (!this.orderId) {
-            const order = await this.createOrder();
-            if (!order) {
-                console.error('[Checkout] Failed to create order');
-                return;
-            }
-            this.orderId = order.id;
-            console.log('[Checkout] Order created:', this.orderId);
+            console.error('[Checkout] No order ID - should have been created with shipping address');
+            return;
         }
 
         // Step 2: Initialize escrow
