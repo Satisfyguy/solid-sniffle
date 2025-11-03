@@ -1,5 +1,60 @@
 // Settings page JavaScript
-// Handles wallet update responses
+// Handles wallet update responses with enhanced UX
+
+// Real-time validation
+const walletInput = document.getElementById('wallet_address');
+const walletForm = document.querySelector('form[hx-post="/api/settings/update-wallet"]');
+
+if (walletInput) {
+  walletInput.addEventListener('input', function(e) {
+    const addr = e.target.value.trim();
+    const isValid = /^[48][a-zA-Z0-9]{94,105}$/.test(addr);
+
+    if (addr.length === 0) {
+      e.target.style.borderColor = '';
+      e.target.style.boxShadow = '';
+      return;
+    }
+
+    e.target.style.borderColor = isValid ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)';
+    e.target.style.boxShadow = isValid
+      ? '0 0 0 3px rgba(34, 197, 94, 0.1)'
+      : '0 0 0 3px rgba(239, 68, 68, 0.1)';
+  });
+
+  // Auto-trim on paste
+  walletInput.addEventListener('paste', function(e) {
+    setTimeout(() => {
+      e.target.value = e.target.value.trim();
+      e.target.dispatchEvent(new Event('input'));
+    }, 10);
+  });
+}
+
+// Confirmation modal for updating existing address
+if (walletForm) {
+  walletForm.addEventListener('htmx:confirm', function(e) {
+    const existingAddress = document.querySelector('.wallet-address-display .address-text');
+
+    if (existingAddress && existingAddress.textContent.trim().length > 0) {
+      const newAddress = walletInput.value.trim();
+
+      // Show confirmation dialog
+      const confirmed = confirm(
+        '⚠️ WARNING: Update Wallet Address?\n\n' +
+        'You are about to change your payment address.\n\n' +
+        'All future payments will be sent to the NEW address.\n\n' +
+        'Current: ' + existingAddress.textContent.substring(0, 20) + '...\n' +
+        'New: ' + newAddress.substring(0, 20) + '...\n\n' +
+        'Continue with this change?'
+      );
+
+      if (!confirmed) {
+        e.preventDefault();
+      }
+    }
+  });
+}
 
 document.body.addEventListener('htmx:afterRequest', function(event) {
   if (event.detail.pathInfo.requestPath === '/api/settings/update-wallet') {
@@ -14,6 +69,13 @@ document.body.addEventListener('htmx:afterRequest', function(event) {
           'success',
           3000
         );
+      }
+
+      // Clear input field
+      if (walletInput) {
+        walletInput.value = '';
+        walletInput.style.borderColor = '';
+        walletInput.style.boxShadow = '';
       }
 
       // HTMX already updates #wallet-result with the new address from backend

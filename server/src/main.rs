@@ -255,7 +255,7 @@ async fn main() -> Result<()> {
             // Logging middleware (logs all requests)
             .wrap(Logger::default())
             // Global rate limiter (100 req/min per IP)
-            // .wrap(global_rate_limiter()) // TEMPORAIREMENT DÉSACTIVÉ
+            .wrap(global_rate_limiter())
             // Session middleware
             // Security features:
             // - HttpOnly: prevents JavaScript access
