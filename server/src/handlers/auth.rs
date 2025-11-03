@@ -26,9 +26,10 @@ use crate::middleware::csrf::validate_csrf_token;
 use crate::models::user::{NewUser, User};
 
 /// Helper function to check if request is from HTMX
+/// Note: Actix-web normalizes headers to lowercase, so we check "hx-request" not "HX-Request"
 fn is_htmx_request(req: &HttpRequest) -> bool {
     req.headers()
-        .get("HX-Request")
+        .get("hx-request")  // lowercase to match what browsers actually send
         .and_then(|v| v.to_str().ok())
         .map(|v| v == "true")
         .unwrap_or(false)
@@ -477,16 +478,32 @@ pub async fn update_wallet_address(
     let wallet_addr = req.wallet_address.clone();
     let uid = user_id.clone();
 
-    let update_result = web::block(move || {
-        diesel::update(users::table.filter(users::id.eq(&uid)))
+    info!("DEBUG: Attempting to update wallet for user_id: {}", uid);
+    info!("DEBUG: Wallet address to save: {}", wallet_addr);
+
+    let update_result = web::block(move || -> Result<usize, diesel::result::Error> {
+        let rows_affected = diesel::update(users::table.filter(users::id.eq(&uid)))
             .set(users::wallet_address.eq(Some(&wallet_addr)))
-            .execute(&mut conn)
+            .execute(&mut conn)?;
+
+        info!("DEBUG: Rows affected by UPDATE: {}", rows_affected);
+        Ok(rows_affected)
     }).await;
 
     match update_result {
-        Ok(Ok(_)) => {
+        Ok(Ok(rows_affected)) => {
+            if rows_affected == 0 {
+                error!("CRITICAL: UPDATE affected 0 rows! User ID not found: {}", user_id);
+                return if is_htmx {
+                    Ok(htmx_error_response("User not found in database"))
+                } else {
+                    Err(ApiError::Internal("User not found".to_string()))
+                };
+            }
+
             info!(
                 user_id = %user_id,
+                rows = rows_affected,
                 "Wallet address updated successfully"
             );
 
