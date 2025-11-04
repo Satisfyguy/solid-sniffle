@@ -3,7 +3,7 @@
 use actix::Addr;
 use anyhow::{Context, Result};
 use std::sync::Arc;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 use uuid::Uuid;
 
 use crate::crypto::encryption::encrypt_field;
@@ -416,6 +416,62 @@ impl EscrowOrchestrator {
             "🎉 [MULTISIG SETUP] Complete! Address: {} (Wallets: EMPTY, ready for direct payment)",
             &multisig_address[..15]
         );
+
+        // Close all 3 temporary wallets to free RPC slots for other escrows
+        info!("🔓 Closing 3 temporary wallets to free RPC instances...");
+
+        if let Some(pool) = wallet_manager.wallet_pool() {
+            // Register escrow wallet filenames in pool for future reopening
+            pool.register_escrow_wallets(escrow_id).await;
+
+            // Get pool stats BEFORE closing
+            let stats_before = pool.stats().await;
+            info!(
+                "🔍 WalletPool stats BEFORE close: {}/{} RPC slots free",
+                stats_before.free, stats_before.total
+            );
+
+            // Collect rpc_port from each wallet
+            let mut ports_to_close = Vec::new();
+
+            for wallet_id in &[buyer_temp_wallet_id, vendor_temp_wallet_id, arbiter_temp_wallet_id] {
+                if let Some(wallet) = wallet_manager.wallets.get(wallet_id) {
+                    if let Some(port) = wallet.rpc_port {
+                        ports_to_close.push(port);
+                        info!("📍 Will close wallet {} on port {}", wallet_id, port);
+                    } else {
+                        warn!("⚠️ Wallet {} has no rpc_port tracked", wallet_id);
+                    }
+                } else {
+                    warn!("⚠️ Wallet {} not found in WalletManager", wallet_id);
+                }
+            }
+
+            // Close all wallets via pool
+            let mut closed_count = 0;
+            for port in ports_to_close {
+                match pool.close_wallet(port).await {
+                    Ok(_) => {
+                        info!("✅ Closed wallet on port {}", port);
+                        closed_count += 1;
+                    }
+                    Err(e) => {
+                        error!("❌ Failed to close wallet on port {}: {}", port, e);
+                    }
+                }
+            }
+
+            // Get pool stats AFTER closing
+            let stats_after = pool.stats().await;
+            info!(
+                "🔍 WalletPool stats AFTER close: {}/{} RPC slots free (freed {} slots)",
+                stats_after.free, stats_after.total, closed_count
+            );
+
+            info!("✅ Closed {} wallets successfully", closed_count);
+        } else {
+            warn!("⚠️ WalletPool not enabled - wallets will remain open (legacy mode)");
+        }
 
         Ok(multisig_address)
     }

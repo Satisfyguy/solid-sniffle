@@ -43,6 +43,8 @@ pub struct WalletInstance {
     pub rpc_client: MoneroClient,
     pub address: String,
     pub multisig_state: MultisigState,
+    /// RPC port this wallet is connected to (for WalletPool management)
+    pub rpc_port: Option<u16>,
 }
 
 #[derive(Error, Debug)]
@@ -248,12 +250,21 @@ impl WalletManager {
         let rpc_client = MoneroClient::new(config.clone())?;
         let wallet_info = rpc_client.get_wallet_info().await?;
 
+        // Extract RPC port from config URL for WalletPool tracking
+        let rpc_port = config
+            .rpc_url
+            .split(':')
+            .nth(2)
+            .and_then(|s| s.split('/').next())
+            .and_then(|s| s.parse::<u16>().ok());
+
         let instance = WalletInstance {
             id: Uuid::new_v4(),
             role: role.clone(),
             rpc_client,
             address: wallet_info.address,
             multisig_state: MultisigState::NotStarted,
+            rpc_port,
         };
         let id = instance.id;
         self.wallets.insert(id, instance);
@@ -282,6 +293,14 @@ impl WalletManager {
         let rpc_client = MoneroClient::new(config.clone())?;
         let wallet_info = rpc_client.get_wallet_info().await?;
 
+        // Extract RPC port from config URL for WalletPool tracking
+        let rpc_port = config
+            .rpc_url
+            .split(':')
+            .nth(2)
+            .and_then(|s| s.split('/').next())
+            .and_then(|s| s.parse::<u16>().ok());
+
         let wallet_address = wallet_info.address.clone();
         let instance = WalletInstance {
             id: Uuid::new_v4(),
@@ -289,6 +308,7 @@ impl WalletManager {
             rpc_client,
             address: wallet_info.address,
             multisig_state: MultisigState::NotStarted,
+            rpc_port,
         };
         let id = instance.id;
         self.wallets.insert(id, instance);
@@ -377,12 +397,20 @@ impl WalletManager {
 
         let wallet_id = Uuid::new_v4();
 
+        // Extract RPC port from client URL for WalletPool tracking
+        let rpc_port = rpc_url
+            .split(':')
+            .nth(2)
+            .and_then(|s| s.split('/').next())
+            .and_then(|s| s.parse::<u16>().ok());
+
         let instance = WalletInstance {
             id: wallet_id,
             role: role.clone(),
             rpc_client,
             address: wallet_info.address.clone(),
             multisig_state: MultisigState::NotStarted,
+            rpc_port,
         };
         self.wallets.insert(wallet_id, instance);
 
@@ -507,12 +535,21 @@ impl WalletManager {
         // Get wallet address (use get_address() instead of get_wallet_info() to avoid daemon dependency in --offline mode)
         let address = rpc_client.get_address().await?;
 
+        // Extract RPC port from config URL for WalletPool tracking
+        let rpc_port = config
+            .rpc_url
+            .split(':')
+            .nth(2)
+            .and_then(|s| s.split('/').next())
+            .and_then(|s| s.parse::<u16>().ok());
+
         let instance = WalletInstance {
             id: Uuid::new_v4(),
             role: wallet_role.clone(),
             rpc_client,
             address: address.clone(),
             multisig_state: MultisigState::NotStarted,
+            rpc_port,
         };
         let id = instance.id;
         self.wallets.insert(id, instance);
@@ -1292,6 +1329,13 @@ impl WalletManager {
                 }
             };
 
+            // Extract RPC port from recovered URL for WalletPool tracking
+            let rpc_port = rpc_url
+                .split(':')
+                .nth(2)
+                .and_then(|s| s.split('/').next())
+                .and_then(|s| s.parse::<u16>().ok());
+
             // Reconstruct WalletInstance
             let instance = WalletInstance {
                 id: wallet_uuid,
@@ -1299,6 +1343,7 @@ impl WalletManager {
                 rpc_client,
                 address: wallet_info.address.clone(),
                 multisig_state,
+                rpc_port,
             };
 
             // Insert into in-memory wallet map
@@ -1385,6 +1430,7 @@ impl WalletManager {
                 multisig_state: MultisigState::Ready {
                     address: mock_address, // Mark as ready so release can proceed
                 },
+                rpc_port: None, // Mock wallets don't track ports
             };
 
             self.wallets.insert(wallet_uuid, wallet_instance);
