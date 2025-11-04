@@ -933,28 +933,32 @@ impl WalletManager {
                 })?;
         }
 
-        // 1. Find buyer and arbiter wallets for this escrow
-        let (buyer_id, arbiter_id) =
-            self.find_wallets_for_escrow(WalletRole::Buyer, WalletRole::Arbiter)?;
+        // DEV MODE: Check if mock wallets exist (for testing)
+        let has_mock_wallets = self.wallets.iter().any(|(_, w)| {
+            w.address.starts_with("mock_address_")
+        });
 
-        // 2. Validate both wallets are in Ready state
-        self.validate_wallet_ready(buyer_id)?;
-        self.validate_wallet_ready(arbiter_id)?;
-
-        // DEV MODE: Check if we're using mock wallets
-        let buyer_wallet = self
-            .wallets
-            .get(&buyer_id)
-            .ok_or(WalletManagerError::WalletNotFound(buyer_id))?;
-
-        let is_mock = buyer_wallet.address.starts_with("mock_address_");
-
-        if is_mock {
+        if has_mock_wallets {
             info!("DEV: Using mock wallets - simulating release without RPC calls");
             let mock_tx_hash = format!("mock_release_tx_{}", Uuid::new_v4());
             info!("DEV: Simulated release transaction: {}", mock_tx_hash);
             return Ok(mock_tx_hash);
         }
+
+        // PRODUCTION: Reopen wallets for signing (they were closed after multisig setup)
+        info!("🔓 Reopening 3 wallets for transaction signing...");
+
+        let buyer_id = self.reopen_wallet_for_signing(escrow_id, WalletRole::Buyer)
+            .await?;
+        info!("✅ Reopened buyer wallet: {}", buyer_id);
+
+        let _vendor_id = self.reopen_wallet_for_signing(escrow_id, WalletRole::Vendor)
+            .await?;
+        info!("✅ Reopened vendor wallet: {}", _vendor_id);
+
+        let arbiter_id = self.reopen_wallet_for_signing(escrow_id, WalletRole::Arbiter)
+            .await?;
+        info!("✅ Reopened arbiter wallet: {}", arbiter_id);
 
         // 3. Create unsigned transaction using buyer wallet
         info!("Creating unsigned transaction with buyer wallet");
@@ -1031,6 +1035,18 @@ impl WalletManager {
             tx_hash, escrow_id
         );
 
+        // Close all 3 wallets to free RPC slots
+        info!("🔒 Closing 3 wallets after transaction signing...");
+
+        self.close_wallet_by_id(buyer_id).await?;
+        info!("✅ Closed buyer wallet");
+
+        self.close_wallet_by_id(_vendor_id).await?;
+        info!("✅ Closed vendor wallet");
+
+        self.close_wallet_by_id(arbiter_id).await?;
+        info!("✅ Closed arbiter wallet");
+
         Ok(tx_hash)
     }
 
@@ -1071,29 +1087,32 @@ impl WalletManager {
                 })?;
         }
 
-        // For refunds, we use vendor and arbiter signatures (buyer doesn't need to approve their own refund)
-        // This allows arbiter to force refund even if buyer is unresponsive
-        let (vendor_id, arbiter_id) =
-            self.find_wallets_for_escrow(WalletRole::Vendor, WalletRole::Arbiter)?;
+        // DEV MODE: Check if mock wallets exist (for testing)
+        let has_mock_wallets = self.wallets.iter().any(|(_, w)| {
+            w.address.starts_with("mock_address_")
+        });
 
-        // Validate both wallets are in Ready state
-        self.validate_wallet_ready(vendor_id)?;
-        self.validate_wallet_ready(arbiter_id)?;
-
-        // DEV MODE: Check if we're using mock wallets
-        let vendor_wallet = self
-            .wallets
-            .get(&vendor_id)
-            .ok_or(WalletManagerError::WalletNotFound(vendor_id))?;
-
-        let is_mock = vendor_wallet.address.starts_with("mock_address_");
-
-        if is_mock {
+        if has_mock_wallets {
             info!("DEV: Using mock wallets - simulating refund without RPC calls");
             let mock_tx_hash = format!("mock_refund_tx_{}", Uuid::new_v4());
             info!("DEV: Simulated refund transaction: {}", mock_tx_hash);
             return Ok(mock_tx_hash);
         }
+
+        // PRODUCTION: Reopen wallets for signing (they were closed after multisig setup)
+        info!("🔓 Reopening 3 wallets for refund transaction signing...");
+
+        let _buyer_id = self.reopen_wallet_for_signing(escrow_id, WalletRole::Buyer)
+            .await?;
+        info!("✅ Reopened buyer wallet: {}", _buyer_id);
+
+        let vendor_id = self.reopen_wallet_for_signing(escrow_id, WalletRole::Vendor)
+            .await?;
+        info!("✅ Reopened vendor wallet: {}", vendor_id);
+
+        let arbiter_id = self.reopen_wallet_for_signing(escrow_id, WalletRole::Arbiter)
+            .await?;
+        info!("✅ Reopened arbiter wallet: {}", arbiter_id);
 
         // Create unsigned transaction using vendor wallet
         info!("Creating unsigned refund transaction with vendor wallet");
@@ -1169,6 +1188,18 @@ impl WalletManager {
             "Refund transaction successfully broadcast: tx_hash={}, escrow={}",
             tx_hash, escrow_id
         );
+
+        // Close all 3 wallets to free RPC slots
+        info!("🔒 Closing 3 wallets after refund transaction signing...");
+
+        self.close_wallet_by_id(_buyer_id).await?;
+        info!("✅ Closed buyer wallet");
+
+        self.close_wallet_by_id(vendor_id).await?;
+        info!("✅ Closed vendor wallet");
+
+        self.close_wallet_by_id(arbiter_id).await?;
+        info!("✅ Closed arbiter wallet");
 
         Ok(tx_hash)
     }
