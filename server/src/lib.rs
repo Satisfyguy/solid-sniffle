@@ -34,4 +34,5 @@ pub mod repositories;
 pub mod schema;
 pub mod services;
 pub mod wallet_manager;
+pub mod wallet_pool;
 pub mod websocket;

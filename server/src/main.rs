@@ -147,6 +147,11 @@ async fn main() -> Result<()> {
             encryption_key.clone(),
         )?;
 
+        // Enable wallet pool for production-ready wallet rotation
+        let wallet_dir = std::path::PathBuf::from("./testnet-wallets");
+        wm.enable_wallet_pool(wallet_dir)?;
+        info!("WalletPool enabled for production-ready wallet management");
+
         // Attempt automatic recovery of active escrows
         info!("Attempting automatic recovery of active escrows...");
         match wm.recover_active_escrows().await {

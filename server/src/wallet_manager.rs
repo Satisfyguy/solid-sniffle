@@ -15,6 +15,7 @@ use uuid::Uuid;
 use crate::db::DbPool;
 use crate::repositories::MultisigStateRepository;
 use crate::models::multisig_state::{MultisigPhase, MultisigSnapshot};
+use crate::wallet_pool::{WalletPool, WalletRole as PoolWalletRole};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum WalletRole {
@@ -77,6 +78,8 @@ pub struct WalletManager {
     db_pool: Option<DbPool>,
     // Encryption key for RPC config persistence (same as multisig_repo)
     encryption_key: Option<Vec<u8>>,
+    // Wallet pool for rotation management (Option for backward compatibility)
+    wallet_pool: Option<Arc<WalletPool>>,
 }
 
 impl WalletManager {
@@ -97,6 +100,7 @@ impl WalletManager {
             multisig_repo: None,
             db_pool: None,
             encryption_key: None,
+            wallet_pool: None,
         })
     }
 
@@ -147,7 +151,62 @@ impl WalletManager {
             multisig_repo: Some(Arc::new(multisig_repo)),
             db_pool: Some(db_pool.clone()),
             encryption_key: Some(encryption_key),
+            wallet_pool: None,
         })
+    }
+
+    /// Enable wallet pool for production-ready wallet rotation
+    ///
+    /// This method configures the WalletManager to use the WalletPool system,
+    /// allowing unlimited concurrent escrows with limited RPC resources.
+    ///
+    /// # Arguments
+    /// * `wallet_dir` - Directory where wallet files are stored
+    ///
+    /// # Example
+    /// ```ignore
+    /// let mut wallet_manager = WalletManager::new_with_persistence(...)?;
+    /// wallet_manager.enable_wallet_pool(PathBuf::from("./testnet-wallets"))?;
+    /// ```
+    pub fn enable_wallet_pool(&mut self, wallet_dir: std::path::PathBuf) -> Result<()> {
+        // Extract RPC ports from configs
+        let ports: Vec<u16> = self
+            .rpc_configs
+            .iter()
+            .filter_map(|config| {
+                // Parse port from URL like "http://127.0.0.1:18082/json_rpc"
+                config
+                    .rpc_url
+                    .split(':')
+                    .nth(2)?
+                    .split('/')
+                    .next()?
+                    .parse::<u16>()
+                    .ok()
+            })
+            .collect();
+
+        if ports.is_empty() {
+            return Err(anyhow::anyhow!(
+                "No valid RPC ports found in configs for WalletPool initialization"
+            ));
+        }
+
+        let pool = WalletPool::new(ports.clone(), wallet_dir);
+        self.wallet_pool = Some(Arc::new(pool));
+
+        info!(
+            "WalletPool enabled with {} RPC instances on ports: {:?}",
+            ports.len(),
+            ports
+        );
+
+        Ok(())
+    }
+
+    /// Get reference to the wallet pool (if enabled)
+    pub fn wallet_pool(&self) -> Option<&Arc<WalletPool>> {
+        self.wallet_pool.as_ref()
     }
 
     /// DEPRECATED: Use create_arbiter_wallet_instance() or register_client_wallet_rpc() instead.
