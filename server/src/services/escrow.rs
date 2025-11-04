@@ -3,7 +3,7 @@
 use actix::Addr;
 use anyhow::{Context, Result};
 use std::sync::Arc;
-use tracing::info;
+use tracing::{error, info};
 use uuid::Uuid;
 
 use crate::crypto::encryption::encrypt_field;
@@ -218,6 +218,10 @@ impl EscrowOrchestrator {
             buyer_temp_wallet_id, vendor_temp_wallet_id, arbiter_temp_wallet_id
         );
 
+        // Release the wallet_manager lock before calling setup_multisig_non_custodial
+        // (which will need to acquire the lock again)
+        drop(wallet_manager);
+
         // 4. Store temp wallet IDs in escrow record
         use diesel::prelude::*;
         use crate::schema::escrows;
@@ -247,21 +251,22 @@ impl EscrowOrchestrator {
 
         info!("✅ Escrow updated with temp wallet IDs");
 
-        // 5. TODO Phase 2: Setup multisig to generate the shared address
-        // For Phase 6 (QR Code), we temporarily use the buyer wallet address
-        // The full multisig setup will be implemented in Phase 2
-        info!("⏭️  [PHASE 6] Skipping multisig setup for now - using buyer wallet address for QR code demo");
+        // 5. Setup multisig to generate the shared address (Phase 2 - NON-CUSTODIAL)
+        info!("🔐 [PHASE 2] Starting real multisig setup to generate shared address");
 
-        // Get buyer wallet address from WalletManager
-        let wm = self.wallet_manager.lock().await;
-        let buyer_wallet = wm.wallets.get(&buyer_temp_wallet_id)
-            .ok_or_else(|| anyhow::anyhow!("Buyer wallet not found"))?;
-        let multisig_address = buyer_wallet.address.clone();
-        drop(wm); // Release lock
+        let multisig_address = self
+            .setup_multisig_non_custodial(
+                escrow_id,
+                buyer_temp_wallet_id,
+                vendor_temp_wallet_id,
+                arbiter_temp_wallet_id,
+            )
+            .await
+            .context("Failed to setup multisig")?;
 
         info!(
-            "📱 [PHASE 6 QR] Using buyer temp wallet address for demo: {}",
-            multisig_address
+            "✅ [PHASE 2] Multisig address generated: {}",
+            &multisig_address[..10]
         );
 
         // 6. Reload escrow again to get final state
@@ -315,10 +320,20 @@ impl EscrowOrchestrator {
         // Step 1: prepare_multisig() - Each wallet generates multisig info
         info!("📝 Step 1/3: Calling prepare_multisig() on all 3 wallets...");
 
-        let buyer_info = wallet_manager
+        info!("📝 Calling prepare_multisig() for BUYER wallet {}", buyer_temp_wallet_id);
+        let buyer_info = match wallet_manager
             .make_multisig(&escrow_id.to_string(), buyer_temp_wallet_id, vec![])
             .await
-            .context("Failed to prepare multisig for buyer temp wallet")?;
+        {
+            Ok(info) => {
+                info!("✅ Buyer prepare_multisig() success: {} chars", info.multisig_info.len());
+                info
+            }
+            Err(e) => {
+                error!("❌ Buyer prepare_multisig() FAILED: {:?}", e);
+                return Err(anyhow::anyhow!("Failed to prepare multisig for buyer: {:?}", e));
+            }
+        };
 
         let vendor_info = wallet_manager
             .make_multisig(&escrow_id.to_string(), vendor_temp_wallet_id, vec![])
@@ -336,6 +351,22 @@ impl EscrowOrchestrator {
             vendor_info.multisig_info.len(),
             arbiter_info.multisig_info.len()
         );
+
+        // Persist state after all 3 wallets are prepared
+        use crate::models::multisig_state::MultisigPhase;
+        let phase = MultisigPhase::Preparing {
+            completed: vec![
+                "buyer".to_string(),
+                "vendor".to_string(),
+                "arbiter".to_string(),
+            ],
+        };
+        wallet_manager
+            .persist_multisig_state(&escrow_id.to_string(), phase)
+            .await
+            .context("Failed to persist Preparing phase")?;
+
+        info!("💾 Multisig Preparing phase persisted to database");
 
         // Step 2: make_multisig() - Exchange infos to create 2-of-3 multisig
         info!("🔄 Step 2/3: Exchanging multisig info (make_multisig)...");

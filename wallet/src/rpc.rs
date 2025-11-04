@@ -532,6 +532,12 @@ impl MoneroRpcClient {
             .result
             .ok_or_else(|| MoneroError::InvalidResponse("Missing result field".to_string()))?;
 
+        // DEBUG: Log what we received
+        tracing::info!("🔍 RPC returned multisig_info: {} chars, prefix: {:?}",
+            result.multisig_info.len(),
+            result.multisig_info.chars().take(20).collect::<String>()
+        );
+
         // VALIDATION STRICTE: multisig_info
         validate_multisig_info(&result.multisig_info)?;
 
@@ -1378,10 +1384,10 @@ impl MoneroRpcClient {
 
 /// Validation stricte multisig_info
 fn validate_multisig_info(info: &str) -> Result<(), MoneroError> {
-    // Doit commencer par MultisigV1
-    if !info.starts_with("MultisigV1") {
+    // Doit commencer par MultisigV1 ou MultisigxV2 (nouveau format depuis Monero v0.18+)
+    if !info.starts_with("MultisigV1") && !info.starts_with("MultisigxV2") {
         return Err(MoneroError::InvalidResponse(
-            "Invalid multisig_info prefix".to_string(),
+            format!("Invalid multisig_info prefix (got: {:?})", info.chars().take(20).collect::<String>()),
         ));
     }
 
