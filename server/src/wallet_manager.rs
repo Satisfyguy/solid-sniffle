@@ -479,6 +479,7 @@ impl WalletManager {
     /// - Generated multisig address (95 chars) receives payment directly from buyer's external wallet
     ///
     /// # Arguments
+    /// * `escrow_id` - Escrow UUID (used to construct wallet filename for later reopening)
     /// * `role` - The role for this temporary wallet ("buyer", "vendor", or "arbiter")
     ///
     /// # Returns
@@ -491,12 +492,13 @@ impl WalletManager {
     ///
     /// # Example
     /// ```rust
-    /// let buyer_temp_wallet_id = wallet_manager.create_temporary_wallet("buyer").await?;
-    /// let vendor_temp_wallet_id = wallet_manager.create_temporary_wallet("vendor").await?;
-    /// let arbiter_temp_wallet_id = wallet_manager.create_temporary_wallet("arbiter").await?;
+    /// let escrow_id = Uuid::new_v4();
+    /// let buyer_temp_wallet_id = wallet_manager.create_temporary_wallet(escrow_id, "buyer").await?;
+    /// let vendor_temp_wallet_id = wallet_manager.create_temporary_wallet(escrow_id, "vendor").await?;
+    /// let arbiter_temp_wallet_id = wallet_manager.create_temporary_wallet(escrow_id, "arbiter").await?;
     /// // All 3 wallets have 0 XMR balance - used only for multisig coordination
     /// ```
-    pub async fn create_temporary_wallet(&mut self, role: &str) -> Result<Uuid, WalletManagerError> {
+    pub async fn create_temporary_wallet(&mut self, escrow_id: Uuid, role: &str) -> Result<Uuid, WalletManagerError> {
         let wallet_role = match role {
             "buyer" => WalletRole::Buyer,
             "vendor" => WalletRole::Vendor,
@@ -513,8 +515,9 @@ impl WalletManager {
             .ok_or(WalletManagerError::NoAvailableRpc)?;
         self.next_rpc_index = (self.next_rpc_index + 1) % self.rpc_configs.len();
 
-        // Create a unique wallet filename for this temporary wallet
-        let wallet_filename = format!("temp_{}_{}", role, uuid::Uuid::new_v4().to_string().replace("-", "")[..12].to_string());
+        // Create wallet filename based on escrow_id (for later reopening)
+        // Format: "{role}_temp_escrow_{escrow_id}"
+        let wallet_filename = format!("{}_temp_escrow_{}", role, escrow_id);
 
         // Create RPC client
         let rpc_client = MoneroClient::new(config.clone())?;
@@ -561,6 +564,173 @@ impl WalletManager {
         info!("🔒 NON-CUSTODIAL: This wallet will remain EMPTY (0 XMR) - used only for multisig coordination");
 
         Ok(id)
+    }
+
+    /// Reopen a previously created wallet for signing operations (PRODUCTION-READY)
+    ///
+    /// This method enables the wallet rotation pattern:
+    /// 1. Create wallets → Setup multisig → Close wallets (free RPC slots)
+    /// 2. **[THIS METHOD]** Reopen wallet when needed for signing → Sign → Close again
+    /// 3. Repeat for unlimited concurrent escrows with limited RPC resources
+    ///
+    /// # Arguments
+    /// * `escrow_id` - Escrow UUID (used to construct wallet filename)
+    /// * `role` - Role of the wallet to reopen (buyer, vendor, or arbiter)
+    ///
+    /// # Returns
+    /// UUID of the reopened wallet instance
+    ///
+    /// # Errors
+    /// - NoAvailableRpc - No free RPC instances available
+    /// - RpcError - Failed to open wallet from disk or get wallet info
+    ///
+    /// # Example
+    /// ```rust
+    /// // Reopen buyer wallet for signing release transaction
+    /// let buyer_wallet_id = wallet_manager
+    ///     .reopen_wallet_for_signing(escrow_id, WalletRole::Buyer)
+    ///     .await?;
+    ///
+    /// // Sign transaction...
+    ///
+    /// // Close wallet to free RPC slot
+    /// wallet_manager.close_wallet_by_id(buyer_wallet_id).await?;
+    /// ```
+    pub async fn reopen_wallet_for_signing(
+        &mut self,
+        escrow_id: Uuid,
+        role: WalletRole,
+    ) -> Result<Uuid, WalletManagerError> {
+        info!(
+            "🔓 Reopening wallet for signing: escrow={}, role={:?}",
+            escrow_id, role
+        );
+
+        // 1. Get next available RPC config (round-robin)
+        let config = self
+            .rpc_configs
+            .get(self.next_rpc_index)
+            .ok_or(WalletManagerError::NoAvailableRpc)?;
+        self.next_rpc_index = (self.next_rpc_index + 1) % self.rpc_configs.len();
+
+        // 2. Extract port from config
+        let rpc_port = config
+            .rpc_url
+            .split(':')
+            .nth(2)
+            .and_then(|s| s.split('/').next())
+            .and_then(|s| s.parse::<u16>().ok());
+
+        // 3. Create RPC client
+        let rpc_client = MoneroClient::new(config.clone())?;
+
+        // 4. Close any currently open wallet (RPC can only have 1 wallet open at a time)
+        let _ = rpc_client.close_wallet().await; // Ignore errors if no wallet is open
+
+        // 5. Construct wallet filename (must match the format from create_temporary_wallet)
+        let role_str = match role {
+            WalletRole::Buyer => "buyer",
+            WalletRole::Vendor => "vendor",
+            WalletRole::Arbiter => "arbiter",
+        };
+        // NOTE: The filename format should match WalletPool::wallet_filename()
+        // Format: "{role}_temp_escrow_{escrow_id}"
+        let wallet_filename = format!("{}_temp_escrow_{}", role_str, escrow_id);
+
+        info!("📂 Opening wallet file: {}", wallet_filename);
+
+        // 6. Open wallet from disk
+        match rpc_client.open_wallet(&wallet_filename, "").await {
+            Ok(_) => info!("✅ Wallet opened successfully: {}", wallet_filename),
+            Err(e) => {
+                error!(
+                    "❌ Failed to open wallet '{}': {:?}",
+                    wallet_filename, e
+                );
+                return Err(WalletManagerError::RpcError(CommonError::MoneroRpc(
+                    format!("Failed to open wallet '{}': {:?}", wallet_filename, e),
+                )));
+            }
+        }
+
+        // 7. Get wallet address to verify it's the correct wallet
+        let address = rpc_client
+            .get_address()
+            .await
+            .map_err(|e| WalletManagerError::RpcError(CommonError::MoneroRpc(e.to_string())))?;
+
+        // 8. Create WalletInstance
+        let wallet_id = Uuid::new_v4();
+        let instance = WalletInstance {
+            id: wallet_id,
+            role: role.clone(),
+            rpc_client,
+            address: address.clone(),
+            multisig_state: MultisigState::Ready {
+                address: address.clone(), // Assume wallet is already in multisig Ready state
+            },
+            rpc_port,
+        };
+
+        // 9. Store in wallets map
+        self.wallets.insert(wallet_id, instance);
+
+        info!(
+            "✅ Reopened wallet for signing: wallet_id={}, role={:?}, address={}, port={:?}",
+            wallet_id, role, &address[..10], rpc_port
+        );
+
+        Ok(wallet_id)
+    }
+
+    /// Close a wallet by its UUID and free the RPC slot (PRODUCTION-READY)
+    ///
+    /// Companion method to `reopen_wallet_for_signing()`.
+    /// Call this after signing operations to free the RPC instance.
+    ///
+    /// # Arguments
+    /// * `wallet_id` - UUID of the wallet to close
+    ///
+    /// # Returns
+    /// Ok(()) on success
+    ///
+    /// # Errors
+    /// - WalletNotFound - Wallet ID not in wallets map
+    /// - RpcError - Failed to close wallet via RPC
+    pub async fn close_wallet_by_id(&mut self, wallet_id: Uuid) -> Result<(), WalletManagerError> {
+        // 1. Get wallet instance
+        let wallet = self
+            .wallets
+            .get(&wallet_id)
+            .ok_or(WalletManagerError::WalletNotFound(wallet_id))?;
+
+        let rpc_port = wallet.rpc_port;
+
+        // 2. Close wallet via RPC
+        wallet
+            .rpc_client
+            .close_wallet()
+            .await
+            .map_err(|e| WalletManagerError::RpcError(CommonError::MoneroRpc(e.to_string())))?;
+
+        // 3. Remove from wallets map
+        self.wallets.remove(&wallet_id);
+
+        // 4. If WalletPool is enabled, release the RPC slot
+        if let (Some(ref pool), Some(port)) = (&self.wallet_pool, rpc_port) {
+            pool.release_rpc(port).await.map_err(|e| {
+                warn!("Failed to release RPC port {} via pool: {}", port, e);
+                WalletManagerError::RpcError(CommonError::MoneroRpc(format!(
+                    "Failed to release RPC: {}",
+                    e
+                )))
+            })?;
+            info!("✅ Closed wallet {} and released RPC port {}", wallet_id, port);
+        } else {
+            info!("✅ Closed wallet {} (no pool release)", wallet_id);
+        }
+
+        Ok(())
     }
 
     // ========== MULTISIG STATE PERSISTENCE HELPERS ==========

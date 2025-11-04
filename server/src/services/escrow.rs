@@ -199,17 +199,17 @@ impl EscrowOrchestrator {
         let mut wallet_manager = self.wallet_manager.lock().await;
 
         let buyer_temp_wallet_id = wallet_manager
-            .create_temporary_wallet("buyer")
+            .create_temporary_wallet(escrow_id, "buyer")
             .await
             .context("Failed to create buyer temp wallet")?;
 
         let vendor_temp_wallet_id = wallet_manager
-            .create_temporary_wallet("vendor")
+            .create_temporary_wallet(escrow_id, "vendor")
             .await
             .context("Failed to create vendor temp wallet")?;
 
         let arbiter_temp_wallet_id = wallet_manager
-            .create_temporary_wallet("arbiter")
+            .create_temporary_wallet(escrow_id, "arbiter")
             .await
             .context("Failed to create arbiter temp wallet")?;
 
