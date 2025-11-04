@@ -45,7 +45,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Check if columns already exist
     println!("🔍 Checking if columns already exist...");
-    let check_result: Result<i32, _> = diesel::sql_query(
+    let check_result = diesel::sql_query(
         "SELECT buyer_temp_wallet_id FROM escrows LIMIT 1"
     )
     .execute(&mut conn);
@@ -90,7 +90,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   ✅ idx_escrows_arbiter_temp_wallet created");
 
     println!();
-    println!("=" .repeat(70));
+    println!("{}", "=".repeat(70));
     println!("🎉 MIGRATION COMPLETED SUCCESSFULLY!");
     println!();
     println!("✅ All Phase 1 temp wallet columns added:");
@@ -101,7 +101,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("✅ All indexes created for performance");
     println!();
     println!("🚀 You can now restart the server and escrow initialization will work!");
-    println!("=" .repeat(70));
+    println!("{}", "=".repeat(70));
 
     Ok(())
 }

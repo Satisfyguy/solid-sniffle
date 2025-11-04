@@ -117,6 +117,30 @@ impl MoneroClient {
             .map_err(convert_monero_error)
     }
 
+    /// Create a new wallet in the wallet-rpc
+    pub async fn create_wallet(&self, filename: &str, password: &str) -> Result<()> {
+        self.rpc_client
+            .create_wallet(filename, password)
+            .await
+            .map_err(convert_monero_error)
+    }
+
+    /// Open an existing wallet in the wallet-rpc
+    pub async fn open_wallet(&self, filename: &str, password: &str) -> Result<()> {
+        self.rpc_client
+            .open_wallet(filename, password)
+            .await
+            .map_err(convert_monero_error)
+    }
+
+    /// Close the currently open wallet in the wallet-rpc
+    pub async fn close_wallet(&self) -> Result<()> {
+        self.rpc_client
+            .close_wallet()
+            .await
+            .map_err(convert_monero_error)
+    }
+
     /// Get multisig manager
     pub fn multisig(&self) -> &MultisigManager {
         &self.multisig_manager

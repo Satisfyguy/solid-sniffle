@@ -247,24 +247,24 @@ impl EscrowOrchestrator {
 
         info!("✅ Escrow updated with temp wallet IDs");
 
-        // 5. Setup multisig to generate the shared address
-        info!("🔐 Starting multisig setup (prepare → make → finalize)...");
-        let multisig_address = self
-            .setup_multisig_non_custodial(
-                escrow_id,
-                buyer_temp_wallet_id,
-                vendor_temp_wallet_id,
-                arbiter_temp_wallet_id,
-            )
-            .await
-            .context("Failed to setup multisig")?;
+        // 5. TODO Phase 2: Setup multisig to generate the shared address
+        // For Phase 6 (QR Code), we temporarily use the buyer wallet address
+        // The full multisig setup will be implemented in Phase 2
+        info!("⏭️  [PHASE 6] Skipping multisig setup for now - using buyer wallet address for QR code demo");
+
+        // Get buyer wallet address from WalletManager
+        let wm = self.wallet_manager.lock().await;
+        let buyer_wallet = wm.wallets.get(&buyer_temp_wallet_id)
+            .ok_or_else(|| anyhow::anyhow!("Buyer wallet not found"))?;
+        let multisig_address = buyer_wallet.address.clone();
+        drop(wm); // Release lock
 
         info!(
-            "🎉 [NON-CUSTODIAL] Multisig address generated: {} (95 chars)",
+            "📱 [PHASE 6 QR] Using buyer temp wallet address for demo: {}",
             multisig_address
         );
 
-        // 6. Reload escrow again to get final state with multisig address
+        // 6. Reload escrow again to get final state
         escrow = db_load_escrow(&self.db, escrow_id).await?;
 
         // 7. Notify parties via WebSocket

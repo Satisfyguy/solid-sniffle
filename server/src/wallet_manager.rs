@@ -426,14 +426,33 @@ impl WalletManager {
             .ok_or(WalletManagerError::NoAvailableRpc)?;
         self.next_rpc_index = (self.next_rpc_index + 1) % self.rpc_configs.len();
 
+        // Create a unique wallet filename for this temporary wallet
+        let wallet_filename = format!("temp_{}_{}", role, uuid::Uuid::new_v4().to_string().replace("-", "")[..12].to_string());
+
+        // Create RPC client
         let rpc_client = MoneroClient::new(config.clone())?;
-        let wallet_info = rpc_client.get_wallet_info().await?;
+
+        // Close any currently open wallet first (Monero RPC can only have one wallet open at a time)
+        let _ = rpc_client.close_wallet().await; // Ignore errors if no wallet is open
+
+        // Create new wallet in the RPC (or open if exists)
+        match rpc_client.create_wallet(&wallet_filename, "").await {
+            Ok(_) => info!("Created new temporary wallet: {}", wallet_filename),
+            Err(e) => {
+                // Wallet might already exist, try to open it
+                warn!("Wallet creation failed (might exist): {:?}, trying to open", e);
+                rpc_client.open_wallet(&wallet_filename, "").await?;
+            }
+        }
+
+        // Get wallet address (use get_address() instead of get_wallet_info() to avoid daemon dependency in --offline mode)
+        let address = rpc_client.get_address().await?;
 
         let instance = WalletInstance {
             id: Uuid::new_v4(),
             role: wallet_role.clone(),
             rpc_client,
-            address: wallet_info.address.clone(),
+            address: address.clone(),
             multisig_state: MultisigState::NotStarted,
         };
         let id = instance.id;
@@ -441,7 +460,7 @@ impl WalletManager {
 
         info!(
             "✅ Created EMPTY temporary wallet: id={}, role={:?}, address={}",
-            id, wallet_role, wallet_info.address
+            id, wallet_role, address
         );
         info!("🔒 NON-CUSTODIAL: This wallet will remain EMPTY (0 XMR) - used only for multisig coordination");
 

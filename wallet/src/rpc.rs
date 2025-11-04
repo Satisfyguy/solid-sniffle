@@ -296,6 +296,167 @@ impl MoneroRpcClient {
     /// # Ok(())
     /// # }
     /// ```
+
+    /// Create a new wallet file in the wallet-rpc
+    ///
+    /// # Arguments
+    /// * `filename` - Name of the wallet file (without extension)
+    /// * `password` - Wallet password (can be empty for testnet)
+    ///
+    /// # Returns
+    /// Ok(()) if wallet was created successfully
+    ///
+    /// # Errors
+    /// - MoneroError::RpcUnreachable - RPC not accessible
+    /// - MoneroError::RpcError - Wallet already exists or other RPC error
+    /// - MoneroError::InvalidResponse - Invalid response format
+    pub async fn create_wallet(&self, filename: &str, password: &str) -> Result<(), MoneroError> {
+        let _permit = self.semaphore.acquire().await
+            .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
+
+        let _guard = self.rpc_lock.lock().await;
+
+        let params = serde_json::json!({
+            "filename": filename,
+            "password": password,
+            "language": "English"
+        });
+
+        let request = RpcRequest {
+            jsonrpc: "2.0".to_string(),
+            id: "0".to_string(),
+            method: "create_wallet".to_string(),
+            params: Some(params),
+        };
+
+        let response = self.client
+            .post(format!("{}/json_rpc", self.url))
+            .json(&request)
+            .send()
+            .await
+            .map_err(|e| {
+                if e.is_connect() {
+                    MoneroError::RpcUnreachable
+                } else {
+                    MoneroError::NetworkError(e.to_string())
+                }
+            })?;
+
+        let rpc_response: RpcResponse<serde_json::Value> = response
+            .json()
+            .await
+            .map_err(|e| MoneroError::InvalidResponse(format!("JSON parse: {}", e)))?;
+
+        if let Some(error) = rpc_response.error {
+            return Err(MoneroError::RpcError(error.message));
+        }
+
+        Ok(())
+    }
+
+    /// Open an existing wallet file in the wallet-rpc
+    ///
+    /// # Arguments
+    /// * `filename` - Name of the wallet file (without extension)
+    /// * `password` - Wallet password
+    ///
+    /// # Returns
+    /// Ok(()) if wallet was opened successfully
+    ///
+    /// # Errors
+    /// - MoneroError::RpcUnreachable - RPC not accessible
+    /// - MoneroError::RpcError - Wallet not found or wrong password
+    /// - MoneroError::InvalidResponse - Invalid response format
+    pub async fn open_wallet(&self, filename: &str, password: &str) -> Result<(), MoneroError> {
+        let _permit = self.semaphore.acquire().await
+            .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
+
+        let _guard = self.rpc_lock.lock().await;
+
+        let params = serde_json::json!({
+            "filename": filename,
+            "password": password
+        });
+
+        let request = RpcRequest {
+            jsonrpc: "2.0".to_string(),
+            id: "0".to_string(),
+            method: "open_wallet".to_string(),
+            params: Some(params),
+        };
+
+        let response = self.client
+            .post(format!("{}/json_rpc", self.url))
+            .json(&request)
+            .send()
+            .await
+            .map_err(|e| {
+                if e.is_connect() {
+                    MoneroError::RpcUnreachable
+                } else {
+                    MoneroError::NetworkError(e.to_string())
+                }
+            })?;
+
+        let rpc_response: RpcResponse<serde_json::Value> = response
+            .json()
+            .await
+            .map_err(|e| MoneroError::InvalidResponse(format!("JSON parse: {}", e)))?;
+
+        if let Some(error) = rpc_response.error {
+            return Err(MoneroError::RpcError(error.message));
+        }
+
+        Ok(())
+    }
+
+    /// Close the currently open wallet in the wallet-rpc
+    ///
+    /// # Returns
+    /// Ok(()) if wallet was closed successfully
+    ///
+    /// # Errors
+    /// - MoneroError::RpcUnreachable - RPC not accessible
+    /// - MoneroError::RpcError - No wallet open or RPC error
+    /// - MoneroError::InvalidResponse - Invalid response format
+    pub async fn close_wallet(&self) -> Result<(), MoneroError> {
+        let _permit = self.semaphore.acquire().await
+            .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
+
+        let _guard = self.rpc_lock.lock().await;
+
+        let request = RpcRequest {
+            jsonrpc: "2.0".to_string(),
+            id: "0".to_string(),
+            method: "close_wallet".to_string(),
+            params: None,
+        };
+
+        let response = self.client
+            .post(format!("{}/json_rpc", self.url))
+            .json(&request)
+            .send()
+            .await
+            .map_err(|e| {
+                if e.is_connect() {
+                    MoneroError::RpcUnreachable
+                } else {
+                    MoneroError::NetworkError(e.to_string())
+                }
+            })?;
+
+        let rpc_response: RpcResponse<serde_json::Value> = response
+            .json()
+            .await
+            .map_err(|e| MoneroError::InvalidResponse(format!("JSON parse: {}", e)))?;
+
+        if let Some(error) = rpc_response.error {
+            return Err(MoneroError::RpcError(error.message));
+        }
+
+        Ok(())
+    }
+
     pub async fn prepare_multisig(&self) -> Result<MultisigInfo, MoneroError> {
         // Retry logic avec backoff exponentiel
         let mut retries = 0;

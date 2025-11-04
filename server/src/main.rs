@@ -118,8 +118,31 @@ async fn main() -> Result<()> {
     // 6. Initialize Wallet Manager with persistence and automatic recovery
     let encryption_key = hex::decode(&db_encryption_key).context("Failed to hex decode DB_ENCRYPTION_KEY")?;
     let wallet_manager = {
+        // Configure 3 RPC instances (one per role: buyer, vendor, arbiter)
+        // NOTE: URL should NOT include /json_rpc suffix - it's added by the RPC client
+        let rpc_configs = vec![
+            MoneroConfig {
+                rpc_url: "http://127.0.0.1:18082".to_string(), // Buyer
+                rpc_user: None,
+                rpc_password: None,
+                timeout_seconds: 30,
+            },
+            MoneroConfig {
+                rpc_url: "http://127.0.0.1:18083".to_string(), // Vendor
+                rpc_user: None,
+                rpc_password: None,
+                timeout_seconds: 30,
+            },
+            MoneroConfig {
+                rpc_url: "http://127.0.0.1:18084".to_string(), // Arbiter
+                rpc_user: None,
+                rpc_password: None,
+                timeout_seconds: 30,
+            },
+        ];
+
         let mut wm = WalletManager::new_with_persistence(
-            vec![MoneroConfig::default()],
+            rpc_configs,
             pool.clone(),
             encryption_key.clone(),
         )?;
