@@ -63,6 +63,10 @@ path = "src/bin/split_key.rs"
 name = "reconstruct_key"
 path = "src/bin/reconstruct_key.rs"
 
+[[bin]]
+name = "apply_migration"
+path = "src/bin/apply_migration.rs"
+
 [dev-dependencies]
 tokio = { version = "1.35", features = ["macros", "rt-multi-thread"] }
 dotenvy = "0.15"

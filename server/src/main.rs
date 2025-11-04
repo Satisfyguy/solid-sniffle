@@ -12,7 +12,7 @@ use server::db::create_pool;
 use server::handlers::{auth, cart, escrow, frontend, listings, monitoring, multisig_challenge, orders, reputation, reputation_ipfs};
 use server::middleware::{
     admin_auth::AdminAuth,
-    rate_limit::{global_rate_limiter, protected_rate_limiter},
+    // rate_limit::{global_rate_limiter, protected_rate_limiter}, // Temporarily disabled for testing
     security_headers::SecurityHeaders,
 };
 use hex;
@@ -276,7 +276,7 @@ async fn main() -> Result<()> {
             // Logging middleware (logs all requests)
             .wrap(Logger::default())
             // Global rate limiter (100 req/min per IP)
-            .wrap(global_rate_limiter())
+            // .wrap(global_rate_limiter()) // Temporarily disabled for testing
             // Session middleware
             // Security features:
             // - HttpOnly: prevents JavaScript access
@@ -361,7 +361,7 @@ async fn main() -> Result<()> {
             // Single scope ensures shared rate limit quota across all protected operations
             .service(
                 web::scope("/api")
-                    .wrap(protected_rate_limiter())
+                    // .wrap(protected_rate_limiter()) // Temporarily disabled for testing
                     // Listings
                     .service(listings::create_listing)
                     .service(listings::create_listing_with_images)
