@@ -68,16 +68,23 @@ pub fn create_pool(database_url: &str, encryption_key: &str) -> Result<DbPool> {
 
 pub async fn db_insert_escrow(pool: &DbPool, new_escrow: NewEscrow) -> Result<Escrow> {
     let mut conn = pool.get().context("Failed to get DB connection")?;
+    let escrow_id = new_escrow.id.to_string();
     tokio::task::spawn_blocking(move || {
         diesel::insert_into(escrows::table)
             .values(&new_escrow)
             .execute(&mut conn)
-            .context("Failed to insert escrow")?;
+            .map_err(|e| {
+                tracing::error!("Database insert error for escrow {}: {:?}", escrow_id, e);
+                anyhow::anyhow!("Failed to insert escrow: {}", e)
+            })?;
 
         escrows::table
-            .filter(escrows::id.eq(new_escrow.id.to_string()))
+            .filter(escrows::id.eq(escrow_id.clone()))
             .first(&mut conn)
-            .context("Failed to retrieve created escrow")
+            .map_err(|e| {
+                tracing::error!("Failed to retrieve escrow {} after insert: {:?}", escrow_id, e);
+                anyhow::anyhow!("Failed to retrieve created escrow: {}", e)
+            })
     })
     .await?
 }

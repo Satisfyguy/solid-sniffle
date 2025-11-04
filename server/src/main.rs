@@ -407,6 +407,11 @@ async fn main() -> Result<()> {
                         "/escrow/{id}/dispute",
                         web::post().to(escrow::initiate_dispute),
                     )
+                    // NON-CUSTODIAL: Get multisig address for escrow
+                    .route(
+                        "/escrow/{id}/multisig-address",
+                        web::get().to(escrow::get_multisig_address),
+                    )
                     .route(
                         "/escrow/{id}/resolve",
                         web::post().to(escrow::resolve_dispute),

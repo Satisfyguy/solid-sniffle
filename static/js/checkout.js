@@ -406,10 +406,50 @@ class CheckoutFlow {
                     if (copyBtn && data.multisig_address && data.multisig_address !== 'Pending') {
                         copyBtn.disabled = false;
                     }
+
+                    // Generate QR code for multisig address (NON-CUSTODIAL Phase 6)
+                    if (data.multisig_address && data.multisig_address !== 'Pending' && data.multisig_address.length === 95) {
+                        this.generateQRCode(data.multisig_address);
+                    }
                 }
             }
         } catch (error) {
             console.error('[Checkout] Error checking escrow status:', error);
+        }
+    }
+
+    /**
+     * Generate QR code for multisig address (Phase 6: Non-custodial frontend)
+     */
+    generateQRCode(multisigAddress) {
+        console.log('[Checkout] Generating QR code for multisig address');
+
+        const qrcodeContainer = document.getElementById('qrcode');
+        if (!qrcodeContainer) {
+            console.warn('[Checkout] QR code container not found');
+            return;
+        }
+
+        // Clear any existing QR code
+        qrcodeContainer.innerHTML = '';
+
+        // Generate QR code using QRCode.js library
+        if (typeof QRCode !== 'undefined') {
+            try {
+                new QRCode(qrcodeContainer, {
+                    text: multisigAddress,
+                    width: 200,
+                    height: 200,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+                console.log('[Checkout] QR code generated successfully');
+            } catch (error) {
+                console.error('[Checkout] Error generating QR code:', error);
+            }
+        } else {
+            console.error('[Checkout] QRCode library not loaded');
         }
     }
 

@@ -248,18 +248,34 @@
                             <div class="multisig-address-box">
                                 <label for="multisig-address" class="checkout-label">
                                     <i data-lucide="lock" class="inline-icon-sm"></i>
-                                    Adresse Multisig Escrow
+                                    Multisig Escrow Address
                                 </label>
                                 <div class="address-input-group">
                                     <input
                                         type="text"
                                         id="multisig-address"
                                         class="checkout-input checkout-input-mono checkout-input-address"
-                                        value="{% if escrow and escrow.multisig_address %}{{ escrow.multisig_address }}{% else %}Génération en cours...{% endif %}"
+                                        value="{% if escrow and escrow.multisig_address %}{{ escrow.multisig_address }}{% else %}Generating address...{% endif %}"
                                         readonly>
                                     <button class="btn-copy" id="copy-address-btn" {% if not escrow or not escrow.multisig_address %}disabled{% endif %}>
                                         <i data-lucide="copy"></i>
                                     </button>
+                                </div>
+
+                                <!-- QR Code Display -->
+                                <div id="qrcode-container" style="display: flex; justify-content: center; align-items: center; margin-top: 1.5rem; padding: 1.5rem; background: #1a1a2e; border-radius: 0.75rem; border: 2px solid rgba(139, 92, 246, 0.3);">
+                                    <div id="qrcode" style="background: white; padding: 1rem; border-radius: 0.5rem;"></div>
+                                </div>
+
+                                <!-- NON-CUSTODIAL Educational Banner -->
+                                <div class="checkout-notice info" style="margin-top: 1.5rem; background: linear-gradient(135deg, rgba(34, 211, 238, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-color: rgba(34, 211, 238, 0.4);">
+                                    <i data-lucide="shield-check" class="checkout-notice-icon" style="color: #22d3ee;"></i>
+                                    <div class="checkout-notice-content">
+                                        <p class="checkout-notice-title" style="color: #22d3ee; font-weight: 600;">100% Non-Custodial Architecture</p>
+                                        <p class="checkout-notice-text" style="font-size: 0.875rem; line-height: 1.6;">
+                                            <strong>Pay from ANY Monero wallet you control.</strong> The server created 3 empty temporary wallets to generate this multisig address - these wallets never hold funds (0 XMR forever). Send payment from your personal Monero CLI, GUI, or mobile wallet directly to the address above. The server NEVER has custody of your funds.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -523,6 +539,9 @@
             </div>
         </div>
     </main>
+
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <script src="/static/js/lucide.min.js"></script>
     <script src="/static/js/checkout.js"></script>
