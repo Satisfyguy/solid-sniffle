@@ -1572,8 +1572,24 @@ pub async fn show_profile(tera: web::Data<Tera>, session: Session) -> impl Respo
     }
 }
 
+/// Display struct for featured listings
+#[derive(Debug, Serialize)]
+struct FeaturedListing {
+    id: String,
+    title: String,
+    description: String,
+    price_xmr: String, // Formatted as "0.25 XMR"
+    vendor_id: String,
+    vendor_name: String,
+    category: String,
+}
+
 /// GET /featured - Featured products page
-pub async fn show_featured(tera: web::Data<Tera>, session: Session) -> impl Responder {
+pub async fn show_featured(
+    tera: web::Data<Tera>,
+    pool: web::Data<DbPool>,
+    session: Session,
+) -> impl Responder {
     let mut ctx = Context::new();
 
     // Check if user is logged in
@@ -1594,6 +1610,52 @@ pub async fn show_featured(tera: web::Data<Tera>, session: Session) -> impl Resp
     // Add CSRF token for forms
     let csrf_token = get_csrf_token(&session);
     ctx.insert("csrf_token", &csrf_token);
+
+    // Fetch 4 latest active listings for featured section with vendor names
+    use crate::schema::listings::dsl as listings_dsl;
+    use crate::schema::users::dsl as users_dsl;
+    let mut conn = match pool.get() {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Failed to get DB connection: {}", e);
+            return HttpResponse::InternalServerError().body("Database connection error");
+        }
+    };
+
+    let recent_listings: Vec<(Listing, String)> = match listings_dsl::listings
+        .inner_join(users_dsl::users.on(listings_dsl::vendor_id.eq(users_dsl::id)))
+        .filter(listings_dsl::status.eq("active"))
+        .order(listings_dsl::created_at.desc())
+        .limit(4)
+        .select((Listing::as_select(), users_dsl::username))
+        .load::<(Listing, String)>(&mut conn)
+    {
+        Ok(l) => l,
+        Err(e) => {
+            error!("Failed to load featured listings: {}", e);
+            vec![] // Empty list on error
+        }
+    };
+
+    // Convert to display format
+    let featured: Vec<FeaturedListing> = recent_listings
+        .into_iter()
+        .map(|(l, vendor_username)| {
+            // Convert price from atomic units to XMR (1 XMR = 1e12 atomic units)
+            let price_xmr_f64 = l.price_xmr as f64 / 1_000_000_000_000.0;
+            FeaturedListing {
+                id: l.id,
+                title: l.title,
+                description: l.description,
+                price_xmr: format!("{:.2}", price_xmr_f64),
+                vendor_id: l.vendor_id,
+                vendor_name: vendor_username,
+                category: l.category,
+            }
+        })
+        .collect();
+
+    ctx.insert("listings", &featured);
 
     match tera.render("featured/index.html", &ctx) {
         Ok(html) => HttpResponse::Ok().content_type("text/html; charset=utf-8").body(html),

@@ -21,7 +21,7 @@
         .container {
             max-width: 1280px;
             margin: 0 auto;
-            padding: 0 1.5rem 3rem;
+            padding: 6rem 1.5rem 3rem;
         }
 
         /* Hero Section */
@@ -306,90 +306,37 @@
     {% include "header.html" %}
 
     <main class="container">
-        <!-- Hero Section -->
-        <div class="hero-section">
-            <div class="premium-badge">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="8" r="6"/>
-                    <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
-                </svg>
-                <span>Premium Selection</span>
-            </div>
-
-            <h1 class="hero-title">
-                Featured <span class="text-accent">Products</span>
-            </h1>
-
-            <p class="hero-description">
-                Discover our exclusive selection of the most popular products and services,
-                rigorously vetted and approved by our community.
-            </p>
-        </div>
-
-        <!-- Stats -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-                    <polyline points="16 7 22 7 22 13"/>
-                </svg>
-                <p class="stat-value">98%</p>
-                <p class="stat-label">Satisfaction Rate</p>
-            </div>
-
-            <div class="stat-card">
-                <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-                <p class="stat-value">4.9+</p>
-                <p class="stat-label">Average Rating</p>
-            </div>
-
-            <div class="stat-card">
-                <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <circle cx="9" cy="21" r="1"/>
-                    <circle cx="20" cy="21" r="1"/>
-                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                </svg>
-                <p class="stat-value">3,200+</p>
-                <p class="stat-label">Total Sales</p>
-            </div>
-        </div>
-
         <!-- Featured Products Grid -->
+        {% if listings %}
         <div class="products-grid">
-            <!-- Product 1 -->
+            {% for listing in listings %}
             <div class="product-card">
                 <div class="product-header">
                     <div class="product-header-top">
-                        <span class="badge">Bestseller</span>
-                        <div class="rating">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                            </svg>
-                            <span class="rating-value">5.0</span>
-                            <span class="rating-count">(892 sales)</span>
-                        </div>
+                        <span class="badge">{{ listing.category }}</span>
                     </div>
-                    <h3 class="product-title">Complete Security Suite</h3>
+                    <h3 class="product-title">{{ listing.title }}</h3>
                     <p class="product-description">
-                        Complete package for maximum security including VPN, antivirus and anonymity tools
+                        {{ listing.description | truncate(length=100) }}
                     </p>
                 </div>
                 <div class="product-content">
                     <div class="product-info">
                         <div class="vendor-info">
-                            <p>Verified Vendor</p>
-                            <p class="vendor-name">SecurityPro</p>
+                            <p>Vendor</p>
+                            <p class="vendor-name">{{ listing.vendor_name }}</p>
                         </div>
                         <div class="price-info">
                             <p>Price</p>
-                            <p class="product-price">0.25 XMR</p>
+                            <p class="product-price">{{ listing.price_xmr }} XMR</p>
                         </div>
                     </div>
                 </div>
                 <div class="product-footer">
-                    <button class="btn btn-primary">
+                    <button class="btn btn-primary"
+                            hx-post="/api/cart/add"
+                            hx-vals='{"listing_id": "{{ listing.id }}", "quantity": 1}'
+                            hx-swap="none">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="9" cy="21" r="1"/>
                             <circle cx="20" cy="21" r="1"/>
@@ -397,139 +344,17 @@
                         </svg>
                         Add to Cart
                     </button>
-                    <a href="/listings/1" class="btn btn-outline">Details</a>
+                    <a href="/listings/{{ listing.id }}" class="btn btn-outline">Details</a>
                 </div>
             </div>
-
-            <!-- Product 2 -->
-            <div class="product-card">
-                <div class="product-header">
-                    <div class="product-header-top">
-                        <span class="badge">Top Rated</span>
-                        <div class="rating">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                            </svg>
-                            <span class="rating-value">4.9</span>
-                            <span class="rating-count">(456 sales)</span>
-                        </div>
-                    </div>
-                    <h3 class="product-title">Premium Anonymous Hosting</h3>
-                    <p class="product-description">
-                        High-performance servers with DDoS protection and total anonymity
-                    </p>
-                </div>
-                <div class="product-content">
-                    <div class="product-info">
-                        <div class="vendor-info">
-                            <p>Verified Vendor</p>
-                            <p class="vendor-name">DarkHostPro</p>
-                        </div>
-                        <div class="price-info">
-                            <p>Price</p>
-                            <p class="product-price">0.30 XMR</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="product-footer">
-                    <button class="btn btn-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="9" cy="21" r="1"/>
-                            <circle cx="20" cy="21" r="1"/>
-                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                        </svg>
-                        Add to Cart
-                    </button>
-                    <a href="/listings/2" class="btn btn-outline">Details</a>
-                </div>
-            </div>
-
-            <!-- Product 3 -->
-            <div class="product-card">
-                <div class="product-header">
-                    <div class="product-header-top">
-                        <span class="badge">Trending</span>
-                        <div class="rating">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                            </svg>
-                            <span class="rating-value">4.8</span>
-                            <span class="rating-count">(678 sales)</span>
-                        </div>
-                    </div>
-                    <h3 class="product-title">Pro Secure Communication</h3>
-                    <p class="product-description">
-                        End-to-end encrypted communication platform for teams
-                    </p>
-                </div>
-                <div class="product-content">
-                    <div class="product-info">
-                        <div class="vendor-info">
-                            <p>Verified Vendor</p>
-                            <p class="vendor-name">CryptoComm</p>
-                        </div>
-                        <div class="price-info">
-                            <p>Price</p>
-                            <p class="product-price">0.18 XMR</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="product-footer">
-                    <button class="btn btn-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="9" cy="21" r="1"/>
-                            <circle cx="20" cy="21" r="1"/>
-                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                        </svg>
-                        Add to Cart
-                    </button>
-                    <a href="/listings/3" class="btn btn-outline">Details</a>
-                </div>
-            </div>
-
-            <!-- Product 4 -->
-            <div class="product-card">
-                <div class="product-header">
-                    <div class="product-header-top">
-                        <span class="badge">Popular</span>
-                        <div class="rating">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                            </svg>
-                            <span class="rating-value">5.0</span>
-                            <span class="rating-count">(1234 sales)</span>
-                        </div>
-                    </div>
-                    <h3 class="product-title">Advanced Multi-Sig Wallet</h3>
-                    <p class="product-description">
-                        Secure storage solution with multi-signature support
-                    </p>
-                </div>
-                <div class="product-content">
-                    <div class="product-info">
-                        <div class="vendor-info">
-                            <p>Verified Vendor</p>
-                            <p class="vendor-name">WalletMaster</p>
-                        </div>
-                        <div class="price-info">
-                            <p>Price</p>
-                            <p class="product-price">0.10 XMR</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="product-footer">
-                    <button class="btn btn-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="9" cy="21" r="1"/>
-                            <circle cx="20" cy="21" r="1"/>
-                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                        </svg>
-                        Add to Cart
-                    </button>
-                    <a href="/listings/4" class="btn btn-outline">Details</a>
-                </div>
-            </div>
+            {% endfor %}
         </div>
+        {% else %}
+        <div class="no-listings-message">
+            <p>No featured products available at the moment.</p>
+            <a href="/listings" class="btn btn-outline">Explore All Listings</a>
+        </div>
+        {% endif %}
 
         <!-- CTA Section -->
         <div class="cta-section">

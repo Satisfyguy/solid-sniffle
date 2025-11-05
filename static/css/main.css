@@ -206,19 +206,28 @@ body::before {
 }
 
 .nav-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.nav-left, .nav-right {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 2rem;
 }
 
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    justify-self: start;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    justify-self: end;
+}
+
 .nav-center {
-    flex-grow: 1;
+    justify-self: center;
     text-align: center;
 }
 
@@ -749,21 +758,6 @@ body::before {
 .no-listings-message p {
     color: rgba(255, 255, 255, 0.6);
     margin-bottom: 1.5rem;
-}
-
-.btn-create-listing {
-    display: inline-block;
-    padding: 0.75rem 1.5rem;
-    background-color: var(--color-accent);
-    color: var(--color-background);
-    border-radius: 2px;
-    text-decoration: none;
-    font-weight: 500;
-    transition: background-color 0.3s;
-}
-
-.btn-create-listing:hover {
-    background-color: #E6BF5A;
 }
 
 .smaller-title {
@@ -2222,24 +2216,44 @@ a[href="/cart"].icon-button::before {
     align-items: center;
     gap: 0.5rem;
     padding: 0.625rem 1.25rem;
-    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-    color: #ffffff;
-    font-weight: 700;
+    background: hsla(var(--accent), 0.15);
+    backdrop-filter: blur(10px);
+    color: hsl(var(--accent));
+    font-weight: 400;
     font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-radius: 0.5rem;
+    letter-spacing: 0.025em;
+    border-radius: 0.375rem;
+    border: 1px solid hsla(var(--accent), 0.3);
     transition: all 0.3s ease;
-    box-shadow: 0 4px 14px 0 rgba(251, 146, 60, 0.4);
+    box-shadow: 0 2px 8px 0 hsla(var(--accent), 0.15);
     text-decoration: none;
-    border: none;
     cursor: pointer;
+    position: relative;
+}
+
+/* Yellow glow effect behind button */
+.btn-create-listing::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 0.5rem;
+    background-color: var(--color-accent);
+    opacity: 0;
+    filter: blur(12px);
+    transition: opacity 0.3s ease;
+    z-index: -1;
+    pointer-events: none;
 }
 
 .btn-create-listing:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px 0 rgba(251, 146, 60, 0.6);
-    background: linear-gradient(135deg, #fb923c 0%, #f87171 100%);
+    background: hsla(var(--accent), 0.25);
+    border-color: hsl(var(--accent));
+    box-shadow: 0 4px 16px 0 hsla(var(--accent), 0.3);
+    transform: translateY(-1px);
+}
+
+.btn-create-listing:hover::before {
+    opacity: 0.4;
 }
 
 .btn-create-listing svg {
@@ -2248,15 +2262,29 @@ a[href="/cart"].icon-button::before {
 
 /* Mobile responsive */
 @media (max-width: 768px) {
+    /* Hide Explore Listings on mobile to save space */
+    .nav-left {
+        display: none;
+    }
+
+    /* Adjust grid to 2 columns when nav-left is hidden */
+    .nav-content {
+        grid-template-columns: auto 1fr;
+    }
+
     .btn-create-listing span {
         display: none;
     }
-    
+
     .btn-create-listing {
         padding: 0.625rem;
         border-radius: 50%;
         width: 2.5rem;
         height: 2.5rem;
         justify-content: center;
+    }
+
+    .btn-create-listing::before {
+        border-radius: 50%;
     }
 }
