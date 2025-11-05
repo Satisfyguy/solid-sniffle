@@ -24,6 +24,21 @@
             padding: 6rem 1.5rem 3rem;
         }
 
+        /* Hero Spacer - 4x header height */
+        .hero-spacer {
+            height: 16rem;
+            width: 100%;
+            margin-bottom: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-content-wrapper {
+            text-align: center;
+            max-width: 48rem;
+        }
+
         /* Hero Section */
         .hero-section {
             margin-bottom: 0.5rem;
@@ -306,6 +321,24 @@
     {% include "header.html" %}
 
     <main class="container">
+        <!-- Hero Section -->
+        <div class="hero-spacer">
+            <div class="hero-content-wrapper">
+                <div class="premium-badge">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                    </svg>
+                    <span>Premium Selection</span>
+                </div>
+                <h1 class="hero-title">
+                    <span class="text-accent">Featured</span> Products
+                </h1>
+                <p class="hero-description">
+                    Discover our exclusive selection of the most popular products and services, rigorously vetted and approved by our community.
+                </p>
+            </div>
+        </div>
+
         <!-- Featured Products Grid -->
         {% if listings %}
         <div class="products-grid">

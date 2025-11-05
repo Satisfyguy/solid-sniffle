@@ -1612,8 +1612,10 @@ pub async fn show_featured(
     ctx.insert("csrf_token", &csrf_token);
 
     // Fetch 4 latest active listings for featured section with vendor names
-    use crate::schema::listings::dsl as listings_dsl;
-    use crate::schema::users::dsl as users_dsl;
+    use crate::schema::listings::dsl::*;
+    use crate::schema::users;
+    use std::collections::HashMap;
+
     let mut conn = match pool.get() {
         Ok(c) => c,
         Err(e) => {
@@ -1622,13 +1624,12 @@ pub async fn show_featured(
         }
     };
 
-    let recent_listings: Vec<(Listing, String)> = match listings_dsl::listings
-        .inner_join(users_dsl::users.on(listings_dsl::vendor_id.eq(users_dsl::id)))
-        .filter(listings_dsl::status.eq("active"))
-        .order(listings_dsl::created_at.desc())
+    // First, get the recent listings
+    let recent_listings: Vec<Listing> = match listings
+        .filter(status.eq("active"))
+        .order(created_at.desc())
         .limit(4)
-        .select((Listing::as_select(), users_dsl::username))
-        .load::<(Listing, String)>(&mut conn)
+        .load::<Listing>(&mut conn)
     {
         Ok(l) => l,
         Err(e) => {
@@ -1637,19 +1638,42 @@ pub async fn show_featured(
         }
     };
 
+    // Get all vendor IDs from listings
+    let vendor_ids: Vec<String> = recent_listings.iter().map(|l| l.vendor_id.clone()).collect();
+
+    // Fetch usernames for these vendors
+    use crate::models::user::User;
+    let vendor_map: HashMap<String, String> = if !vendor_ids.is_empty() {
+        match users::table
+            .filter(users::id.eq_any(&vendor_ids))
+            .select((users::id, users::username))
+            .load::<(String, String)>(&mut conn)
+        {
+            Ok(users_list) => users_list.into_iter().collect(),
+            Err(e) => {
+                error!("Failed to load vendor usernames: {}", e);
+                HashMap::new()
+            }
+        }
+    } else {
+        HashMap::new()
+    };
+
     // Convert to display format
     let featured: Vec<FeaturedListing> = recent_listings
         .into_iter()
-        .map(|(l, vendor_username)| {
+        .map(|l| {
             // Convert price from atomic units to XMR (1 XMR = 1e12 atomic units)
             let price_xmr_f64 = l.price_xmr as f64 / 1_000_000_000_000.0;
+            let vendor_name = vendor_map.get(&l.vendor_id).cloned().unwrap_or_else(|| "Unknown".to_string());
+
             FeaturedListing {
                 id: l.id,
                 title: l.title,
                 description: l.description,
                 price_xmr: format!("{:.2}", price_xmr_f64),
                 vendor_id: l.vendor_id,
-                vendor_name: vendor_username,
+                vendor_name,
                 category: l.category,
             }
         })
