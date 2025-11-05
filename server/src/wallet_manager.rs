@@ -11,11 +11,18 @@ use std::sync::Arc;
 use thiserror::Error;
 use tracing::{info, error, debug, warn};
 use uuid::Uuid;
+use tokio::sync::Mutex as TokioMutex;
+use std::path::Path;
 
 use crate::db::DbPool;
 use crate::repositories::MultisigStateRepository;
 use crate::models::multisig_state::{MultisigPhase, MultisigSnapshot};
 use crate::wallet_pool::{WalletPool, WalletRole as PoolWalletRole};
+
+// Global mutex to ensure only ONE wallet creation happens at a time across the entire server
+// This prevents race conditions with monero-wallet-rpc which can only handle one wallet at a time
+use once_cell::sync::Lazy;
+static WALLET_CREATION_LOCK: Lazy<TokioMutex<()>> = Lazy::new(|| TokioMutex::new(()));
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum WalletRole {
@@ -75,6 +82,10 @@ pub struct WalletManager {
     pub wallets: HashMap<Uuid, WalletInstance>,
     rpc_configs: Vec<MoneroConfig>,
     next_rpc_index: usize,
+    // Role-based RPC assignment counters (for production scalability)
+    buyer_rpc_index: std::sync::atomic::AtomicUsize,
+    vendor_rpc_index: std::sync::atomic::AtomicUsize,
+    arbiter_rpc_index: std::sync::atomic::AtomicUsize,
     // Multisig state persistence (Option for backward compatibility)
     multisig_repo: Option<Arc<MultisigStateRepository>>,
     db_pool: Option<DbPool>,
@@ -99,6 +110,9 @@ impl WalletManager {
             wallets: HashMap::new(),
             rpc_configs: configs,
             next_rpc_index: 0,
+            buyer_rpc_index: std::sync::atomic::AtomicUsize::new(0),
+            vendor_rpc_index: std::sync::atomic::AtomicUsize::new(0),
+            arbiter_rpc_index: std::sync::atomic::AtomicUsize::new(0),
             multisig_repo: None,
             db_pool: None,
             encryption_key: None,
@@ -150,6 +164,9 @@ impl WalletManager {
             wallets: HashMap::new(),
             rpc_configs: configs,
             next_rpc_index: 0,
+            buyer_rpc_index: std::sync::atomic::AtomicUsize::new(0),
+            vendor_rpc_index: std::sync::atomic::AtomicUsize::new(0),
+            arbiter_rpc_index: std::sync::atomic::AtomicUsize::new(0),
             multisig_repo: Some(Arc::new(multisig_repo)),
             db_pool: Some(db_pool.clone()),
             encryption_key: Some(encryption_key),
@@ -209,6 +226,86 @@ impl WalletManager {
     /// Get reference to the wallet pool (if enabled)
     pub fn wallet_pool(&self) -> Option<&Arc<WalletPool>> {
         self.wallet_pool.as_ref()
+    }
+
+    /// Get dedicated RPC instance for a specific role (PRODUCTION SCALABILITY)
+    ///
+    /// This method implements role-based RPC assignment to prevent collisions
+    /// and enable parallel escrow processing with limited RPC resources.
+    ///
+    /// # Architecture
+    /// - Buyer wallets: Ports 18082, 18085, 18088... (index % 3 == 0)
+    /// - Vendor wallets: Ports 18083, 18086, 18089... (index % 3 == 1)
+    /// - Arbiter wallets: Ports 18084, 18087, 18090... (index % 3 == 2)
+    ///
+    /// # Arguments
+    /// * `role` - Wallet role (Buyer, Vendor, or Arbiter)
+    ///
+    /// # Returns
+    /// MoneroConfig for the next available RPC instance for this role
+    ///
+    /// # Errors
+    /// - NoAvailableRpc - No RPC instances configured for this role
+    ///
+    /// # Example
+    /// ```ignore
+    /// // With 9 RPC instances (ports 18082-18090):
+    /// // Buyer uses 18082, 18085, 18088 (3 instances)
+    /// // Vendor uses 18083, 18086, 18089 (3 instances)
+    /// // Arbiter uses 18084, 18087, 18090 (3 instances)
+    /// let buyer_config = wallet_manager.get_rpc_for_role(&WalletRole::Buyer)?;
+    /// ```
+    fn get_rpc_for_role(&self, role: &WalletRole) -> Result<MoneroConfig, WalletManagerError> {
+        use std::sync::atomic::Ordering;
+
+        match role {
+            WalletRole::Buyer => {
+                // Ports 18082, 18085, 18088... (indices 0, 3, 6, 9...)
+                let buyer_rpcs: Vec<MoneroConfig> = self.rpc_configs.iter()
+                    .enumerate()
+                    .filter(|(i, _)| i % 3 == 0)
+                    .map(|(_, config)| config.clone())
+                    .collect();
+
+                if buyer_rpcs.is_empty() {
+                    return Err(WalletManagerError::NoAvailableRpc);
+                }
+
+                let index = self.buyer_rpc_index.fetch_add(1, Ordering::SeqCst) % buyer_rpcs.len();
+                Ok(buyer_rpcs[index].clone())
+            },
+            WalletRole::Vendor => {
+                // Ports 18083, 18086, 18089... (indices 1, 4, 7, 10...)
+                let vendor_rpcs: Vec<MoneroConfig> = self.rpc_configs.iter()
+                    .enumerate()
+                    .filter(|(i, _)| i % 3 == 1)
+                    .map(|(_, config)| config.clone())
+                    .collect();
+
+                if vendor_rpcs.is_empty() {
+                    return Err(WalletManagerError::NoAvailableRpc);
+                }
+
+                let index = self.vendor_rpc_index.fetch_add(1, Ordering::SeqCst) % vendor_rpcs.len();
+                Ok(vendor_rpcs[index].clone())
+            },
+            WalletRole::Arbiter => {
+                // Ports 18084, 18087, 18090... (indices 2, 5, 8, 11...)
+                let arbiter_rpcs: Vec<MoneroConfig> = self.rpc_configs.iter()
+                    .enumerate()
+                    .filter(|(i, _)| i % 3 == 2)
+                    .map(|(_, config)| config.clone())
+                    .collect();
+
+                if arbiter_rpcs.is_empty() {
+                    return Err(WalletManagerError::NoAvailableRpc);
+                }
+
+                // Arbiter typically has low load, just use first instance
+                // (can round-robin if needed for high-scale arbitration)
+                Ok(arbiter_rpcs[0].clone())
+            }
+        }
     }
 
     /// DEPRECATED: Use create_arbiter_wallet_instance() or register_client_wallet_rpc() instead.
@@ -499,6 +596,11 @@ impl WalletManager {
     /// // All 3 wallets have 0 XMR balance - used only for multisig coordination
     /// ```
     pub async fn create_temporary_wallet(&mut self, escrow_id: Uuid, role: &str) -> Result<Uuid, WalletManagerError> {
+        // SOLUTION #1: Global mutex to prevent concurrent wallet creation
+        // Only ONE wallet creation can happen at a time across the entire server
+        let _lock = WALLET_CREATION_LOCK.lock().await;
+        info!("🔒 Acquired global wallet creation lock for role={}", role);
+
         let wallet_role = match role {
             "buyer" => WalletRole::Buyer,
             "vendor" => WalletRole::Vendor,
@@ -509,15 +611,26 @@ impl WalletManager {
             }),
         };
 
-        let config = self
-            .rpc_configs
-            .get(self.next_rpc_index)
-            .ok_or(WalletManagerError::NoAvailableRpc)?;
-        self.next_rpc_index = (self.next_rpc_index + 1) % self.rpc_configs.len();
+        // PRODUCTION SCALABILITY: Use role-based RPC assignment instead of round-robin
+        // This ensures buyer/vendor/arbiter wallets use different RPC instances
+        let config = self.get_rpc_for_role(&wallet_role)?;
+        info!("🎯 Assigned {} to RPC: {}", role, config.rpc_url);
 
         // Create wallet filename based on escrow_id (for later reopening)
         // Format: "{role}_temp_escrow_{escrow_id}"
         let wallet_filename = format!("{}_temp_escrow_{}", role, escrow_id);
+
+        // SOLUTION #4: Auto-cleanup of orphaned wallet files before creation
+        let wallet_path = Path::new("/var/monero/wallets").join(&wallet_filename);
+        let keys_path = Path::new("/var/monero/wallets").join(format!("{}.keys", wallet_filename));
+
+        if wallet_path.exists() || keys_path.exists() {
+            warn!("🗑️  Found existing wallet files for {}, deleting before recreation", wallet_filename);
+            let _ = std::fs::remove_file(&wallet_path);
+            let _ = std::fs::remove_file(&keys_path);
+            let _ = std::fs::remove_file(Path::new("/var/monero/wallets").join(format!("{}.address.txt", wallet_filename)));
+            info!("✅ Cleaned up orphaned wallet files for {}", wallet_filename);
+        }
 
         // Create RPC client
         let rpc_client = MoneroClient::new(config.clone())?;
@@ -525,18 +638,73 @@ impl WalletManager {
         // Close any currently open wallet first (Monero RPC can only have one wallet open at a time)
         let _ = rpc_client.close_wallet().await; // Ignore errors if no wallet is open
 
-        // Create new wallet in the RPC (or open if exists)
-        match rpc_client.create_wallet(&wallet_filename, "").await {
-            Ok(_) => info!("Created new temporary wallet: {}", wallet_filename),
-            Err(e) => {
-                // Wallet might already exist, try to open it
-                warn!("Wallet creation failed (might exist): {:?}, trying to open", e);
-                rpc_client.open_wallet(&wallet_filename, "").await?;
-            }
-        }
+        // SOLUTION #2: Increased delay to 500ms based on observed RPC processing times
+        // SOLUTION #3: Retry logic with exponential backoff
+        let mut attempts = 0;
+        let max_attempts = 3;
+        let mut last_error = None;
 
-        // Get wallet address (use get_address() instead of get_wallet_info() to avoid daemon dependency in --offline mode)
-        let address = rpc_client.get_address().await?;
+        // Retry loop for wallet creation with exponential backoff
+        let address = loop {
+            attempts += 1;
+            info!("🔄 Wallet creation attempt {}/{} for role={}", attempts, max_attempts, role);
+
+            // Create new wallet in the RPC (or open if exists)
+            let creation_result = match rpc_client.create_wallet(&wallet_filename, "").await {
+                Ok(_) => {
+                    info!("✅ Created new temporary wallet: {}", wallet_filename);
+                    Ok(())
+                }
+                Err(e) => {
+                    // Wallet might already exist, try to open it
+                    warn!("Wallet creation failed (might exist): {:?}, trying to open", e);
+                    match rpc_client.open_wallet(&wallet_filename, "").await {
+                        Ok(_) => {
+                            info!("✅ Opened existing wallet: {}", wallet_filename);
+                            Ok(())
+                        }
+                        Err(open_err) => Err(open_err),
+                    }
+                }
+            };
+
+            match creation_result {
+                Ok(_) => {
+                    // Get wallet address
+                    match rpc_client.get_address().await {
+                        Ok(addr) => {
+                            info!(
+                                "✅ Created EMPTY temporary wallet: role={:?}, address={}",
+                                wallet_role, addr
+                            );
+                            info!("🔒 NON-CUSTODIAL: This wallet will remain EMPTY (0 XMR) - used only for multisig coordination");
+                            break addr;
+                        }
+                        Err(e) => {
+                            last_error = Some(WalletManagerError::from(e));
+                            warn!("❌ Failed to get wallet address (attempt {}/{})", attempts, max_attempts);
+                        }
+                    }
+                }
+                Err(e) => {
+                    last_error = Some(WalletManagerError::from(e));
+                    warn!("❌ Failed to create/open wallet (attempt {}/{})", attempts, max_attempts);
+                }
+            }
+
+            if attempts >= max_attempts {
+                error!("❌ All {} attempts failed for role={}", max_attempts, role);
+                return Err(last_error.unwrap_or(WalletManagerError::InvalidState {
+                    expected: "successful wallet creation".to_string(),
+                    actual: format!("failed after {} attempts", max_attempts),
+                }));
+            }
+
+            // Exponential backoff: 500ms, 1000ms, 2000ms
+            let delay_ms = 500 * (2_u64.pow(attempts - 1));
+            info!("⏳ Waiting {}ms before retry...", delay_ms);
+            tokio::time::sleep(tokio::time::Duration::from_millis(delay_ms)).await;
+        };
 
         // Extract RPC port from config URL for WalletPool tracking
         let rpc_port = config
@@ -546,6 +714,7 @@ impl WalletManager {
             .and_then(|s| s.split('/').next())
             .and_then(|s| s.parse::<u16>().ok());
 
+        // Create WalletInstance and insert into map
         let instance = WalletInstance {
             id: Uuid::new_v4(),
             role: wallet_role.clone(),
@@ -557,11 +726,11 @@ impl WalletManager {
         let id = instance.id;
         self.wallets.insert(id, instance);
 
-        info!(
-            "✅ Created EMPTY temporary wallet: id={}, role={:?}, address={}",
-            id, wallet_role, address
-        );
-        info!("🔒 NON-CUSTODIAL: This wallet will remain EMPTY (0 XMR) - used only for multisig coordination");
+        // ROLE-BASED RPC: We can keep wallets open because each role uses a different RPC instance!
+        // Buyer, Vendor, Arbiter wallets are on ports 18082, 18083, 18084 respectively.
+        // They will be closed AFTER multisig setup is complete, not before.
+        info!("✅ Wallet remains OPEN for multisig setup (role-based RPC allows parallel open wallets)");
+        info!("✅ Released wallet creation lock for role={}", role);
 
         Ok(id)
     }
@@ -606,12 +775,9 @@ impl WalletManager {
             escrow_id, role
         );
 
-        // 1. Get next available RPC config (round-robin)
-        let config = self
-            .rpc_configs
-            .get(self.next_rpc_index)
-            .ok_or(WalletManagerError::NoAvailableRpc)?;
-        self.next_rpc_index = (self.next_rpc_index + 1) % self.rpc_configs.len();
+        // 1. Get role-specific RPC config (PRODUCTION SCALABILITY)
+        let config = self.get_rpc_for_role(&role)?;
+        info!("🎯 Assigned {:?} to RPC: {}", role, config.rpc_url);
 
         // 2. Extract port from config
         let rpc_port = config

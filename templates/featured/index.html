@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Produits Vedettes - Nexus Marketplace</title>
-    <meta name="description" content="Découvrez nos produits vedettes les plus populaires et les mieux notés sur Nexus marketplace">
+    <title>Featured Products - Nexus Marketplace</title>
+    <meta name="description" content="Discover our most popular and top-rated featured products on Nexus marketplace">
 
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="/static/css/main.css">
@@ -21,12 +21,12 @@
         .container {
             max-width: 1280px;
             margin: 0 auto;
-            padding: 0.5rem 1.5rem 3rem;
+            padding: 0 1.5rem 3rem;
         }
 
         /* Hero Section */
         .hero-section {
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
             text-align: center;
         }
 
@@ -34,7 +34,7 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.5rem 1rem;
+            padding: 0.25rem 0.75rem;
             border-radius: 9999px;
             border: 1px solid hsla(var(--accent), 0.3);
             background-color: hsla(var(--accent), 0.05);
@@ -54,11 +54,11 @@
         }
 
         .hero-title {
-            font-size: 4rem;
+            font-size: 2.5rem;
             font-weight: 300;
             line-height: 1;
             letter-spacing: -0.025em;
-            margin: 0 0 0.5rem 0;
+            margin: 0;
         }
 
         .text-accent {
@@ -68,18 +68,18 @@
         .hero-description {
             color: hsl(var(--muted-foreground));
             max-width: 48rem;
-            margin: 0 auto;
+            margin: 0.25rem auto 0.5rem;
             font-weight: 300;
-            font-size: 1.125rem;
-            line-height: 1.75;
+            font-size: 1rem;
+            line-height: 1.4;
         }
 
         /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(1, minmax(0, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
         }
 
         @media (min-width: 768px) {
@@ -92,22 +92,22 @@
             background-color: hsla(var(--card), 0.5);
             border: 1px solid hsl(var(--border));
             border-radius: 0.5rem;
-            padding: 1.5rem;
+            padding: 0.75rem;
             text-align: center;
         }
 
         .stat-icon {
-            width: 2rem;
-            height: 2rem;
+            width: 1.5rem;
+            height: 1.5rem;
             color: hsl(var(--accent));
-            margin: 0 auto 0.75rem;
+            margin: 0 auto 0.25rem;
         }
 
         .stat-value {
-            font-size: 1.875rem;
+            font-size: 1.5rem;
             font-weight: 300;
             color: hsl(var(--accent));
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.125rem;
         }
 
         .stat-label {
@@ -313,16 +313,16 @@
                     <circle cx="12" cy="8" r="6"/>
                     <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
                 </svg>
-                <span>Sélection Premium</span>
+                <span>Premium Selection</span>
             </div>
 
             <h1 class="hero-title">
-                Produits <span class="text-accent">Vedettes</span>
+                Featured <span class="text-accent">Products</span>
             </h1>
 
             <p class="hero-description">
-                Découvrez notre sélection exclusive de produits et services les plus populaires,
-                rigoureusement vérifiés et approuvés par notre communauté.
+                Discover our exclusive selection of the most popular products and services,
+                rigorously vetted and approved by our community.
             </p>
         </div>
 
@@ -334,7 +334,7 @@
                     <polyline points="16 7 22 7 22 13"/>
                 </svg>
                 <p class="stat-value">98%</p>
-                <p class="stat-label">Taux de satisfaction</p>
+                <p class="stat-label">Satisfaction Rate</p>
             </div>
 
             <div class="stat-card">
@@ -342,7 +342,7 @@
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                 </svg>
                 <p class="stat-value">4.9+</p>
-                <p class="stat-label">Note moyenne</p>
+                <p class="stat-label">Average Rating</p>
             </div>
 
             <div class="stat-card">
@@ -352,7 +352,7 @@
                     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                 </svg>
                 <p class="stat-value">3,200+</p>
-                <p class="stat-label">Ventes totales</p>
+                <p class="stat-label">Total Sales</p>
             </div>
         </div>
 
@@ -368,22 +368,22 @@
                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                             </svg>
                             <span class="rating-value">5.0</span>
-                            <span class="rating-count">(892 ventes)</span>
+                            <span class="rating-count">(892 sales)</span>
                         </div>
                     </div>
-                    <h3 class="product-title">Suite de Sécurité Complète</h3>
+                    <h3 class="product-title">Complete Security Suite</h3>
                     <p class="product-description">
-                        Package complet pour une sécurité maximale incluant VPN, antivirus et outils d'anonymat
+                        Complete package for maximum security including VPN, antivirus and anonymity tools
                     </p>
                 </div>
                 <div class="product-content">
                     <div class="product-info">
                         <div class="vendor-info">
-                            <p>Vendeur vérifié</p>
+                            <p>Verified Vendor</p>
                             <p class="vendor-name">SecurityPro</p>
                         </div>
                         <div class="price-info">
-                            <p>Prix</p>
+                            <p>Price</p>
                             <p class="product-price">0.25 XMR</p>
                         </div>
                     </div>
@@ -395,9 +395,9 @@
                             <circle cx="20" cy="21" r="1"/>
                             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                         </svg>
-                        Ajouter au panier
+                        Add to Cart
                     </button>
-                    <a href="/listings/1" class="btn btn-outline">Détails</a>
+                    <a href="/listings/1" class="btn btn-outline">Details</a>
                 </div>
             </div>
 
@@ -411,22 +411,22 @@
                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                             </svg>
                             <span class="rating-value">4.9</span>
-                            <span class="rating-count">(456 ventes)</span>
+                            <span class="rating-count">(456 sales)</span>
                         </div>
                     </div>
-                    <h3 class="product-title">Hébergement Premium Anonyme</h3>
+                    <h3 class="product-title">Premium Anonymous Hosting</h3>
                     <p class="product-description">
-                        Serveurs haute performance avec protection DDoS et anonymat total
+                        High-performance servers with DDoS protection and total anonymity
                     </p>
                 </div>
                 <div class="product-content">
                     <div class="product-info">
                         <div class="vendor-info">
-                            <p>Vendeur vérifié</p>
+                            <p>Verified Vendor</p>
                             <p class="vendor-name">DarkHostPro</p>
                         </div>
                         <div class="price-info">
-                            <p>Prix</p>
+                            <p>Price</p>
                             <p class="product-price">0.30 XMR</p>
                         </div>
                     </div>
@@ -438,9 +438,9 @@
                             <circle cx="20" cy="21" r="1"/>
                             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                         </svg>
-                        Ajouter au panier
+                        Add to Cart
                     </button>
-                    <a href="/listings/2" class="btn btn-outline">Détails</a>
+                    <a href="/listings/2" class="btn btn-outline">Details</a>
                 </div>
             </div>
 
@@ -454,22 +454,22 @@
                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                             </svg>
                             <span class="rating-value">4.8</span>
-                            <span class="rating-count">(678 ventes)</span>
+                            <span class="rating-count">(678 sales)</span>
                         </div>
                     </div>
-                    <h3 class="product-title">Communication Sécurisée Pro</h3>
+                    <h3 class="product-title">Pro Secure Communication</h3>
                     <p class="product-description">
-                        Plateforme de communication cryptée de bout en bout pour équipes
+                        End-to-end encrypted communication platform for teams
                     </p>
                 </div>
                 <div class="product-content">
                     <div class="product-info">
                         <div class="vendor-info">
-                            <p>Vendeur vérifié</p>
+                            <p>Verified Vendor</p>
                             <p class="vendor-name">CryptoComm</p>
                         </div>
                         <div class="price-info">
-                            <p>Prix</p>
+                            <p>Price</p>
                             <p class="product-price">0.18 XMR</p>
                         </div>
                     </div>
@@ -481,9 +481,9 @@
                             <circle cx="20" cy="21" r="1"/>
                             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                         </svg>
-                        Ajouter au panier
+                        Add to Cart
                     </button>
-                    <a href="/listings/3" class="btn btn-outline">Détails</a>
+                    <a href="/listings/3" class="btn btn-outline">Details</a>
                 </div>
             </div>
 
@@ -497,22 +497,22 @@
                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                             </svg>
                             <span class="rating-value">5.0</span>
-                            <span class="rating-count">(1234 ventes)</span>
+                            <span class="rating-count">(1234 sales)</span>
                         </div>
                     </div>
-                    <h3 class="product-title">Portefeuille Multi-Sig Avancé</h3>
+                    <h3 class="product-title">Advanced Multi-Sig Wallet</h3>
                     <p class="product-description">
-                        Solution de stockage sécurisé avec support multi-signatures
+                        Secure storage solution with multi-signature support
                     </p>
                 </div>
                 <div class="product-content">
                     <div class="product-info">
                         <div class="vendor-info">
-                            <p>Vendeur vérifié</p>
+                            <p>Verified Vendor</p>
                             <p class="vendor-name">WalletMaster</p>
                         </div>
                         <div class="price-info">
-                            <p>Prix</p>
+                            <p>Price</p>
                             <p class="product-price">0.10 XMR</p>
                         </div>
                     </div>
@@ -524,9 +524,9 @@
                             <circle cx="20" cy="21" r="1"/>
                             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                         </svg>
-                        Ajouter au panier
+                        Add to Cart
                     </button>
-                    <a href="/listings/4" class="btn btn-outline">Détails</a>
+                    <a href="/listings/4" class="btn btn-outline">Details</a>
                 </div>
             </div>
         </div>
@@ -535,13 +535,13 @@
         <div class="cta-section">
             <div class="cta-card">
                 <h2 class="cta-title">
-                    Vous ne trouvez pas ce que vous cherchez ?
+                    Can't find what you're looking for?
                 </h2>
                 <p class="cta-description">
-                    Explorez notre catalogue complet avec des milliers de produits et services vérifiés.
+                    Explore our complete catalog with thousands of verified products and services.
                 </p>
                 <a href="/listings" class="btn btn-outline">
-                    Voir tous les listings
+                    View All Listings
                 </a>
             </div>
         </div>
