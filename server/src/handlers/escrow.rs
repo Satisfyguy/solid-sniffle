@@ -960,3 +960,143 @@ pub async fn get_multisig_address(
         })),
     }
 }
+
+// ============================================================================
+// Balance Check (Multisig Sync)
+// ============================================================================
+
+/// Response for balance check
+#[derive(Debug, Serialize)]
+pub struct CheckBalanceResponse {
+    pub success: bool,
+    pub escrow_id: String,
+    pub balance_atomic: u64,
+    pub balance_xmr: String,
+    pub unlocked_balance_atomic: u64,
+    pub unlocked_balance_xmr: String,
+    pub multisig_address: String,
+}
+
+/// Check escrow balance by syncing multisig wallets
+///
+/// This endpoint triggers the lazy sync pattern: reopens all 3 wallets,
+/// performs multisig info exchange, checks balance, then closes wallets.
+///
+/// # Endpoint
+/// POST /api/escrow/{id}/check-balance
+///
+/// # Authentication
+/// Requires valid session with user_id
+///
+/// # Authorization
+/// User must be buyer, vendor, or arbiter of the escrow
+///
+/// # Returns
+/// - 200 OK: Balance successfully retrieved after sync
+/// - 401 Unauthorized: Not authenticated
+/// - 403 Forbidden: Not authorized to view this escrow
+/// - 404 Not Found: Escrow not found
+/// - 500 Internal Server Error: Sync or balance check failed
+///
+/// # Performance
+/// Expected latency: 3-5 seconds (acceptable for manual balance checks)
+#[actix_web::post("/escrow/{id}/check-balance")]
+pub async fn check_escrow_balance(
+    pool: web::Data<DbPool>,
+    orchestrator: web::Data<EscrowOrchestrator>,
+    session: Session,
+    path: web::Path<String>,
+) -> impl Responder {
+    // Get authenticated user
+    let user_id_str = match session.get::<String>("user_id") {
+        Ok(Some(id)) => id,
+        Ok(None) => {
+            return HttpResponse::Unauthorized().json(serde_json::json!({
+                "error": "Not authenticated"
+            }));
+        }
+        Err(e) => {
+            return HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": format!("Session error: {}", e)
+            }));
+        }
+    };
+
+    let user_id = match user_id_str.parse::<Uuid>() {
+        Ok(id) => id,
+        Err(_) => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "Invalid user_id in session"
+            }));
+        }
+    };
+
+    // Parse escrow_id from path
+    let escrow_id_str = path.into_inner();
+    let escrow_id = match escrow_id_str.parse::<Uuid>() {
+        Ok(id) => id,
+        Err(_) => {
+            return HttpResponse::BadRequest().json(serde_json::json!({
+                "error": "Invalid escrow_id"
+            }));
+        }
+    };
+
+    // Load escrow from database
+    let escrow = match crate::db::db_load_escrow(&pool, escrow_id).await {
+        Ok(escrow) => escrow,
+        Err(e) => {
+            return HttpResponse::NotFound().json(serde_json::json!({
+                "error": format!("Escrow not found: {}", e)
+            }));
+        }
+    };
+
+    // Verify user is part of this escrow
+    if user_id.to_string() != escrow.buyer_id
+        && user_id.to_string() != escrow.vendor_id
+        && user_id.to_string() != escrow.arbiter_id
+    {
+        return HttpResponse::Forbidden().json(serde_json::json!({
+            "error": "You are not authorized to view this escrow"
+        }));
+    }
+
+    // Trigger multisig sync and balance check
+    match orchestrator.sync_and_get_balance(escrow_id).await {
+        Ok((balance, unlocked_balance)) => {
+            let balance_xmr = (balance as f64) / 1_000_000_000_000.0;
+            let unlocked_balance_xmr = (unlocked_balance as f64) / 1_000_000_000_000.0;
+
+            tracing::info!(
+                user_id = %user_id,
+                escrow_id = %escrow_id,
+                balance_atomic = balance,
+                balance_xmr = %balance_xmr,
+                "Balance check completed"
+            );
+
+            HttpResponse::Ok().json(CheckBalanceResponse {
+                success: true,
+                escrow_id: escrow_id.to_string(),
+                balance_atomic: balance,
+                balance_xmr: format!("{:.12}", balance_xmr),
+                unlocked_balance_atomic: unlocked_balance,
+                unlocked_balance_xmr: format!("{:.12}", unlocked_balance_xmr),
+                multisig_address: escrow.multisig_address.unwrap_or_default(),
+            })
+        }
+        Err(e) => {
+            tracing::error!(
+                user_id = %user_id,
+                escrow_id = %escrow_id,
+                error = %e,
+                "Failed to check balance"
+            );
+
+            HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": format!("Failed to check balance: {}", e)
+            }))
+        }
+    }
+}

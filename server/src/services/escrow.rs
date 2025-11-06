@@ -955,6 +955,68 @@ impl EscrowOrchestrator {
         Ok(tx_hash)
     }
 
+    /// Sync multisig wallets and get current balance (LAZY SYNC PATTERN)
+    ///
+    /// This method implements the lazy sync pattern to check escrow balance
+    /// while maintaining RPC rotation architecture. It reopens all 3 wallets,
+    /// performs multisig info exchange, checks balance, then closes wallets.
+    ///
+    /// # Arguments
+    /// * `escrow_id` - UUID of the escrow to check balance for
+    ///
+    /// # Returns
+    /// Tuple of (balance_atomic, unlocked_balance_atomic) in piconeros
+    ///
+    /// # Errors
+    /// - Escrow not found
+    /// - Wallet synchronization failed
+    /// - Balance check failed
+    ///
+    /// # Performance
+    /// Expected latency: 3-5 seconds (acceptable for manual balance checks)
+    ///
+    /// # Example
+    /// ```rust
+    /// let (balance, unlocked) = orchestrator.sync_and_get_balance(escrow_id).await?;
+    /// info!("Escrow has {} XMR ({} unlocked)", balance / 1e12, unlocked / 1e12);
+    /// ```
+    pub async fn sync_and_get_balance(&self, escrow_id: Uuid) -> Result<(u64, u64)> {
+        info!("🔄 Syncing multisig wallets for escrow: {}", escrow_id);
+
+        // Verify escrow exists
+        let escrow = db_load_escrow(&self.db, escrow_id)
+            .await
+            .context("Failed to load escrow")?;
+
+        let address_preview = escrow.multisig_address
+            .as_ref()
+            .map(|addr| &addr[..10.min(addr.len())])
+            .unwrap_or("(none)");
+
+        info!(
+            "Loaded escrow {}: status={}, multisig_address={}",
+            escrow_id,
+            escrow.status,
+            address_preview
+        );
+
+        // Call WalletManager's sync method
+        let mut wallet_manager = self.wallet_manager.lock().await;
+        let (balance, unlocked_balance) = wallet_manager
+            .sync_multisig_wallets(escrow_id)
+            .await
+            .context("Failed to sync multisig wallets")?;
+
+        info!(
+            "✅ Balance sync complete for escrow {}: {} atomic units ({} XMR)",
+            escrow_id,
+            balance,
+            (balance as f64) / 1_000_000_000_000.0
+        );
+
+        Ok((balance, unlocked_balance))
+    }
+
     /// DEV ONLY: Initialize mock multisig wallets for testing
     ///
     /// This method creates mock wallets in the WalletManager to allow

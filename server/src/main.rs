@@ -432,6 +432,7 @@ async fn main() -> Result<()> {
                     // Escrow
                     .route("/escrow/{id}", web::get().to(escrow::get_escrow))
                     .service(escrow::get_escrow_status)
+                    .service(escrow::check_escrow_balance)
                     // NON-CUSTODIAL: Client wallet registration
                     .route(
                         "/escrow/register-wallet-rpc",

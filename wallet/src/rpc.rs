@@ -1100,6 +1100,62 @@ impl MoneroRpcClient {
         Ok(is_multisig)
     }
 
+    /// Set wallet attribute (e.g., enable-multisig-experimental)
+    ///
+    /// # Arguments
+    /// * `key` - Attribute key
+    /// * `value` - Attribute value
+    ///
+    /// # Returns
+    /// Ok(()) on success
+    ///
+    /// # Example
+    /// ```
+    /// client.set_attribute("enable-multisig-experimental", "1").await?;
+    /// ```
+    pub async fn set_attribute(&self, key: &str, value: &str) -> Result<(), MoneroError> {
+        // Acquérir permit pour rate limiting
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
+            .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
+
+        // Acquérir lock pour sérialiser les appels RPC
+        let _guard = self.rpc_lock.lock().await;
+
+        let mut request = RpcRequest::new("set_attribute");
+        request.params = Some(serde_json::json!({
+            "key": key,
+            "value": value
+        }));
+
+        let response = self
+            .client
+            .post(format!("{}/json_rpc", self.url))
+            .json(&request)
+            .send()
+            .await
+            .map_err(|e| {
+                if e.is_connect() {
+                    MoneroError::RpcUnreachable
+                } else {
+                    MoneroError::NetworkError(e.to_string())
+                }
+            })?;
+
+        let rpc_response: RpcResponse<serde_json::Value> = response
+            .json()
+            .await
+            .map_err(|e| MoneroError::InvalidResponse(format!("JSON parse: {}", e)))?;
+
+        if let Some(error) = rpc_response.error {
+            return Err(MoneroError::RpcError(error.message));
+        }
+
+        Ok(())
+    }
+
     /// Transfer funds (multisig) - Creates unsigned transaction
     ///
     /// # Arguments

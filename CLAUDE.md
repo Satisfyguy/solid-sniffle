@@ -612,3 +612,4 @@ This project prioritizes:
 - Production-ready code only (no placeholders)
 - Privacy by default (Tor + Monero)
 - Testnet experimentation before mainnet deployment
+- always look at the official documentation of monero
