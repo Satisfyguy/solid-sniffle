@@ -1,0 +1,441 @@
+/**
+ * Dispute System Component
+ *
+ * Modal-based dispute filing system with evidence upload.
+ * Respects design system: #C9A445 accent, glassmorphism.
+ *
+ * Features:
+ * - Modal overlay with backdrop blur
+ * - Structured form with reason dropdown
+ * - Multi-file evidence upload with preview
+ * - Character counter for description
+ * - Submission with loading state
+ */
+
+/* ========== MODAL OVERLAY ========== */
+
+.dispute-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    padding: 1rem;
+}
+
+.dispute-modal.active {
+    display: flex;
+    opacity: 1;
+}
+
+/* ========== MODAL CONTENT ========== */
+
+.dispute-modal-content {
+    background: #1A1A1A;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ========== MODAL HEADER ========== */
+
+.dispute-modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dispute-modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-foreground);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.dispute-modal-title i {
+    color: #ef4444;
+    width: 24px;
+    height: 24px;
+}
+
+.dispute-modal-close {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.dispute-modal-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-foreground);
+}
+
+.dispute-modal-close i {
+    width: 20px;
+    height: 20px;
+}
+
+/* ========== MODAL BODY ========== */
+
+.dispute-modal-body {
+    padding: 1.5rem;
+}
+
+.dispute-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Form Groups */
+.dispute-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.dispute-form-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-foreground);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dispute-form-label-required {
+    color: #ef4444;
+    font-size: 0.75rem;
+}
+
+.dispute-form-label i {
+    width: 16px;
+    height: 16px;
+    color: var(--color-accent, #C9A445);
+}
+
+/* Inputs */
+.dispute-form-select,
+.dispute-form-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    color: var(--color-foreground);
+    font-family: var(--font-inter);
+    font-size: 0.9375rem;
+    transition: all 0.2s ease;
+}
+
+.dispute-form-select:focus,
+.dispute-form-textarea:focus {
+    outline: none;
+    border-color: var(--color-accent, #C9A445);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.dispute-form-textarea {
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.6;
+}
+
+/* Character Counter */
+.dispute-form-counter {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: right;
+}
+
+.dispute-form-counter.warning {
+    color: #eab308;
+}
+
+.dispute-form-counter.error {
+    color: #ef4444;
+}
+
+/* ========== FILE UPLOAD ========== */
+
+.dispute-file-upload {
+    border: 2px dashed var(--color-border);
+    border-radius: 4px;
+    padding: 2rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.02);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dispute-file-upload:hover {
+    border-color: var(--color-accent, #C9A445);
+    background: rgba(201, 164, 69, 0.05);
+}
+
+.dispute-file-upload.dragover {
+    border-color: var(--color-accent, #C9A445);
+    background: rgba(201, 164, 69, 0.1);
+}
+
+.dispute-file-upload-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 1rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.dispute-file-upload-text {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0.5rem;
+}
+
+.dispute-file-upload-hint {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.dispute-file-upload-link {
+    color: var(--color-accent, #C9A445);
+    text-decoration: underline;
+}
+
+.dispute-file-input {
+    display: none;
+}
+
+/* File Preview Grid */
+.dispute-file-previews {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.dispute-file-preview {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.dispute-file-preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.dispute-file-preview-remove {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    width: 24px;
+    height: 24px;
+    background: rgba(239, 68, 68, 0.9);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.dispute-file-preview-remove:hover {
+    background: #ef4444;
+    transform: scale(1.1);
+}
+
+.dispute-file-preview-remove i {
+    width: 14px;
+    height: 14px;
+}
+
+/* ========== INFO BOX ========== */
+
+.dispute-info-box {
+    padding: 1rem;
+    background: rgba(34, 211, 238, 0.1);
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    border-radius: 4px;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.dispute-info-box i {
+    width: 20px;
+    height: 20px;
+    color: #22d3ee;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.dispute-info-box-text {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+}
+
+/* ========== MODAL FOOTER ========== */
+
+.dispute-modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.dispute-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+}
+
+.dispute-btn i {
+    width: 18px;
+    height: 18px;
+}
+
+.dispute-btn-secondary {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-foreground);
+}
+
+.dispute-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.dispute-btn-primary {
+    background: #ef4444;
+    color: white;
+}
+
+.dispute-btn-primary:hover {
+    background: #dc2626;
+}
+
+.dispute-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Loading state */
+.dispute-btn-primary.loading {
+    position: relative;
+    color: transparent;
+}
+
+.dispute-btn-primary.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid white;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 640px) {
+    .dispute-modal-content {
+        max-width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+
+    .dispute-modal {
+        padding: 0;
+    }
+
+    .dispute-file-upload {
+        padding: 1.5rem 1rem;
+    }
+
+    .dispute-file-previews {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .dispute-modal-footer {
+        flex-direction: column-reverse;
+    }
+
+    .dispute-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ========== ACCESSIBILITY ========== */
+
+.dispute-modal-close:focus,
+.dispute-form-select:focus,
+.dispute-form-textarea:focus,
+.dispute-btn:focus {
+    outline: 2px solid var(--color-accent, #C9A445);
+    outline-offset: 2px;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .dispute-modal,
+    .dispute-modal-content,
+    .dispute-btn,
+    .dispute-file-upload {
+        transition: none;
+        animation: none;
+    }
+}
