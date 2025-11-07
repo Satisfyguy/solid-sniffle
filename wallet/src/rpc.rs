@@ -4,8 +4,9 @@ use crate::validation::validate_localhost_strict;
 use monero_marketplace_common::{
     error::MoneroError,
     types::{
-        ExportMultisigInfoResult, ImportMultisigInfoResult, MakeMultisigResult, MoneroConfig,
-        MultisigInfo, PrepareMultisigResult, RpcRequest, RpcResponse,
+        ExchangeMultisigKeysResult, ExportMultisigInfoResult, ImportMultisigInfoResult,
+        MakeMultisigResult, MoneroConfig, MultisigInfo, PrepareMultisigResult, RpcRequest,
+        RpcResponse,
     },
     MAX_MULTISIG_INFO_LEN, MIN_MULTISIG_INFO_LEN,
 };
@@ -708,6 +709,192 @@ impl MoneroRpcClient {
 
         // 2. Vérifier que multisig_info est valide
         validate_multisig_info(&result.multisig_info)?;
+
+        Ok(result)
+    }
+
+    /// Échange les clés multisig pour finaliser le setup 2-of-3 (Round 2)
+    ///
+    /// **CRITIQUE**: Cette méthode est la véritable étape de Round 2 pour le multisig 2-of-3.
+    /// Elle DOIT être appelée après `make_multisig()` avec les `multisig_info` retournés par Round 1.
+    ///
+    /// # Protocole Monero Multisig 2-of-3
+    ///
+    /// ```text
+    /// Round 0: prepare_multisig()           → prepare_info
+    /// Round 1: make_multisig(prepare_infos) → address + multisig_info
+    /// Round 2: exchange_multisig_keys(round1_infos) → finalise le wallet ✅
+    /// ```
+    ///
+    /// **Différence clé avec `make_multisig`**:
+    /// - `make_multisig`: Utilise `prepare_info` pour créer le wallet multisig initial
+    /// - `exchange_multisig_keys`: Utilise `multisig_info` (de Round 1) pour finaliser
+    ///
+    /// # Arguments
+    /// * `multisig_info` - Vec des `multisig_info` retournés par `make_multisig` Round 1
+    ///
+    /// # Returns
+    /// `ExchangeMultisigKeysResult` contenant:
+    /// - `address`: Adresse multisig finale (doit correspondre à Round 1)
+    /// - `multisig_info`: Info de clé (peut être vide après finalisation)
+    ///
+    /// # Errors
+    /// - `ValidationError`: multisig_info invalides ou manquants
+    /// - `RpcError`: Wallet déjà finalisé ou erreur RPC
+    /// - `NetworkError`: Échec de connexion RPC
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use wallet::rpc::MoneroRpcClient;
+    /// # use monero_marketplace_common::Error;
+    /// # async fn example() -> Result<(), Error> {
+    /// let client = MoneroRpcClient::new("http://127.0.0.1:18082")?;
+    ///
+    /// // Round 1: make_multisig retourne multisig_info
+    /// let round1 = client.make_multisig(2, vec![prepare_info1, prepare_info2]).await?;
+    /// let round1_info = round1.multisig_info;
+    ///
+    /// // Round 2: exchange_multisig_keys FINALISE le wallet
+    /// let result = client.exchange_multisig_keys(vec![other_round1_info1, other_round1_info2]).await?;
+    /// assert_eq!(result.address, round1.address); // Même adresse
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// # Références
+    /// - Documentation officielle: https://www.getmonero.org/resources/developer-guides/wallet-rpc.html
+    /// - Guide multisig: https://www.getmonero.org/resources/user-guides/multisig-messaging-system.html
+    pub async fn exchange_multisig_keys(
+        &self,
+        multisig_info: Vec<String>,
+    ) -> Result<ExchangeMultisigKeysResult, MoneroError> {
+        // ⚠️ NO RETRY LOGIC for exchange_multisig_keys!
+        // The wallet state changes after the first successful call, so retrying
+        // with the same inputs will always fail with "wrong kex round number".
+        //
+        // For 2-of-3 multisig in v0.18.4.3:
+        // - First call: exchange_multisig_keys(round1_infos) → may return new multisig_info
+        // - Second call (if needed): exchange_multisig_keys(round2_infos) → finalization
+        //
+        // Each call MUST succeed on first attempt or fail permanently.
+
+        tracing::info!("🔍 exchange_multisig_keys called with {} infos (NO RETRY)", multisig_info.len());
+
+        let result = self.exchange_multisig_keys_inner(multisig_info).await?;
+
+        tracing::info!(
+            "✅ exchange_multisig_keys SUCCESS: multisig_info={} bytes, address={}",
+            result.multisig_info.len(),
+            result.address.chars().take(15).collect::<String>()
+        );
+
+        Ok(result)
+    }
+
+    async fn exchange_multisig_keys_inner(
+        &self,
+        multisig_info: Vec<String>,
+    ) -> Result<ExchangeMultisigKeysResult, MoneroError> {
+        // VALIDATION PRÉ-REQUÊTES
+
+        // 1. Vérifier nombre de multisig_info (doit être = N-1, donc 2 pour 2-of-3)
+        if multisig_info.len() < 2 {
+            return Err(MoneroError::ValidationError(format!(
+                "Need at least 2 multisig_info for Round 2, got {}",
+                multisig_info.len()
+            )));
+        }
+
+        // 2. Valider chaque multisig_info (doivent commencer par "MultisigxV2")
+        for (i, info) in multisig_info.iter().enumerate() {
+            validate_multisig_info(info).map_err(|e| {
+                MoneroError::ValidationError(format!("Invalid multisig_info[{}]: {}", i, e))
+            })?;
+        }
+
+        // Acquérir permit pour rate limiting
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
+            .map_err(|_| MoneroError::NetworkError("Semaphore closed".to_string()))?;
+
+        // Acquérir lock pour sérialiser les appels RPC
+        let _guard = self.rpc_lock.lock().await;
+
+        // Construire request RPC
+        let mut request = RpcRequest::new("exchange_multisig_keys");
+        request.params = Some(serde_json::json!({
+            "multisig_info": multisig_info,
+        }));
+
+        // Appel RPC avec gestion d'erreur
+        let response = self
+            .client
+            .post(format!("{}/json_rpc", self.url))
+            .json(&request)
+            .send()
+            .await
+            .map_err(|e| {
+                if e.is_connect() {
+                    MoneroError::RpcUnreachable
+                } else {
+                    MoneroError::NetworkError(e.to_string())
+                }
+            })?;
+
+        // Parse JSON response
+        let rpc_response: RpcResponse<ExchangeMultisigKeysResult> = response
+            .json()
+            .await
+            .map_err(|e| MoneroError::InvalidResponse(format!("JSON parse: {}", e)))?;
+
+        // Handle RPC errors
+        if let Some(error) = rpc_response.error {
+            return Err(match error.message.as_str() {
+                msg if msg.contains("already") && msg.contains("finalized") => {
+                    MoneroError::ValidationError("Wallet already finalized".to_string())
+                }
+                msg if msg.contains("not") && msg.contains("multisig") => {
+                    MoneroError::ValidationError("Wallet is not a multisig wallet".to_string())
+                }
+                msg if msg.contains("locked") => MoneroError::WalletLocked,
+                msg if msg.contains("busy") => MoneroError::WalletBusy,
+                msg if msg.contains("invalid") || msg.contains("Invalid") => {
+                    MoneroError::ValidationError(error.message.clone())
+                }
+                _ => MoneroError::RpcError(error.message),
+            });
+        }
+
+        // Extract result
+        let result = rpc_response
+            .result
+            .ok_or_else(|| MoneroError::InvalidResponse("Missing result field".to_string()))?;
+
+        // VALIDATION POST-REQUÊTE
+        //
+        // NOTE: Pour 2-of-3 multisig en v0.18.4.3, l'adresse peut être vide lors des rounds
+        // intermédiaires. L'adresse finale sera obtenue avec get_address() après tous les rounds.
+        //
+        // ✅ Round 2 (premier exchange_multisig_keys): peut retourner address="" avec multisig_info non-vide
+        // ✅ Round 3 (second exchange_multisig_keys): peut retourner address="" avec multisig_info=""
+        //
+        // L'adresse multisig finale est récupérée après finalisation via get_address()
+
+        if !result.address.is_empty() {
+            // Si une adresse est retournée, valider qu'elle est valide
+            if !result.address.starts_with('4')
+                && !result.address.starts_with('5')
+                && !result.address.starts_with('9') // Testnet multisig addresses can start with 9
+            {
+                tracing::warn!(
+                    "Unexpected multisig address prefix: {}, len={}",
+                    result.address.chars().take(10).collect::<String>(),
+                    result.address.len()
+                );
+            }
+        }
 
         Ok(result)
     }

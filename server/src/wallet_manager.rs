@@ -1213,22 +1213,136 @@ impl WalletManager {
         let escrow_id_str = escrow_id.to_string();
         info!("🔄 Round 1/2: Exchanging multisig info (make_multisig) for escrow {}", escrow_id);
 
+        if info_from_all.len() != 3 {
+            return Err(WalletManagerError::RpcError(CommonError::MoneroRpc(
+                format!("Expected 3 prepare_infos, got {}", info_from_all.len())
+            )));
+        }
+
+        // Debug: Log incoming prepare_infos
+        info!("🔍 Incoming prepare_infos:");
+        info!("   [0] Buyer:   {}... ({} chars)", &info_from_all[0].multisig_info[..30], info_from_all[0].multisig_info.len());
+        info!("   [1] Vendor:  {}... ({} chars)", &info_from_all[1].multisig_info[..30], info_from_all[1].multisig_info.len());
+        info!("   [2] Arbiter: {}... ({} chars)", &info_from_all[2].multisig_info[..30], info_from_all[2].multisig_info.len());
+
+        // info_from_all arrives in order: [buyer, vendor, arbiter]
+        // We need to match by role to ensure each wallet gets the correct OTHER 2 prepare_infos
+
         // ROUND 1: make_multisig() - Create initial multisig wallet
+        // Process wallets in deterministic role order: Buyer, Vendor, Arbiter
         let mut round1_results = Vec::new();
-        for wallet in self.wallets.values_mut() {
-            let other_infos = info_from_all
-                .iter()
-                .filter(|i| i.multisig_info != wallet.address) // This is incorrect, just a placeholder
-                .map(|i| i.multisig_info.clone())
-                .collect();
+
+        // Import SHA256 once for all iterations
+        use sha2::{Sha256, Digest};
+
+        for role in &[WalletRole::Buyer, WalletRole::Vendor, WalletRole::Arbiter] {
+            // Find wallet with this role
+            let wallet = self.wallets.values_mut()
+                .find(|w| &w.role == role)
+                .ok_or_else(|| WalletManagerError::RpcError(CommonError::MoneroRpc(
+                    format!("Wallet with role {:?} not found", role)
+                )))?;
+
+            // Determine which prepare_infos to use (the OTHER 2)
+            let mut other_infos: Vec<String> = match role {
+                WalletRole::Buyer => {
+                    // Buyer gets vendor + arbiter prepare_infos (indices 1, 2)
+                    vec![info_from_all[1].multisig_info.clone(), info_from_all[2].multisig_info.clone()]
+                },
+                WalletRole::Vendor => {
+                    // Vendor gets buyer + arbiter prepare_infos (indices 0, 2)
+                    vec![info_from_all[0].multisig_info.clone(), info_from_all[2].multisig_info.clone()]
+                },
+                WalletRole::Arbiter => {
+                    // Arbiter gets buyer + vendor prepare_infos (indices 0, 1)
+                    vec![info_from_all[0].multisig_info.clone(), info_from_all[1].multisig_info.clone()]
+                },
+            };
+
+            // ✅ CRITICAL FIX: Sort prepare_infos alphabetically for deterministic ordering
+            // Monero's multisig crypto may be sensitive to the ORDER of inputs
+            other_infos.sort();
+            info!("   📊 Sorted prepare_infos for {:?} (alphabetical order for determinism)", role);
+
+            // ✅ CRITICAL FIX: Ensure the CORRECT wallet is open before make_multisig
+            // Monero RPC can only have ONE wallet open at a time per instance
+            // We MUST explicitly close/reopen to guarantee the right wallet responds
+            let role_str = match role {
+                WalletRole::Buyer => "buyer",
+                WalletRole::Vendor => "vendor",
+                WalletRole::Arbiter => "arbiter",
+            };
+            let wallet_filename = format!("{}_temp_escrow_{}", role_str, escrow_id);
+
+            info!("🔒 Round 1: Ensuring {:?} wallet is open before make_multisig", role);
+
+            // Step 1: Close any currently open wallet
+            wallet.rpc_client.close_wallet().await
+                .map_err(|e| {
+                    warn!("close_wallet warning for {:?}: {:?} (may be already closed)", role, e);
+                    e
+                })
+                .ok(); // Ignore errors - wallet may already be closed
+
+            // Step 2: Open the CORRECT wallet
+            wallet.rpc_client.open_wallet(&wallet_filename, "").await
+                .map_err(|e| WalletManagerError::RpcError(CommonError::MoneroRpc(
+                    format!("Failed to open {:?} wallet '{}': {:?}", role, wallet_filename, e)
+                )))?;
+
+            // Step 3: VERIFY the correct wallet is open by checking FULL address
+            let current_address = wallet.rpc_client.get_address().await
+                .map_err(|e| WalletManagerError::RpcError(CommonError::MoneroRpc(
+                    format!("Failed to get address for {:?}: {:?}", role, e)
+                )))?;
+
+            // ✅ VALIDATION RIGOUREUSE: Log FULL address + SHA256 hash
+            let mut hasher = Sha256::new();
+            hasher.update(current_address.as_bytes());
+            let address_hash = format!("{:x}", hasher.finalize());
+
+            info!("✅ {:?} wallet VERIFIED open (FULL validation):", role);
+            info!("   📍 Full address: {}", current_address);
+            info!("   🔐 Address SHA256: {}", address_hash);
+            info!("   📁 Wallet file: {}", wallet_filename);
+
+            // ✅ VALIDATION RIGOUREUSE: Log FULL prepare_infos BEFORE sort
+            info!("📤 {:?} receiving {} prepare_infos BEFORE sort:", role, other_infos.len());
+            for (i, info) in other_infos.iter().enumerate() {
+                let mut hasher = Sha256::new();
+                hasher.update(info.as_bytes());
+                let info_hash = format!("{:x}", hasher.finalize());
+                info!("   [{}] Length: {} bytes", i, info.len());
+                info!("   [{}] SHA256: {}", i, info_hash);
+                info!("   [{}] Full content: {}", i, info);
+            }
+
+            // Now sort happens here (already in code above)
+            // Re-log AFTER sort
+            info!("📊 {:?} prepare_infos AFTER alphabetical sort:", role);
+            for (i, info) in other_infos.iter().enumerate() {
+                let mut hasher = Sha256::new();
+                hasher.update(info.as_bytes());
+                let info_hash = format!("{:x}", hasher.finalize());
+                info!("   [{}] SHA256: {}", i, info_hash);
+            }
+
             let result = wallet
                 .rpc_client
                 .multisig()
                 .make_multisig(2, other_infos)
                 .await?;
 
-            info!("📋 Round 1 result: address={}, multisig_info_len={}",
-                &result.address[..15], result.multisig_info.len());
+            // ✅ VALIDATION RIGOUREUSE: Log FULL result with hash
+            let mut hasher = Sha256::new();
+            hasher.update(result.multisig_info.as_bytes());
+            let multisig_info_hash = format!("{:x}", hasher.finalize());
+
+            info!("📋 {:?} Round 1 result (FULL validation):", role);
+            info!("   📍 Multisig address: {}", result.address);
+            info!("   📊 multisig_info length: {} bytes", result.multisig_info.len());
+            info!("   🔐 multisig_info SHA256: {}", multisig_info_hash);
+            info!("   📝 multisig_info FULL: {}", result.multisig_info);
 
             // Store multisig_info for round 2
             round1_results.push(result.multisig_info.clone());
@@ -1236,33 +1350,206 @@ impl WalletManager {
             wallet.multisig_state = MultisigState::Ready {
                 address: result.address.clone(),
             };
+
+            // ✅ CRITICAL FIX: Close wallet after make_multisig to reset RPC cache
+            wallet.rpc_client.close_wallet().await.ok();
+            info!("🔒 {:?} wallet closed after make_multisig (cache reset)", role);
+
+            // ✅ VALIDATION RIGOUREUSE: Délai 10s entre appels (sauf après Arbiter)
+            let role_idx = match role {
+                WalletRole::Buyer => 0,
+                WalletRole::Vendor => 1,
+                WalletRole::Arbiter => 2,
+            };
+            if role_idx < 2 {
+                info!("⏳ Waiting 10 seconds before next make_multisig call (reset RPC cache)...");
+                tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
+            }
         }
 
-        info!("✅ Round 1/2 complete: make_multisig successful, collected {} multisig_infos", round1_results.len());
+        info!("✅ Round 1/3 complete: make_multisig successful, collected {} multisig_infos", round1_results.len());
 
-        // ROUND 2: Call make_multisig AGAIN with multisig_info from round 1
-        // This is CRITICAL for 2-of-3 multisig - without this round 2, wallets remain "not yet finalized"
-        info!("🔄 Round 2/2: Finalizing multisig (second make_multisig call)...");
+        // ROUND 2/3: First exchange_multisig_keys call
+        // For 2-of-3 multisig in v0.18.4.3, need TWO rounds of exchange_multisig_keys
+        // Reference: https://www.getmonero.org/resources/developer-guides/wallet-rpc.html
+        info!("🔄 Round 2/3: First exchange_multisig_keys (generates Round 2 infos)...");
+        info!("🔍 DEBUG: round1_results contains {} multisig_infos", round1_results.len());
 
-        // Each wallet calls make_multisig again with the OTHER wallets' multisig_info from round 1
-        for (idx, wallet) in self.wallets.values_mut().enumerate() {
-            // Get multisig_info from the OTHER 2 wallets
+        // Log all round1 multisig_info for debugging
+        for (idx, info) in round1_results.iter().enumerate() {
+            let role_name = match idx {
+                0 => "Buyer",
+                1 => "Vendor",
+                2 => "Arbiter",
+                _ => "Unknown",
+            };
+            info!("🔍 DEBUG: round1_results[{}] ({}) = {} chars, starts with: {}",
+                idx, role_name, info.len(), &info[..50.min(info.len())]);
+        }
+
+        // round1_results is in deterministic order: [buyer, vendor, arbiter]
+        // Each wallet must call exchange_multisig_keys with the OTHER 2 multisig_infos from round1
+        let mut round2_results: Vec<String> = Vec::new();
+
+        for (role_idx, role) in [WalletRole::Buyer, WalletRole::Vendor, WalletRole::Arbiter].iter().enumerate() {
+            // Find wallet with this role
+            let wallet = self.wallets.values_mut()
+                .find(|w| &w.role == role)
+                .ok_or_else(|| WalletManagerError::RpcError(CommonError::MoneroRpc(
+                    format!("Wallet with role {:?} not found in Round 2", role)
+                )))?;
+
+            // Get the OTHER 2 multisig_infos (exclude this wallet's own)
             let other_round1_infos: Vec<String> = round1_results
                 .iter()
                 .enumerate()
-                .filter(|(i, _)| *i != idx)
+                .filter(|(i, _)| *i != role_idx)
                 .map(|(_, info)| info.clone())
                 .collect();
 
-            info!("📤 Wallet {} calling make_multisig round 2 with {} infos", idx, other_round1_infos.len());
+            // ✅ CRITICAL FIX: Ensure the CORRECT wallet is open before exchange_multisig_keys Round 2
+            let role_str = match role {
+                WalletRole::Buyer => "buyer",
+                WalletRole::Vendor => "vendor",
+                WalletRole::Arbiter => "arbiter",
+            };
+            let wallet_filename = format!("{}_temp_escrow_{}", role_str, escrow_id);
 
-            let result = wallet
+            info!("🔒 Round 2: Ensuring {:?} wallet is open before exchange_multisig_keys", role);
+
+            // Step 1: Close any currently open wallet
+            wallet.rpc_client.close_wallet().await
+                .map_err(|e| {
+                    warn!("close_wallet warning for {:?}: {:?} (may be already closed)", role, e);
+                    e
+                })
+                .ok(); // Ignore errors
+
+            // Step 2: Open the CORRECT wallet
+            wallet.rpc_client.open_wallet(&wallet_filename, "").await
+                .map_err(|e| WalletManagerError::RpcError(CommonError::MoneroRpc(
+                    format!("Failed to open {:?} wallet '{}' in Round 2: {:?}", role, wallet_filename, e)
+                )))?;
+
+            // Step 3: VERIFY the correct wallet is open
+            let current_address = wallet.rpc_client.get_address().await
+                .map_err(|e| WalletManagerError::RpcError(CommonError::MoneroRpc(
+                    format!("Failed to get address for {:?} in Round 2: {:?}", role, e)
+                )))?;
+
+            info!("✅ {:?} wallet VERIFIED open (Round 2): address={}, file={}",
+                role, &current_address[..15], wallet_filename);
+
+            info!("📤 {:?} calling exchange_multisig_keys (Round 2) with {} infos",
+                role, other_round1_infos.len());
+
+            for (i, info) in other_round1_infos.iter().enumerate() {
+                info!("  🔍 multisig_info[{}] = {} chars, starts with: {}",
+                    i, info.len(), &info[..30.min(info.len())]);
+            }
+
+            // ✅ ROUND 2: First exchange_multisig_keys call
+            // This will generate NEW multisig_info for Round 3
+            let result = match wallet
                 .rpc_client
                 .multisig()
-                .make_multisig(2, other_round1_infos)
-                .await?;
+                .exchange_multisig_keys(other_round1_infos.clone())
+                .await {
+                    Ok(r) => {
+                        let addr_display = if r.address.is_empty() {
+                            "(empty)".to_string()
+                        } else {
+                            r.address.chars().take(15).collect::<String>()
+                        };
+                        info!("✅ {:?} wallet round 2 SUCCESS: address={}, multisig_info_len={}",
+                            role, addr_display, r.multisig_info.len());
+                        r
+                    },
+                    Err(e) => {
+                        error!("❌ {:?} wallet round 2 FAILED: {:?}", role, e);
+                        return Err(WalletManagerError::from(e));
+                    }
+                };
 
-            info!("✅ Wallet {} round 2 complete: address={}", idx, &result.address[..15]);
+            // Collect Round 2 multisig_info for the next exchange
+            round2_results.push(result.multisig_info.clone());
+        }
+
+        info!("✅ Round 2/3 complete: First exchange_multisig_keys successful, collected {} Round 2 infos", round2_results.len());
+
+        // ROUND 3/3: Second exchange_multisig_keys call (FINALIZATION for 2-of-3)
+        // For 2-of-3 multisig, need to call exchange_multisig_keys TWICE
+        info!("🔄 Round 3/3: Second exchange_multisig_keys (FINALIZATION)...");
+
+        // Log all round2 multisig_info for debugging
+        for (idx, info) in round2_results.iter().enumerate() {
+            let role_name = match idx {
+                0 => "Buyer",
+                1 => "Vendor",
+                2 => "Arbiter",
+                _ => "Unknown",
+            };
+            info!("🔍 DEBUG: round2_results[{}] ({}) = {} chars, starts with: {}",
+                idx, role_name, info.len(), &info[..50.min(info.len())]);
+        }
+
+        for (role_idx, role) in [WalletRole::Buyer, WalletRole::Vendor, WalletRole::Arbiter].iter().enumerate() {
+            // Find wallet with this role
+            let wallet = self.wallets.values_mut()
+                .find(|w| &w.role == role)
+                .ok_or_else(|| WalletManagerError::RpcError(CommonError::MoneroRpc(
+                    format!("Wallet with role {:?} not found in Round 3", role)
+                )))?;
+
+            // Get the OTHER 2 multisig_infos from Round 2 (exclude this wallet's own)
+            let other_round2_infos: Vec<String> = round2_results
+                .iter()
+                .enumerate()
+                .filter(|(i, _)| *i != role_idx)
+                .map(|(_, info)| info.clone())
+                .collect();
+
+            let role_str = match role {
+                WalletRole::Buyer => "buyer",
+                WalletRole::Vendor => "vendor",
+                WalletRole::Arbiter => "arbiter",
+            };
+            let wallet_filename = format!("{}_temp_escrow_{}", role_str, escrow_id);
+
+            info!("🔒 Round 3: Ensuring {:?} wallet is open before final exchange_multisig_keys", role);
+
+            // Step 1: Close any currently open wallet
+            wallet.rpc_client.close_wallet().await.ok();
+
+            // Step 2: Open the CORRECT wallet
+            wallet.rpc_client.open_wallet(&wallet_filename, "").await
+                .map_err(|e| WalletManagerError::RpcError(CommonError::MoneroRpc(
+                    format!("Failed to open {:?} wallet '{}' in Round 3: {:?}", role, wallet_filename, e)
+                )))?;
+
+            info!("📤 {:?} calling exchange_multisig_keys (Round 3 - FINAL) with {} infos",
+                role, other_round2_infos.len());
+
+            for (i, info) in other_round2_infos.iter().enumerate() {
+                info!("  🔍 multisig_info[{}] = {} chars, starts with: {}",
+                    i, info.len(), &info[..30.min(info.len())]);
+            }
+
+            // ✅ ROUND 3: Second exchange_multisig_keys call (FINALIZATION)
+            let result = match wallet
+                .rpc_client
+                .multisig()
+                .exchange_multisig_keys(other_round2_infos.clone())
+                .await {
+                    Ok(r) => {
+                        info!("✅ {:?} wallet round 3 SUCCESS (FINALIZED): address={}", role, &r.address[..15]);
+                        r
+                    },
+                    Err(e) => {
+                        error!("❌ {:?} wallet round 3 FAILED: {:?}", role, e);
+                        return Err(WalletManagerError::from(e));
+                    }
+                };
 
             // Update state with final address
             wallet.multisig_state = MultisigState::Ready {
@@ -1270,7 +1557,7 @@ impl WalletManager {
             };
         }
 
-        info!("✅ Round 2/2 complete: All wallets finalized and ready");
+        info!("✅ Round 3/3 complete: All wallets FINALIZED and ready");
 
         // NOTE: Persistence disabled for Exchanging phase during testing
         // TODO: Fix role mapping (need "buyer"/"vendor"/"arbiter", not "participant_0/1/2")

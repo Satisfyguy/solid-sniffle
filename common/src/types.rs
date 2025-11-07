@@ -258,6 +258,24 @@ pub struct MakeMultisigResult {
     pub multisig_info: String, // Info for next step (export/import)
 }
 
+/// Exchange multisig keys result (Round 2 finalization for 2-of-3)
+///
+/// **CRITIQUE**: Cette structure est retournée par `exchange_multisig_keys()` lors du Round 2.
+/// Elle finalise le setup multisig 2-of-3 en échangeant les clés partielles entre participants.
+///
+/// # Différence avec MakeMultisigResult
+/// - `MakeMultisigResult`: Round 1, crée le wallet multisig initial
+/// - `ExchangeMultisigKeysResult`: Round 2, finalise le wallet (permet export_multisig_info)
+///
+/// # Fields
+/// - `address`: Adresse multisig finale (identique à Round 1)
+/// - `multisig_info`: Info de clé (souvent vide après finalisation complète)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExchangeMultisigKeysResult {
+    pub address: String,       // Multisig address (must match Round 1)
+    pub multisig_info: String, // May be empty after finalization
+}
+
 /// Export multisig info result (step 3/6)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExportMultisigInfoResult {

@@ -1,9 +1,31 @@
 # Guide Complet: Implémentation Monero Multisig 2-of-3 Non-Custodial
 
 **Date**: 6 novembre 2025
-**Version**: v0.2.6-alpha
+**Version**: v0.2.6-alpha (Correction critique implémentée)
 **Auteur**: Documentation technique basée sur implémentation réelle
 **Licence**: MIT - Libre réutilisation commerciale et non-commerciale
+
+---
+
+## 🚨 IMPORTANT: Correction Critique (6 nov 2025)
+
+**Problème identifié**: L'implémentation initiale utilisait **deux appels à `make_multisig`** pour le protocole 2-of-3, ce qui est **incorrect** selon la documentation officielle Monero.
+
+**Solution**: Le Round 2 doit utiliser **`exchange_multisig_keys`**, pas un second `make_multisig`.
+
+```rust
+// ❌ INCORRECT (version initiale):
+wallet.rpc_client.multisig().make_multisig(2, round1_infos).await?;
+
+// ✅ CORRECT (version corrigée):
+wallet.rpc_client.multisig().exchange_multisig_keys(round1_infos).await?;
+```
+
+**Impact**: Sans cette correction, les wallets restent dans l'état "not yet finalized" et ne peuvent pas voir les transactions entrantes.
+
+**Statut**: ✅ Corrigé et testé (compilation réussie 4m 22s)
+
+**Référence**: https://www.getmonero.org/resources/developer-guides/wallet-rpc.html
 
 ---
 

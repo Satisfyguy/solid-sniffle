@@ -3,7 +3,10 @@
 use crate::rpc::MoneroRpcClient;
 use monero_marketplace_common::{
     error::{Error, MoneroError, Result},
-    types::{ExportMultisigInfoResult, ImportMultisigInfoResult, MakeMultisigResult, MultisigInfo},
+    types::{
+        ExchangeMultisigKeysResult, ExportMultisigInfoResult, ImportMultisigInfoResult,
+        MakeMultisigResult, MultisigInfo,
+    },
 };
 
 /// Multisig manager for handling escrow operations
@@ -64,6 +67,59 @@ impl MultisigManager {
     ) -> Result<MakeMultisigResult> {
         self.rpc_client
             .make_multisig(threshold, multisig_infos)
+            .await
+            .map_err(|e| match e {
+                MoneroError::RpcUnreachable => Error::MoneroRpc("RPC unreachable".to_string()),
+                MoneroError::AlreadyMultisig => {
+                    Error::Multisig("Already in multisig mode".to_string())
+                }
+                MoneroError::NotMultisig => Error::Multisig("Not in multisig mode".to_string()),
+                MoneroError::WalletLocked => Error::Wallet("Wallet locked".to_string()),
+                MoneroError::WalletBusy => Error::Wallet("Wallet busy".to_string()),
+                MoneroError::ValidationError(msg) => Error::InvalidInput(msg),
+                MoneroError::InvalidResponse(msg) => {
+                    Error::MoneroRpc(format!("Invalid response: {}", msg))
+                }
+                MoneroError::NetworkError(msg) => {
+                    Error::Internal(format!("Network error: {}", msg))
+                }
+                MoneroError::RpcError(msg) => Error::MoneroRpc(msg),
+            })
+    }
+
+    /// Exchange multisig keys (Round 2 finalization for 2-of-3)
+    ///
+    /// **CRITIQUE**: Cette méthode finalise le setup multisig 2-of-3 en échangeant
+    /// les clés retournées par `make_multisig` (Round 1).
+    ///
+    /// # Protocole Monero Multisig 2-of-3
+    /// ```text
+    /// Round 0: prepare_multisig()           → prepare_info
+    /// Round 1: make_multisig(prepare_infos) → address + multisig_info
+    /// Round 2: exchange_multisig_keys(round1_infos) → finalise le wallet ✅
+    /// ```
+    ///
+    /// Après cet appel, le wallet peut appeler `export_multisig_info()` et voir
+    /// les transactions entrantes.
+    ///
+    /// # Arguments
+    /// * `multisig_infos` - Vec des `multisig_info` retournés par `make_multisig` (Round 1)
+    ///                      des AUTRES participants (N-1 = 2 pour 2-of-3)
+    ///
+    /// # Returns
+    /// ExchangeMultisigKeysResult containing:
+    /// - `address`: Adresse multisig finale (identique à Round 1)
+    /// - `multisig_info`: Info de clé (peut être vide après finalisation)
+    ///
+    /// # Références
+    /// - https://www.getmonero.org/resources/developer-guides/wallet-rpc.html
+    /// - https://www.getmonero.org/resources/user-guides/multisig-messaging-system.html
+    pub async fn exchange_multisig_keys(
+        &self,
+        multisig_infos: Vec<String>,
+    ) -> Result<ExchangeMultisigKeysResult> {
+        self.rpc_client
+            .exchange_multisig_keys(multisig_infos)
             .await
             .map_err(|e| match e {
                 MoneroError::RpcUnreachable => Error::MoneroRpc("RPC unreachable".to_string()),

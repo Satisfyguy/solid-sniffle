@@ -251,11 +251,37 @@ Après les 2 rounds:
 ## 📝 TODO: Prochaines Étapes
 
 1. ✅ Implémenter les 2 rounds de make_multisig
-2. ⏳ Tester avec un nouvel escrow
-3. ⏳ Vérifier que les wallets peuvent export_multisig_info
-4. ⏳ Envoyer XMR testnet et vérifier visibilité
-5. ⏳ Tester l'API check-balance
-6. ⏳ Documenter dans MULTISIG-SYNC-IMPLEMENTATION.md
+2. ✅ **CORRECTION CRITIQUE**: Remplacer deuxième `make_multisig` par `exchange_multisig_keys`
+3. ✅ Ajouter méthode `exchange_multisig_keys()` dans `wallet/src/rpc.rs`
+4. ✅ Ajouter wrapper dans `wallet/src/multisig.rs`
+5. ✅ Mettre à jour `server/src/wallet_manager.rs` Round 2
+6. ✅ Compilation réussie (4m 22s)
+7. ⏳ Tester avec un nouvel escrow via UI
+8. ⏳ Vérifier que les wallets peuvent export_multisig_info
+9. ⏳ Envoyer XMR testnet et vérifier visibilité
+10. ⏳ Tester l'API check-balance
+
+## ⚠️ CORRECTION CRITIQUE (6 nov 2025)
+
+**Problème découvert**: Le code initial faisait **deux appels à `make_multisig`**, ce qui est incorrect selon la documentation officielle Monero.
+
+**Solution implémentée**:
+```rust
+// ❌ AVANT (INCORRECT):
+let result = wallet.rpc_client.multisig().make_multisig(2, other_round1_infos).await?;
+
+// ✅ MAINTENANT (CORRECT):
+let result = wallet.rpc_client.multisig().exchange_multisig_keys(other_round1_infos).await?;
+```
+
+**Fichiers modifiés**:
+- `common/src/types.rs`: Ajout `ExchangeMultisigKeysResult` (ligne 261-277)
+- `wallet/src/rpc.rs`: Ajout méthode `exchange_multisig_keys()` (ligne 766-893)
+- `wallet/src/multisig.rs`: Ajout wrapper `exchange_multisig_keys()` (ligne 90-141)
+- `server/src/wallet_manager.rs`: Correction Round 2 (ligne 1243-1272)
+
+**Référence officielle**:
+https://www.getmonero.org/resources/developer-guides/wallet-rpc.html
 
 ---
 
