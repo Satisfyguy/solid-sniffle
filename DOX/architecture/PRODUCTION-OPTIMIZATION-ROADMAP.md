@@ -154,74 +154,44 @@ killall -9 -r "monero-wallet-rpc.*18083"
 
 ---
 
-### 1.2 Retry Logic with Exponential Backoff
+### ~~1.2 Retry Logic with Exponential Backoff~~ ❌ ABANDONED
 
 **Problem:** Transient network errors or RPC hiccups cause permanent escrow initialization failures.
 
-**Solution:** Retry failed operations with exponential backoff (3 attempts max).
+**Originally Proposed Solution:** Retry failed operations with exponential backoff (3 attempts max).
 
-**Implementation:**
+**Why Abandoned:**
 
-**File:** `server/src/services/escrow.rs`
+This approach is **incompatible with the ephemeral temporary wallet architecture**:
 
-```rust
-const MAX_RETRIES: u32 = 3;
-const INITIAL_RETRY_DELAY_MS: u64 = 500;
+1. **Wallet lifecycle issue:**
+   - Temporary wallets are created → used for multisig → immediately closed
+   - Wallets are closed **during** multisig process to free RPC slots
+   - Retry logic would trigger **after** wallets already closed
 
-impl EscrowService {
-    /// Setup multisig with retry logic
-    pub async fn setup_multisig_with_retry(
-        &self,
-        escrow_id: Uuid,
-    ) -> Result<String, EscrowError> {
-        let mut retry_delay = Duration::from_millis(INITIAL_RETRY_DELAY_MS);
-        let mut last_error: Option<EscrowError> = None;
+2. **Concrete failure scenario:**
+   ```
+   ✅ Create buyer_temp_abc123, vendor_temp_xyz789, arbiter_temp_def456
+   ✅ Multisig Phase 1: prepare_multisig() succeeds
+   ✅ Close wallets to free RPC slots
+   ❌ Multisig Phase 2: exchange_keys() fails (network timeout)
+   🔄 Retry triggers...
+   ❌ CRASH: wallet_id "buyer_temp_abc123" doesn't exist anymore!
+   ```
 
-        for attempt in 1..=MAX_RETRIES {
-            info!("🔄 Multisig setup attempt {}/{} for escrow {}",
-                attempt, MAX_RETRIES, escrow_id);
+3. **Why we can't "just recreate wallets":**
+   - New wallets would have **different wallet IDs**
+   - Previous `multisig_info` strings are **wallet-specific** (can't be reused)
+   - Would require **full restart** of multisig process with new participants
+   - Breaks 2-of-3 coordination (other parties already have old info)
 
-            match self.setup_multisig_non_custodial(escrow_id).await {
-                Ok(address) => {
-                    if attempt > 1 {
-                        info!("✅ Multisig setup succeeded on retry #{}", attempt);
-                    }
-                    return Ok(address);
-                }
-                Err(e) if attempt < MAX_RETRIES => {
-                    warn!("⚠️ Multisig setup attempt {} failed: {}. Retrying in {:?}",
-                        attempt, e, retry_delay);
+**Alternative Approach:**
+- ✅ **Phase 1.1 Health Checks** (upstream prevention) - Keep this
+- ✅ **Fail-fast** on errors (let caller handle retry at HTTP level)
+- ✅ Better error messages to help diagnose issues
+- 🔮 **Future:** Implement persistent wallet sessions (major refactor)
 
-                    last_error = Some(e);
-                    tokio::time::sleep(retry_delay).await;
-                    retry_delay *= 2; // Exponential backoff
-                }
-                Err(e) => {
-                    error!("❌ Multisig setup failed after {} attempts", MAX_RETRIES);
-                    return Err(e);
-                }
-            }
-        }
-
-        // Should never reach here, but Rust requires exhaustive match
-        Err(last_error.unwrap_or_else(|| EscrowError::MultisigSetupFailed(
-            "Unknown error after retries".to_string()
-        )))
-    }
-}
-```
-
-**Backoff Schedule:**
-- Attempt 1: Immediate
-- Attempt 2: +500ms delay
-- Attempt 3: +1000ms delay (2x)
-- Total max delay: ~1.5s
-
-**Acceptance Criteria:**
-- [ ] Transient errors auto-retry
-- [ ] Permanent errors fail after 3 attempts
-- [ ] Total retry time <2s
-- [ ] Clear logging of retry attempts
+**Decision Date:** 2025-11-07
 
 ---
 
@@ -990,7 +960,6 @@ docker-compose up -d --scale wallet-buyer=10 --scale wallet-vendor=10 --scale wa
 | Monitoring                  | Logs   | Logs          | Dashboard     | Dashboard     | Grafana       |
 | Scaling                     | Manual | Manual        | Auto          | Auto          | Docker Scale  |
 | Health checks               | None   | ✅            | ✅            | ✅            | ✅            |
-| Retry logic                 | None   | ✅            | ✅            | ✅            | ✅            |
 | Metrics export              | None   | None          | ✅            | ✅            | ✅            |
 | Auto-scaling                | None   | None          | None          | ✅            | ✅            |
 | Batch operations            | None   | None          | None          | ✅            | ✅            |
@@ -1001,19 +970,20 @@ docker-compose up -d --scale wallet-buyer=10 --scale wallet-vendor=10 --scale wa
 
 **Priority:**
 1. ⚠️ **Phase 1.1** (Health checks) - CRITICAL for stability
-2. ⚠️ **Phase 1.2** (Retry logic) - CRITICAL for reliability
-3. 📊 **Phase 2.1** (Metrics) - HIGH for observability
-4. 📊 **Phase 2.2** (Dashboard) - HIGH for monitoring
-5. 📈 **Phase 3.1** (Hot reload) - MEDIUM for operational flexibility
-6. 📈 **Phase 3.2** (Auto-scaling) - MEDIUM for growth
-7. ⚡ **Phase 4.1** (Batch API) - LOW (nice-to-have)
-8. ⚡ **Phase 4.2** (Parallel multisig) - LOW (optimization)
-9. 🚀 **Phase 5** (Docker) - LOW (deployment sugar)
+2. 📊 **Phase 2.1** (Metrics) - HIGH for observability
+3. 📊 **Phase 2.2** (Dashboard) - HIGH for monitoring
+4. 📈 **Phase 3.1** (Hot reload) - MEDIUM for operational flexibility
+5. 📈 **Phase 3.2** (Auto-scaling) - MEDIUM for growth
+6. ⚡ **Phase 4.1** (Batch API) - LOW (nice-to-have)
+7. ⚡ **Phase 4.2** (Parallel multisig) - LOW (optimization)
+8. 🚀 **Phase 5** (Docker) - LOW (deployment sugar)
+
+**Note:** Phase 1.2 (Retry logic) was abandoned due to architectural incompatibility with ephemeral wallet design. See section 1.2 for details.
 
 **Start with:** Phase 1.1 (Health checks) - Most impactful for production stability.
 
 ---
 
-**Last Updated:** 2025-11-05
-**Status:** 📋 Planning Complete - Ready for Implementation
+**Last Updated:** 2025-11-07
+**Status:** 📋 Planning Revised - Phase 1.2 Abandoned
 **Next Action:** Implement Phase 1.1 (RPC health checks with failover)
