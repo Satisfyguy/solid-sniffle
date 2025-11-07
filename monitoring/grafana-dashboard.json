@@ -1,0 +1,498 @@
+{
+  "dashboard": {
+    "title": "Monero Marketplace - Production Monitoring",
+    "description": "Comprehensive monitoring dashboard for Monero Marketplace escrow platform",
+    "tags": ["monero", "marketplace", "escrow", "production"],
+    "timezone": "utc",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h"],
+      "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "7d", "30d"]
+    },
+
+    "panels": [
+      {
+        "id": 1,
+        "title": "🚨 Alert Status",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "ALERTS{alertstate=\"firing\", severity=\"critical\"}",
+            "legendFormat": "Critical",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "textMode": "value_and_name",
+          "colorMode": "background",
+          "graphMode": "none"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": null, "color": "green"},
+                {"value": 1, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+
+      {
+        "id": 2,
+        "title": "📊 Escrow Funnel (24h)",
+        "type": "graph",
+        "gridPos": {"x": 6, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "increase(escrows_created_total[24h])",
+            "legendFormat": "Created",
+            "refId": "A"
+          },
+          {
+            "expr": "increase(escrows_funded_total[24h])",
+            "legendFormat": "Funded",
+            "refId": "B"
+          },
+          {
+            "expr": "increase(escrows_completed_total[24h])",
+            "legendFormat": "Completed",
+            "refId": "C"
+          },
+          {
+            "expr": "increase(escrows_disputed_total[24h])",
+            "legendFormat": "Disputed",
+            "refId": "D"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Count"},
+          {"format": "short", "show": false}
+        ]
+      },
+
+      {
+        "id": 3,
+        "title": "⏱️ Uptime",
+        "type": "stat",
+        "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "uptime_seconds",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "textMode": "value",
+          "colorMode": "value",
+          "graphMode": "area"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": null, "color": "red"},
+                {"value": 300, "color": "yellow"},
+                {"value": 3600, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+
+      {
+        "id": 4,
+        "title": "💰 Escrow Success Rate",
+        "type": "gauge",
+        "gridPos": {"x": 0, "y": 4, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "(rate(escrows_completed_total[1h]) / rate(escrows_funded_total[1h])) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": null, "color": "red"},
+                {"value": 70, "color": "yellow"},
+                {"value": 90, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+
+      {
+        "id": 5,
+        "title": "🔧 RPC Call Success Rate",
+        "type": "gauge",
+        "gridPos": {"x": 18, "y": 4, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "((rate(rpc_calls_total[5m]) - rate(rpc_calls_failed_total[5m])) / rate(rpc_calls_total[5m])) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": null, "color": "red"},
+                {"value": 90, "color": "yellow"},
+                {"value": 98, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+
+      {
+        "id": 6,
+        "title": "⚖️ Dispute Resolution Balance",
+        "type": "piechart",
+        "gridPos": {"x": 0, "y": 8, "w": 8, "h": 6},
+        "targets": [
+          {
+            "expr": "disputes_buyer_won_total",
+            "legendFormat": "Buyer Won",
+            "refId": "A"
+          },
+          {
+            "expr": "disputes_vendor_won_total",
+            "legendFormat": "Vendor Won",
+            "refId": "B"
+          }
+        ],
+        "options": {
+          "legend": {
+            "displayMode": "table",
+            "placement": "right",
+            "values": ["value", "percent"]
+          },
+          "pieType": "donut",
+          "displayLabels": ["name", "percent"]
+        }
+      },
+
+      {
+        "id": 7,
+        "title": "📈 Escrow Creation Rate (per hour)",
+        "type": "graph",
+        "gridPos": {"x": 8, "y": 8, "w": 8, "h": 6},
+        "targets": [
+          {
+            "expr": "rate(escrows_created_total[1h]) * 3600",
+            "legendFormat": "Creation Rate",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Escrows/hour"},
+          {"format": "short", "show": false}
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"type": "lt", "params": [0.01]},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"type": "avg"}
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "1m",
+          "handler": 1,
+          "name": "Low Escrow Creation Rate",
+          "noDataState": "no_data",
+          "for": "4h"
+        }
+      },
+
+      {
+        "id": 8,
+        "title": "🚦 RPC Call Rate",
+        "type": "graph",
+        "gridPos": {"x": 16, "y": 8, "w": 8, "h": 6},
+        "targets": [
+          {
+            "expr": "rate(rpc_calls_total[5m])",
+            "legendFormat": "Total",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(rpc_calls_failed_total[5m])",
+            "legendFormat": "Failed",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Calls/sec"},
+          {"format": "short", "show": false}
+        ],
+        "seriesOverrides": [
+          {
+            "alias": "Failed",
+            "color": "#F2495C",
+            "fill": 2
+          }
+        ]
+      },
+
+      {
+        "id": 9,
+        "title": "📊 Escrow State Distribution",
+        "type": "table",
+        "gridPos": {"x": 0, "y": 14, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "escrows_created_total",
+            "instant": true,
+            "legendFormat": "Created",
+            "refId": "A"
+          },
+          {
+            "expr": "escrows_funded_total",
+            "instant": true,
+            "legendFormat": "Funded",
+            "refId": "B"
+          },
+          {
+            "expr": "escrows_completed_total",
+            "instant": true,
+            "legendFormat": "Completed",
+            "refId": "C"
+          },
+          {
+            "expr": "escrows_disputed_total",
+            "instant": true,
+            "legendFormat": "Disputed",
+            "refId": "D"
+          },
+          {
+            "expr": "escrows_resolved_total",
+            "instant": true,
+            "legendFormat": "Resolved",
+            "refId": "E"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "merge",
+            "options": {}
+          },
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {},
+              "indexByName": {},
+              "renameByName": {
+                "Time": "State",
+                "Value": "Count"
+              }
+            }
+          }
+        ],
+        "options": {
+          "showHeader": true,
+          "sortBy": [
+            {
+              "desc": true,
+              "displayName": "Count"
+            }
+          ]
+        }
+      },
+
+      {
+        "id": 10,
+        "title": "⚠️ Active Alerts",
+        "type": "table",
+        "gridPos": {"x": 12, "y": 14, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "ALERTS{alertstate=\"firing\"}",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showHeader": true,
+          "sortBy": [
+            {
+              "desc": false,
+              "displayName": "severity"
+            }
+          ]
+        },
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "__name__": true,
+                "alertstate": true,
+                "instance": true,
+                "job": true
+              },
+              "indexByName": {
+                "alertname": 0,
+                "severity": 1,
+                "component": 2,
+                "description": 3
+              }
+            }
+          }
+        ]
+      },
+
+      {
+        "id": 11,
+        "title": "💡 Key Metrics Summary",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 20, "w": 24, "h": 4},
+        "targets": [
+          {
+            "expr": "escrows_created_total",
+            "legendFormat": "Total Escrows",
+            "refId": "A"
+          },
+          {
+            "expr": "rpc_calls_total",
+            "legendFormat": "Total RPC Calls",
+            "refId": "B"
+          },
+          {
+            "expr": "escrows_disputed_total",
+            "legendFormat": "Total Disputes",
+            "refId": "C"
+          },
+          {
+            "expr": "(escrows_disputed_total / escrows_created_total) * 100",
+            "legendFormat": "Dispute Rate %",
+            "refId": "D"
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "orientation": "horizontal",
+          "textMode": "value_and_name",
+          "colorMode": "value",
+          "graphMode": "none"
+        },
+        "fieldConfig": {
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "Dispute Rate %"},
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "percent"
+                },
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {"value": null, "color": "green"},
+                      {"value": 2, "color": "yellow"},
+                      {"value": 5, "color": "red"}
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+
+    "annotations": {
+      "list": [
+        {
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "ALERTS{alertstate=\"firing\", severity=\"critical\"}",
+          "iconColor": "red",
+          "name": "Critical Alerts",
+          "step": "60s",
+          "tagKeys": "alertname",
+          "textFormat": "{{ alertname }}: {{ description }}",
+          "titleFormat": "Critical Alert"
+        },
+        {
+          "datasource": "Prometheus",
+          "enable": true,
+          "expr": "(time() - process_start_time_seconds) < 300",
+          "iconColor": "yellow",
+          "name": "Server Restarts",
+          "step": "60s",
+          "titleFormat": "Server Restarted"
+        }
+      ]
+    },
+
+    "templating": {
+      "list": [
+        {
+          "name": "interval",
+          "type": "interval",
+          "query": "1m,5m,10m,30m,1h,6h,12h,1d,7d",
+          "current": {
+            "text": "5m",
+            "value": "5m"
+          }
+        }
+      ]
+    }
+  }
+}

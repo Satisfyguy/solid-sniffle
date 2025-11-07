@@ -24,3 +24,4 @@ url = "2.5"  # TM-004: URL parsing pour validation stricte
 
 [dev-dependencies]
 tokio-test = { workspace = true }
+proptest = "1.4"  # Property-based testing for crypto operations

@@ -1,0 +1,105 @@
+# Cargo Deny Configuration
+# https://embarkstudios.github.io/cargo-deny/
+
+# ============================================================================
+# Advisory Database Configuration
+# ============================================================================
+[advisories]
+# Database path and URLs for vulnerability data
+db-path = "~/.cargo/advisory-db"
+db-urls = ["https://github.com/rustsec/advisory-db"]
+
+# How to handle different types of advisories
+vulnerability = "deny"      # Fail on any known vulnerabilities
+unmaintained = "warn"       # Warn if dependency is unmaintained
+yanked = "deny"             # Fail if using yanked crate versions
+notice = "warn"             # Warn on security notices
+ignore = [
+    # Example: Ignore specific advisories if absolutely necessary
+    # "RUSTSEC-2020-0001",  # Description of why this is safe to ignore
+]
+
+# ============================================================================
+# License Configuration
+# ============================================================================
+[licenses]
+unlicensed = "deny"         # Fail if dependency has no license
+
+# Allow these licenses (compatible with MIT)
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "CC0-1.0",
+    "Zlib",
+    "Unicode-DFS-2016",
+]
+
+# Explicitly deny these licenses
+deny = [
+    "GPL-3.0",              # Copyleft - incompatible with proprietary use
+    "AGPL-3.0",             # Strong copyleft - network use triggers licensing
+]
+
+# Confidence threshold for license detection
+confidence-threshold = 0.8
+
+# Specific license exceptions
+exceptions = [
+    # SQLCipher has AGPL implications - document this exception
+    # { allow = ["AGPL-3.0"], name = "sqlcipher", version = "*" },
+]
+
+[[licenses.clarify]]
+# Clarify dual-licensed crates
+name = "ring"
+expression = "MIT AND ISC AND OpenSSL"
+license-files = [{ path = "LICENSE", hash = 0xbd0eed23 }]
+
+# ============================================================================
+# Bans Configuration (Prevent Problematic Dependencies)
+# ============================================================================
+[bans]
+# Warn on multiple versions of same dependency (reduces binary size)
+multiple-versions = "warn"
+
+# Allow using crates.io git dependencies
+wildcards = "allow"
+
+# Highlight when multiple versions would be used
+highlight = "all"
+
+# Specific crates to deny
+deny = [
+    # Example: Ban old/insecure versions
+    # { name = "openssl", version = "<1.0.1" },
+]
+
+# Skip checking specific dependency trees
+skip = [
+    # Example: Skip checks for test-only dependencies
+    # { name = "proptest", version = "*" },
+]
+
+skip-tree = [
+    # Skip entire dependency trees if needed
+]
+
+# ============================================================================
+# Sources Configuration (Prevent Supply Chain Attacks)
+# ============================================================================
+[sources]
+# Deny dependencies from unknown registries
+unknown-registry = "deny"
+
+# Deny dependencies from unknown git repos
+unknown-git = "deny"
+
+# Allow only these git sources
+allow-git = []
+
+[sources.allow-org]
+# Allow GitHub organizations (for private repos if needed)
+# github = ["your-organization"]

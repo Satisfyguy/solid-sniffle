@@ -1,0 +1,310 @@
+# Prometheus Alerting Rules for Monero Marketplace
+# https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
+
+groups:
+  # ============================================================================
+  # CRITICAL ALERTS - Immediate Action Required
+  # ============================================================================
+  - name: critical_alerts
+    interval: 30s
+    rules:
+      # Alert: High RPC failure rate
+      - alert: HighRPCFailureRate
+        expr: |
+          (
+            rate(rpc_calls_failed_total[5m])
+            /
+            rate(rpc_calls_total[5m])
+          ) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          component: monero_rpc
+        annotations:
+          summary: "High Monero RPC failure rate detected"
+          description: |
+            RPC failure rate is {{ $value | humanizePercentage }}.
+            This indicates connectivity issues with Monero wallet-rpc.
+            Current failures: {{ $value }}/s
+
+            **Immediate Actions:**
+            1. Check Monero wallet-rpc logs: `journalctl -u monero-wallet-rpc`
+            2. Verify RPC is running: `systemctl status monero-wallet-rpc`
+            3. Test connectivity: `curl http://127.0.0.1:18082/json_rpc`
+            4. Check for blockchain sync issues
+          runbook_url: "https://docs.example.com/runbooks/high-rpc-failure"
+
+      # Alert: Escrow stuck in disputed state
+      - alert: EscrowDisputeBacklog
+        expr: |
+          (escrows_disputed_total - escrows_resolved_total) > 5
+        for: 1h
+        labels:
+          severity: critical
+          component: escrow
+        annotations:
+          summary: "Escrow dispute backlog detected"
+          description: |
+            {{ $value }} escrows are stuck in disputed state for over 1 hour.
+            This requires immediate arbiter attention.
+
+            **Actions:**
+            1. Check arbiter availability
+            2. Review pending disputes: `curl /admin/escrow/status`
+            3. Contact arbiter if unresponsive
+            4. Check dispute resolution logs
+          runbook_url: "https://docs.example.com/runbooks/dispute-backlog"
+
+      # Alert: Server down
+      - alert: ServerDown
+        expr: up{job="monero_marketplace"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: server
+        annotations:
+          summary: "Monero Marketplace server is down"
+          description: |
+            Server has been unreachable for 1 minute.
+
+            **Actions:**
+            1. Check server status: `systemctl status monero-marketplace`
+            2. Check logs: `journalctl -u monero-marketplace -n 100`
+            3. Verify network connectivity
+            4. Check resource usage (CPU, memory, disk)
+          runbook_url: "https://docs.example.com/runbooks/server-down"
+
+  # ============================================================================
+  # HIGH PRIORITY ALERTS - Action Required Soon
+  # ============================================================================
+  - name: high_priority_alerts
+    interval: 1m
+    rules:
+      # Alert: Escrow completion rate declining
+      - alert: LowEscrowCompletionRate
+        expr: |
+          (
+            rate(escrows_completed_total[1h])
+            /
+            rate(escrows_funded_total[1h])
+          ) < 0.7
+        for: 30m
+        labels:
+          severity: high
+          component: escrow
+        annotations:
+          summary: "Low escrow completion rate"
+          description: |
+            Only {{ $value | humanizePercentage }} of funded escrows are completing.
+            Normal rate is 90%+. This may indicate:
+            - Shipping delays
+            - User abandonment
+            - Platform issues
+
+            **Actions:**
+            1. Review escrow states distribution
+            2. Check for timeout issues
+            3. Contact high-value vendors
+            4. Review recent complaints
+          runbook_url: "https://docs.example.com/runbooks/low-completion-rate"
+
+      # Alert: High dispute rate
+      - alert: HighDisputeRate
+        expr: |
+          (
+            rate(escrows_disputed_total[24h])
+            /
+            rate(escrows_created_total[24h])
+          ) > 0.05
+        for: 1h
+        labels:
+          severity: high
+          component: escrow
+        annotations:
+          summary: "High dispute rate detected"
+          description: |
+            {{ $value | humanizePercentage }} of escrows are entering disputes.
+            Normal rate is <2%. This may indicate:
+            - Vendor quality issues
+            - Fraudulent activity
+            - Platform bugs
+
+            **Actions:**
+            1. Identify vendors with high dispute rates
+            2. Review dispute reasons
+            3. Check for patterns (timing, categories)
+            4. Consider vendor suspension
+          runbook_url: "https://docs.example.com/runbooks/high-dispute-rate"
+
+      # Alert: Server restart detected
+      - alert: ServerRestarted
+        expr: |
+          (time() - process_start_time_seconds{job="monero_marketplace"}) < 300
+        labels:
+          severity: high
+          component: server
+        annotations:
+          summary: "Server restarted recently"
+          description: |
+            Server restarted {{ $value | humanizeDuration }} ago.
+            Check logs for crash causes.
+
+            **Actions:**
+            1. Review restart reason: `journalctl -u monero-marketplace | grep -A 20 "Starting\|Stopping"`
+            2. Check for panics: `journalctl -u monero-marketplace | grep panic`
+            3. Verify all services recovered: `curl /api/health`
+            4. Check database integrity
+          runbook_url: "https://docs.example.com/runbooks/server-restart"
+
+  # ============================================================================
+  # WARNING ALERTS - Investigate When Possible
+  # ============================================================================
+  - name: warning_alerts
+    interval: 5m
+    rules:
+      # Alert: Disputes increasingly favoring one party
+      - alert: DisputeBiasDete cted
+        expr: |
+          (
+            disputes_buyer_won_total
+            /
+            (disputes_buyer_won_total + disputes_vendor_won_total)
+          ) > 0.8 or < 0.2
+        for: 24h
+        labels:
+          severity: warning
+          component: arbiter
+        annotations:
+          summary: "Dispute resolution bias detected"
+          description: |
+            {{ $value | humanizePercentage }} of disputes favor one party.
+            Expected: 40-60% balance. This may indicate:
+            - Arbiter bias
+            - Systematic fraud
+            - Category-specific issues
+
+            **Actions:**
+            1. Review arbiter decisions
+            2. Check for fraudulent vendor patterns
+            3. Analyze dispute categories
+            4. Consider arbiter rotation
+          runbook_url: "https://docs.example.com/runbooks/dispute-bias"
+
+      # Alert: RPC latency increasing
+      - alert: HighRPCLatency
+        expr: |
+          histogram_quantile(0.95, rate(rpc_call_duration_seconds_bucket[5m])) > 5
+        for: 10m
+        labels:
+          severity: warning
+          component: monero_rpc
+        annotations:
+          summary: "High RPC latency detected"
+          description: |
+            95th percentile RPC latency is {{ $value }}s (>5s threshold).
+            This may cause timeouts and poor UX.
+
+            **Actions:**
+            1. Check Monero daemon sync status
+            2. Verify network connectivity
+            3. Review RPC resource usage
+            4. Consider scaling RPC instances
+          runbook_url: "https://docs.example.com/runbooks/high-rpc-latency"
+
+      # Alert: Low escrow creation rate
+      - alert: LowEscrowCreationRate
+        expr: |
+          rate(escrows_created_total[1h]) < 0.01
+        for: 4h
+        labels:
+          severity: warning
+          component: marketplace
+        annotations:
+          summary: "Low escrow creation rate"
+          description: |
+            Only {{ $value }}/s escrows being created (expected >0.01/s).
+            This may indicate:
+            - Low platform activity
+            - User acquisition issues
+            - Technical barriers
+            - Marketing needed
+
+            **Actions:**
+            1. Review user registration trends
+            2. Check listing quality
+            3. Verify payment flows working
+            4. Review marketing campaigns
+          runbook_url: "https://docs.example.com/runbooks/low-activity"
+
+  # ============================================================================
+  # PERFORMANCE ALERTS - Optimization Needed
+  # ============================================================================
+  - name: performance_alerts
+    interval: 5m
+    rules:
+      # Alert: Memory usage high
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            process_resident_memory_bytes{job="monero_marketplace"}
+            /
+            node_memory_MemTotal_bytes
+          ) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          component: resources
+        annotations:
+          summary: "High memory usage detected"
+          description: |
+            Memory usage is {{ $value | humanizePercentage }}.
+            Consider scaling up or optimizing.
+
+            **Actions:**
+            1. Check for memory leaks: `ps aux | grep server`
+            2. Review connection pool sizes
+            3. Check for stuck operations
+            4. Consider server restart if critical
+          runbook_url: "https://docs.example.com/runbooks/high-memory"
+
+      # Alert: High CPU usage
+      - alert: HighCPUUsage
+        expr: |
+          rate(process_cpu_seconds_total{job="monero_marketplace"}[5m]) > 0.8
+        for: 15m
+        labels:
+          severity: warning
+          component: resources
+        annotations:
+          summary: "High CPU usage detected"
+          description: |
+            CPU usage is {{ $value | humanizePercentage }}.
+            May impact performance.
+
+            **Actions:**
+            1. Profile application: Enable CPU profiling
+            2. Check for expensive queries
+            3. Review concurrent operations
+            4. Consider horizontal scaling
+          runbook_url: "https://docs.example.com/runbooks/high-cpu"
+
+      # Alert: Database connection pool exhausted
+      - alert: DatabasePoolExhausted
+        expr: |
+          diesel_connection_pool_connections{state="in_use"} >= diesel_connection_pool_max_size
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database connection pool exhausted"
+          description: |
+            All {{ $value }} database connections are in use.
+            New requests will be queued/rejected.
+
+            **Actions:**
+            1. Increase pool size in configuration
+            2. Check for connection leaks
+            3. Review slow queries
+            4. Consider read replicas
+          runbook_url: "https://docs.example.com/runbooks/db-pool-exhausted"
