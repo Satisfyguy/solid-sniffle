@@ -419,6 +419,9 @@ async fn main() -> Result<()> {
                     .service(orders::complete_order)
                     .service(orders::cancel_order)
                     .service(orders::dispute_order)
+                    // Order Messages (Chat)
+                    .service(messages::get_messages)
+                    .service(messages::send_message)
                     // Escrow
                     .route("/escrow/{id}", web::get().to(escrow::get_escrow))
                     .service(escrow::get_escrow_status)

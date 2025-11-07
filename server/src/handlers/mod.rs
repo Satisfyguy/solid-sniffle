@@ -4,6 +4,7 @@ pub mod cart;
 pub mod escrow;
 pub mod frontend;
 pub mod listings;
+pub mod messages;
 pub mod monitoring;
 pub mod multisig_challenge;
 pub mod orders;

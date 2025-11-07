@@ -779,6 +779,8 @@ pub async fn show_order(
     let mut ctx = Context::new();
 
     // Insert session data
+    ctx.insert("user_id", &user_id);
+
     if let Ok(Some(username)) = session.get::<String>("username") {
         ctx.insert("username", &username);
         ctx.insert("user_name", &username); // For nav template

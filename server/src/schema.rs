@@ -45,6 +45,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    order_messages (id) {
+        id -> Text,
+        order_id -> Text,
+        sender_id -> Text,
+        message -> Text,
+        created_at -> Integer,
+    }
+}
+
+diesel::table! {
     orders (id) {
         id -> Text,
         buyer_id -> Text,
@@ -129,6 +139,8 @@ diesel::table! {
 
 diesel::joinable!(escrows -> orders (order_id));
 diesel::joinable!(listings -> users (vendor_id));
+diesel::joinable!(order_messages -> orders (order_id));
+diesel::joinable!(order_messages -> users (sender_id));
 diesel::joinable!(orders -> listings (listing_id));
 diesel::joinable!(transactions -> escrows (escrow_id));
 diesel::joinable!(wallet_address_history -> users (user_id));
@@ -137,6 +149,7 @@ diesel::joinable!(wallet_rpc_configs -> escrows (escrow_id));
 diesel::allow_tables_to_appear_in_same_query!(
     escrows,
     listings,
+    order_messages,
     orders,
     reviews,
     transactions,
