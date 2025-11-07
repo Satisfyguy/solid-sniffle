@@ -16,6 +16,7 @@ use crate::models::escrow::Escrow;
 use crate::models::listing::Listing;
 use crate::models::order::Order;
 use crate::models::cart::Cart;
+use crate::models::user::User;
 
 
 /// GET /new-home - New V2 Homepage
@@ -491,6 +492,220 @@ pub async fn show_edit_listing(
     }
 }
 
+/// GET /vendor/dashboard - Vendor dashboard page (vendor only)
+///
+/// Displays comprehensive vendor dashboard with stats, listings, and recent orders.
+///
+/// # Authentication
+/// - Requires active session with vendor role
+/// - Redirects to /login if not authenticated
+/// - Returns 403 Forbidden if user is not a vendor
+///
+/// # Returns
+/// - 200 OK: HTML dashboard page
+/// - 302 Found: Redirect to /login (not authenticated)
+/// - 403 Forbidden: User is not a vendor
+/// - 500 Internal Server Error: Database or template error
+pub async fn show_vendor_dashboard(
+    tera: web::Data<Tera>,
+    pool: web::Data<DbPool>,
+    session: Session,
+) -> impl Responder {
+    use crate::models::listing::Listing;
+    use crate::models::user::User;
+
+    // Check authentication and vendor role
+    let vendor_id = match session.get::<String>("user_id") {
+        Ok(Some(uid)) => uid,
+        _ => {
+            return HttpResponse::Found()
+                .append_header(("Location", "/login"))
+                .finish()
+        }
+    };
+
+    // Verify vendor role
+    if let Ok(Some(role)) = session.get::<String>("role") {
+        if role != "vendor" {
+            return HttpResponse::Forbidden().body("Access denied: Vendor role required");
+        }
+    } else {
+        return HttpResponse::Found()
+            .append_header(("Location", "/login"))
+            .finish();
+    }
+
+    let mut ctx = Context::new();
+
+    // Insert session data
+    if let Ok(Some(username)) = session.get::<String>("username") {
+        ctx.insert("username", &username);
+        ctx.insert("logged_in", &true);
+        ctx.insert("role", &"vendor");
+        ctx.insert("is_vendor", &true);
+    } else {
+        ctx.insert("logged_in", &false);
+        ctx.insert("is_vendor", &false);
+    }
+
+    // Add CSRF token
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
+
+    // Fetch vendor's listings
+    let mut conn = match pool.get() {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Database connection error: {}", e);
+            return HttpResponse::InternalServerError().body("Database connection error");
+        }
+    };
+
+    let vendor_id_clone = vendor_id.clone();
+    let listings_result =
+        web::block(move || Listing::find_by_vendor(&mut conn, vendor_id_clone)).await;
+
+    let listings = match listings_result {
+        Ok(Ok(l)) => l,
+        Ok(Err(e)) => {
+            error!("Error fetching vendor listings: {}", e);
+            Vec::new()
+        }
+        Err(e) => {
+            error!("Database query error: {}", e);
+            Vec::new()
+        }
+    };
+
+    // Prepare listings for template with images
+    #[derive(Serialize)]
+    struct ListingForDashboard {
+        id: String,
+        title: String,
+        category: String,
+        price_xmr: i64,
+        stock: i32,
+        status: String,
+        first_image_cid: Option<String>,
+    }
+
+    let mut listings_for_template = Vec::new();
+    for listing in &listings {
+        let first_image_cid = listing
+            .images_ipfs_cids
+            .as_ref()
+            .and_then(|cids_json| serde_json::from_str::<Vec<String>>(cids_json).ok())
+            .and_then(|cids| cids.first().cloned());
+
+        listings_for_template.push(ListingForDashboard {
+            id: listing.id.clone(),
+            title: listing.title.clone(),
+            category: listing.category.clone(),
+            price_xmr: listing.price_xmr,
+            stock: listing.stock,
+            status: listing.status.clone(),
+            first_image_cid,
+        });
+    }
+
+    // Fetch recent orders for this vendor
+    let mut conn2 = match pool.get() {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Database connection error: {}", e);
+            return HttpResponse::InternalServerError().body("Database connection error");
+        }
+    };
+
+    use crate::schema::orders;
+    let vendor_id_clone2 = vendor_id.clone();
+    let orders_result = web::block(move || {
+        orders::table
+            .filter(orders::vendor_id.eq(vendor_id_clone2))
+            .order(orders::created_at.desc())
+            .limit(5)
+            .load::<Order>(&mut conn2)
+    })
+    .await;
+
+    let recent_orders = match orders_result {
+        Ok(Ok(o)) => o,
+        Ok(Err(e)) => {
+            error!("Error fetching recent orders: {}", e);
+            Vec::new()
+        }
+        Err(e) => {
+            error!("Database query error: {}", e);
+            Vec::new()
+        }
+    };
+
+    // Prepare orders for template with buyer info
+    #[derive(Serialize)]
+    struct OrderForDashboard {
+        id: String,
+        buyer_username: String,
+        total_xmr: i64,
+        status: String,
+        created_at: String,
+    }
+
+    let mut orders_for_template = Vec::new();
+    for order in recent_orders {
+        let mut conn3 = match pool.get() {
+            Ok(c) => c,
+            Err(e) => {
+                error!("Database connection error: {}", e);
+                continue;
+            }
+        };
+
+        let buyer_id = order.buyer_id.clone();
+        let buyer_result = web::block(move || User::find_by_id(&mut conn3, buyer_id)).await;
+
+        let buyer_username = match buyer_result {
+            Ok(Ok(user)) => user.username,
+            _ => "Unknown".to_string(),
+        };
+
+        orders_for_template.push(OrderForDashboard {
+            id: order.id,
+            buyer_username,
+            total_xmr: order.total_xmr,
+            status: order.status,
+            created_at: order.created_at.format("%Y-%m-%d %H:%M").to_string(),
+        });
+    }
+
+    // Calculate stats
+    let total_listings = listings.len();
+    let active_listings = listings.iter().filter(|l| l.status == "active").count();
+
+    // Stats will be loaded dynamically via API, but provide initial values
+    ctx.insert("stats", &serde_json::json!({
+        "active_listings": active_listings,
+        "pending_orders": 0,
+        "total_revenue_xmr": "0.000000000000",
+        "revenue_this_month_xmr": "0.000000000000",
+        "total_sales": 0,
+        "sales_this_month": 0,
+    }));
+
+    ctx.insert("listings", &listings_for_template);
+    ctx.insert("orders", &orders_for_template);
+
+    // Render template
+    match tera.render("vendor/dashboard.html", &ctx) {
+        Ok(html) => HttpResponse::Ok()
+            .content_type("text/html; charset=utf-8")
+            .body(html),
+        Err(e) => {
+            error!("Template error rendering vendor dashboard: {}", e);
+            HttpResponse::InternalServerError().body(format!("Template error: {}", e))
+        }
+    }
+}
+
 /// GET /vendor/listings - Vendor's listings management page (vendor only)
 ///
 /// Displays all listings created by the authenticated vendor with management options.
@@ -779,6 +994,8 @@ pub async fn show_order(
     let mut ctx = Context::new();
 
     // Insert session data
+    ctx.insert("user_id", &user_id);
+
     if let Ok(Some(username)) = session.get::<String>("username") {
         ctx.insert("username", &username);
         ctx.insert("user_name", &username); // For nav template

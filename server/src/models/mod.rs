@@ -1,6 +1,7 @@
 pub mod cart;
 pub mod escrow;
 pub mod listing;
+pub mod message;
 pub mod multisig_state;
 pub mod order;
 pub mod transaction;

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Dashboard - NEXUS</title>
+    <meta name="description" content="Manage your listings and track your marketplace performance.">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/vendor-dashboard.css">
+</head>
+<body>
+    {% include "header.html" %}
+
+    <main class="dashboard-container">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div>
+                <h1 class="dashboard-title">
+                    <i data-lucide="layout-dashboard"></i>
+                    Vendor Dashboard
+                </h1>
+                <p class="dashboard-subtitle">Welcome back, {{ username }}! Here's your marketplace overview.</p>
+            </div>
+            <a href="/listings/create" class="btn-create-listing">
+                <i data-lucide="plus"></i>
+                <span>Create New Listing</span>
+            </a>
+        </div>
+
+        <!-- Stats Cards Grid -->
+        <div class="stats-grid">
+            <!-- Active Listings -->
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-card-icon active-listings">
+                        <i data-lucide="package"></i>
+                    </div>
+                    <span class="stat-card-label">Active Listings</span>
+                </div>
+                <div class="stat-card-content">
+                    <span class="stat-card-value">{{ stats.active_listings }}</span>
+                    <span class="stat-card-change positive">
+                        <i data-lucide="trending-up"></i>
+                        <span>+{{ stats.new_listings_this_week }} this week</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Pending Orders -->
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-card-icon pending-orders">
+                        <i data-lucide="clock"></i>
+                    </div>
+                    <span class="stat-card-label">Pending Orders</span>
+                </div>
+                <div class="stat-card-content">
+                    <span class="stat-card-value">{{ stats.pending_orders }}</span>
+                    {% if stats.pending_orders > 0 %}
+                    <a href="/orders" class="stat-card-link">
+                        <span>View orders</span>
+                        <i data-lucide="arrow-right"></i>
+                    </a>
+                    {% else %}
+                    <span class="stat-card-change neutral">
+                        <span>All caught up!</span>
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Total Revenue -->
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-card-icon revenue">
+                        <i data-lucide="dollar-sign"></i>
+                    </div>
+                    <span class="stat-card-label">Total Revenue</span>
+                </div>
+                <div class="stat-card-content">
+                    <span class="stat-card-value monospace">{{ stats.total_revenue_xmr }} XMR</span>
+                    <span class="stat-card-change positive">
+                        <i data-lucide="trending-up"></i>
+                        <span>+{{ stats.revenue_this_month_xmr }} XMR this month</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Total Sales -->
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="stat-card-icon sales">
+                        <i data-lucide="shopping-bag"></i>
+                    </div>
+                    <span class="stat-card-label">Total Sales</span>
+                </div>
+                <div class="stat-card-content">
+                    <span class="stat-card-value">{{ stats.total_sales }}</span>
+                    <span class="stat-card-change neutral">
+                        <span>{{ stats.completed_orders }} completed</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Listings Table -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i data-lucide="list"></i>
+                    Your Active Listings
+                </h2>
+                <a href="/vendor/listings" class="section-link">
+                    <span>View all</span>
+                    <i data-lucide="arrow-right"></i>
+                </a>
+            </div>
+
+            {% if listings and listings | length > 0 %}
+            <div class="listings-table-container">
+                <table class="listings-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th class="text-right">Price</th>
+                            <th class="text-center">Stock</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for listing in listings %}
+                        <tr data-listing-id="{{ listing.id }}">
+                            <td>
+                                <div class="listing-cell">
+                                    {% if listing.first_image_cid %}
+                                    <img src="/api/listings/{{ listing.id }}/images/{{ listing.first_image_cid }}"
+                                         alt="{{ listing.title }}"
+                                         class="listing-thumbnail">
+                                    {% else %}
+                                    <div class="listing-thumbnail-placeholder">
+                                        <i data-lucide="image"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div class="listing-info">
+                                        <a href="/listings/{{ listing.id }}" class="listing-title-link">
+                                            {{ listing.title }}
+                                        </a>
+                                        <span class="listing-id">ID: {{ listing.id | truncate(length=12, end="...") }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="category-badge">{{ listing.category }}</span>
+                            </td>
+                            <td class="text-right">
+                                <span class="price-value">{{ (listing.price_xmr / 1000000000000) | round(method="ceil", precision=12) }} XMR</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="stock-badge {% if listing.stock == 0 %}out-of-stock{% elif listing.stock < 5 %}low-stock{% endif %}">
+                                    {{ listing.stock }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="status-badge status-{{ listing.status }}">
+                                    {{ listing.status }}
+                                </span>
+                            </td>
+                            <td class="text-right">
+                                <div class="listing-actions">
+                                    <a href="/listings/{{ listing.id }}/edit" class="action-btn action-btn-edit" title="Edit listing">
+                                        <i data-lucide="edit"></i>
+                                    </a>
+                                    <button class="action-btn action-btn-delete"
+                                            data-listing-id="{{ listing.id }}"
+                                            data-listing-title="{{ listing.title }}"
+                                            title="Delete listing">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i data-lucide="package-x"></i>
+                <h3>No Active Listings</h3>
+                <p>You don't have any active listings yet. Create your first listing to start selling!</p>
+                <a href="/listings/create" class="btn-primary">
+                    <i data-lucide="plus"></i>
+                    <span>Create Your First Listing</span>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Recent Orders Section -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i data-lucide="shopping-cart"></i>
+                    Recent Orders
+                </h2>
+                <a href="/orders" class="section-link">
+                    <span>View all</span>
+                    <i data-lucide="arrow-right"></i>
+                </a>
+            </div>
+
+            {% if recent_orders and recent_orders | length > 0 %}
+            <div class="orders-list">
+                {% for order in recent_orders %}
+                <div class="order-card">
+                    <div class="order-card-header">
+                        <span class="order-id">Order #{{ order.id | truncate(length=12, end="...") }}</span>
+                        <span class="order-status status-{{ order.status }}">{{ order.status }}</span>
+                    </div>
+                    <div class="order-card-body">
+                        <div class="order-info">
+                            <span class="order-product">{{ order.listing_title }}</span>
+                            <span class="order-buyer">Buyer: {{ order.buyer_username }}</span>
+                        </div>
+                        <div class="order-meta">
+                            <span class="order-price">{{ order.total_price_xmr }} XMR</span>
+                            <span class="order-date">{{ order.created_at | date(format="%b %d, %Y") }}</span>
+                        </div>
+                    </div>
+                    <div class="order-card-footer">
+                        <a href="/orders/{{ order.id }}" class="btn-view-order">
+                            <span>View Details</span>
+                            <i data-lucide="arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i data-lucide="inbox"></i>
+                <h3>No Recent Orders</h3>
+                <p>You haven't received any orders yet. Keep your listings active to attract buyers!</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <script src="/static/js/lucide.min.js"></script>
+    <script src="/static/js/base.js"></script>
+    <script src="/static/js/vendor-dashboard.js"></script>
+
+    <!-- Initialize Dashboard -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            // Initialize dashboard (delete confirmations, etc.)
+            if (typeof VendorDashboard !== 'undefined') {
+                const dashboard = new VendorDashboard({
+                    csrfToken: '{{ csrf_token }}'
+                });
+                window.vendorDashboard = dashboard;
+            }
+        });
+    </script>
+</body>
+</html>

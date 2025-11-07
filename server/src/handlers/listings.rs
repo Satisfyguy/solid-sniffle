@@ -16,7 +16,9 @@ use infer;
 use crate::db::DbPool;
 use crate::ipfs::client::IpfsClient;
 use crate::models::listing::{Listing, ListingStatus, NewListing, UpdateListing};
-use crate::schema::listings;
+use crate::models::order::Order;
+use crate::schema::{listings, orders};
+use chrono::Utc;
 
 /// Request body for creating a new listing
 #[derive(Debug, Deserialize, Validate)]
@@ -909,6 +911,113 @@ pub async fn delete_listing(
                 }))
             }
         }
+        Err(_) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": "An unexpected async task error occurred"
+        })),
+    }
+}
+
+/// Response body for vendor dashboard stats
+#[derive(Debug, Serialize)]
+pub struct VendorDashboardStats {
+    pub active_listings: i64,
+    pub pending_orders: i64,
+    pub total_revenue_xmr: String,
+    pub revenue_this_month_xmr: String,
+    pub total_sales: i64,
+    pub sales_this_month: i64,
+}
+
+/// GET /api/vendor/dashboard/stats - Get vendor dashboard statistics
+///
+/// Requires authentication. Returns statistics about vendor's listings and orders.
+#[get("/vendor/dashboard/stats")]
+pub async fn get_vendor_dashboard_stats(
+    pool: web::Data<DbPool>,
+    session: Session,
+) -> impl Responder {
+    // Get authenticated user
+    let user_id = match get_user_id_from_session(&session) {
+        Ok(id) => id,
+        Err(response) => return response,
+    };
+
+    let stats_result = web::block(move || {
+        let mut conn = pool.get().with_context(|| "Database connection failed")?;
+
+        // Count active listings
+        let active_listings = listings::table
+            .filter(listings::vendor_id.eq(&user_id))
+            .filter(listings::status.eq("active"))
+            .count()
+            .get_result::<i64>(&mut conn)
+            .context("Failed to count active listings")?;
+
+        // Count pending orders (pending or funded status)
+        let pending_orders = orders::table
+            .filter(orders::vendor_id.eq(&user_id))
+            .filter(
+                orders::status
+                    .eq("pending")
+                    .or(orders::status.eq("funded"))
+                    .or(orders::status.eq("shipped")),
+            )
+            .count()
+            .get_result::<i64>(&mut conn)
+            .context("Failed to count pending orders")?;
+
+        // Calculate total revenue from completed orders
+        let completed_orders: Vec<Order> = orders::table
+            .filter(orders::vendor_id.eq(&user_id))
+            .filter(orders::status.eq("completed"))
+            .load::<Order>(&mut conn)
+            .context("Failed to load completed orders")?;
+
+        let total_revenue_atomic: i64 = completed_orders.iter().map(|o| o.total_xmr).sum();
+        let total_revenue_xmr = format!("{:.12}", total_revenue_atomic as f64 / 1_000_000_000_000.0);
+
+        // Calculate total sales count
+        let total_sales = completed_orders.len() as i64;
+
+        // Calculate this month's revenue and sales
+        let now = Utc::now();
+        let month_start = now
+            .with_day(1)
+            .and_then(|d| d.with_hour(0))
+            .and_then(|d| d.with_minute(0))
+            .and_then(|d| d.with_second(0))
+            .ok_or_else(|| anyhow::anyhow!("Failed to calculate month start"))?
+            .naive_utc();
+
+        let this_month_orders: Vec<Order> = orders::table
+            .filter(orders::vendor_id.eq(&user_id))
+            .filter(orders::status.eq("completed"))
+            .filter(orders::created_at.ge(month_start))
+            .load::<Order>(&mut conn)
+            .context("Failed to load this month's orders")?;
+
+        let revenue_this_month_atomic: i64 = this_month_orders.iter().map(|o| o.total_xmr).sum();
+        let revenue_this_month_xmr =
+            format!("{:.12}", revenue_this_month_atomic as f64 / 1_000_000_000_000.0);
+
+        let sales_this_month = this_month_orders.len() as i64;
+
+        Ok(VendorDashboardStats {
+            active_listings,
+            pending_orders,
+            total_revenue_xmr,
+            revenue_this_month_xmr,
+            total_sales,
+            sales_this_month,
+        })
+    })
+    .await;
+
+    match stats_result {
+        Ok(Ok(stats)) => HttpResponse::Ok().json(stats),
+        Ok(Err(e)) => HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": format!("Failed to retrieve dashboard stats: {}", e)
+        })),
         Err(_) => HttpResponse::InternalServerError().json(serde_json::json!({
             "error": "An unexpected async task error occurred"
         })),

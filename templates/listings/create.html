@@ -7,6 +7,7 @@
     <meta name="description" content="Add a new product to the marketplace.">
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/listing-preview.css">
     <style>
         /* Basic styling for card and form elements to match the overall theme */
         .card {
@@ -132,17 +133,19 @@
           </ol>
         </nav>
 
-        {# Form Container #}
-        <div class="section container" style="padding-top: 2rem; max-width: 900px;">
-          <div class="card">
-            <div class="card-header" style="text-align: center; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 1.5rem; margin-bottom: 2rem;">
-              <h1 class="section-title" style="margin: 0;">
-                Create New Listing
-              </h1>
-              <p class="section-subtitle" style="margin-top: 0.5rem;">
-                Add a new product to the marketplace
-              </p>
-            </div>
+        {# Form Container with Preview Layout #}
+        <div class="section container" style="padding-top: 2rem; max-width: 1400px;">
+          <div class="create-listing-layout">
+            <!-- Form Column -->
+            <div class="card">
+              <div class="card-header" style="text-align: center; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+                <h1 class="section-title" style="margin: 0;">
+                  Create New Listing
+                </h1>
+                <p class="section-subtitle" style="margin-top: 0.5rem;">
+                  Add a new product to the marketplace
+                </p>
+              </div>
 
             <div class="card-content">
               <form id="create-listing-form" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 2rem;">
@@ -377,25 +380,67 @@
               <div id="listing-result" style="margin-top: 1.5rem;"></div>
             </div>
           </div>
+
+          <!-- Preview Column -->
+          <aside class="listing-preview-container">
+            <div class="listing-preview-header">
+              <div>
+                <i data-lucide="eye"></i>
+              </div>
+              <div style="flex: 1;">
+                <h2 class="listing-preview-title">Live Preview</h2>
+                <p class="listing-preview-subtitle">See how your listing will appear</p>
+              </div>
+            </div>
+
+            <div id="listing-preview">
+              <!-- Preview will be rendered here by JavaScript -->
+            </div>
+
+            <div class="listing-preview-notice">
+              <i data-lucide="info"></i>
+              <p class="listing-preview-notice-text">
+                This is a real-time preview of your listing. Changes you make to the form will be reflected here instantly.
+              </p>
+            </div>
+          </aside>
+        </div>
         </div>
     </main>
 
     <script src="/static/js/lucide.min.js"></script>
     <script src="/static/js/base.js"></script>
     <script src="/static/js/xmr-converter.js"></script>
+    <script src="/static/js/listing-preview.js"></script>
     <script src="/static/js/create-listing.js" defer></script>
 
-    <!-- Initialize XMR Converter -->
+    <!-- Initialize Components -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize converter for listing creation form
+            // Initialize XMR converter
             initXmrConverter('price-xmr-human', 'price_xmr', {
                 onChange: function(data) {
                     console.log('Price updated:', data);
+                    // Trigger preview update when price changes
+                    if (window.listingPreview) {
+                        window.listingPreview.updatePreview();
+                    }
                 }
             });
 
-            // Initialize Lucide icons (for arrow-left-right icon)
+            // Initialize listing preview
+            {% if username %}
+            const listingPreview = new ListingPreview({
+                formId: 'create-listing-form',
+                previewContainerId: 'listing-preview',
+                vendorName: '{{ username }}'
+            });
+
+            // Export globally for debugging and integration
+            window.listingPreview = listingPreview;
+            {% endif %}
+
+            // Initialize Lucide icons
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
