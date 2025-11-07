@@ -7,6 +7,7 @@
     <meta name="description" content="Complete your order with 2/3 multisig Monero escrow protection">
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/checkout-stepper.css">
 </head>
 <body>
     {% include "header.html" %}
@@ -27,6 +28,43 @@
                 <p class="checkout-subtitle">
                     Non-custodial transaction with 2/3 multisig Monero escrow
                 </p>
+            </div>
+
+            <!-- Progress Stepper -->
+            <div class="checkout-stepper" id="checkout-stepper-container">
+                <div class="checkout-step active" data-step="1" data-target-section="shipping-address-form">
+                    <div class="checkout-step-indicator">
+                        <span class="checkout-step-number">1</span>
+                    </div>
+                    <span class="checkout-step-label">Shipping Info</span>
+                </div>
+
+                <div class="checkout-step-connector"></div>
+
+                <div class="checkout-step pending" data-step="2" data-target-section="escrow-init">
+                    <div class="checkout-step-indicator">
+                        <span class="checkout-step-number">2</span>
+                    </div>
+                    <span class="checkout-step-label">Escrow Setup</span>
+                </div>
+
+                <div class="checkout-step-connector"></div>
+
+                <div class="checkout-step pending" data-step="3" data-target-section="payment-instructions">
+                    <div class="checkout-step-indicator">
+                        <span class="checkout-step-number">3</span>
+                    </div>
+                    <span class="checkout-step-label">Payment</span>
+                </div>
+
+                <div class="checkout-step-connector"></div>
+
+                <div class="checkout-step pending" data-step="4" data-target-section="payment-confirmed">
+                    <div class="checkout-step-indicator">
+                        <span class="checkout-step-number">4</span>
+                    </div>
+                    <span class="checkout-step-label">Confirmation</span>
+                </div>
             </div>
 
             <!-- Hidden Data for JavaScript -->
@@ -544,7 +582,39 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <script src="/static/js/lucide.min.js"></script>
+    <script src="/static/js/checkout-stepper.js"></script>
     <script src="/static/js/checkout.js"></script>
     <script src="/static/js/base.js"></script>
+
+    <!-- Initialize Checkout Stepper -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize stepper
+            const stepper = new CheckoutStepper('.checkout-stepper', {
+                onStepChange: function(data) {
+                    console.log('Step changed:', data);
+
+                    // Show/hide corresponding sections
+                    const sections = ['shipping-address-form', 'escrow-init', 'payment-instructions', 'payment-confirmed'];
+                    sections.forEach((sectionId, index) => {
+                        const section = document.getElementById(sectionId);
+                        if (section) {
+                            section.style.display = (index === data.to) ? 'block' : 'none';
+                        }
+                    });
+                },
+                beforeStepChange: function(data) {
+                    console.log('Before step change:', data);
+                    // Add validation logic here if needed
+                    return true; // Allow transition
+                }
+            });
+
+            // Export stepper instance globally for use in checkout.js
+            window.checkoutStepper = stepper;
+
+            console.log('✅ Checkout stepper initialized');
+        });
+    </script>
 </body>
 </html>

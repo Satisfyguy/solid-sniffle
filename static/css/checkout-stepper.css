@@ -1,0 +1,259 @@
+/**
+ * Checkout Stepper Component
+ *
+ * Visual progress indicator for multi-step checkout process.
+ * Respects design system: #C9A445 accent color, #1A1A1A background.
+ *
+ * States: pending, active, completed
+ */
+
+.checkout-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 800px;
+    margin: 0 auto 3rem;
+    padding: 0 1rem;
+}
+
+/* Individual Step */
+.checkout-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    position: relative;
+    flex: 0 0 auto;
+    transition: all 0.3s ease;
+}
+
+/* Step Indicator (Circle) */
+.checkout-step-indicator {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    font-weight: 600;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+
+    /* Pending state (default) */
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Step Label */
+.checkout-step-label {
+    font-size: 0.875rem;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.6);
+    transition: color 0.3s ease;
+    white-space: nowrap;
+}
+
+/* Step Connector (Line between steps) */
+.checkout-step-connector {
+    flex: 1;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.checkout-step-connector::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: var(--color-accent, #C9A445);
+    transition: width 0.5s ease;
+}
+
+/* ========== STATE VARIATIONS ========== */
+
+/* Active Step */
+.checkout-step.active .checkout-step-indicator {
+    background: var(--color-accent, #C9A445);
+    border-color: var(--color-accent, #C9A445);
+    color: #1A1A1A;
+    box-shadow: 0 0 0 4px rgba(201, 164, 69, 0.2);
+    transform: scale(1.1);
+}
+
+.checkout-step.active .checkout-step-label {
+    color: var(--color-accent, #C9A445);
+    font-weight: 500;
+}
+
+/* Completed Step */
+.checkout-step.completed .checkout-step-indicator {
+    background: var(--color-accent, #C9A445);
+    border-color: var(--color-accent, #C9A445);
+    color: #1A1A1A;
+}
+
+.checkout-step.completed .checkout-step-label {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Completed Connector */
+.checkout-step-connector.completed::after {
+    width: 100%;
+}
+
+/* Active Connector (animating) */
+.checkout-step-connector.active::after {
+    width: 50%;
+    animation: pulse-connector 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-connector {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* ========== ICON SUPPORT ========== */
+
+.checkout-step-indicator i,
+.checkout-step-indicator svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+}
+
+/* Completed step shows checkmark */
+.checkout-step.completed .checkout-step-number {
+    display: none;
+}
+
+.checkout-step.completed .checkout-step-icon-check {
+    display: block;
+}
+
+.checkout-step-number {
+    display: block;
+}
+
+.checkout-step-icon-check {
+    display: none;
+}
+
+/* ========== RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+    .checkout-stepper {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+    }
+
+    .checkout-step {
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 1rem;
+        padding: 0.75rem 0;
+    }
+
+    .checkout-step-connector {
+        display: none;
+    }
+
+    /* Vertical connector on mobile */
+    .checkout-step::after {
+        content: '';
+        position: absolute;
+        left: 23px; /* Center of indicator (48px / 2) */
+        top: 60px; /* Below indicator */
+        width: 2px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        z-index: 1;
+    }
+
+    .checkout-step:last-child::after {
+        display: none;
+    }
+
+    .checkout-step.completed::after {
+        background: var(--color-accent, #C9A445);
+    }
+
+    .checkout-step-label {
+        text-align: left;
+    }
+}
+
+/* ========== ADDITIONAL STATES ========== */
+
+/* Error State */
+.checkout-step.error .checkout-step-indicator {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.checkout-step.error .checkout-step-label {
+    color: #ef4444;
+}
+
+/* Loading State (pulsing animation) */
+.checkout-step.loading .checkout-step-indicator {
+    animation: pulse-step 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-step {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(201, 164, 69, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(201, 164, 69, 0);
+    }
+}
+
+/* ========== ACCESSIBILITY ========== */
+
+.checkout-step-indicator:focus {
+    outline: 2px solid var(--color-accent, #C9A445);
+    outline-offset: 2px;
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .checkout-step-indicator {
+        border-width: 3px;
+    }
+
+    .checkout-step.active .checkout-step-indicator {
+        box-shadow: 0 0 0 6px rgba(201, 164, 69, 0.4);
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .checkout-step,
+    .checkout-step-indicator,
+    .checkout-step-connector,
+    .checkout-step-connector::after {
+        transition: none;
+    }
+
+    .checkout-step-connector.active::after {
+        animation: none;
+    }
+
+    .checkout-step.loading .checkout-step-indicator {
+        animation: none;
+    }
+}
