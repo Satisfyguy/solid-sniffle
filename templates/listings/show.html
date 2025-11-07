@@ -7,6 +7,7 @@
     <meta name="description" content="{{ listing.description | truncate(length=160) }}">
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/product-gallery.css">
 </head>
 <body>
     {% include "header.html" %}
@@ -19,24 +20,21 @@
         </a>
 
         <div class="product-detail-grid">
-            <!-- Left Column: Image & Vendor Info -->
+            <!-- Left Column: Image Gallery & Vendor Info -->
             <div class="product-detail-left">
-                <!-- Product Image -->
-                <div class="product-detail-image-wrapper">
-                    {% if images and images | length > 0 %}
-                        <img src="/api/listings/{{ listing.id }}/images/{{ images[0] }}"
-                             alt="{{ listing.title }}"
-                             class="product-detail-image">
-                        <div class="product-detail-image-badge">
-                            <span class="badge badge-category">{{ listing.category }}</span>
-                        </div>
-                    {% else %}
-                        <div class="product-detail-image-placeholder">
-                            <i data-lucide="image"></i>
-                            <span>No image available</span>
-                        </div>
-                    {% endif %}
-                </div>
+                <!-- Product Gallery -->
+                <div id="product-gallery-container"></div>
+
+                <!-- Hidden data for JavaScript -->
+                <script type="application/json" id="gallery-images-data">
+                    [
+                        {% if images and images | length > 0 %}
+                            {% for image in images %}
+                                "/api/listings/{{ listing.id }}/images/{{ image }}"{% if not loop.last %},{% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    ]
+                </script>
 
                 <!-- Vendor Card -->
                 <div class="vendor-detail-card">
@@ -146,8 +144,53 @@
     </main>
 
     <script src="/static/js/lucide.min.js"></script>
+    <script src="/static/js/product-gallery.js"></script>
     <script src="/static/js/cart.js"></script>
     <script src="/static/js/product-detail.js"></script>
     <script src="/static/js/base.js"></script>
+
+    <!-- Initialize Product Gallery -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Parse images from JSON data
+            const imagesDataElement = document.getElementById('gallery-images-data');
+            let images = [];
+
+            if (imagesDataElement) {
+                try {
+                    images = JSON.parse(imagesDataElement.textContent);
+                } catch (e) {
+                    console.error('Failed to parse gallery images:', e);
+                }
+            }
+
+            // Initialize gallery
+            if (images.length > 0) {
+                const gallery = new ProductGallery('#product-gallery-container', images, {
+                    showThumbnails: true,
+                    showLightbox: true,
+                    showZoomHint: true,
+                    categoryBadge: '{{ listing.category }}'
+                });
+
+                console.log('✅ Product gallery initialized with', images.length, 'images');
+            } else {
+                // Show empty state
+                const container = document.getElementById('product-gallery-container');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="gallery-empty">
+                            <i data-lucide="image"></i>
+                            <span class="gallery-empty-text">No images available</span>
+                        </div>
+                    `;
+
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
