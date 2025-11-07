@@ -83,6 +83,11 @@ async fn main() -> Result<()> {
 
     info!("Starting Monero Marketplace Server");
 
+    // 2.5 CRITICAL SECURITY: Validate environment variables for placeholder patterns
+    // This prevents deployment with .env.example values (e.g., "your-xxx-here")
+    // In production, this will PANIC if placeholders are detected
+    server::security::placeholder_validator::validate_all_critical_env_vars();
+
     // 3. Database connection pool with SQLCipher encryption
     let database_url =
         env::var("DATABASE_URL").context("DATABASE_URL must be set in environment")?;

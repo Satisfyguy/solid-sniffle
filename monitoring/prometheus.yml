@@ -1,0 +1,159 @@
+# Prometheus Configuration for Monero Marketplace
+# https://prometheus.io/docs/prometheus/latest/configuration/configuration/
+
+global:
+  # How frequently to scrape targets
+  scrape_interval: 15s
+
+  # How frequently to evaluate rules
+  evaluation_interval: 15s
+
+  # Labels to add to all metrics
+  external_labels:
+    environment: 'production'
+    project: 'monero_marketplace'
+    cluster: 'main'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'localhost:9093'  # Alertmanager address
+      timeout: 10s
+
+# Load alerting rules
+rule_files:
+  - 'prometheus-alerts.yml'
+
+# Scrape configurations
+scrape_configs:
+  # ============================================================================
+  # Monero Marketplace Application
+  # ============================================================================
+  - job_name: 'monero_marketplace'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+    static_configs:
+      - targets:
+          - 'localhost:8080'  # Main application
+        labels:
+          instance: 'main'
+          component: 'server'
+
+    metrics_path: '/metrics'
+    scheme: 'http'
+
+    # Relabeling rules
+    relabel_configs:
+      # Add instance hostname
+      - source_labels: [__address__]
+        target_label: instance
+        regex: '([^:]+)(:[0-9]+)?'
+        replacement: '${1}'
+
+    # Metric relabeling (post-scrape)
+    metric_relabel_configs:
+      # Drop metrics we don't need
+      - source_labels: [__name__]
+        regex: 'go_.*'  # Drop Go metrics if not using Go
+        action: drop
+
+  # ============================================================================
+  # Prometheus Self-Monitoring
+  # ============================================================================
+  - job_name: 'prometheus'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 'localhost:9090'
+        labels:
+          component: 'prometheus'
+
+  # ============================================================================
+  # Node Exporter (System Metrics)
+  # ============================================================================
+  - job_name: 'node_exporter'
+    scrape_interval: 15s
+    static_configs:
+      - targets:
+          - 'localhost:9100'
+        labels:
+          component: 'node'
+
+    # Collect important system metrics
+    metric_relabel_configs:
+      # Keep only essential metrics to reduce cardinality
+      - source_labels: [__name__]
+        regex: 'node_(cpu|memory|disk|network|filesystem)_.*'
+        action: keep
+
+  # ============================================================================
+  # Monero Wallet RPC Monitoring (Optional)
+  # ============================================================================
+  - job_name: 'monero_wallet_rpc'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+    static_configs:
+      - targets:
+          - 'localhost:18082'  # Buyer wallet
+          - 'localhost:18083'  # Vendor wallet
+          - 'localhost:18084'  # Arbiter wallet
+        labels:
+          component: 'wallet_rpc'
+
+    # Custom metrics path if using Monero exporter
+    metrics_path: '/metrics'
+    scheme: 'http'
+
+  # ============================================================================
+  # Database Exporter (SQLite)
+  # ============================================================================
+  - job_name: 'sqlite_exporter'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 'localhost:9719'  # SQLite exporter
+        labels:
+          component: 'database'
+          db_name: 'marketplace'
+
+  # ============================================================================
+  # Alertmanager
+  # ============================================================================
+  - job_name: 'alertmanager'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 'localhost:9093'
+        labels:
+          component: 'alertmanager'
+
+# Storage configuration
+storage:
+  tsdb:
+    # Keep metrics for 30 days
+    retention.time: 30d
+
+    # Keep at most 10GB of data
+    retention.size: 10GB
+
+    # Data directory
+    path: /var/lib/prometheus
+
+# Remote write configuration (for long-term storage)
+# remote_write:
+#   - url: 'https://prometheus.example.com/api/v1/write'
+#     queue_config:
+#       capacity: 10000
+#       max_shards: 50
+#       min_shards: 1
+#       max_samples_per_send: 5000
+#       batch_send_deadline: 5s
+#     write_relabel_configs:
+#       # Only send critical metrics for long-term storage
+#       - source_labels: [__name__]
+#         regex: 'escrows_.*|rpc_calls_.*|disputes_.*'
+#         action: keep
