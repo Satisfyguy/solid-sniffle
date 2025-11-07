@@ -8,6 +8,7 @@
     <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="/static/css/main.css">
     <link rel="stylesheet" href="/static/css/order-escrow.css">
+    <link rel="stylesheet" href="/static/css/dispute-system.css">
     {% if csrf_token %}<meta name="csrf-token" content="{{ csrf_token }}">{% endif %}
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
@@ -525,6 +526,7 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="/static/js/fund-escrow.js"></script>
     <script src="/static/js/order-actions.js"></script>
+    <script src="/static/js/dispute-system.js"></script>
 
     <!-- CSP-compliant HTMX event handler for ship order button -->
     <script>
@@ -538,6 +540,39 @@
                         window.location.reload();
                     }
                 });
+            }
+
+            // Initialize Dispute Modal
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const orderId = '{{ order.id }}';
+
+            if (csrfToken && orderId) {
+                const disputeModal = new DisputeModal({
+                    orderId: orderId,
+                    csrfToken: csrfToken,
+                    onSubmit: function(result) {
+                        console.log('Dispute submitted:', result);
+                    }
+                });
+
+                // Attach to existing dispute button
+                const existingDisputeBtn = document.querySelector('button[hx-post*="/dispute"]');
+                if (existingDisputeBtn) {
+                    // Remove HTMX attributes to use custom modal
+                    existingDisputeBtn.removeAttribute('hx-post');
+                    existingDisputeBtn.removeAttribute('hx-target');
+                    existingDisputeBtn.removeAttribute('hx-swap');
+                    existingDisputeBtn.removeAttribute('hx-confirm');
+
+                    // Open modal on click
+                    existingDisputeBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        disputeModal.open();
+                    });
+                }
+
+                // Export globally for debugging
+                window.disputeModal = disputeModal;
             }
         });
     </script>
