@@ -127,3 +127,6 @@ settings.local.*
 4.5/docker/.env
 *.key
 *.asc
+
+# Ignore testnet data, logs, and databases
+/testnet-data/

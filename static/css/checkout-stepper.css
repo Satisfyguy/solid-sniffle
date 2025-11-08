@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /**
  * Checkout Stepper Component
  *
@@ -257,3 +258,165 @@
         animation: none;
     }
 }
+=======
+/* static/css/checkout-stepper.css */
+
+.checkout-stepper {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Align items to the top */
+    margin-bottom: 2rem;
+    position: relative;
+    padding: 1rem 0;
+}
+
+.checkout-stepper::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--color-border);
+    transform: translateY(-50%);
+    z-index: 0;
+}
+
+.checkout-stepper-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    max-width: 25%; /* Ensure steps don't take up too much space */
+}
+
+.checkout-stepper-step-indicator {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--color-background);
+    border: 2px solid var(--color-border);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+    color: var(--color-foreground);
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+    position: relative;
+}
+
+.checkout-stepper-step-indicator .lucide {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.5;
+}
+
+.checkout-stepper-step-label {
+    font-size: 0.875rem;
+    color: var(--color-muted-foreground);
+    transition: color 0.3s ease;
+    line-height: 1.2;
+}
+
+/* Step States */
+.checkout-stepper-step.active .checkout-stepper-step-indicator {
+    border-color: var(--color-accent);
+    background-color: var(--color-accent);
+    color: var(--color-background);
+    box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.3);
+    animation: pulse 1.5s infinite;
+}
+
+.checkout-stepper-step.active .checkout-stepper-step-label {
+    color: var(--color-foreground);
+}
+
+.checkout-stepper-step.completed .checkout-stepper-step-indicator {
+    border-color: var(--color-accent);
+    background-color: var(--color-accent);
+    color: var(--color-background);
+}
+
+.checkout-stepper-step.completed .checkout-stepper-step-indicator .lucide {
+    display: block; /* Show checkmark */
+}
+
+.checkout-stepper-step.completed .checkout-stepper-step-indicator span {
+    display: none; /* Hide number */
+}
+
+.checkout-stepper-step.error .checkout-stepper-step-indicator {
+    border-color: var(--color-destructive);
+    background-color: var(--color-destructive);
+    color: var(--color-foreground);
+}
+
+.checkout-stepper-step.error .checkout-stepper-step-label {
+    color: var(--color-destructive);
+}
+
+/* Connectors */
+.checkout-stepper-connector {
+    position: absolute;
+    top: 50%;
+    left: 50%; /* Start from the middle of the previous step */
+    width: 100%; /* Will be adjusted by JS */
+    height: 2px;
+    background-color: var(--color-accent);
+    transform: translateY(-50%);
+    z-index: 0;
+    transition: width 0.3s ease-in-out;
+    transform-origin: left center;
+}
+
+/* Animation for active step */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(var(--color-accent-rgb), 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(var(--color-accent-rgb), 0); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--color-accent-rgb), 0); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .checkout-stepper {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0;
+    }
+
+    .checkout-stepper::before {
+        left: 19px; /* Align with indicator center */
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        height: 100%;
+        transform: none;
+    }
+
+    .checkout-stepper-step {
+        flex-direction: row;
+        text-align: left;
+        max-width: 100%;
+        padding: 1rem 0;
+        justify-content: flex-start;
+    }
+
+    .checkout-stepper-step-indicator {
+        margin-right: 1rem;
+        margin-bottom: 0;
+        flex-shrink: 0;
+    }
+
+    .checkout-stepper-step-label {
+        flex-grow: 1;
+    }
+
+    .checkout-stepper-connector {
+        display: none; /* Connectors are handled differently in vertical layout */
+    }
+}
+>>>>>>> cd3680e (feat: Add new UI/UX features and ignore testnet data)

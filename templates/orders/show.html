@@ -9,7 +9,10 @@
     <link rel="stylesheet" href="/static/css/main.css">
     <link rel="stylesheet" href="/static/css/order-escrow.css">
     <link rel="stylesheet" href="/static/css/dispute-system.css">
+<<<<<<< HEAD
     <link rel="stylesheet" href="/static/css/order-chat.css">
+=======
+>>>>>>> cd3680e (feat: Add new UI/UX features and ignore testnet data)
     {% if csrf_token %}<meta name="csrf-token" content="{{ csrf_token }}">{% endif %}
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
@@ -448,11 +451,9 @@
 
                             {% if (role == "buyer" or role == "vendor") and (order.status == "funded" or order.status == "shipped") %}
                             <button
-                                class="btn btn-destructive btn-block"
-                                hx-post="/api/orders/{{ order.id }}/dispute"
-                                hx-target="#action-result"
-                                hx-swap="innerHTML"
-                                hx-confirm="Are you sure you want to open a dispute for this order?"
+                                id="open-dispute-modal-btn"
+                                class="btn btn-destructive btn-block open-dispute-modal-btn"
+                                data-order-id="{{ order.id }}"
                             >
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -565,6 +566,55 @@
         </div>
     </main>
 
+    <!-- Dispute Modal -->
+    <div id="dispute-modal" class="dispute-modal-overlay">
+        <div class="dispute-modal-content">
+            <div class="dispute-modal-header">
+                <h2>Open a Dispute</h2>
+                <button class="dispute-modal-close">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="dispute-modal-body">
+                <form id="dispute-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div class="dispute-form-group">
+                        <label for="dispute-reason" class="dispute-label">Reason for Dispute</label>
+                        <select id="dispute-reason" name="reason" class="dispute-select" required>
+                            <option value="">Select a reason...</option>
+                            <option value="item_not_received">Item Not Received</option>
+                            <option value="item_not_as_described">Item Not As Described</option>
+                            <option value="damaged_item">Damaged Item</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="dispute-form-group">
+                        <label for="dispute-description" class="dispute-label">Description</label>
+                        <textarea id="dispute-description" name="description" class="dispute-textarea" rows="5" maxlength="500" required></textarea>
+                        <div id="dispute-char-counter" class="dispute-char-counter">0/500</div>
+                    </div>
+                    <div class="dispute-form-group">
+                        <label for="dispute-files" class="dispute-label">Evidence (Images)</label>
+                        <div id="dispute-file-upload-area" class="dispute-file-upload-area">
+                            <i data-lucide="upload-cloud"></i>
+                            <p>Drag & drop files here or click to upload</p>
+                            <input type="file" id="dispute-files" name="files" accept="image/jpeg,image/png,image/gif" multiple hidden>
+                        </div>
+                        <div id="dispute-file-previews" class="dispute-file-previews"></div>
+                        <small style="color: rgba(255,255,255,0.6); font-size: 0.75rem; margin-top: 0.5rem; display: block;">Max 5 images, 5MB each. JPEG, PNG, GIF only.</small>
+                    </div>
+                </form>
+            </div>
+            <div class="dispute-modal-footer">
+                <button type="button" class="btn-dispute-cancel">Cancel</button>
+                <button type="submit" form="dispute-form" id="btn-dispute-submit" class="btn-dispute-submit">
+                    <i data-lucide="send"></i>
+                    <span>Submit Dispute</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/js/lucide.min.js"></script>
     <script src="/static/js/base.js"></script>
     <!-- QRCode.js library for generating payment QR codes -->
@@ -572,9 +622,12 @@
     <script src="/static/js/fund-escrow.js"></script>
     <script src="/static/js/order-actions.js"></script>
     <script src="/static/js/dispute-system.js"></script>
+<<<<<<< HEAD
     <script src="/static/js/order-chat.js"></script>
 
     <!-- CSP-compliant HTMX event handler for ship order button -->
+=======
+>>>>>>> cd3680e (feat: Add new UI/UX features and ignore testnet data)
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const shipBtn = document.getElementById('ship-order-btn');
@@ -588,6 +641,7 @@
                 });
             }
 
+<<<<<<< HEAD
             // Initialize Dispute Modal
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             const orderId = '{{ order.id }}';
@@ -639,6 +693,19 @@
                 window.orderChat = orderChat;
             }
             {% endif %}
+=======
+            // Initialize Dispute System
+            const disputeSystem = new DisputeSystem({
+                apiEndpoint: '/api/orders/{{ order.id }}/dispute',
+                onDisputeSubmitted: () => {
+                    // Optionally reload the page or update UI after dispute submission
+                    window.location.reload();
+                }
+            });
+
+            // Make the dispute system globally accessible if needed
+            window.disputeSystem = disputeSystem;
+>>>>>>> cd3680e (feat: Add new UI/UX features and ignore testnet data)
         });
     </script>
 </body>

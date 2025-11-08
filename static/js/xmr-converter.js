@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /**
  * XMR ↔ Atomic Units Converter
  *
@@ -392,3 +393,203 @@ if (typeof module !== 'undefined' && module.exports) {
         createXmrConverterWidget
     };
 }
+=======
+// static/js/xmr-converter.js
+
+/**
+ * XMR Converter Widget
+ *
+ * Provides real-time, bidirectional conversion between human-readable XMR and Monero atomic units (piconeros).
+ * Uses BigInt to prevent floating-point errors.
+ * Includes validation for min/max values and clear error messages.
+ *
+ * 1 XMR = 1,000,000,000,000 piconeros (10^12)
+ */
+
+const XMR_TO_ATOMIC_UNITS = BigInt(1_000_000_000_000); // 10^12
+const MAX_XMR_SUPPLY = BigInt(18_400_000) * XMR_TO_ATOMIC_UNITS; // Approx 18.4 million XMR in atomic units
+
+/**
+ * Formats a BigInt atomic value to a human-readable XMR string.
+ * @param {BigInt} atomicValue - The value in atomic units.
+ * @returns {string} - The formatted XMR string.
+ */
+function formatAtomicToXmr(atomicValue) {
+    if (atomicValue === BigInt(0)) {
+        return "0.000000000000";
+    }
+    const sign = atomicValue < BigInt(0) ? "-" : "";
+    const absAtomic = atomicValue < BigInt(0) ? -atomicValue : atomicValue;
+
+    const integerPart = absAtomic / XMR_TO_ATOMIC_UNITS;
+    let fractionalPart = absAtomic % XMR_TO_ATOMIC_UNITS;
+
+    // Pad fractional part with leading zeros
+    let fractionalString = fractionalPart.toString().padStart(12, '0');
+
+    // Remove trailing zeros
+    fractionalString = fractionalString.replace(/0+$/, '');
+
+    return `${sign}${integerPart}.${fractionalString || '0'}`;
+}
+
+/**
+ * Parses a human-readable XMR string to a BigInt atomic value.
+ * @param {string} xmrString - The XMR string.
+ * @returns {BigInt} - The value in atomic units.
+ */
+function parseXmrToAtomic(xmrString) {
+    xmrString = xmrString.trim();
+    if (!xmrString) {
+        return BigInt(0);
+    }
+
+    const sign = xmrString.startsWith('-') ? -1 : 1;
+    if (sign === -1) {
+        xmrString = xmrString.substring(1);
+    }
+
+    const parts = xmrString.split('.');
+    let integerPart = BigInt(parts[0] || '0');
+    let fractionalPart = BigInt(0);
+
+    if (parts.length > 1) {
+        let fractionalString = parts[1].padEnd(12, '0').substring(0, 12);
+        fractionalPart = BigInt(fractionalString);
+    }
+
+    return (integerPart * XMR_TO_ATOMIC_UNITS + fractionalPart) * BigInt(sign);
+}
+
+/**
+ * Validates an atomic value.
+ * @param {BigInt} atomicValue - The value in atomic units.
+ * @returns {string|null} - Error message or null if valid.
+ */
+function validateAtomicValue(atomicValue) {
+    if (atomicValue < BigInt(0)) {
+        return "Le montant ne peut pas être négatif.";
+    }
+    if (atomicValue === BigInt(0)) {
+        return "Le montant doit être supérieur à 0.";
+    }
+    if (atomicValue > MAX_XMR_SUPPLY) {
+        return `Le montant dépasse l'offre maximale de Monero (${formatAtomicToXmr(MAX_XMR_SUPPLY)} XMR).`;
+    }
+    return null;
+}
+
+/**
+ * Initializes an XMR converter widget.
+ * @param {HTMLElement} xmrInput - The input element for human-readable XMR.
+ * @param {HTMLElement} atomicInput - The input element for atomic units.
+ * @param {HTMLElement} errorElement - The element to display error messages.
+ */
+function initXmrConverter(xmrInput, atomicInput, errorElement) {
+    let lastValidAtomic = BigInt(0);
+
+    const updateXmrFromAtomic = () => {
+        const atomicValue = parseXmrToAtomic(atomicInput.value);
+        const error = validateAtomicValue(atomicValue);
+        if (error) {
+            errorElement.textContent = error;
+            xmrInput.value = ''; // Clear XMR input on error
+            atomicInput.classList.add('input-error');
+            xmrInput.classList.add('input-error');
+        } else {
+            errorElement.textContent = '';
+            xmrInput.value = formatAtomicToXmr(atomicValue);
+            lastValidAtomic = atomicValue;
+            atomicInput.classList.remove('input-error');
+            xmrInput.classList.remove('input-error');
+        }
+    };
+
+    const updateAtomicFromXmr = () => {
+        const xmrValue = xmrInput.value;
+        const atomicValue = parseXmrToAtomic(xmrValue);
+        const error = validateAtomicValue(atomicValue);
+        if (error) {
+            errorElement.textContent = error;
+            atomicInput.value = ''; // Clear atomic input on error
+            atomicInput.classList.add('input-error');
+            xmrInput.classList.add('input-error');
+        } else {
+            errorElement.textContent = '';
+            atomicInput.value = atomicValue.toString();
+            lastValidAtomic = atomicValue;
+            atomicInput.classList.remove('input-error');
+            xmrInput.classList.remove('input-error');
+        }
+    };
+
+    atomicInput.addEventListener('input', updateXmrFromAtomic);
+    xmrInput.addEventListener('input', updateAtomicFromXmr);
+
+    // Initial update
+    updateAtomicFromXmr();
+}
+
+/**
+ * Creates and initializes an XMR converter widget within a given container.
+ * @param {HTMLElement} container - The container element for the widget.
+ * @param {string} xmrInputName - The name attribute for the XMR input.
+ * @param {string} atomicInputName - The name attribute for the atomic input.
+ * @param {string} initialAtomicValue - The initial value for the atomic input (as string).
+ */
+function createXmrConverterWidget(container, xmrInputName, atomicInputName, initialAtomicValue = '0') {
+    container.innerHTML = `
+        <div class="xmr-converter-widget">
+            <div class="xmr-converter-inputs">
+                <div class="form-group">
+                    <label for="${xmrInputName}" class="label">Price (XMR)</label>
+                    <input
+                        type="text"
+                        id="${xmrInputName}"
+                        name="${xmrInputName}"
+                        placeholder="0.000000000000"
+                        class="input xmr-input"
+                        style="font-family: monospace;"
+                    >
+                </div>
+                <div class="xmr-converter-icon">
+                    <i data-lucide="arrow-left-right"></i>
+                </div>
+                <div class="form-group">
+                    <label for="${atomicInputName}" class="label">Price (Atomic Units)</label>
+                    <input
+                        type="number"
+                        id="${atomicInputName}"
+                        name="${atomicInputName}"
+                        placeholder="0"
+                        min="1"
+                        required
+                        class="input atomic-input"
+                        style="font-family: monospace;"
+                        value="${initialAtomicValue}"
+                        readonly
+                    >
+                </div>
+            </div>
+            <small class="xmr-converter-info">
+                1 XMR = 1,000,000,000,000 piconeros
+            </small>
+            <div class="xmr-converter-error" style="color: var(--color-destructive); margin-top: 0.5rem;"></div>
+        </div>
+    `;
+
+    const xmrInput = container.querySelector(`#${xmrInputName}`);
+    const atomicInput = container.querySelector(`#${atomicInputName}`);
+    const errorElement = container.querySelector('.xmr-converter-error');
+
+    if (xmrInput && atomicInput && errorElement) {
+        initXmrConverter(xmrInput, atomicInput, errorElement);
+        // Ensure Lucide icons are created if they are used in the widget
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    } else {
+        console.error("XMR Converter widget elements not found after creation.");
+    }
+}
+>>>>>>> cd3680e (feat: Add new UI/UX features and ignore testnet data)

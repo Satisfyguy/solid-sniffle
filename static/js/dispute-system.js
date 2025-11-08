@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /**
  * Dispute System Component
  *
@@ -525,3 +526,251 @@ class DisputeModal {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { DisputeModal };
 }
+=======
+// static/js/dispute-system.js
+
+/**
+ * Dispute System Modal
+ *
+ * Manages the display and functionality of a dispute submission modal.
+ * Handles file uploads, previews, character counting, and form submission.
+ */
+class DisputeSystem {
+    constructor(options = {}) {
+        this.options = {
+            modalId: 'dispute-modal',
+            openButtonSelector: '.open-dispute-modal-btn',
+            closeButtonSelector: '.dispute-modal-close',
+            formId: 'dispute-form',
+            reasonSelectId: 'dispute-reason',
+            descriptionTextareaId: 'dispute-description',
+            fileInputId: 'dispute-files',
+            fileUploadAreaId: 'dispute-file-upload-area',
+            filePreviewsId: 'dispute-file-previews',
+            charCounterId: 'dispute-char-counter',
+            submitButtonId: 'btn-dispute-submit',
+            maxDescriptionLength: 500,
+            maxFiles: 5,
+            maxFileSize: 5 * 1024 * 1024, // 5MB
+            allowedFileTypes: ['image/jpeg', 'image/png', 'image/gif'],
+            apiEndpoint: '/api/orders/{orderId}/dispute',
+            onDisputeSubmitted: () => {},
+            ...options
+        };
+
+        this.modal = document.getElementById(this.options.modalId);
+        if (!this.modal) {
+            console.error(`DisputeSystem: Modal with ID "${this.options.modalId}" not found.`);
+            return;
+        }
+
+        this.form = this.modal.querySelector(`#${this.options.formId}`);
+        this.descriptionTextarea = this.modal.querySelector(`#${this.options.descriptionTextareaId}`);
+        this.fileInput = this.modal.querySelector(`#${this.options.fileInputId}`);
+        this.fileUploadArea = this.modal.querySelector(`#${this.options.fileUploadAreaId}`);
+        this.filePreviewsContainer = this.modal.querySelector(`#${this.options.filePreviewsId}`);
+        this.charCounter = this.modal.querySelector(`#${this.options.charCounterId}`);
+        this.submitButton = this.modal.querySelector(`#${this.options.submitButtonId}`);
+
+        this.selectedFiles = [];
+        this.orderId = null; // To be set when modal is opened
+
+        this._init();
+    }
+
+    _init() {
+        // Event Listeners for opening and closing modal
+        document.querySelectorAll(this.options.openButtonSelector).forEach(button => {
+            button.addEventListener('click', (e) => {
+                this.orderId = button.dataset.orderId; // Assuming orderId is stored in data-order-id
+                this.openModal();
+            });
+        });
+        this.modal.querySelector(this.options.closeButtonSelector).addEventListener('click', this.closeModal.bind(this));
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) {
+                this.closeModal();
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.classList.contains('active')) {
+                this.closeModal();
+            }
+        });
+
+        // Form element listeners
+        if (this.descriptionTextarea) {
+            this.descriptionTextarea.addEventListener('input', this._updateCharCounter.bind(this));
+            this._updateCharCounter(); // Initial count
+        }
+        if (this.fileInput) {
+            this.fileInput.addEventListener('change', this._handleFileSelect.bind(this));
+        }
+        if (this.fileUploadArea) {
+            this.fileUploadArea.addEventListener('dragover', this._handleDragOver.bind(this));
+            this.fileUploadArea.addEventListener('dragleave', this._handleDragLeave.bind(this));
+            this.fileUploadArea.addEventListener('drop', this._handleDrop.bind(this));
+            this.fileUploadArea.addEventListener('click', () => this.fileInput.click());
+        }
+        if (this.form) {
+            this.form.addEventListener('submit', this._handleSubmit.bind(this));
+        }
+    }
+
+    _updateCharCounter() {
+        if (!this.descriptionTextarea || !this.charCounter) return;
+
+        const currentLength = this.descriptionTextarea.value.length;
+        this.charCounter.textContent = `${currentLength}/${this.options.maxDescriptionLength}`;
+
+        this.charCounter.classList.remove('warning', 'error');
+        if (currentLength > this.options.maxDescriptionLength * 0.8) {
+            this.charCounter.classList.add('warning');
+        }
+        if (currentLength > this.options.maxDescriptionLength) {
+            this.charCounter.classList.add('error');
+        }
+    }
+
+    _handleDragOver(e) {
+        e.preventDefault();
+        this.fileUploadArea.classList.add('drag-over');
+    }
+
+    _handleDragLeave(e) {
+        e.preventDefault();
+        this.fileUploadArea.classList.remove('drag-over');
+    }
+
+    _handleDrop(e) {
+        e.preventDefault();
+        this.fileUploadArea.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        this._addFiles(files);
+    }
+
+    _handleFileSelect(e) {
+        const files = e.target.files;
+        this._addFiles(files);
+    }
+
+    _addFiles(files) {
+        let filesAdded = 0;
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+
+            if (this.selectedFiles.length >= this.options.maxFiles) {
+                alert(`You can only upload a maximum of ${this.options.maxFiles} files.`);
+                break;
+            }
+            if (!this.options.allowedFileTypes.includes(file.type)) {
+                alert(`File "${file.name}" is not an allowed type. Only JPEG, PNG, GIF are allowed.`);
+                continue;
+            }
+            if (file.size > this.options.maxFileSize) {
+                alert(`File "${file.name}" is too large. Maximum size is ${this.options.maxFileSize / (1024 * 1024)}MB.`);
+                continue;
+            }
+
+            this.selectedFiles.push(file);
+            filesAdded++;
+        }
+        if (filesAdded > 0) {
+            this._renderFilePreviews();
+        }
+        this.fileInput.value = ''; // Clear input to allow re-uploading same file if needed
+    }
+
+    _renderFilePreviews() {
+        if (!this.filePreviewsContainer) return;
+
+        this.filePreviewsContainer.innerHTML = '';
+        this.selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const previewItem = document.createElement('div');
+                previewItem.classList.add('dispute-file-preview-item');
+                previewItem.innerHTML = `
+                    <img src="${e.target.result}" alt="${file.name}">
+                    <button type="button" class="dispute-file-preview-remove" data-index="${index}">
+                        <i data-lucide="x"></i>
+                    </button>
+                `;
+                this.filePreviewsContainer.appendChild(previewItem);
+
+                previewItem.querySelector('.dispute-file-preview-remove').addEventListener('click', (e) => {
+                    const idxToRemove = parseInt(e.currentTarget.dataset.index, 10);
+                    this._removeFile(idxToRemove);
+                });
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    _removeFile(index) {
+        this.selectedFiles.splice(index, 1);
+        this._renderFilePreviews();
+    }
+
+    async _handleSubmit(e) {
+        e.preventDefault();
+        if (!this.form || !this.orderId) return;
+
+        this.submitButton.classList.add('loading');
+        this.submitButton.disabled = true;
+        const loaderIcon = this.submitButton.querySelector('.lucide-loader');
+        if (loaderIcon) loaderIcon.style.display = 'inline-block';
+
+        const formData = new FormData();
+        formData.append('csrf_token', document.getElementById('csrf-token')?.value || '');
+        formData.append('reason', this.form.querySelector(`#${this.options.reasonSelectId}`).value);
+        formData.append('description', this.descriptionTextarea.value);
+        this.selectedFiles.forEach((file, index) => {
+            formData.append(`files[${index}]`, file);
+        });
+
+        try {
+            const response = await fetch(this.options.apiEndpoint.replace('{orderId}', this.orderId), {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to submit dispute');
+            }
+
+            const result = await response.json();
+            alert('Dispute submitted successfully!');
+            this.options.onDisputeSubmitted(result);
+            this.closeModal();
+
+        } catch (error) {
+            console.error('Dispute submission error:', error);
+            alert(`Error submitting dispute: ${error.message}`);
+        } finally {
+            this.submitButton.classList.remove('loading');
+            this.submitButton.disabled = false;
+            if (loaderIcon) loaderIcon.style.display = 'none';
+        }
+    }
+
+    openModal() {
+        this.modal.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling background
+        // Reset form fields
+        if (this.form) this.form.reset();
+        this.selectedFiles = [];
+        this._renderFilePreviews();
+        this._updateCharCounter();
+    }
+
+    closeModal() {
+        this.modal.classList.remove('active');
+        document.body.style.overflow = ''; // Restore scrolling
+    }
+}
+>>>>>>> cd3680e (feat: Add new UI/UX features and ignore testnet data)

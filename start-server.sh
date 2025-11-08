@@ -8,7 +8,7 @@ export OPENSSL_INCLUDE_DIR=/usr/include/openssl
 
 # Variables d'environnement pour le serveur
 export DATABASE_URL="sqlite:///home/malix/Desktop/monero.marketplace/data/marketplace-dev.db?mode=rwc"
-export DB_ENCRYPTION_KEY="development_encryption_key_32_bytes_minimum_required_for_sqlcipher"
+export DB_ENCRYPTION_KEY="b9fa942239ade83c0be8e19dc9ede609116bc735ece6f01652be6554766f93db"
 export SESSION_SECRET_KEY="8dca8a38790f2ce50422553309fa4f756dfd50d7c67a0aba2009d688b64ea811"
 export RUST_LOG="debug"
 export MONERO_NETWORK="testnet"

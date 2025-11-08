@@ -30,6 +30,7 @@
                 </p>
             </div>
 
+<<<<<<< HEAD
             <!-- Progress Stepper -->
             <div class="checkout-stepper" id="checkout-stepper-container">
                 <div class="checkout-step active" data-step="1" data-target-section="shipping-address-form">
@@ -64,6 +65,25 @@
                         <span class="checkout-step-number">4</span>
                     </div>
                     <span class="checkout-step-label">Confirmation</span>
+=======
+            <!-- Checkout Stepper -->
+            <div id="checkout-stepper" class="checkout-stepper">
+                <div class="checkout-stepper-step" data-step-id="shipping">
+                    <div class="checkout-stepper-step-indicator"><span>1</span></div>
+                    <div class="checkout-stepper-step-label">Shipping Info</div>
+                </div>
+                <div class="checkout-stepper-step" data-step-id="escrow">
+                    <div class="checkout-stepper-step-indicator"><span>2</span></div>
+                    <div class="checkout-stepper-step-label">Escrow Setup</div>
+                </div>
+                <div class="checkout-stepper-step" data-step-id="payment">
+                    <div class="checkout-stepper-step-indicator"><span>3</span></div>
+                    <div class="checkout-stepper-step-label">Payment</div>
+                </div>
+                <div class="checkout-stepper-step" data-step-id="confirmation">
+                    <div class="checkout-stepper-step-indicator"><span>4</span></div>
+                    <div class="checkout-stepper-step-label">Confirmation</div>
+>>>>>>> cd3680e (feat: Add new UI/UX features and ignore testnet data)
                 </div>
             </div>
 
@@ -82,7 +102,7 @@
                 <!-- Main Form -->
                 <div class="checkout-main">
                     <!-- Step 0: Shipping Address (buyer only) -->
-                    <div class="checkout-card" id="shipping-address-form" style="{% if escrow_exists %}display:none;{% endif %}">
+                    <div class="checkout-card" id="shipping-address-form" data-step-content="shipping">
                         <div class="checkout-card-header">
                             <h2 class="checkout-card-title">
                                 <i data-lucide="map-pin" class="inline-icon"></i>
@@ -183,7 +203,7 @@
                     </div>
 
                     <!-- Step 1: Escrow Initialization -->
-                    <div class="checkout-card" id="escrow-init" style="display:none;">
+                    <div class="checkout-card" id="escrow-init" data-step-content="escrow" style="display:none;">
                         <div class="checkout-card-header">
                             <h2 class="checkout-card-title">
                                 <i data-lucide="lock" class="inline-icon"></i>
@@ -258,7 +278,7 @@
                     </div>
 
                     <!-- Step 2: Payment Instructions (once escrow is ready) -->
-                    <div class="checkout-card" id="payment-instructions" style="{% if not escrow_exists %}display:none;{% elif escrow.status == 'active' %}display:none;{% endif %}">
+                    <div class="checkout-card" id="payment-instructions" data-step-content="payment" style="display:none;">
                         <div class="checkout-card-header">
                             <h2 class="checkout-card-title">
                                 <i data-lucide="send" class="inline-icon"></i>
@@ -386,7 +406,7 @@
                     </div>
 
                     <!-- Step 3: Payment Confirmed -->
-                    <div class="checkout-card success" id="payment-confirmed" style="{% if not escrow or escrow.status != 'active' %}display:none;{% endif %}">
+                    <div class="checkout-card success" id="payment-confirmed" data-step-content="confirmation" style="display:none;">
                         <div class="checkout-card-header">
                             <div class="success-icon-large">
                                 <i data-lucide="check-circle"></i>
@@ -568,6 +588,7 @@
     <script src="/static/js/checkout-stepper.js"></script>
     <script src="/static/js/checkout.js"></script>
     <script src="/static/js/base.js"></script>
+<<<<<<< HEAD
 
     <!-- Initialize Checkout Stepper -->
     <script>
@@ -597,6 +618,54 @@
             window.checkoutStepper = stepper;
 
             console.log('✅ Checkout stepper initialized');
+=======
+    <script src="/static/js/checkout-stepper.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const stepContents = {
+                shipping: document.getElementById('shipping-address-form'),
+                escrow: document.getElementById('escrow-init'),
+                payment: document.getElementById('payment-instructions'),
+                confirmation: document.getElementById('payment-confirmed')
+            };
+
+            const stepper = new CheckoutStepper('checkout-stepper', {
+                onStepChange: (newStepIndex) => {
+                    Object.values(stepContents).forEach(el => el.style.display = 'none');
+                    const newStepId = document.querySelector(`.checkout-stepper-step[data-step-index="${newStepIndex}"]`).dataset.stepId;
+                    if (stepContents[newStepId]) {
+                        stepContents[newStepId].style.display = 'block';
+                    }
+                },
+                beforeStepChange: (oldStepIndex, newStepIndex) => {
+                    // Add validation logic here if needed
+                    return true;
+                }
+            });
+
+            window.checkoutStepper = stepper; // Make stepper globally accessible for other scripts
+
+            // Initial step based on escrow status or default
+            const escrowStatus = document.getElementById('escrow-status')?.value;
+            const escrowExists = document.getElementById('escrow-id')?.value;
+
+            if (escrowExists && escrowStatus === 'active') {
+                stepper.goToStep(3); // Confirmation
+            } else if (escrowExists) {
+                stepper.goToStep(2); // Payment
+            } else {
+                stepper.goToStep(0); // Shipping Info
+            }
+
+            // Example of how to advance the stepper (e.g., after shipping form submission)
+            document.getElementById('submit-shipping-btn')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Simulate successful submission
+                setTimeout(() => {
+                    stepper.next();
+                }, 500);
+            });
+>>>>>>> cd3680e (feat: Add new UI/UX features and ignore testnet data)
         });
     </script>
 </body>

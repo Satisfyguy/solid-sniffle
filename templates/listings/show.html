@@ -22,6 +22,7 @@
         <div class="product-detail-grid">
             <!-- Left Column: Image Gallery & Vendor Info -->
             <div class="product-detail-left">
+<<<<<<< HEAD
                 <!-- Product Gallery -->
                 <div id="product-gallery-container"></div>
 
@@ -34,6 +35,26 @@
                             {% endfor %}
                         {% endif %}
                     ]
+                </script>
+=======
+                <!-- Product Image Gallery -->
+                <div id="product-gallery-container" class="product-gallery-container">
+                    <div class="product-gallery-main-image-wrapper">
+                        <img src="" alt="Product Main Image" class="product-gallery-main-image">
+                        <div class="product-gallery-image-badge">
+                            <span class="badge badge-category">{{ listing.category }}</span>
+                        </div>
+                        <div class="product-gallery-zoom-hint">Click to enlarge</div>
+                    </div>
+                    <div class="product-gallery-thumbnails">
+                        <!-- Thumbnails will be injected here by JS -->
+                    </div>
+                </div>
+>>>>>>> cd3680e (feat: Add new UI/UX features and ignore testnet data)
+
+                <!-- Hidden JSON data for images -->
+                <script type="application/json" id="product-images-data">
+                    {% if images %}{{ images | json_encode() }}{% else %}[]{% endif %}
                 </script>
 
                 <!-- Vendor Card -->
@@ -148,6 +169,7 @@
     <script src="/static/js/cart.js"></script>
     <script src="/static/js/product-detail.js"></script>
     <script src="/static/js/base.js"></script>
+<<<<<<< HEAD
 
     <!-- Initialize Product Gallery -->
     <script>
@@ -190,6 +212,22 @@
                     }
                 }
             }
+=======
+    <script src="/static/js/product-gallery.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const imagesDataElement = document.getElementById('product-images-data');
+            let images = [];
+            if (imagesDataElement && imagesDataElement.textContent) {
+                try {
+                    const cids = JSON.parse(imagesDataElement.textContent);
+                    images = cids.map(cid => `/api/listings/{{ listing.id }}/images/${cid}`);
+                } catch (e) {
+                    console.error("Failed to parse product images JSON:", e);
+                }
+            }
+            new ProductGallery('product-gallery-container', images);
+>>>>>>> cd3680e (feat: Add new UI/UX features and ignore testnet data)
         });
     </script>
 </body>

@@ -20,6 +20,9 @@ use server::coordination::EscrowCoordinator;
 use server::services::escrow::EscrowOrchestrator;
 use server::wallet_manager::WalletManager;
 use server::websocket::{WebSocketServer, WebSocketSession};
+mod dependencies;
+mod security;
+use crate::security::placeholder_validator;
 use std::env;
 use std::sync::Arc;
 use tera::Tera;
@@ -84,10 +87,14 @@ async fn main() -> Result<()> {
 
     info!("Starting Monero Marketplace Server");
 
-    // 2.5 CRITICAL SECURITY: Validate environment variables for placeholder patterns
+    // 2.5 Check and start dependencies (daemon and RPCs)
+    dependencies::ensure_dependencies().await
+        .context("Failed to ensure dependencies are running")?;
+
+    // 2.6 CRITICAL SECURITY: Validate environment variables for placeholder patterns
     // This prevents deployment with .env.example values (e.g., "your-xxx-here")
     // In production, this will PANIC if placeholders are detected
-    server::security::placeholder_validator::validate_all_critical_env_vars();
+    placeholder_validator::validate_all_critical_env_vars();
 
     // 3. Database connection pool with SQLCipher encryption
     let database_url =

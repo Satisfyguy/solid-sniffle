@@ -28,7 +28,6 @@ monero-wallet-rpc \
     --daemon-address "$DAEMON_URL" \
     --testnet \
     --log-level 2 \
-    --offline \
     > "$LOG_DIR/monero-wallet-rpc-18082.log" 2>&1 &
 
 sleep 1
@@ -42,7 +41,6 @@ monero-wallet-rpc \
     --daemon-address "$DAEMON_URL" \
     --testnet \
     --log-level 2 \
-    --offline \
     > "$LOG_DIR/monero-wallet-rpc-18083.log" 2>&1 &
 
 sleep 1
@@ -56,7 +54,6 @@ monero-wallet-rpc \
     --daemon-address "$DAEMON_URL" \
     --testnet \
     --log-level 2 \
-    --offline \
     > "$LOG_DIR/monero-wallet-rpc-18084.log" 2>&1 &
 
 sleep 2
