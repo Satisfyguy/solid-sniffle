@@ -1053,6 +1053,31 @@ pub async fn init_escrow(
         .await
     {
         Ok(escrow) => {
+            // TESTNET: Initialize mock multisig wallets for testing
+            // This allows testing the full escrow flow without needing real Monero wallets
+            let escrow_uuid = match Uuid::parse_str(&escrow.id) {
+                Ok(uuid) => uuid,
+                Err(e) => {
+                    tracing::error!("Invalid escrow UUID {}: {}", escrow.id, e);
+                    return HttpResponse::InternalServerError().json(serde_json::json!({
+                        "error": "Internal error"
+                    }));
+                }
+            };
+
+            match escrow_orchestrator.dev_initialize_mock_wallets(escrow_uuid).await {
+                Ok(_) => {
+                    tracing::info!("TESTNET: Mock multisig wallets initialized for escrow {}", escrow.id);
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        "TESTNET: Failed to initialize mock wallets for escrow {}: {}. Manual wallet setup required.",
+                        escrow.id, e
+                    );
+                    // Don't fail the request - allow manual wallet setup
+                }
+            }
+
             // Update order with escrow_id
             match Order::set_escrow(&mut conn, order_id_str, escrow.id.clone()) {
                 Ok(_) => {
