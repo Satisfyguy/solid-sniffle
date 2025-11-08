@@ -32,6 +32,7 @@ pub mod models;
 pub mod monitoring;
 pub mod repositories;
 pub mod schema;
+pub mod security;
 pub mod services;
 pub mod wallet_manager;
 pub mod wallet_pool;

@@ -18,7 +18,7 @@ use crate::ipfs::client::IpfsClient;
 use crate::models::listing::{Listing, ListingStatus, NewListing, UpdateListing};
 use crate::models::order::Order;
 use crate::schema::{listings, orders};
-use chrono::Utc;
+use chrono::{Datelike, Timelike, Utc};
 
 /// Request body for creating a new listing
 #[derive(Debug, Deserialize, Validate)]
@@ -942,7 +942,7 @@ pub async fn get_vendor_dashboard_stats(
         Err(response) => return response,
     };
 
-    let stats_result = web::block(move || {
+    let stats_result = web::block(move || -> anyhow::Result<VendorDashboardStats> {
         let mut conn = pool.get().with_context(|| "Database connection failed")?;
 
         // Count active listings
