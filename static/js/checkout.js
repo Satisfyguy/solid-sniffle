@@ -341,7 +341,7 @@ class CheckoutFlow {
             return;
         }
 
-        const icon = stepEl.querySelector('.progress-icon i');
+        const icon = stepEl.querySelector('.progress-icon svg');
         if (!icon) {
             console.warn(`[Checkout] Icon element not found in step-${step}`);
             return;
