@@ -329,6 +329,195 @@ pub async fn get_coordination_status(
     }
 }
 
+/// POST /api/v2/escrow/sync-round
+///
+/// Coordinate multisig synchronization rounds.
+///
+/// **Flow:**
+/// 1. Each participant exports multisig_info
+/// 2. Participant sends their export to this endpoint
+/// 3. Server collects exports from all 3 participants
+/// 4. Server returns exports from the OTHER 2 participants
+///
+/// **Rounds:**
+/// - Round 1: After make_multisig()
+/// - Round 2: After importing round 1 exports
+///
+/// **Example Request:**
+/// ```json
+/// {
+///   "escrow_id": "escrow_abc123",
+///   "round": 1,
+///   "role": "buyer",
+///   "export_info": "MultisigxV1..."
+/// }
+/// ```
+pub async fn coordinate_sync_round(
+    req: web::Json<SyncRoundRequest>,
+) -> impl Responder {
+    use tracing::{info, warn};
+    use std::sync::Mutex;
+    use std::collections::HashMap;
+    use once_cell::sync::Lazy;
+
+    // In-memory storage for sync round exports
+    // Key: (escrow_id, round) -> HashMap<role, export_info>
+    static SYNC_STORAGE: Lazy<Mutex<HashMap<(String, u8), HashMap<String, String>>>> =
+        Lazy::new(|| Mutex::new(HashMap::new()));
+
+    let escrow_key = (req.escrow_id.clone(), req.round);
+
+    info!("🔄 Sync round {} for escrow {} from {}", req.round, req.escrow_id, req.role);
+
+    // Store our export
+    {
+        let mut storage = SYNC_STORAGE.lock().unwrap();
+        let round_exports = storage.entry(escrow_key.clone()).or_insert_with(HashMap::new);
+        round_exports.insert(req.role.clone(), req.export_info.clone());
+
+        info!("Stored export for {} (round {}), total participants: {}",
+            req.role, req.round, round_exports.len());
+    }
+
+    // Wait for all 3 participants (or timeout)
+    let storage = SYNC_STORAGE.lock().unwrap();
+    let round_exports = storage.get(&escrow_key);
+
+    if let Some(exports) = round_exports {
+        if exports.len() == 3 {
+            // All participants ready! Return the OTHER 2 exports
+            let mut received_infos = Vec::new();
+            for (role, export) in exports.iter() {
+                if role != &req.role {
+                    received_infos.push(export.clone());
+                }
+            }
+
+            info!("✅ Sync round {} complete for {}, returning {} exports",
+                req.round, req.role, received_infos.len());
+
+            return HttpResponse::Ok().json(SyncRoundResponse {
+                success: true,
+                received_infos,
+            });
+        } else {
+            // Not all participants ready yet
+            warn!("Sync round {} for escrow {} incomplete: {}/3 participants",
+                req.round, req.escrow_id, exports.len());
+        }
+    }
+
+    // Not ready yet
+    HttpResponse::Accepted().json(SyncRoundResponse {
+        success: false,
+        received_infos: vec![],
+    })
+}
+
+/// POST /api/v2/escrow/funds-received
+///
+/// Client notifies server that funds were detected on multisig address.
+///
+/// **Flow:**
+/// 1. Client monitors blockchain locally
+/// 2. Client detects funds arrival
+/// 3. Client calls this endpoint
+/// 4. Server updates escrow status to "funded"
+///
+/// **Example Request:**
+/// ```json
+/// {
+///   "escrow_id": "escrow_abc123",
+///   "balance": 1500000000000
+/// }
+/// ```
+pub async fn funds_received_notification(
+    req: web::Json<FundsReceivedRequest>,
+    db: web::Data<crate::db::DbPool>,
+) -> impl Responder {
+    use tracing::{info, error};
+    use diesel::prelude::*;
+    use crate::schema::escrows;
+
+    info!("💰 Funds received notification for escrow {}: {} atomic units",
+        req.escrow_id, req.balance);
+
+    let escrow_id = req.escrow_id.clone();
+    let balance = req.balance;
+    let db_clone = db.get_ref().clone();
+
+    // Update escrow status in database
+    let result = tokio::task::spawn_blocking(move || {
+        let mut conn = db_clone.get()
+            .map_err(|e| anyhow::anyhow!("Failed to get DB connection: {}", e))?;
+
+        diesel::update(escrows::table.filter(escrows::id.eq(&escrow_id)))
+            .set((
+                escrows::status.eq("funded"),
+                escrows::updated_at.eq(chrono::Utc::now().naive_utc()),
+            ))
+            .execute(&mut conn)
+            .map_err(|e| anyhow::anyhow!("Failed to update escrow status: {}", e))?;
+
+        Ok::<(), anyhow::Error>(())
+    })
+    .await;
+
+    match result {
+        Ok(Ok(())) => {
+            let amount_xmr = balance as f64 / 1e12;
+            info!("✅ Escrow {} status updated to 'funded' ({} XMR)", req.escrow_id, amount_xmr);
+
+            HttpResponse::Ok().json(serde_json::json!({
+                "success": true,
+                "message": "Escrow status updated to funded"
+            }))
+        }
+        Ok(Err(e)) => {
+            error!("Failed to update escrow status: {}", e);
+            HttpResponse::InternalServerError().json(serde_json::json!({
+                "success": false,
+                "error": format!("Failed to update status: {}", e)
+            }))
+        }
+        Err(e) => {
+            error!("Task panic: {}", e);
+            HttpResponse::InternalServerError().json(serde_json::json!({
+                "success": false,
+                "error": "Internal server error"
+            }))
+        }
+    }
+}
+
+// ============================================================================
+// NEW REQUEST/RESPONSE TYPES FOR SYNC AND MONITORING
+// ============================================================================
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct SyncRoundRequest {
+    #[validate(length(min = 1))]
+    pub escrow_id: String,
+    pub round: u8,
+    #[validate(length(min = 1))]
+    pub role: String,
+    #[validate(length(min = 1))]
+    pub export_info: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SyncRoundResponse {
+    pub success: bool,
+    pub received_infos: Vec<String>,
+}
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct FundsReceivedRequest {
+    #[validate(length(min = 1))]
+    pub escrow_id: String,
+    pub balance: u64,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
