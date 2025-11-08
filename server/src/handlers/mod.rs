@@ -7,6 +7,7 @@ pub mod listings;
 pub mod messages;
 pub mod monitoring;
 pub mod multisig_challenge;
+pub mod noncustodial;
 pub mod orders;
 pub mod reputation;
 pub mod reputation_ipfs;

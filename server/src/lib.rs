@@ -21,6 +21,7 @@ macro_rules! log_amount {
 }
 
 pub mod config;
+pub mod coordination;
 pub mod crypto;
 pub mod db;
 pub mod error;

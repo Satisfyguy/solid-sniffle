@@ -9,13 +9,14 @@ use actix_web_actors::ws;
 use anyhow::{Context, Result};
 use monero_marketplace_common::types::MoneroConfig;
 use server::db::create_pool;
-use server::handlers::{auth, cart, escrow, frontend, listings, monitoring, multisig_challenge, orders, reputation, reputation_ipfs};
+use server::handlers::{auth, cart, escrow, frontend, listings, monitoring, multisig_challenge, noncustodial, orders, reputation, reputation_ipfs};
 use server::middleware::{
     admin_auth::AdminAuth,
     // rate_limit::{global_rate_limiter, protected_rate_limiter}, // Temporarily disabled for testing
     security_headers::SecurityHeaders,
 };
 use hex;
+use server::coordination::EscrowCoordinator;
 use server::services::escrow::EscrowOrchestrator;
 use server::wallet_manager::WalletManager;
 use server::websocket::{WebSocketServer, WebSocketSession};
@@ -264,6 +265,10 @@ async fn main() -> Result<()> {
         encryption_key.clone(),
     ));
 
+    // 8b. Initialize Non-Custodial Escrow Coordinator (Haveno-inspired)
+    let escrow_coordinator = Arc::new(EscrowCoordinator::new());
+    info!("✅ Non-custodial EscrowCoordinator initialized (pure coordinator mode)");
+
     // 9. Initialize and start Timeout Monitor (background service)
     use server::config::TimeoutConfig;
     use server::services::timeout_monitor::TimeoutMonitor;
@@ -329,6 +334,7 @@ async fn main() -> Result<()> {
             // Shared app state
             .app_data(web::Data::new(pool.clone()))
             .app_data(web::Data::from(escrow_orchestrator.clone()))
+            .app_data(web::Data::from(escrow_coordinator.clone()))
             .app_data(web::Data::new(websocket_server.clone()))
             .app_data(web::Data::new(tera.clone()))
             .app_data(web::Data::new(ipfs_client.clone()))
@@ -452,6 +458,19 @@ async fn main() -> Result<()> {
                     .route(
                         "/escrow/{id}/resolve",
                         web::post().to(escrow::resolve_dispute),
+                    )
+                    // NON-CUSTODIAL V2: Haveno-inspired pure coordinator
+                    .route(
+                        "/v2/escrow/register-wallet",
+                        web::post().to(noncustodial::register_client_wallet),
+                    )
+                    .route(
+                        "/v2/escrow/coordinate-exchange",
+                        web::post().to(noncustodial::coordinate_multisig_exchange),
+                    )
+                    .route(
+                        "/v2/escrow/coordination-status/{escrow_id}",
+                        web::get().to(noncustodial::get_coordination_status),
                     )
                     // TM-003: Challenge-Response multisig validation
                     .service(multisig_challenge::request_multisig_challenge)
