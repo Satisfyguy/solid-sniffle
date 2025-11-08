@@ -6,9 +6,53 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Monero Marketplace** is a secure, privacy-focused marketplace platform that runs as a Tor hidden service with Monero-based escrow using 2-of-3 multisig. This is a high-security educational project with strict OPSEC requirements and automated enforcement against "security theatre" (code that appears secure but isn't).
 
-**Current Status:** Alpha (v0.2.6) - Testnet only, NOT for production use.
+**Current Status:** Alpha (v0.3.0) - Testnet only, NOT for production use.
 
 **📋 Après chaque commit significatif:** Exécuter `/alpha-terminal` pour vérification anti-hallucination + mise à jour doc. Voir [PROTOCOLE-ALPHA-TERMINAL.md](DOX/protocols/PROTOCOLE-ALPHA-TERMINAL.md)
+
+## 🚨 Non-Custodial Migration (Phase 3 - ACTIVE)
+
+**Status:** Phase 3 Dépréciation - Mode custodial déprécié, suppression prévue v0.4.0
+
+### Fonctions Dépréciées
+
+⚠️ **Ces fonctions génèrent des warnings et seront supprimées dans v0.4.0 (2-3 semaines):**
+
+1. **`WalletManager::create_temporary_wallet()`** - Crée wallets sur serveur (CUSTODIAL)
+2. **`EscrowOrchestrator::init_escrow()`** - Utilise create_temporary_wallet en interne
+
+### Migration Recommandée
+
+**❌ Ancien (Déprécié):**
+```rust
+let wallet_id = wallet_manager.create_temporary_wallet(escrow_id, "buyer").await?;
+```
+
+**✅ Nouveau (Recommandé):**
+```rust
+coordinator.register_client_wallet(escrow_id, EscrowRole::Buyer, "http://127.0.0.1:18083").await?;
+```
+
+### Documentation Migration
+
+- **Guide utilisateur:** `DOX/guides/NON-CUSTODIAL-USER-GUIDE.md`
+- **Guide migration:** `DOX/guides/MIGRATION-TO-NONCUSTODIAL.md`
+- **Plan complet:** `DOX/guides/MIGRATION-NON-CUSTODIAL-PLAN.md`
+
+### CLI Non-Custodial
+
+```bash
+# Lancer wallet RPC local
+monero-wallet-rpc --testnet --rpc-bind-port 18083 --disable-rpc-login --offline
+
+# Initialiser escrow non-custodial
+cargo run --bin monero-marketplace -- noncustodial init-escrow \
+  --escrow-id "escrow_001" \
+  --role buyer \
+  --wallet-name "my_wallet" \
+  --local-rpc-url "http://127.0.0.1:18083" \
+  --server-url "http://localhost:8080"
+```
 
 ## Critical Security Context
 

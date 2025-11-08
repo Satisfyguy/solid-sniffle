@@ -595,7 +595,38 @@ impl WalletManager {
     /// let arbiter_temp_wallet_id = wallet_manager.create_temporary_wallet(escrow_id, "arbiter").await?;
     /// // All 3 wallets have 0 XMR balance - used only for multisig coordination
     /// ```
+    ///
+    /// # ⚠️ DEPRECATED - Phase 3 Non-Custodial Migration
+    ///
+    /// **This function is CUSTODIAL and will be removed in v0.4.0.**
+    ///
+    /// **Why deprecated:**
+    /// - Server creates and manages wallets (custodial anti-pattern)
+    /// - Server has access to wallet files and private keys
+    /// - Violates non-custodial principles (Haveno-style architecture)
+    ///
+    /// **Use instead:**
+    /// - `EscrowCoordinator::register_client_wallet()` - Clients provide their own wallet RPC URLs
+    /// - See: `DOX/guides/NON-CUSTODIAL-USER-GUIDE.md`
+    /// - See: `DOX/guides/MIGRATION-TO-NONCUSTODIAL.md`
+    ///
+    /// **Migration path:**
+    /// 1. Client runs local `monero-wallet-rpc`
+    /// 2. Client calls `/api/v2/escrow/register-wallet` with RPC URL
+    /// 3. Server coordinates multisig exchange (NO wallet creation)
+    ///
+    /// This function will be removed in **v0.4.0** (estimated 2-3 weeks).
+    #[deprecated(
+        since = "0.3.0",
+        note = "Use EscrowCoordinator with client wallets instead. This custodial mode will be removed in v0.4.0. See DOX/guides/MIGRATION-TO-NONCUSTODIAL.md"
+    )]
     pub async fn create_temporary_wallet(&mut self, escrow_id: Uuid, role: &str) -> Result<Uuid, WalletManagerError> {
+        // ⚠️ DEPRECATION WARNING
+        warn!(
+            "⚠️  DEPRECATED: create_temporary_wallet() is CUSTODIAL and will be removed in v0.4.0. \
+            Migrate to EscrowCoordinator with client-side wallets. See DOX/guides/MIGRATION-TO-NONCUSTODIAL.md"
+        );
+
         // SOLUTION #1: Global mutex to prevent concurrent wallet creation
         // Only ONE wallet creation can happen at a time across the entire server
         let _lock = WALLET_CREATION_LOCK.lock().await;
