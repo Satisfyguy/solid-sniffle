@@ -112,7 +112,7 @@ pub struct GetCoordinationStatusResponse {
 /// }
 /// ```
 pub async fn register_client_wallet(
-    coordinator: web::Data<Arc<EscrowCoordinator>>,
+    coordinator: web::Data<EscrowCoordinator>,
     req: web::Json<RegisterClientWalletRequest>,
 ) -> impl Responder {
     use tracing::{error, info};
@@ -241,7 +241,7 @@ pub async fn register_client_wallet(
 /// }
 /// ```
 pub async fn coordinate_multisig_exchange(
-    coordinator: web::Data<Arc<EscrowCoordinator>>,
+    coordinator: web::Data<EscrowCoordinator>,
     req: web::Json<CoordinateExchangeRequest>,
 ) -> impl Responder {
     use tracing::{error, info};
@@ -294,7 +294,7 @@ pub async fn coordinate_multisig_exchange(
 /// - Which participants are registered
 /// - Whether ready for multisig exchange
 pub async fn get_coordination_status(
-    coordinator: web::Data<Arc<EscrowCoordinator>>,
+    coordinator: web::Data<EscrowCoordinator>,
     escrow_id: web::Path<String>,
 ) -> impl Responder {
     use tracing::{error, info};
