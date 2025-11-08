@@ -15,6 +15,7 @@ use tracing::{error, info, warn};
 use uuid::Uuid;
 
 use crate::db::{db_load_escrow, db_update_escrow_status, DbPool};
+use crate::models::order::{Order, OrderStatus};
 use crate::wallet_manager::WalletManager;
 use crate::websocket::WebSocketServer;
 
@@ -190,7 +191,40 @@ impl BlockchainMonitor {
                 .await
                 .context("Failed to update escrow status to active")?;
 
-            // Notify all parties via WebSocket
+            // Update associated order status to "funded"
+            let order_id = escrow.order_id.clone();
+            let db_pool = self.db.clone();
+            match tokio::task::spawn_blocking(move || {
+                let mut conn = db_pool.get().context("Failed to get DB connection")?;
+                Order::update_status(&mut conn, order_id.clone(), OrderStatus::Funded)
+                    .context("Failed to update order status to funded")
+            })
+            .await
+            {
+                Ok(Ok(_)) => {
+                    info!("Order {} status updated to 'funded'", order_id);
+
+                    // Notify vendor that order is now funded
+                    if let Ok(vendor_uuid) = Uuid::parse_str(&escrow.vendor_id) {
+                        if let Ok(order_uuid) = Uuid::parse_str(&order_id) {
+                            use crate::websocket::WsEvent;
+                            self.websocket.do_send(WsEvent::OrderStatusChanged {
+                                order_id: order_uuid,
+                                new_status: "funded".to_string(),
+                            });
+                        }
+                    }
+                }
+                Ok(Err(e)) => {
+                    error!("Failed to update order {} status: {}", order_id, e);
+                    // Don't fail the escrow update, just log error
+                }
+                Err(e) => {
+                    error!("Task join error updating order {}: {}", order_id, e);
+                }
+            }
+
+            // Notify all parties via WebSocket about escrow status
             use crate::websocket::WsEvent;
             self.websocket.do_send(WsEvent::EscrowStatusChanged {
                 escrow_id,
