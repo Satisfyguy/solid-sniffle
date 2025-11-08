@@ -9,7 +9,7 @@ use actix_web_actors::ws;
 use anyhow::{Context, Result};
 use monero_marketplace_common::types::MoneroConfig;
 use server::db::create_pool;
-use server::handlers::{auth, cart, escrow, frontend, listings, monitoring, multisig_challenge, noncustodial, orders, reputation, reputation_ipfs};
+use server::handlers::{auth, cart, escrow, frontend, listings, messages, monitoring, multisig_challenge, noncustodial, orders, reputation, reputation_ipfs};
 use server::middleware::{
     admin_auth::AdminAuth,
     // rate_limit::{global_rate_limiter, protected_rate_limiter}, // Temporarily disabled for testing

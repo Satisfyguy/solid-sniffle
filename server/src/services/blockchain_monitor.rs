@@ -193,6 +193,7 @@ impl BlockchainMonitor {
 
             // Update associated order status to "funded"
             let order_id = escrow.order_id.clone();
+            let order_id_for_log = order_id.clone();
             let db_pool = self.db.clone();
             match tokio::task::spawn_blocking(move || {
                 let mut conn = db_pool.get().context("Failed to get DB connection")?;
@@ -202,11 +203,11 @@ impl BlockchainMonitor {
             .await
             {
                 Ok(Ok(_)) => {
-                    info!("Order {} status updated to 'funded'", order_id);
+                    info!("Order {} status updated to 'funded'", order_id_for_log);
 
                     // Notify vendor that order is now funded
                     if let Ok(vendor_uuid) = Uuid::parse_str(&escrow.vendor_id) {
-                        if let Ok(order_uuid) = Uuid::parse_str(&order_id) {
+                        if let Ok(order_uuid) = Uuid::parse_str(&order_id_for_log) {
                             use crate::websocket::WsEvent;
                             self.websocket.do_send(WsEvent::OrderStatusChanged {
                                 order_id: order_uuid,
@@ -216,11 +217,11 @@ impl BlockchainMonitor {
                     }
                 }
                 Ok(Err(e)) => {
-                    error!("Failed to update order {} status: {}", order_id, e);
+                    error!("Failed to update order {} status: {}", order_id_for_log, e);
                     // Don't fail the escrow update, just log error
                 }
                 Err(e) => {
-                    error!("Task join error updating order {}: {}", order_id, e);
+                    error!("Task join error updating order {}: {}", order_id_for_log, e);
                 }
             }
 

@@ -141,7 +141,6 @@ pub async fn logout(session: Session) -> impl Responder {
         .finish()
 }
 
-use crate::models::user::User;
 
 #[derive(serde::Serialize)]
 struct ListingForTemplate {

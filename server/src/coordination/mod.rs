@@ -19,5 +19,5 @@
 pub mod escrow_coordinator;
 
 pub use escrow_coordinator::{
-    CoordinationState, EscrowCoordination, EscrowCoordinator, MultisigExchangeResult,
+    CoordinationState, EscrowCoordination, EscrowCoordinator, EscrowRole, MultisigExchangeResult,
 };
