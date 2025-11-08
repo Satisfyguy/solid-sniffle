@@ -50,6 +50,9 @@ pub enum Error {
 
     #[error("Invalid transaction: {0}")]
     InvalidTransaction(String),
+
+    #[error("Security violation: {0}")]
+    Security(String),
 }
 
 /// Tor-specific errors
