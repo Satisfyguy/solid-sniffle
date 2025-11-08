@@ -160,6 +160,34 @@ impl EscrowOrchestrator {
     ///
     /// **CRITICAL:** Server creates EMPTY wallets only for multisig coordination.
     /// These wallets never hold funds - they only generate the multisig address.
+    ///
+    /// # ⚠️ DEPRECATED - Phase 3 Non-Custodial Migration
+    ///
+    /// **This function is CUSTODIAL despite the NON-CUSTODIAL label in comments.**
+    ///
+    /// **Why deprecated:**
+    /// - Server creates temporary wallets on server (lines 202-214)
+    /// - Uses `WalletManager::create_temporary_wallet()` which is custodial
+    /// - Server has access to wallet files (even if empty)
+    /// - Violates true non-custodial architecture (Haveno-style)
+    ///
+    /// **Use instead:**
+    /// - `EscrowCoordinator::register_client_wallet()` - Clients provide RPC URLs
+    /// - `EscrowCoordinator::coordinate_multisig_exchange()` - Server coordinates only
+    /// - See: `DOX/guides/NON-CUSTODIAL-USER-GUIDE.md`
+    /// - See: `DOX/guides/MIGRATION-TO-NONCUSTODIAL.md`
+    ///
+    /// **True non-custodial flow:**
+    /// 1. Each client runs local `monero-wallet-rpc`
+    /// 2. Clients register RPC URLs with server (no wallet creation)
+    /// 3. Server coordinates multisig_info exchange
+    /// 4. Clients finalize multisig locally
+    ///
+    /// This function will be removed in **v0.4.0** (estimated 2-3 weeks).
+    #[deprecated(
+        since = "0.3.0",
+        note = "Server-side wallet creation is custodial. Use EscrowCoordinator with client wallets instead. Will be removed in v0.4.0. See DOX/guides/MIGRATION-TO-NONCUSTODIAL.md"
+    )]
     pub async fn init_escrow(
         &self,
         order_id: Uuid,
@@ -167,8 +195,14 @@ impl EscrowOrchestrator {
         vendor_id: Uuid,
         amount_atomic: i64,
     ) -> Result<Escrow> {
+        // ⚠️ DEPRECATION WARNING
+        warn!(
+            "⚠️  DEPRECATED: EscrowOrchestrator::init_escrow() uses server-side wallet creation (CUSTODIAL). \
+            Migrate to EscrowCoordinator for true non-custodial escrow. See DOX/guides/MIGRATION-TO-NONCUSTODIAL.md"
+        );
+
         info!(
-            "🔄 [NON-CUSTODIAL] Initializing escrow: order={}, buyer={}, vendor={}, amount={}",
+            "🔄 [CUSTODIAL-DEPRECATED] Initializing escrow: order={}, buyer={}, vendor={}, amount={}",
             order_id, buyer_id, vendor_id, amount_atomic
         );
 
