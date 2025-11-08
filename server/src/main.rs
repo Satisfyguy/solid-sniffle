@@ -480,6 +480,16 @@ async fn main() -> Result<()> {
                         "/v2/escrow/coordination-status/{escrow_id}",
                         web::get().to(noncustodial::get_coordination_status),
                     )
+                    // NON-CUSTODIAL V2: Multisig sync round coordination
+                    .route(
+                        "/v2/escrow/sync-round",
+                        web::post().to(noncustodial::coordinate_sync_round),
+                    )
+                    // NON-CUSTODIAL V2: Funds received notification
+                    .route(
+                        "/v2/escrow/funds-received",
+                        web::post().to(noncustodial::funds_received_notification),
+                    )
                     // TM-003: Challenge-Response multisig validation
                     .service(multisig_challenge::request_multisig_challenge)
                     .service(multisig_challenge::submit_multisig_info_with_signature)

@@ -104,14 +104,44 @@ monero-wallet-rpc --version
 # Devrait afficher: Monero 'Fluorine Fermi' (v0.18.3.1-release)
 ```
 
-### 3. Cloner le Projet Monero Marketplace
+### 3. Daemon Monero Testnet (REQUIS)
+
+⚠️ **IMPORTANT:** Le daemon est OBLIGATOIRE pour détecter les fonds entrants automatiquement.
+
+Sans daemon, vos wallets ne peuvent pas:
+- ❌ Voir les transactions entrantes
+- ❌ Détecter les confirmations blockchain
+- ❌ Mettre à jour le statut de l'escrow automatiquement
+
+**Option 1: Daemon Local (Recommandé pour Dev)**
+```bash
+# Télécharger et synchroniser le testnet (peut prendre du temps)
+monerod --testnet --detach
+# Attend la synchronisation complète
+```
+
+**Option 2: Daemon Public Testnet (Rapide)**
+```bash
+# Utiliser un daemon public testnet (pas besoin de sync locale)
+# Dans vos commandes wallet RPC, utilisez:
+--daemon-address node.monerodevs.org:28089
+```
+
+**Vérifier la connexion daemon:**
+```bash
+curl -X POST http://127.0.0.1:28081/json_rpc -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":"0","method":"get_info"}'
+# Devrait retourner des informations sur la blockchain
+```
+
+### 4. Cloner le Projet Monero Marketplace
 
 ```bash
 git clone https://github.com/Satisfyguy/solid-sniffle
 cd solid-sniffle
 ```
 
-### 4. Compiler le CLI
+### 5. Compiler le CLI
 
 ```bash
 cargo build --release --package monero-marketplace-cli
@@ -143,10 +173,18 @@ Le serveur démarre sur `http://localhost:8080`.
 
 ## Démarrage Rapide
 
+⚠️ **PRÉREQUIS:** Assurez-vous que le daemon Monero testnet est démarré et synchronisé!
+
+```bash
+# Vérifier que le daemon tourne
+monerod --testnet status
+# OU utiliser daemon public: node.monerodevs.org:28089
+```
+
 ### Scénario: 3 Participants (Buyer, Seller, Arbiter)
 
 Chaque participant doit:
-1. Lancer son propre `monero-wallet-rpc`
+1. Lancer son propre `monero-wallet-rpc` **connecté au daemon**
 2. Utiliser le CLI pour initialiser l'escrow
 
 #### **Participant 1: Buyer**
@@ -158,7 +196,7 @@ monero-wallet-rpc \
   --rpc-bind-port 18083 \
   --disable-rpc-login \
   --wallet-dir ~/.monero/testnet/wallets/buyer \
-  --offline
+  --daemon-address 127.0.0.1:28081
 
 # Terminal 3: Buyer CLI
 cargo run --release --bin monero-marketplace -- noncustodial init-escrow \
@@ -178,7 +216,7 @@ monero-wallet-rpc \
   --rpc-bind-port 18084 \
   --disable-rpc-login \
   --wallet-dir ~/.monero/testnet/wallets/seller \
-  --offline
+  --daemon-address 127.0.0.1:28081
 
 # Terminal 5: Seller CLI
 cargo run --release --bin monero-marketplace -- noncustodial init-escrow \
@@ -198,7 +236,7 @@ monero-wallet-rpc \
   --rpc-bind-port 18085 \
   --disable-rpc-login \
   --wallet-dir ~/.monero/testnet/wallets/arbiter \
-  --offline
+  --daemon-address 127.0.0.1:28081
 
 # Terminal 7: Arbiter CLI
 cargo run --release --bin monero-marketplace -- noncustodial init-escrow \
@@ -240,13 +278,13 @@ monero-wallet-rpc \
   --rpc-bind-port 18083 \               # Port de votre choix (18083-18099)
   --disable-rpc-login \                 # Pas de login pour local
   --wallet-dir ~/.monero/testnet/wallets/buyer \  # Votre répertoire
-  --offline                             # Mode hors ligne (pas besoin de daemon)
+  --daemon-address 127.0.0.1:28081      # Connexion au daemon testnet (REQUIS)
 ```
 
 **Options importantes:**
 - `--testnet`: Utilisez testnet pour tests (mainnet pour production)
 - `--rpc-bind-port`: Port unique pour chaque participant
-- `--offline`: Permet de travailler sans daemon Monero
+- `--daemon-address`: Connexion au daemon Monero (REQUIS pour détecter les fonds entrants)
 
 #### Vérification
 
@@ -408,7 +446,7 @@ Getting wallet info for buyer at http://127.0.0.1:18083
 ps aux | grep monero-wallet-rpc
 
 # Relancer le RPC
-monero-wallet-rpc --testnet --rpc-bind-port 18083 --disable-rpc-login --offline
+monero-wallet-rpc --testnet --rpc-bind-port 18083 --disable-rpc-login --daemon-address 127.0.0.1:28081
 ```
 
 ---

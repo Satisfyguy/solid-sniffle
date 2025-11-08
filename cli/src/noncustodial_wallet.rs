@@ -14,7 +14,7 @@
 
 use anyhow::{Context, Result};
 use monero_marketplace_common::types::MoneroConfig;
-use monero_marketplace_wallet::{multisig::MultisigManager, MoneroClient};
+use monero_marketplace_wallet::MoneroClient;
 use reqwest::Client as HttpClient;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -204,22 +204,281 @@ impl NonCustodialClient {
         info!("✅ Multisig wallet created locally!");
         info!("Multisig address: {}", make_result.address);
 
-        // Step 7: Export for sync round 1
-        info!("📤 Exporting multisig info for sync round 1...");
-        let export_result = self.local_wallet
+        // Step 7: Complete multisig synchronization (2 rounds)
+        info!("🔄 Starting multisig synchronization (2 rounds required)...");
+        self.complete_multisig_sync(escrow_id).await
+            .context("Failed to complete multisig synchronization")?;
+
+        info!("✅ Multisig fully synchronized and READY for transactions!");
+
+        // Step 8: Start monitoring blockchain for incoming funds
+        info!("👁️  Starting blockchain monitoring...");
+        info!("Waiting for funds to arrive at: {}", make_result.address);
+
+        // Launch monitoring in background (non-blocking)
+        // Create new MoneroClient instance for monitoring (MoneroClient doesn't implement Clone)
+        let monitor_config = MoneroConfig {
+            rpc_url: self.local_rpc_url.clone(),
+            rpc_user: None,
+            rpc_password: None,
+            timeout_seconds: 30,
+        };
+        let monitor_client = MoneroClient::new(monitor_config)
+            .context("Failed to create monitoring client")?;
+        let monitor_address = make_result.address.clone();
+        let monitor_server_url = self.server_url.clone();
+        let monitor_escrow_id = escrow_id.to_string();
+
+        tokio::spawn(async move {
+            if let Err(e) = Self::monitor_blockchain_static(
+                monitor_client,
+                &monitor_address,
+                &monitor_server_url,
+                &monitor_escrow_id,
+            ).await {
+                error!("Blockchain monitoring failed: {}", e);
+            }
+        });
+
+        info!("ℹ️  Next steps:");
+        info!("  1. Buyer sends XMR to multisig address: {}", make_result.address);
+        info!("  2. System will detect funds automatically");
+        info!("  3. Escrow status will update to 'funded'");
+
+        Ok(make_result.address)
+    }
+
+    /// Complete multisig synchronization (2 rounds of export/import)
+    ///
+    /// **Critical:** This MUST be done before the wallet can sign transactions.
+    /// Monero multisig requires 2 rounds of info exchange to fully synchronize.
+    async fn complete_multisig_sync(&self, escrow_id: &str) -> Result<()> {
+        info!("🔄 Round 1: Export/Import multisig info...");
+
+        // Round 1: Export
+        let export_round1 = self.local_wallet
             .multisig()
             .export_multisig_info()
             .await
-            .context("Failed to export multisig info")?;
+            .context("Failed to export multisig info (round 1)")?;
 
-        info!("✅ Export successful, info length: {} chars", export_result.info.len());
-        info!("ℹ️  Next steps:");
-        info!("  1. Share export info with other participants");
-        info!("  2. Import their export infos (sync round 1)");
-        info!("  3. Repeat export/import (sync round 2)");
-        info!("  4. Wallet will be ready for transactions");
+        info!("📤 Round 1 export: {} chars", export_round1.info.len());
 
-        Ok(make_result.address)
+        // Coordinate round 1 with server
+        let others_round1 = self.coordinate_sync_round(escrow_id, 1, &export_round1.info).await?;
+
+        info!("📥 Received {} infos from other participants (round 1)", others_round1.len());
+
+        // Round 1: Import
+        let import_result1 = self.local_wallet
+            .multisig()
+            .import_multisig_info(others_round1)
+            .await
+            .context("Failed to import multisig info (round 1)")?;
+
+        info!("✅ Round 1 complete: {} outputs processed", import_result1.n_outputs);
+
+        // Small delay between rounds
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        info!("🔄 Round 2: Export/Import multisig info...");
+
+        // Round 2: Export
+        let export_round2 = self.local_wallet
+            .multisig()
+            .export_multisig_info()
+            .await
+            .context("Failed to export multisig info (round 2)")?;
+
+        info!("📤 Round 2 export: {} chars", export_round2.info.len());
+
+        // Coordinate round 2 with server
+        let others_round2 = self.coordinate_sync_round(escrow_id, 2, &export_round2.info).await?;
+
+        info!("📥 Received {} infos from other participants (round 2)", others_round2.len());
+
+        // Round 2: Import
+        let import_result2 = self.local_wallet
+            .multisig()
+            .import_multisig_info(others_round2)
+            .await
+            .context("Failed to import multisig info (round 2)")?;
+
+        info!("✅ Round 2 complete: {} outputs processed", import_result2.n_outputs);
+        info!("✅ Multisig synchronization fully complete!");
+
+        Ok(())
+    }
+
+    /// Coordinate a sync round with the server
+    ///
+    /// Sends our export info to server and receives exports from other participants
+    async fn coordinate_sync_round(
+        &self,
+        escrow_id: &str,
+        round: u8,
+        our_export: &str,
+    ) -> Result<Vec<String>> {
+        let url = format!("{}/api/v2/escrow/sync-round", self.server_url);
+
+        #[derive(serde::Serialize)]
+        struct SyncRoundRequest {
+            escrow_id: String,
+            round: u8,
+            role: String,
+            export_info: String,
+        }
+
+        #[derive(serde::Deserialize)]
+        struct SyncRoundResponse {
+            success: bool,
+            received_infos: Vec<String>,
+        }
+
+        let request = SyncRoundRequest {
+            escrow_id: escrow_id.to_string(),
+            round,
+            role: self.role.as_str().to_string(),
+            export_info: our_export.to_string(),
+        };
+
+        // Retry logic with exponential backoff (wait for other participants)
+        let max_attempts = 60; // 60 attempts * 2s = 2 minutes max
+        let mut attempts = 0;
+
+        loop {
+            attempts += 1;
+            if attempts > max_attempts {
+                return Err(anyhow::anyhow!(
+                    "Timeout waiting for sync round {} participants after {} attempts",
+                    round, max_attempts
+                ));
+            }
+
+            let response = self.http_client
+                .post(&url)
+                .json(&request)
+                .send()
+                .await
+                .context("Failed to send sync round request")?;
+
+            if !response.status().is_success() {
+                warn!("Sync round {} not ready yet (attempt {}), retrying...", round, attempts);
+                tokio::time::sleep(Duration::from_secs(2)).await;
+                continue;
+            }
+
+            let sync_response: SyncRoundResponse = response
+                .json()
+                .await
+                .context("Failed to parse sync round response")?;
+
+            if !sync_response.success {
+                warn!("Sync round {} not ready (attempt {}), retrying...", round, attempts);
+                tokio::time::sleep(Duration::from_secs(2)).await;
+                continue;
+            }
+
+            // We should receive exactly 2 infos (from the other 2 participants)
+            if sync_response.received_infos.len() != 2 {
+                warn!(
+                    "Sync round {} incomplete: expected 2 infos, got {} (attempt {}), retrying...",
+                    round, sync_response.received_infos.len(), attempts
+                );
+                tokio::time::sleep(Duration::from_secs(2)).await;
+                continue;
+            }
+
+            info!("✅ Sync round {} coordination complete", round);
+            return Ok(sync_response.received_infos);
+        }
+    }
+
+    /// Monitor blockchain for incoming funds (static method for spawn)
+    async fn monitor_blockchain_static(
+        wallet: MoneroClient,
+        address: &str,
+        server_url: &str,
+        escrow_id: &str,
+    ) -> Result<()> {
+        info!("👁️  Monitoring blockchain for address: {}...", &address[..15]);
+
+        let mut last_balance: u64 = 0;
+        let check_interval = Duration::from_secs(30); // Check every 30 seconds
+
+        loop {
+            // Get current balance (returns tuple: (balance, unlocked_balance))
+            match wallet.rpc().get_balance().await {
+                Ok((balance, _unlocked_balance)) => {
+                    if balance > last_balance {
+                        let amount_xmr = balance as f64 / 1e12;
+                        info!("🎉 FUNDS RECEIVED! Balance: {} XMR", amount_xmr);
+
+                        // Notify server that funds were received
+                        if let Err(e) = Self::notify_funds_received_static(
+                            server_url,
+                            escrow_id,
+                            balance
+                        ).await {
+                            error!("Failed to notify server of funds: {}", e);
+                        }
+
+                        last_balance = balance;
+
+                        // Continue monitoring for additional deposits
+                    } else if balance > 0 && last_balance == 0 {
+                        // First detection of non-zero balance
+                        let amount_xmr = balance as f64 / 1e12;
+                        info!("💰 Current balance: {} XMR", amount_xmr);
+                        last_balance = balance;
+                    }
+                }
+                Err(e) => {
+                    warn!("Failed to check balance: {}", e);
+                }
+            }
+
+            tokio::time::sleep(check_interval).await;
+        }
+    }
+
+    /// Notify server that funds were received (static method)
+    async fn notify_funds_received_static(
+        server_url: &str,
+        escrow_id: &str,
+        balance: u64,
+    ) -> Result<()> {
+        let url = format!("{}/api/v2/escrow/funds-received", server_url);
+
+        #[derive(serde::Serialize)]
+        struct FundsReceivedRequest {
+            escrow_id: String,
+            balance: u64,
+        }
+
+        let client = HttpClient::builder()
+            .timeout(Duration::from_secs(10))
+            .build()?;
+
+        let request = FundsReceivedRequest {
+            escrow_id: escrow_id.to_string(),
+            balance,
+        };
+
+        let response = client
+            .post(&url)
+            .json(&request)
+            .send()
+            .await
+            .context("Failed to send funds notification")?;
+
+        if response.status().is_success() {
+            info!("✅ Server notified of funds received");
+            Ok(())
+        } else {
+            let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+            Err(anyhow::anyhow!("Server notification failed: {}", error_text))
+        }
     }
 
     /// Create local wallet (skip if exists)
