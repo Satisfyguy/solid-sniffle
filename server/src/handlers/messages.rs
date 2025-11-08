@@ -76,7 +76,7 @@ pub async fn get_messages(
     };
 
     // SECURITY: Verify user is buyer or vendor for this order
-    let order = match Order::get_by_id(&order_id, &mut conn) {
+    let order = match Order::find_by_id(&mut conn, order_id.clone()) {
         Ok(order) => order,
         Err(_) => {
             return HttpResponse::NotFound().json(serde_json::json!({
@@ -107,7 +107,7 @@ pub async fn get_messages(
         .into_iter()
         .filter_map(|msg| {
             // Get sender username
-            let sender = User::get_by_id(&msg.sender_id, &mut conn).ok()?;
+            let sender = User::find_by_id(&mut conn, msg.sender_id.clone()).ok()?;
 
             Some(OrderMessageWithSender {
                 id: msg.id.clone(),
@@ -181,7 +181,7 @@ pub async fn send_message(
     };
 
     // SECURITY: Verify user is buyer or vendor for this order
-    let order = match Order::get_by_id(&order_id, &mut conn) {
+    let order = match Order::find_by_id(&mut conn, order_id.clone()) {
         Ok(order) => order,
         Err(_) => {
             return HttpResponse::NotFound().json(serde_json::json!({
@@ -214,7 +214,7 @@ pub async fn send_message(
     };
 
     // Get sender info for response
-    let sender = match User::get_by_id(&user_id, &mut conn) {
+    let sender = match User::find_by_id(&mut conn, user_id.clone()) {
         Ok(user) => user,
         Err(e) => {
             tracing::error!("Failed to load sender: {:?}", e);
