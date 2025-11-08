@@ -3,8 +3,9 @@
 //! Command-line interface for the Monero Marketplace
 
 mod checkpoint;
+mod noncustodial_wallet;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use monero_marketplace_common::{
     types::{MoneroConfig, WorkflowStep},
@@ -46,6 +47,11 @@ enum Commands {
     Checkpoint {
         #[command(subcommand)]
         command: CheckpointCommands,
+    },
+    /// Non-custodial escrow operations (Phase 2)
+    Noncustodial {
+        #[command(subcommand)]
+        command: NoncustodialCommands,
     },
     /// Test RPC connection
     Test,
@@ -103,6 +109,40 @@ enum CheckpointCommands {
     Delete {
         /// The session ID of the checkpoint to delete
         session_id: String,
+    },
+}
+
+#[derive(Subcommand)]
+enum NoncustodialCommands {
+    /// Initialize non-custodial escrow (Phase 2 flow)
+    InitEscrow {
+        /// Escrow ID
+        #[arg(long)]
+        escrow_id: String,
+        /// Role (buyer, seller, or arbiter)
+        #[arg(long)]
+        role: String,
+        /// Local wallet name
+        #[arg(long, default_value = "noncustodial_wallet")]
+        wallet_name: String,
+        /// Local wallet RPC URL
+        #[arg(long, default_value = "http://127.0.0.1:18083")]
+        local_rpc_url: String,
+        /// Server coordinator URL
+        #[arg(long, default_value = "http://localhost:8080")]
+        server_url: String,
+    },
+    /// Check local wallet status
+    WalletInfo {
+        /// Local wallet RPC URL
+        #[arg(long, default_value = "http://127.0.0.1:18083")]
+        local_rpc_url: String,
+        /// Role (for display)
+        #[arg(long, default_value = "buyer")]
+        role: String,
+        /// Server URL (for API calls)
+        #[arg(long, default_value = "http://localhost:8080")]
+        server_url: String,
     },
 }
 
@@ -308,6 +348,63 @@ async fn main() -> Result<()> {
                 info!("Deleting checkpoint '{}'...", session_id);
                 checkpoint::delete_checkpoint(&session_id)?;
                 info!("Checkpoint '{}' deleted.", session_id);
+            }
+        },
+
+        Commands::Noncustodial { command } => match command {
+            NoncustodialCommands::InitEscrow {
+                escrow_id,
+                role,
+                wallet_name,
+                local_rpc_url,
+                server_url,
+            } => {
+                info!("🔐 Starting non-custodial escrow initialization");
+                info!("Escrow ID: {}", escrow_id);
+                info!("Role: {}", role);
+                info!("Local RPC: {}", local_rpc_url);
+                info!("Server: {}", server_url);
+
+                // Parse role
+                let escrow_role = noncustodial_wallet::parse_role(&role)
+                    .context("Invalid role")?;
+
+                // Create non-custodial client
+                let noncustodial_client = noncustodial_wallet::NonCustodialClient::new(
+                    local_rpc_url.clone(),
+                    server_url.clone(),
+                    escrow_role,
+                )?;
+
+                // Initialize escrow
+                let multisig_address = noncustodial_client
+                    .init_escrow(&escrow_id, &wallet_name)
+                    .await?;
+
+                info!("✅ Non-custodial escrow initialized successfully!");
+                info!("Multisig address: {}", multisig_address);
+            }
+
+            NoncustodialCommands::WalletInfo {
+                local_rpc_url,
+                role,
+                server_url,
+            } => {
+                info!("Getting wallet info for {} at {}", role, local_rpc_url);
+
+                // Parse role
+                let escrow_role = noncustodial_wallet::parse_role(&role)
+                    .context("Invalid role")?;
+
+                // Create non-custodial client
+                let noncustodial_client = noncustodial_wallet::NonCustodialClient::new(
+                    local_rpc_url,
+                    server_url,
+                    escrow_role,
+                )?;
+
+                // Get wallet info
+                noncustodial_client.get_wallet_info().await?;
             }
         },
 
