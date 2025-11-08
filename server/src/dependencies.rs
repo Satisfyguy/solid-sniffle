@@ -61,10 +61,10 @@ async fn check_rpc_availability() -> Result<bool> {
 pub fn start_wallet_rpcs() -> Result<()> {
     println!("🚀 Starting 3 Monero Wallet RPC instances...");
 
-    // Tuer les instances existantes
-    let _ = Command::new("killall")
-        .args(["-9", "monero-wallet-rpc"])
-        .status();
+    // NE PAS tuer les instances existantes - elles peuvent être gérées manuellement
+    // let _ = Command::new("killall")
+    //     .args(["-9", "monero-wallet-rpc"])
+    //     .status();
 
     std::thread::sleep(Duration::from_millis(1000));
 
@@ -73,14 +73,14 @@ pub fn start_wallet_rpcs() -> Result<()> {
         .context("Failed to create testnet-wallets directory")?;
 
     // Démarrer le Buyer RPC (port 18082)
+    // IMPORTANT: PAS de --offline pour permettre la détection des fonds!
     let _output1 = Command::new("monero-wallet-rpc")
         .args([
             "--rpc-bind-port", "18082",
             "--disable-rpc-login",
             "--wallet-dir", "./testnet-wallets",
-            "--daemon-address", "http://127.0.0.1:18081",
+            "--daemon-address", "127.0.0.1:28081",  // Testnet daemon port
             "--testnet",
-            "--offline",
             "--log-level", "2"
         ])
         .spawn()
@@ -90,11 +90,10 @@ pub fn start_wallet_rpcs() -> Result<()> {
     let _output2 = Command::new("monero-wallet-rpc")
         .args([
             "--rpc-bind-port", "18083",
-            "--disable-rpc-login", 
+            "--disable-rpc-login",
             "--wallet-dir", "./testnet-wallets",
-            "--daemon-address", "http://127.0.0.1:18081",
+            "--daemon-address", "127.0.0.1:28081",  // Testnet daemon port
             "--testnet",
-            "--offline",
             "--log-level", "2"
         ])
         .spawn()
@@ -105,10 +104,9 @@ pub fn start_wallet_rpcs() -> Result<()> {
         .args([
             "--rpc-bind-port", "18084",
             "--disable-rpc-login",
-            "--wallet-dir", "./testnet-wallets", 
-            "--daemon-address", "http://127.0.0.1:18081",
+            "--wallet-dir", "./testnet-wallets",
+            "--daemon-address", "127.0.0.1:28081",  // Testnet daemon port
             "--testnet",
-            "--offline",
             "--log-level", "2"
         ])
         .spawn()
