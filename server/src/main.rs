@@ -9,7 +9,7 @@ use actix_web_actors::ws;
 use anyhow::{Context, Result};
 use monero_marketplace_common::types::MoneroConfig;
 use server::db::create_pool;
-use server::handlers::{auth, cart, escrow, frontend, listings, messages, monitoring, multisig_challenge, noncustodial, orders, reputation, reputation_ipfs};
+use server::handlers::{auth, cart, escrow, frontend, listings, messages, monitoring, multisig_challenge, noncustodial, orders, reputation, reputation_ipfs, user};
 use server::middleware::{
     admin_auth::AdminAuth,
     // rate_limit::{global_rate_limiter, protected_rate_limiter}, // Temporarily disabled for testing
@@ -385,6 +385,7 @@ async fn main() -> Result<()> {
             .route("/settings/wallet", web::get().to(frontend::show_wallet_settings))
             .route("/docs/wallet-setup", web::get().to(frontend::show_wallet_guide))
             .route("/profile", web::get().to(frontend::show_profile))
+            .route("/multisig-dashboard", web::get().to(frontend::show_multisig_dashboard))
             .route("/featured", web::get().to(frontend::show_featured))
             // API Routes
             .route("/api/health", web::get().to(health_check))
@@ -514,7 +515,9 @@ async fn main() -> Result<()> {
                     .route("/cart/update", web::post().to(cart::update_cart))
                     .route("/cart/clear", web::post().to(cart::clear_cart))
                     .route("/cart", web::get().to(cart::get_cart))
-                    .route("/cart/count", web::get().to(cart::get_cart_count)),
+                    .route("/cart/count", web::get().to(cart::get_cart_count))
+                    // User endpoints
+                    .route("/user/escrows", web::get().to(user::get_user_escrows)),
             )
             // Admin-only endpoints (requires admin role)
             .service(

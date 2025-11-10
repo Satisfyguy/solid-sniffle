@@ -130,3 +130,4 @@ settings.local.*
 
 # Ignore testnet data, logs, and databases
 /testnet-data/
+/testnet-wallets/

@@ -1,0 +1,13 @@
+/home/malix/Desktop/monero.marketplace/monitor_sync.sh: line 2: $'\r': command not found
+/home/malix/Desktop/monero.marketplace/monitor_sync.sh: line 5: $'\r': command not found
+/home/malix/Desktop/monero.marketplace/monitor_sync.sh: line 9: $'\r': command not found
+/home/malix/Desktop/monero.marketplace/monitor_sync.sh: line 16: $'\r': command not found
+========================================
+Monero Testnet Daemon Sync Monitor
+Started: Sun Nov  9 04:17:11 PM CET 2025
+========================================
+
+/home/malix/Desktop/monero.marketplace/monitor_sync.sh: line 22: $'\r': command not found
+/home/malix/Desktop/monero.marketplace/monitor_sync.sh: line 26: $'\r': command not found
+/home/malix/Desktop/monero.marketplace/monitor_sync.sh: line 79: syntax error near unexpected token `elif'
+/home/malix/Desktop/monero.marketplace/monitor_sync.sh: line 79: `    elif [ "$(echo "$PERCENT >= 50" | bc)" -eq 1 ]; then'

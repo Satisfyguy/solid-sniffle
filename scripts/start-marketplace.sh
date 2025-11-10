@@ -58,9 +58,9 @@ success "IPFS daemon running"
 
 # Check IPFS gateway port
 IPFS_GATEWAY=$(ipfs config Addresses.Gateway 2>/dev/null || echo "unknown")
-if [[ "$IPFS_GATEWAY" != *"8081"* ]]; then
-    warning "IPFS gateway not on port 8081 (found: $IPFS_GATEWAY)"
-    echo "   Expected: /ip4/127.0.0.1/tcp/8081"
+if [[ "$IPFS_GATEWAY" != *"8083"* ]] && [[ "$IPFS_GATEWAY" != *"8081"* ]]; then
+    warning "IPFS gateway not on expected port (found: $IPFS_GATEWAY)"
+    echo "   Expected: /ip4/127.0.0.1/tcp/8083 or /ip4/127.0.0.1/tcp/8081"
 fi
 
 # 3. Verify database
@@ -115,13 +115,13 @@ echo "5. Verifying IPFS gateway configuration..."
 if grep -q "8080/ipfs" server/src/ipfs/client.rs; then
     error "IPFS gateway uses wrong port (8080) in code"
     echo "   File: server/src/ipfs/client.rs"
-    echo "   Fix: Change to http://127.0.0.1:8081/ipfs"
+    echo "   Fix: Change to http://127.0.0.1:8083/ipfs"
     echo "   Then recompile: cargo build --release --package server"
     exit 1
 fi
 
-if grep -q "8081/ipfs" server/src/ipfs/client.rs; then
-    success "IPFS gateway port correct (8081)"
+if grep -q "8083/ipfs\|8081/ipfs" server/src/ipfs/client.rs; then
+    success "IPFS gateway port correct (8083 or 8081)"
 else
     warning "Could not verify IPFS gateway port"
 fi

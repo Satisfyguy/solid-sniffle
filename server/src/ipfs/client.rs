@@ -93,11 +93,11 @@ impl IpfsClient {
 
     /// Create client with default local IPFS node settings
     ///
-    /// Connects to localhost:5001 (API) and localhost:8081 (gateway)
+    /// Connects to localhost:5001 (API) and localhost:8083 (gateway)
     pub fn new_local() -> Result<Self> {
         Self::new(
             "http://127.0.0.1:5001/api/v0".to_string(),
-            "http://127.0.0.1:8081/ipfs".to_string(),
+            "http://127.0.0.1:8083/ipfs".to_string(),
         )
     }
 

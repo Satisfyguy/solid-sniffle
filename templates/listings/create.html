@@ -218,7 +218,6 @@
                   </small>
                 </div>
 
-<<<<<<< HEAD
                 {# Price Section - XMR Converter Widget #}
                 <div>
                   <label class="label">
@@ -325,28 +324,6 @@
                       </span>
                     </div>
                   </div>
-=======
-                {# XMR Converter Widget #}
-                <div id="xmr-converter-container"></div>
-
-                {# Stock Field #}
-                <div>
-                  <label for="stock" class="label">
-                    Stock
-                  </label>
-                  <input
-                    type="number"
-                    id="stock"
-                    name="stock"
-                    placeholder="0"
-                    min="0"
-                    required
-                    class="input"
-                  >
-                  <small>
-                    Available quantity
-                  </small>
->>>>>>> cd3680e (feat: Add new UI/UX features and ignore testnet data)
                 </div>
 
                 {# Stock Field #}
@@ -416,7 +393,7 @@
               </div>
             </div>
 
-            <div id="listing-preview">
+            <div id="listing-preview" data-vendor-name="{{ username }}">
               <!-- Preview will be rendered here by JavaScript -->
             </div>
 
@@ -435,48 +412,7 @@
     <script src="/static/js/base.js"></script>
     <script src="/static/js/xmr-converter.js"></script>
     <script src="/static/js/listing-preview.js"></script>
-    <script src="/static/js/create-listing.js" defer></script>
-<<<<<<< HEAD
-
-    <!-- Initialize Components -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize XMR converter
-            initXmrConverter('price-xmr-human', 'price_xmr', {
-                onChange: function(data) {
-                    console.log('Price updated:', data);
-                    // Trigger preview update when price changes
-                    if (window.listingPreview) {
-                        window.listingPreview.updatePreview();
-                    }
-                }
-            });
-
-            // Initialize listing preview
-            {% if username %}
-            const listingPreview = new ListingPreview({
-                formId: 'create-listing-form',
-                previewContainerId: 'listing-preview',
-                vendorName: '{{ username }}'
-            });
-
-            // Export globally for debugging and integration
-            window.listingPreview = listingPreview;
-            {% endif %}
-
-            // Initialize Lucide icons
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-=======
-    <script src="/static/js/xmr-converter.js" defer></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const xmrConverterContainer = document.getElementById('xmr-converter-container');
-            if (xmrConverterContainer) {
-                createXmrConverterWidget(xmrConverterContainer, 'price_xmr_human', 'price_xmr');
->>>>>>> cd3680e (feat: Add new UI/UX features and ignore testnet data)
-            }
-        });
-    </script>
+    <script src="/static/js/create-listing.js"></script>
+    <script src="/static/js/create-listing-init.js"></script>
 </body>
 </html>

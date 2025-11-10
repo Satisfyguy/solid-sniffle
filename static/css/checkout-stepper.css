@@ -1,422 +1,126 @@
-<<<<<<< HEAD
 /**
- * Checkout Stepper Component
- *
- * Visual progress indicator for multi-step checkout process.
- * Respects design system: #C9A445 accent color, #1A1A1A background.
- *
- * States: pending, active, completed
+ * Checkout Stepper Component - ALWAYS HORIZONTAL
+ * Compact design that stays horizontal on all screen sizes
  */
 
 .checkout-stepper {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    max-width: 800px;
-    margin: 0 auto 3rem;
-    padding: 0 1rem;
+    max-width: 100%;
+    margin: 0 auto 2rem;
+    padding: 1rem;
+    position: relative;
+}
+
+/* Connector line */
+.checkout-stepper::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 0;
 }
 
 /* Individual Step */
-.checkout-step {
+.checkout-stepper-step {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     position: relative;
-    flex: 0 0 auto;
+    flex: 1;
+    z-index: 1;
     transition: all 0.3s ease;
 }
 
 /* Step Indicator (Circle) */
-.checkout-step-indicator {
+.checkout-stepper-step-indicator {
     width: 48px;
     height: 48px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.125rem;
+    font-size: 1rem;
     font-weight: 600;
     position: relative;
     z-index: 2;
     transition: all 0.3s ease;
-
-    /* Pending state (default) */
     background: rgba(255, 255, 255, 0.05);
     border: 2px solid rgba(255, 255, 255, 0.2);
     color: rgba(255, 255, 255, 0.5);
 }
 
 /* Step Label */
-.checkout-step-label {
-    font-size: 0.875rem;
-    font-weight: 300;
+.checkout-stepper-step-label {
+    font-size: 0.75rem;
+    font-weight: 400;
     color: rgba(255, 255, 255, 0.6);
     transition: color 0.3s ease;
     white-space: nowrap;
+    text-align: center;
 }
-
-/* Step Connector (Line between steps) */
-.checkout-step-connector {
-    flex: 1;
-    height: 2px;
-    background: rgba(255, 255, 255, 0.1);
-    position: relative;
-    transition: all 0.3s ease;
-}
-
-.checkout-step-connector::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 0%;
-    background: var(--color-accent, #C9A445);
-    transition: width 0.5s ease;
-}
-
-/* ========== STATE VARIATIONS ========== */
 
 /* Active Step */
-.checkout-step.active .checkout-step-indicator {
-    background: var(--color-accent, #C9A445);
-    border-color: var(--color-accent, #C9A445);
-    color: #1A1A1A;
-    box-shadow: 0 0 0 4px rgba(201, 164, 69, 0.2);
-    transform: scale(1.1);
-}
-
-.checkout-step.active .checkout-step-label {
-    color: var(--color-accent, #C9A445);
-    font-weight: 500;
-}
-
-/* Completed Step */
-.checkout-step.completed .checkout-step-indicator {
-    background: var(--color-accent, #C9A445);
-    border-color: var(--color-accent, #C9A445);
-    color: #1A1A1A;
-}
-
-.checkout-step.completed .checkout-step-label {
-    color: rgba(255, 255, 255, 0.8);
-}
-
-/* Completed Connector */
-.checkout-step-connector.completed::after {
-    width: 100%;
-}
-
-/* Active Connector (animating) */
-.checkout-step-connector.active::after {
-    width: 50%;
-    animation: pulse-connector 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse-connector {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.6;
-    }
-}
-
-/* ========== ICON SUPPORT ========== */
-
-.checkout-step-indicator i,
-.checkout-step-indicator svg {
-    width: 20px;
-    height: 20px;
-    stroke-width: 2;
-}
-
-/* Completed step shows checkmark */
-.checkout-step.completed .checkout-step-number {
-    display: none;
-}
-
-.checkout-step.completed .checkout-step-icon-check {
-    display: block;
-}
-
-.checkout-step-number {
-    display: block;
-}
-
-.checkout-step-icon-check {
-    display: none;
-}
-
-/* ========== RESPONSIVE ========== */
-
-@media (max-width: 768px) {
-    .checkout-stepper {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0;
-    }
-
-    .checkout-step {
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 1rem;
-        padding: 0.75rem 0;
-    }
-
-    .checkout-step-connector {
-        display: none;
-    }
-
-    /* Vertical connector on mobile */
-    .checkout-step::after {
-        content: '';
-        position: absolute;
-        left: 23px; /* Center of indicator (48px / 2) */
-        top: 60px; /* Below indicator */
-        width: 2px;
-        height: 40px;
-        background: rgba(255, 255, 255, 0.1);
-        z-index: 1;
-    }
-
-    .checkout-step:last-child::after {
-        display: none;
-    }
-
-    .checkout-step.completed::after {
-        background: var(--color-accent, #C9A445);
-    }
-
-    .checkout-step-label {
-        text-align: left;
-    }
-}
-
-/* ========== ADDITIONAL STATES ========== */
-
-/* Error State */
-.checkout-step.error .checkout-step-indicator {
-    background: rgba(239, 68, 68, 0.2);
-    border-color: #ef4444;
-    color: #ef4444;
-}
-
-.checkout-step.error .checkout-step-label {
-    color: #ef4444;
-}
-
-/* Loading State (pulsing animation) */
-.checkout-step.loading .checkout-step-indicator {
-    animation: pulse-step 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse-step {
-    0%, 100% {
-        box-shadow: 0 0 0 0 rgba(201, 164, 69, 0.4);
-    }
-    50% {
-        box-shadow: 0 0 0 8px rgba(201, 164, 69, 0);
-    }
-}
-
-/* ========== ACCESSIBILITY ========== */
-
-.checkout-step-indicator:focus {
-    outline: 2px solid var(--color-accent, #C9A445);
-    outline-offset: 2px;
-}
-
-/* High Contrast Mode */
-@media (prefers-contrast: high) {
-    .checkout-step-indicator {
-        border-width: 3px;
-    }
-
-    .checkout-step.active .checkout-step-indicator {
-        box-shadow: 0 0 0 6px rgba(201, 164, 69, 0.4);
-    }
-}
-
-/* Reduced Motion */
-@media (prefers-reduced-motion: reduce) {
-    .checkout-step,
-    .checkout-step-indicator,
-    .checkout-step-connector,
-    .checkout-step-connector::after {
-        transition: none;
-    }
-
-    .checkout-step-connector.active::after {
-        animation: none;
-    }
-
-    .checkout-step.loading .checkout-step-indicator {
-        animation: none;
-    }
-}
-=======
-/* static/css/checkout-stepper.css */
-
-.checkout-stepper {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start; /* Align items to the top */
-    margin-bottom: 2rem;
-    position: relative;
-    padding: 1rem 0;
-}
-
-.checkout-stepper::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background-color: var(--color-border);
-    transform: translateY(-50%);
-    z-index: 0;
-}
-
-.checkout-stepper-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    position: relative;
-    z-index: 1;
-    flex: 1;
-    max-width: 25%; /* Ensure steps don't take up too much space */
-}
-
-.checkout-stepper-step-indicator {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: var(--color-background);
-    border: 2px solid var(--color-border);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: 600;
-    color: var(--color-foreground);
-    transition: all 0.3s ease;
-    margin-bottom: 0.5rem;
-    position: relative;
-}
-
-.checkout-stepper-step-indicator .lucide {
-    width: 20px;
-    height: 20px;
-    stroke-width: 2.5;
-}
-
-.checkout-stepper-step-label {
-    font-size: 0.875rem;
-    color: var(--color-muted-foreground);
-    transition: color 0.3s ease;
-    line-height: 1.2;
-}
-
-/* Step States */
 .checkout-stepper-step.active .checkout-stepper-step-indicator {
-    border-color: var(--color-accent);
-    background-color: var(--color-accent);
-    color: var(--color-background);
-    box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.3);
-    animation: pulse 1.5s infinite;
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    border-color: #8b5cf6;
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.3);
+    transform: scale(1.05);
 }
 
 .checkout-stepper-step.active .checkout-stepper-step-label {
-    color: var(--color-foreground);
+    color: #8b5cf6;
+    font-weight: 600;
 }
 
+/* Completed Step */
 .checkout-stepper-step.completed .checkout-stepper-step-indicator {
-    border-color: var(--color-accent);
-    background-color: var(--color-accent);
-    color: var(--color-background);
+    background: #8b5cf6;
+    border-color: #8b5cf6;
+    color: #fff;
 }
 
-.checkout-stepper-step.completed .checkout-stepper-step-indicator .lucide {
-    display: block; /* Show checkmark */
+.checkout-stepper-step.completed .checkout-stepper-step-label {
+    color: rgba(255, 255, 255, 0.8);
 }
 
-.checkout-stepper-step.completed .checkout-stepper-step-indicator span {
-    display: none; /* Hide number */
-}
-
-.checkout-stepper-step.error .checkout-stepper-step-indicator {
-    border-color: var(--color-destructive);
-    background-color: var(--color-destructive);
-    color: var(--color-foreground);
-}
-
-.checkout-stepper-step.error .checkout-stepper-step-label {
-    color: var(--color-destructive);
-}
-
-/* Connectors */
-.checkout-stepper-connector {
-    position: absolute;
-    top: 50%;
-    left: 50%; /* Start from the middle of the previous step */
-    width: 100%; /* Will be adjusted by JS */
-    height: 2px;
-    background-color: var(--color-accent);
-    transform: translateY(-50%);
-    z-index: 0;
-    transition: width 0.3s ease-in-out;
-    transform-origin: left center;
-}
-
-/* Animation for active step */
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(var(--color-accent-rgb), 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(var(--color-accent-rgb), 0); }
-    100% { box-shadow: 0 0 0 0 rgba(var(--color-accent-rgb), 0); }
-}
-
-/* Responsive adjustments */
+/* Mobile: Keep horizontal but smaller */
 @media (max-width: 768px) {
     .checkout-stepper {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 0;
-    }
-
-    .checkout-stepper::before {
-        left: 19px; /* Align with indicator center */
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        height: 100%;
-        transform: none;
-    }
-
-    .checkout-stepper-step {
-        flex-direction: row;
-        text-align: left;
-        max-width: 100%;
-        padding: 1rem 0;
-        justify-content: flex-start;
+        padding: 0.5rem;
+        margin-bottom: 1.5rem;
     }
 
     .checkout-stepper-step-indicator {
-        margin-right: 1rem;
-        margin-bottom: 0;
-        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        font-size: 0.875rem;
     }
 
     .checkout-stepper-step-label {
-        flex-grow: 1;
-    }
-
-    .checkout-stepper-connector {
-        display: none; /* Connectors are handled differently in vertical layout */
+        font-size: 0.65rem;
     }
 }
->>>>>>> cd3680e (feat: Add new UI/UX features and ignore testnet data)
+
+/* Very small screens: Ultra compact but still horizontal */
+@media (max-width: 480px) {
+    .checkout-stepper {
+        padding: 0.25rem;
+    }
+
+    .checkout-stepper-step-indicator {
+        width: 32px;
+        height: 32px;
+        font-size: 0.75rem;
+    }
+
+    .checkout-stepper-step-label {
+        font-size: 0.6rem;
+    }
+}

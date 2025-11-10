@@ -234,6 +234,12 @@
                 <i data-lucide="bell" class="h-4 w-4"></i>
                 Notifications
             </label>
+
+            <input type="radio" id="tab-escrows" name="tabs" class="tab-radio">
+            <label for="tab-escrows" class="tab-label">
+                <i data-lucide="lock" class="h-4 w-4"></i>
+                Escrows
+            </label>
         </div>
 
         <!-- Profile Tab Content -->
@@ -430,6 +436,80 @@
                             <p class="text-sm text-muted-foreground font-light">Receive information about new features</p>
                         </div>
                         <label class="switch"><input type="checkbox"><span class="slider round"></span></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Escrows Tab Content -->
+        <div class="tab-content" id="content-escrows">
+            <div class="space-y-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Active Escrows</h3>
+                        <p>Manage your 2-of-3 multisig escrow transactions</p>
+                    </div>
+                    <div class="card-content">
+                        <!-- Escrows will be loaded dynamically -->
+                        <div id="escrows-container">
+                            <!-- Empty state for now -->
+                            <div class="empty-state" style="text-align: center; padding: 3rem 1rem;">
+                                <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+                                <h4 style="font-size: 1.125rem; font-weight: 500; margin-bottom: 0.5rem; color: hsl(var(--foreground));">No Active Escrows</h4>
+                                <p style="color: hsl(var(--muted-foreground)); margin-bottom: 1.5rem;">You don't have any active multisig escrows yet.</p>
+                                <a href="/listings" class="btn" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                                    <i data-lucide="shopping-bag" style="width: 1rem; height: 1rem;"></i>
+                                    Browse Listings
+                                </a>
+                            </div>
+
+                            <!-- Escrows table (hidden by default, shown when data loads) -->
+                            <table class="escrows-table" style="display: none; width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid hsl(var(--border));">
+                                        <th style="text-align: left; padding: 0.75rem; font-size: 0.75rem; font-weight: 500; color: hsl(var(--muted-foreground)); text-transform: uppercase;">Order ID</th>
+                                        <th style="text-align: left; padding: 0.75rem; font-size: 0.75rem; font-weight: 500; color: hsl(var(--muted-foreground)); text-transform: uppercase;">Role</th>
+                                        <th style="text-align: left; padding: 0.75rem; font-size: 0.75rem; font-weight: 500; color: hsl(var(--muted-foreground)); text-transform: uppercase;">Amount</th>
+                                        <th style="text-align: left; padding: 0.75rem; font-size: 0.75rem; font-weight: 500; color: hsl(var(--muted-foreground)); text-transform: uppercase;">Status</th>
+                                        <th style="text-align: left; padding: 0.75rem; font-size: 0.75rem; font-weight: 500; color: hsl(var(--muted-foreground)); text-transform: uppercase;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="escrows-tbody">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="background: linear-gradient(135deg, rgba(255, 26, 92, 0.05) 0%, rgba(138, 43, 226, 0.05) 100%); border-color: rgba(255, 26, 92, 0.2);">
+                    <div class="card-header">
+                        <h3>Understanding Multisig Escrow</h3>
+                        <p>How 2-of-3 multisig protects your transactions</p>
+                    </div>
+                    <div class="card-content">
+                        <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.75rem;">
+                            <li style="display: flex; align-items: start; gap: 0.75rem;">
+                                <span style="flex-shrink: 0; color: hsl(var(--accent));">🔐</span>
+                                <span style="font-size: 0.875rem; color: hsl(var(--foreground));">Funds are locked in a multisig wallet requiring 2 of 3 signatures</span>
+                            </li>
+                            <li style="display: flex; align-items: start; gap: 0.75rem;">
+                                <span style="flex-shrink: 0; color: hsl(var(--accent));">👥</span>
+                                <span style="font-size: 0.875rem; color: hsl(var(--foreground));">Participants: Buyer, Vendor, and neutral Arbiter</span>
+                            </li>
+                            <li style="display: flex; align-items: start; gap: 0.75rem;">
+                                <span style="flex-shrink: 0; color: hsl(var(--accent));">✅</span>
+                                <span style="font-size: 0.875rem; color: hsl(var(--foreground));">Normal flow: Buyer + Vendor sign to release funds</span>
+                            </li>
+                            <li style="display: flex; align-items: start; gap: 0.75rem;">
+                                <span style="flex-shrink: 0; color: hsl(var(--accent));">⚖️</span>
+                                <span style="font-size: 0.875rem; color: hsl(var(--foreground));">Dispute flow: Arbiter steps in to resolve with either party</span>
+                            </li>
+                            <li style="display: flex; align-items: start; gap: 0.75rem;">
+                                <span style="flex-shrink: 0; color: hsl(var(--accent));">🔒</span>
+                                <span style="font-size: 0.875rem; color: hsl(var(--foreground));">No single party can access funds alone - maximum security</span>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>

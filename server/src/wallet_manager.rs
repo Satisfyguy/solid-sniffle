@@ -2163,9 +2163,11 @@ impl WalletManager {
         escrow_id: &str,
         snapshot: &MultisigSnapshot,
     ) -> Result<(), WalletManagerError> {
+        let total_start = std::time::Instant::now();
         debug!(escrow_id, phase = ?snapshot.phase, "Recovering escrow");
 
         // Load RPC configs from database
+        let db_query_start = std::time::Instant::now();
         let rpc_configs = if let (Some(ref pool), Some(ref key)) = (&self.db_pool, &self.encryption_key) {
             use crate::models::wallet_rpc_config::WalletRpcConfig;
 
@@ -2188,6 +2190,7 @@ impl WalletManager {
                 actual: "No db_pool or encryption_key".to_string(),
             });
         };
+        info!("⏱️  [{}] DB query: {:?}", escrow_id, db_query_start.elapsed());
 
         if rpc_configs.is_empty() {
             warn!(escrow_id, "No RPC configs found in database for this escrow");
@@ -2199,6 +2202,7 @@ impl WalletManager {
 
         // Reconstruct wallet instances from RPC configs
         for rpc_config in rpc_configs {
+            let wallet_start = std::time::Instant::now();
             let wallet_uuid = uuid::Uuid::parse_str(&rpc_config.wallet_id.clone().unwrap_or_default())
                 .map_err(|e| WalletManagerError::InvalidState {
                     expected: "Valid wallet UUID".to_string(),
@@ -2216,6 +2220,7 @@ impl WalletManager {
             };
 
             // Decrypt RPC credentials
+            let decrypt_start = std::time::Instant::now();
             let encryption_key = self.encryption_key.as_ref().unwrap();
             let rpc_url = rpc_config.decrypt_url(encryption_key)
                 .map_err(|e| {
@@ -2234,8 +2239,10 @@ impl WalletManager {
                 .map_err(|e| WalletManagerError::RpcError(CommonError::MoneroRpc(
                     format!("Failed to decrypt RPC password: {}", e)
                 )))?;
+            info!("⏱️  [{}] Decrypt (3 fields): {:?}", escrow_id, decrypt_start.elapsed());
 
             // Reconnect to wallet RPC
+            let rpc_connect_start = std::time::Instant::now();
             let config = MoneroConfig {
                 rpc_url: rpc_url.clone(),
                 rpc_user,
@@ -2250,8 +2257,10 @@ impl WalletManager {
                         format!("Failed to reconnect to {} wallet RPC: {}", rpc_config.role, e),
                     ))
                 })?;
+            info!("⏱️  [{}] RPC client connect: {:?}", escrow_id, rpc_connect_start.elapsed());
 
             // Verify wallet is accessible
+            let rpc_call_start = std::time::Instant::now();
             let wallet_info = rpc_client
                 .get_wallet_info()
                 .await
@@ -2261,6 +2270,7 @@ impl WalletManager {
                         format!("Failed to get wallet info: {}", e),
                     ))
                 })?;
+            info!("⏱️  [{}] RPC get_wallet_info: {:?}", escrow_id, rpc_call_start.elapsed());
 
             // Determine multisig state from phase
             let multisig_state = match &snapshot.phase {
@@ -2318,8 +2328,10 @@ impl WalletManager {
                 address = %wallet_info.address,
                 "✅ Wallet instance recovered and reconnected"
             );
+            info!("⏱️  [{}] TOTAL for 1 wallet ({:?}): {:?}", escrow_id, role, wallet_start.elapsed());
         }
 
+        info!("⏱️  [{}] TOTAL ESCROW RECOVERY: {:?}", escrow_id, total_start.elapsed());
         Ok(())
     }
 }

@@ -146,19 +146,34 @@
                         <span class="product-detail-price-unit">/ unité</span>
                     </div>
 
-                    <div class="product-detail-buttons">
-                        <button class="btn-product-cart" data-listing-id="{{ listing.id }}">
-                            <i data-lucide="shopping-cart"></i>
-                            <span>Add to Cart</span>
-                        </button>
-                        <a href="/checkout?listing_id={{ listing.id }}" class="btn-product-buy">
-                            Buy Now
-                        </a>
-                    </div>
+                    {% if is_owner %}
+                        <!-- Owner view: Show edit/manage options instead of buy buttons -->
+                        <div class="product-detail-owner-notice">
+                            <i data-lucide="info"></i>
+                            <p>Ceci est votre propre produit. Vous ne pouvez pas l'acheter.</p>
+                        </div>
+                        <div class="product-detail-buttons">
+                            <a href="/listings/{{ listing.id }}/edit" class="btn-product-buy">
+                                <i data-lucide="edit"></i>
+                                <span>Modifier</span>
+                            </a>
+                        </div>
+                    {% else %}
+                        <!-- Buyer view: Show normal purchase buttons -->
+                        <div class="product-detail-buttons">
+                            <button class="btn-product-cart" data-listing-id="{{ listing.id }}">
+                                <i data-lucide="shopping-cart"></i>
+                                <span>Add to Cart</span>
+                            </button>
+                            <a href="/checkout?listing_id={{ listing.id }}" class="btn-product-buy">
+                                Buy Now
+                            </a>
+                        </div>
 
-                    <p class="product-detail-security-note">
-                        2/3 Multisig Escrow Protection • Complete Anonymity via Tor
-                    </p>
+                        <p class="product-detail-security-note">
+                            2/3 Multisig Escrow Protection • Complete Anonymity via Tor
+                        </p>
+                    {% endif %}
                 </div>
             </div>
         </div>

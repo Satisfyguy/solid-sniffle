@@ -345,11 +345,15 @@ pub async fn show_listing(
         .and_then(|json| serde_json::from_str(json).ok())
         .unwrap_or_default();
 
+    // Check if current user is the owner of this listing
+    let is_owner = _user_id.as_ref().map_or(false, |uid| uid == &listing.vendor_id);
+
     ctx.insert("listing", &listing);
     ctx.insert("vendor", &vendor);
     ctx.insert("price_display", &listing.price_as_xmr());
     ctx.insert("images", &images);
-    
+    ctx.insert("is_owner", &is_owner);
+
     // Add CSRF token for order creation
     let csrf_token = get_csrf_token(&session);
     ctx.insert("csrf_token", &csrf_token);
@@ -1731,6 +1735,54 @@ pub async fn home2(tera: web::Data<Tera>, session: Session) -> impl Responder {
         Ok(html) => HttpResponse::Ok().content_type("text/html; charset=utf-8").body(html),
         Err(e) => {
             error!("Template error rendering home2: {}", e);
+            HttpResponse::InternalServerError().body(format!("Template error: {}", e))
+        }
+    }
+}
+
+/// GET /multisig-dashboard - Multisig escrow dashboard
+pub async fn show_multisig_dashboard(tera: web::Data<Tera>, session: Session) -> impl Responder {
+    // Require authentication
+    let _user_id = match session.get::<String>("user_id") {
+        Ok(Some(uid)) => uid,
+        _ => {
+            return HttpResponse::Found()
+                .append_header(("Location", "/login"))
+                .finish();
+        }
+    };
+
+    let mut ctx = Context::new();
+
+    // Insert session data
+    if let Ok(Some(username)) = session.get::<String>("username") {
+        ctx.insert("username", &username);
+        ctx.insert("logged_in", &true);
+
+        if let Ok(Some(role)) = session.get::<String>("role") {
+            ctx.insert("role", &role);
+        } else {
+            ctx.insert("role", &"buyer");
+        }
+    } else {
+        return HttpResponse::Found()
+            .append_header(("Location", "/login"))
+            .finish();
+    }
+
+    // Add CSRF token
+    let csrf_token = get_csrf_token(&session);
+    ctx.insert("csrf_token", &csrf_token);
+
+    match tera.render("multisig-dashboard.html", &ctx) {
+        Ok(html) => {
+            info!("Rendered multisig dashboard");
+            HttpResponse::Ok()
+                .content_type("text/html; charset=utf-8")
+                .body(html)
+        }
+        Err(e) => {
+            error!("Template error rendering multisig dashboard: {}", e);
             HttpResponse::InternalServerError().body(format!("Template error: {}", e))
         }
     }

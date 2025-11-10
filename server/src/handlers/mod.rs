@@ -11,3 +11,4 @@ pub mod noncustodial;
 pub mod orders;
 pub mod reputation;
 pub mod reputation_ipfs;
+pub mod user;

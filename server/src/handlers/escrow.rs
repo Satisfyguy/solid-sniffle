@@ -830,10 +830,12 @@ pub async fn get_escrow_status(
                 }));
             }
 
-            // Return simplified status response
+            // Return status response with multisig_address and amount
             HttpResponse::Ok().json(serde_json::json!({
                 "escrow_id": escrow.id,
-                "status": escrow.status
+                "status": escrow.status,
+                "multisig_address": escrow.multisig_address,
+                "amount": escrow.amount
             }))
         }
         Err(e) => HttpResponse::NotFound().json(serde_json::json!({

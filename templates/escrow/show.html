@@ -175,6 +175,80 @@
         .scenario-list { list-style: disc; padding-left: 1.25rem; }
         .scenario-list li { font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin-bottom: 0.5rem; }
 
+        /* Technical Details Section */
+        .technical-details-toggle {
+            display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, rgba(255, 26, 92, 0.1) 0%, rgba(138, 43, 226, 0.1) 100%);
+            border: 1px solid rgba(255, 26, 92, 0.3); border-radius: 0.5rem; cursor: pointer;
+            transition: all 0.3s; font-size: 1rem; font-weight: 500; color: hsl(var(--foreground));
+        }
+        .technical-details-toggle:hover { border-color: hsl(var(--accent)); transform: translateY(-2px); }
+        .toggle-icon { width: 1.25rem; height: 1.25rem; stroke: hsl(var(--accent)); flex-shrink: 0; }
+        .chevron-icon { width: 1.25rem; height: 1.25rem; margin-left: auto; transition: transform 0.3s; }
+        .technical-details-toggle.expanded .chevron-icon { transform: rotate(180deg); }
+
+        .technical-details-content { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+
+        .tech-detail-card {
+            background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+        .tech-detail-title { font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem; color: hsl(var(--foreground)); }
+
+        /* Address Box */
+        .tech-address-box {
+            display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: rgba(0, 0, 0, 0.3);
+            border: 1px solid hsl(var(--border)); border-radius: 0.375rem;
+        }
+        .tech-monospace { flex: 1; font-family: monospace; font-size: 0.875rem; color: hsl(var(--accent)); word-break: break-all; }
+        .tech-copy-btn {
+            padding: 0.5rem; border-radius: 0.375rem; background: transparent; border: 1px solid hsl(var(--border));
+            cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+        }
+        .tech-copy-btn:hover { background: hsl(var(--accent)); border-color: hsl(var(--accent)); }
+        .tech-copy-btn svg { stroke: hsl(var(--foreground)); }
+        .tech-copy-btn:hover svg { stroke: #1A1A1A; }
+        .tech-pending { color: hsl(var(--muted-foreground)); font-style: italic; }
+
+        /* Participants Grid */
+        .tech-participants-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+        .tech-participant { padding: 1rem; background: rgba(0, 0, 0, 0.2); border: 1px solid hsl(var(--border)); border-radius: 0.375rem; }
+        .tech-participant-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+        .tech-role-icon { font-size: 1.5rem; }
+        .tech-role-label { font-size: 0.625rem; text-transform: uppercase; color: hsl(var(--muted-foreground)); letter-spacing: 0.05em; }
+        .tech-username { font-size: 0.875rem; font-weight: 500; color: hsl(var(--foreground)); }
+        .tech-info-box { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+        .tech-info-label { font-size: 0.75rem; color: hsl(var(--muted-foreground)); }
+        .tech-hash { font-family: monospace; font-size: 0.75rem; color: hsl(var(--accent)); }
+        .tech-status { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; margin-top: 0.5rem; }
+        .tech-status-ready { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .tech-status-pending { background: rgba(234, 179, 8, 0.2); color: #eab308; }
+
+        /* Timeline */
+        .tech-timeline { display: flex; flex-direction: column; gap: 1rem; }
+        .tech-timeline-item { display: flex; align-items: start; gap: 1rem; padding: 0.75rem; border-left: 2px solid hsl(var(--border)); padding-left: 1.5rem; position: relative; }
+        .tech-timeline-item.completed { border-left-color: hsl(var(--accent)); }
+        .tech-timeline-item.completed .tech-timeline-marker { background: hsl(var(--accent)); color: #1A1A1A; }
+        .tech-timeline-marker {
+            position: absolute; left: -0.875rem; width: 1.75rem; height: 1.75rem; border-radius: 50%;
+            background: hsl(var(--muted)); display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700; color: hsl(var(--foreground));
+        }
+        .tech-timeline-content { flex: 1; }
+        .tech-timeline-title { font-size: 0.875rem; font-weight: 600; color: hsl(var(--foreground)); margin-bottom: 0.25rem; }
+        .tech-timeline-desc { font-size: 0.75rem; color: hsl(var(--muted-foreground)); margin-bottom: 0.25rem; }
+        .tech-timeline-time { font-size: 0.75rem; color: hsl(var(--muted-foreground)); font-family: monospace; }
+
+        /* Export Card */
+        .tech-export-card { background: linear-gradient(135deg, rgba(255, 26, 92, 0.05) 0%, rgba(138, 43, 226, 0.05) 100%); }
+        .tech-export-desc { font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin-bottom: 1rem; }
+        .tech-export-btn {
+            display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem;
+            background: hsl(var(--accent)); color: #1A1A1A; border: none; border-radius: 0.5rem;
+            font-weight: 500; cursor: pointer; transition: opacity 0.2s;
+        }
+        .tech-export-btn:hover { opacity: 0.85; }
+
     </style>
 </head>
 <body>
@@ -375,6 +449,158 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Technical Details Section (Collapsible) -->
+                    <div class="section">
+                        <button class="technical-details-toggle" id="tech-details-toggle" onclick="toggleTechnicalDetails()">
+                            <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <span>Show Technical Details</span>
+                            <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        <div class="technical-details-content" id="tech-details-content" style="display: none;">
+                            <!-- Multisig Address -->
+                            <div class="tech-detail-card">
+                                <h3 class="tech-detail-title">Multisig Wallet Address</h3>
+                                {% if escrow.multisig_address %}
+                                <div class="tech-address-box">
+                                    <code class="tech-monospace">{{ escrow.multisig_address }}</code>
+                                    <button class="tech-copy-btn" onclick="copyToClipboard('{{ escrow.multisig_address }}', this)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                {% else %}
+                                <p class="tech-pending">Multisig address pending finalization</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Participants Multisig Info -->
+                            <div class="tech-detail-card">
+                                <h3 class="tech-detail-title">Participants Multisig Info</h3>
+                                <div class="tech-participants-grid">
+                                    <!-- Buyer -->
+                                    <div class="tech-participant">
+                                        <div class="tech-participant-header">
+                                            <span class="tech-role-icon">👤</span>
+                                            <div>
+                                                <div class="tech-role-label">Buyer</div>
+                                                <div class="tech-username">{{ escrow.buyer_username }}</div>
+                                            </div>
+                                        </div>
+                                        {% if escrow.buyer_wallet_info %}
+                                        <div class="tech-info-box">
+                                            <span class="tech-info-label">Multisig Info Hash</span>
+                                            <code class="tech-hash">{{ escrow.buyer_wallet_info | truncate(length=16, end="...") }}</code>
+                                            <span class="tech-status tech-status-ready">✅ Prepared</span>
+                                        </div>
+                                        {% else %}
+                                        <span class="tech-status tech-status-pending">⏳ Pending</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Vendor -->
+                                    <div class="tech-participant">
+                                        <div class="tech-participant-header">
+                                            <span class="tech-role-icon">🏪</span>
+                                            <div>
+                                                <div class="tech-role-label">Vendor</div>
+                                                <div class="tech-username">{{ escrow.vendor_username }}</div>
+                                            </div>
+                                        </div>
+                                        {% if escrow.vendor_wallet_info %}
+                                        <div class="tech-info-box">
+                                            <span class="tech-info-label">Multisig Info Hash</span>
+                                            <code class="tech-hash">{{ escrow.vendor_wallet_info | truncate(length=16, end="...") }}</code>
+                                            <span class="tech-status tech-status-ready">✅ Prepared</span>
+                                        </div>
+                                        {% else %}
+                                        <span class="tech-status tech-status-pending">⏳ Pending</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Arbiter -->
+                                    <div class="tech-participant">
+                                        <div class="tech-participant-header">
+                                            <span class="tech-role-icon">⚖️</span>
+                                            <div>
+                                                <div class="tech-role-label">Arbiter</div>
+                                                <div class="tech-username">{{ escrow.arbiter_username }}</div>
+                                            </div>
+                                        </div>
+                                        {% if escrow.arbiter_wallet_info %}
+                                        <div class="tech-info-box">
+                                            <span class="tech-info-label">Multisig Info Hash</span>
+                                            <code class="tech-hash">{{ escrow.arbiter_wallet_info | truncate(length=16, end="...") }}</code>
+                                            <span class="tech-status tech-status-ready">✅ Prepared</span>
+                                        </div>
+                                        {% else %}
+                                        <span class="tech-status tech-status-pending">⏳ Pending</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Multisig Timeline -->
+                            <div class="tech-detail-card">
+                                <h3 class="tech-detail-title">Multisig Setup Timeline</h3>
+                                <div class="tech-timeline">
+                                    <div class="tech-timeline-item {% if escrow.multisig_phase != 'init' %}completed{% endif %}">
+                                        <div class="tech-timeline-marker">1</div>
+                                        <div class="tech-timeline-content">
+                                            <div class="tech-timeline-title">Prepare Multisig</div>
+                                            <div class="tech-timeline-desc">Each party generates multisig info</div>
+                                            <div class="tech-timeline-time">{{ escrow.created_at | date(format="%Y-%m-%d %H:%M") }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="tech-timeline-item {% if escrow.multisig_phase in ['finalized', 'funded', 'released'] %}completed{% endif %}">
+                                        <div class="tech-timeline-marker">2</div>
+                                        <div class="tech-timeline-content">
+                                            <div class="tech-timeline-title">Exchange Info</div>
+                                            <div class="tech-timeline-desc">Coordinator exchanges multisig info between parties</div>
+                                        </div>
+                                    </div>
+                                    <div class="tech-timeline-item {% if escrow.multisig_phase in ['finalized', 'funded', 'released'] %}completed{% endif %}">
+                                        <div class="tech-timeline-marker">3</div>
+                                        <div class="tech-timeline-content">
+                                            <div class="tech-timeline-title">Finalize Wallet</div>
+                                            <div class="tech-timeline-desc">Multisig wallet created with 2/3 requirement</div>
+                                        </div>
+                                    </div>
+                                    <div class="tech-timeline-item {% if escrow.multisig_phase in ['funded', 'released'] %}completed{% endif %}">
+                                        <div class="tech-timeline-marker">4</div>
+                                        <div class="tech-timeline-content">
+                                            <div class="tech-timeline-title">Fund Escrow</div>
+                                            <div class="tech-timeline-desc">Buyer deposits XMR to multisig address</div>
+                                            {% if escrow.funded_at %}
+                                            <div class="tech-timeline-time">{{ escrow.funded_at | date(format="%Y-%m-%d %H:%M") }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Export Technical Data -->
+                            <div class="tech-detail-card tech-export-card">
+                                <h3 class="tech-detail-title">Export Technical Data</h3>
+                                <p class="tech-export-desc">Download cryptographic proof and full escrow details for your records</p>
+                                <button class="tech-export-btn" onclick="exportTechnicalData('{{ escrow.id }}')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    Download JSON
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -433,5 +659,99 @@
 
     <script src="/static/js/lucide.min.js"></script>
     <script src="/static/js/base.js"></script>
-    <script src="/static/js/escrow-websocket.js"></script></body>
+    <script src="/static/js/escrow-websocket.js"></script>
+
+    <script>
+        // Toggle Technical Details
+        function toggleTechnicalDetails() {
+            const toggle = document.getElementById('tech-details-toggle');
+            const content = document.getElementById('tech-details-content');
+
+            if (content.style.display === 'none' || content.style.display === '') {
+                content.style.display = 'flex';
+                toggle.classList.add('expanded');
+                toggle.querySelector('span').textContent = 'Hide Technical Details';
+            } else {
+                content.style.display = 'none';
+                toggle.classList.remove('expanded');
+                toggle.querySelector('span').textContent = 'Show Technical Details';
+            }
+        }
+
+        // Copy to Clipboard
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+
+        // Export Technical Data as JSON
+        async function exportTechnicalData(escrowId) {
+            try {
+                const response = await fetch(`/api/escrow/${escrowId}`);
+                if (!response.ok) {
+                    console.error('Failed to fetch escrow data');
+                    return;
+                }
+
+                const escrowData = await response.json();
+
+                // Create export object
+                const exportData = {
+                    escrow_id: escrowData.id,
+                    order_id: escrowData.order_id,
+                    amount_atomic: escrowData.amount,
+                    amount_xmr: (escrowData.amount / 1000000000000).toFixed(12),
+                    multisig_address: escrowData.multisig_address,
+                    status: escrowData.status,
+                    multisig_phase: escrowData.multisig_phase,
+                    participants: {
+                        buyer: {
+                            id: escrowData.buyer_id,
+                            wallet_info_present: !!escrowData.buyer_wallet_info
+                        },
+                        vendor: {
+                            id: escrowData.vendor_id,
+                            wallet_info_present: !!escrowData.vendor_wallet_info
+                        },
+                        arbiter: {
+                            id: escrowData.arbiter_id,
+                            wallet_info_present: !!escrowData.arbiter_wallet_info
+                        }
+                    },
+                    timestamps: {
+                        created_at: escrowData.created_at,
+                        updated_at: escrowData.updated_at,
+                        last_activity_at: escrowData.last_activity_at
+                    },
+                    transaction_hash: escrowData.transaction_hash,
+                    exported_at: new Date().toISOString()
+                };
+
+                // Create download
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `escrow_${escrowId.substring(0, 8)}_technical_data.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                console.log('Technical data exported successfully');
+            } catch (error) {
+                console.error('Error exporting technical data:', error);
+                alert('Failed to export technical data. Please try again.');
+            }
+        }
+    </script>
+</body>
 </html>

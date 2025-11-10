@@ -85,6 +85,12 @@ class CheckoutFlow {
         if (devSimulateBtn) {
             devSimulateBtn.addEventListener('click', () => this.devSimulatePayment());
         }
+
+        // Fund Escrow button
+        const fundEscrowBtn = document.getElementById('fund-escrow-btn');
+        if (fundEscrowBtn) {
+            fundEscrowBtn.addEventListener('click', () => this.checkPaymentManually());
+        }
     }
 
     /**
@@ -177,6 +183,55 @@ class CheckoutFlow {
     }
 
     /**
+     * Check payment manually - forces blockchain verification
+     */
+    async checkPaymentManually() {
+        console.log('[Checkout] Manual payment check requested');
+
+        if (!this.escrowId) {
+            this.showNotification('Erreur: Aucun escrow trouvé', 'error');
+            return;
+        }
+
+        try {
+            // Disable button
+            const btn = document.getElementById('fund-escrow-btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i data-lucide="loader" class="animate-spin"></i><span>Vérification en cours...</span>';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+
+            // Force check payment status
+            await this.checkPaymentStatus();
+
+            // Show notification
+            this.showNotification('Vérification lancée - la confirmation peut prendre quelques minutes', 'info');
+
+            // Re-enable button after 5 seconds
+            setTimeout(() => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i data-lucide="wallet"></i><span>J\'ai envoyé les fonds - Vérifier le paiement</span>';
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }
+            }, 5000);
+
+        } catch (error) {
+            console.error('[Checkout] Manual check error:', error);
+            this.showNotification('Erreur lors de la vérification', 'error');
+
+            // Re-enable button
+            const btn = document.getElementById('fund-escrow-btn');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="wallet"></i><span>J\'ai envoyé les fonds - Vérifier le paiement</span>';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }
+        }
+    }
+
+    /**
      * DEV: Simulate payment (for testing without blockchain)
      */
     async devSimulatePayment() {
@@ -256,6 +311,12 @@ class CheckoutFlow {
         // Show escrow init UI
         document.getElementById('escrow-init')?.style.removeProperty('display');
 
+        // Start typewriter effect
+        if (window.startMultisigTypewriter) {
+            // console.log('[Checkout] Starting typewriter effect');
+            window.startMultisigTypewriter();
+        }
+
         // Step 1: Create order if needed (already created with shipping address)
         if (!this.orderId) {
             console.error('[Checkout] No order ID - should have been created with shipping address');
@@ -264,8 +325,6 @@ class CheckoutFlow {
 
         // Step 2: Initialize escrow
         try {
-            this.updateMultisigProgress('prepare', 'pending');
-
             const response = await fetch(`/api/orders/${this.orderId}/init-escrow`, {
                 method: 'POST',
                 headers: {
@@ -313,55 +372,129 @@ class CheckoutFlow {
 
     /**
      * Simulate multisig progress (UI updates)
+     * Now tracks REAL backend progress via polling
      */
     async simulateMultisigProgress() {
+        // console.log('[Checkout] Starting realistic multisig progress tracking');
+
+        // Step timing based on real observations (in seconds)
+        // Total: ~115 seconds (1m 55s)
+        const stepTimings = {
+            prepare: { duration: 30, label: 'Generating multisig information...', percentage: 20 },
+            make: { duration: 25, label: 'Building 2-of-3 wallet...', percentage: 40 },
+            'sync-r1': { duration: 25, label: 'Exchanging sync information (round 1)...', percentage: 60 },
+            'sync-r2': { duration: 25, label: 'Finalizing multisig wallet (round 2)...', percentage: 80 },
+            verify: { duration: 10, label: 'Checking wallet consistency...', percentage: 100 }
+        };
+
         const steps = ['prepare', 'make', 'sync-r1', 'sync-r2', 'verify'];
+        const totalDuration = 115; // seconds
+        const startTime = Date.now();
 
-        for (let i = 0; i < steps.length; i++) {
-            await this.sleep(2000 + Math.random() * 1000);
-            this.updateMultisigProgress(steps[i], 'complete');
+        let currentStepIndex = 0;
 
-            if (i < steps.length - 1) {
-                this.updateMultisigProgress(steps[i + 1], 'pending');
+        // Start first step
+        this.updateGlobalProgress(0, stepTimings[steps[0]].label, 0, totalDuration);
+
+        // Poll backend every 2 seconds to check real progress
+        const pollInterval = setInterval(async () => {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+
+            // Calculate which step we should be on based on elapsed time
+            let cumulativeTime = 0;
+            let expectedStep = 0;
+            for (let i = 0; i < steps.length; i++) {
+                cumulativeTime += stepTimings[steps[i]].duration;
+                if (elapsed < cumulativeTime) {
+                    expectedStep = i;
+                    break;
+                }
             }
-        }
 
-        // Multisig complete - fetch escrow status
-        await this.sleep(1000);
-        await this.checkEscrowStatus();
+            // Update UI if we've advanced to a new step
+            if (expectedStep > currentStepIndex) {
+                currentStepIndex = expectedStep;
+            }
+
+            // Update global progress bar
+            const currentStep = steps[currentStepIndex];
+            const stepInfo = stepTimings[currentStep];
+            const percentage = stepInfo.percentage;
+            const eta = Math.max(0, totalDuration - elapsed);
+
+            this.updateGlobalProgress(percentage, stepInfo.label, elapsed, eta);
+
+            // Check if escrow is actually ready
+            if (elapsed >= totalDuration || currentStepIndex >= steps.length - 1) {
+                try {
+                    const response = await fetch(`/api/escrow/${this.escrowId}/status`);
+                    const data = await response.json();
+
+                    if (response.ok && data.multisig_address && data.multisig_address !== 'Pending') {
+                        console.log('[Checkout] Multisig address ready!', data.multisig_address);
+
+                        this.updateGlobalProgress(100, 'Multisig address generated!', elapsed, 0);
+
+                        // Stop polling
+                        clearInterval(pollInterval);
+
+                        // Show payment instructions
+                        await this.sleep(1000);
+                        await this.checkEscrowStatus();
+                    }
+                } catch (error) {
+                    console.error('[Checkout] Error checking escrow status:', error);
+                }
+            }
+
+            // Safety timeout: stop after 3 minutes
+            if (elapsed > 180) {
+                console.warn('[Checkout] Multisig setup timeout - checking final status');
+                clearInterval(pollInterval);
+                await this.checkEscrowStatus();
+            }
+        }, 2000); // Poll every 2 seconds
     }
 
     /**
-     * Update multisig progress UI
+     * Update global progress bar
      */
-    updateMultisigProgress(step, status) {
-        const stepEl = document.getElementById(`step-${step}`);
-        if (!stepEl) {
-            console.warn(`[Checkout] Step element not found: step-${step}`);
-            return;
+    updateGlobalProgress(percentage, statusText, elapsed, eta) {
+        const progressBarFill = document.getElementById('progress-bar-fill');
+        const progressPercentage = document.getElementById('progress-percentage');
+        const progressStatusText = document.getElementById('progress-status-text');
+        const progressElapsed = document.getElementById('progress-elapsed');
+        const progressEta = document.getElementById('progress-eta');
+
+        if (progressBarFill) {
+            progressBarFill.style.width = `${percentage}%`;
         }
 
-        const icon = stepEl.querySelector('.progress-icon svg');
-        if (!icon) {
-            console.warn(`[Checkout] Icon element not found in step-${step}`);
-            return;
+        if (progressPercentage) {
+            progressPercentage.textContent = `${percentage}%`;
         }
 
-        stepEl.classList.remove('pending', 'complete');
-        stepEl.classList.add(status);
-
-        if (status === 'pending') {
-            icon.setAttribute('data-lucide', 'loader');
-            icon.classList.add('animate-spin');
-        } else if (status === 'complete') {
-            icon.setAttribute('data-lucide', 'check-circle');
-            icon.classList.remove('animate-spin');
+        if (progressStatusText) {
+            progressStatusText.textContent = statusText;
         }
 
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
+        if (progressElapsed) {
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            progressElapsed.textContent = `Elapsed: ${minutes}m ${seconds}s`;
+        }
+
+        if (progressEta) {
+            if (eta <= 0) {
+                progressEta.textContent = 'Almost done...';
+            } else {
+                const minutes = Math.floor(eta / 60);
+                const seconds = eta % 60;
+                progressEta.textContent = `ETA: ~${minutes}m ${seconds}s`;
+            }
         }
     }
+
 
     /**
      * Check escrow status
@@ -370,11 +503,13 @@ class CheckoutFlow {
         if (!this.escrowId) return;
 
         try {
-            const response = await fetch(`/api/escrow/${this.escrowId}/status`);
+            const response = await fetch(`/api/escrow/${this.escrowId}/status`, {
+                credentials: 'include'
+            });
             const data = await response.json();
 
             if (response.ok) {
-                console.log('[Checkout] Escrow status:', data);
+                // console.log('[Checkout] Escrow status:', data);
                 this.escrowStatus = data.status;
 
                 // Show payment instructions even if address is "Pending" (for DEV mode)
@@ -501,11 +636,13 @@ class CheckoutFlow {
         if (!this.escrowId) return;
 
         try {
-            const response = await fetch(`/api/escrow/${this.escrowId}/status`);
+            const response = await fetch(`/api/escrow/${this.escrowId}/status`, {
+                credentials: 'include'
+            });
             const data = await response.json();
 
             if (response.ok) {
-                console.log('[Checkout] Payment status:', data.status);
+                // console.log('[Checkout] Payment status:', data.status);
 
                 // Update confirmations if available
                 if (data.confirmations !== undefined) {
@@ -632,7 +769,7 @@ class CheckoutFlow {
             this.ws.onmessage = (event) => {
                 try {
                     const message = JSON.parse(event.data);
-                    console.log('[Checkout] WebSocket message:', message);
+                    // console.log('[Checkout] WebSocket message:', message);
 
                     this.handleWebSocketMessage(message);
                 } catch (error) {
@@ -645,7 +782,7 @@ class CheckoutFlow {
             };
 
             this.ws.onclose = () => {
-                console.log('[Checkout] WebSocket disconnected');
+                // console.log('[Checkout] WebSocket disconnected');
 
                 // Reconnect after 5 seconds
                 setTimeout(() => {
@@ -800,3 +937,205 @@ style.textContent = `
 }
 `;
 document.head.appendChild(style);
+
+// =============================================================================
+// TYPEWRITER EFFECT FOR MULTISIG PROGRESS
+// =============================================================================
+
+const funnyMessages = [
+    "Multisig your potatoes",
+    "Funds somewhere between here and there",
+    "Escrow for your thoughts",
+    "Mining your own business",
+    "Proof of steak",
+    "Consensus among vegetables",
+    "Hashing it out with reality",
+    "Your keys are probably fine",
+    "Wallet.exe has stopped caring",
+    "Nodes nodding off",
+    "Transaction pending since birth",
+    "Signatures collecting dust",
+    "The blockchain suggests therapy",
+    "Zero knowledge, zero problems",
+    "Fork in the road ahead",
+    "Mining for compliments",
+    "Your balance is conceptually yours",
+    "Escrow is just friendship with paperwork",
+    "Three of three shrugging",
+    "Cryptographically secure feelings",
+    "Funds temporarily eternal",
+    "The mempool of consciousness",
+    "Validating your parking",
+    "Keys under the digital doormat",
+    "Mining your childhood trauma",
+    "Consensus is a social construct",
+    "Your coins exist theoretically",
+    "Escrow in the middle of nowhere",
+    "Multisig your vegetables first",
+    "Proof of work-life balance",
+    "Hashing out the details later",
+    "Nodes having a moment",
+    "Transaction lost in translation",
+    "Signatures but no autographs",
+    "The blockchain of command",
+    "Zero confirmations, maximum doubt",
+    "Fork it, we'll do it live",
+    "Mining for meaning",
+    "Your balance is having doubts",
+    "Escrow with extra steps",
+    "Two of three ain't bad",
+    "Cryptographically probable",
+    "Funds in a quantum state",
+    "The mempool of broken dreams",
+    "Validating your existence",
+    "Keys to the kingdom of nothing",
+    "Mining for approval",
+    "Consensus pending approval",
+    "Your coins in witness protection",
+    "Escrow as a lifestyle choice",
+    "Multisig your expectations",
+    "Proof of trying",
+    "Hashing browns for breakfast",
+    "Nodes knowing nothing",
+    "Transaction in a relationship",
+    "Signatures without commitment",
+    "The blockchain of memories",
+    "Zero balance, full vibes",
+    "Fork around and find out",
+    "Mining your own grave",
+    "Your balance on vacation",
+    "Escrow is just spicy holding",
+    "Three signatures, no witnesses",
+    "Cryptographically confused",
+    "Funds having an identity crisis",
+    "The mempool of regret",
+    "Validating parking tickets",
+    "Keys to someone else's car",
+    "Mining for bitcoin in a goldmine",
+    "Consensus among chaos",
+    "Your coins taking a break",
+    "Escrow without the crow",
+    "Multisig your feelings",
+    "Proof of stake in society",
+    "Hashing out childhood issues",
+    "Nodes pretending to care",
+    "Transaction having second thoughts",
+    "Signatures with commitment issues",
+    "The blockchain of evidence",
+    "Zero effort, maximum security",
+    "Fork this particular situation",
+    "Mining compliments from strangers",
+    "Your balance needs balance",
+    "Escrow eating crow",
+    "Three blind signatures",
+    "Cryptographically challenged",
+    "Funds fundamentally misunderstood",
+    "The mempool of destiny",
+    "Validating invalid validation",
+    "Keys to the highway",
+    "Mining for comedy gold",
+    "Consensus is just peer pressure",
+    "Your coins coining phrases",
+    "Escrow and tell",
+    "Multisig your homework",
+    "Proof of proof",
+    "Hashing hashtags",
+    "Nodes being nodular",
+    "Transaction pending since yesterday",
+    "Signatures signing off",
+    "The blockchain of custody",
+    "Zero sum, negative game",
+    "Fork in the disposal",
+    "Mining for likes",
+    "Your balance balanced badly",
+    "Escrow growing slow",
+    "Three signatures short of a quartet",
+    "Cryptographically cryptic",
+    "Funds funded by fun",
+    "The mempool of mediocrity",
+    "Validating the validators",
+    "Keys to the city of nowhere",
+    "Mining minor minerals",
+    "Consensus consensually",
+    "Your coins flipping themselves",
+    "Escrow is tomorrow",
+    "Multisig your sandwich",
+    "Proof of pudding",
+    "Hashing out the hash",
+    "Nodes anonymously famous",
+    "Transaction attracting inaction",
+    "Signatures significantly insignificant",
+    "The blockchain of jokes",
+    "Zero to hero to zero",
+    "Fork the police",
+    "Mining minding its business",
+    "Your balance imbalanced",
+    "Escrow? More like es-later",
+    "Three amigos, no signatures",
+    "Cryptographically graphic",
+    "Funds fun while they lasted",
+    "The mempool of maybe",
+    "Validating various velociraptors",
+    "Keys to unlock nothing",
+    "Mining underwater",
+    "Consensus among NPCs",
+    "Your coins in coin heaven",
+    "Escrow escaping tomorrow",
+    "Multisig your multisig",
+    "Proof of poof",
+    "Hashing rehashing old hash",
+    "Nodes known to be unknown",
+    "Transaction transacting badly",
+    "Signatures signing in cursive"
+];
+
+let currentMessageIndex = 0;
+let currentCharIndex = 0;
+let typewriterInterval = null;
+
+function typeNextChar() {
+    const element = document.getElementById('multisig-typewriter');
+    if (!element) {
+        console.error('[Typewriter] Element #multisig-typewriter not found!');
+        return;
+    }
+
+    const message = funnyMessages[currentMessageIndex];
+    // console.log('[Typewriter] Message:', message, 'CharIndex:', currentCharIndex, '/', message.length);
+
+    if (currentCharIndex < message.length) {
+        element.textContent = message.substring(0, currentCharIndex + 1);
+        // console.log('[Typewriter] Updated text to:', element.textContent);
+        currentCharIndex++;
+    } else {
+        // Message complete, wait 3 seconds then start next message
+        // console.log('[Typewriter] Message complete, waiting 3s for next...');
+        clearInterval(typewriterInterval);
+        setTimeout(() => {
+            currentMessageIndex = (currentMessageIndex + 1) % funnyMessages.length;
+            currentCharIndex = 0;
+            element.textContent = '';
+            typewriterInterval = setInterval(typeNextChar, 50);
+        }, 3000);
+    }
+}
+
+// Global function to start typewriter (called from CheckoutFlow)
+window.startMultisigTypewriter = function() {
+    // console.log('[Typewriter] Starting typewriter effect!');
+
+    // Shuffle messages for variety
+    funnyMessages.sort(() => Math.random() - 0.5);
+
+    // Reset state
+    currentMessageIndex = 0;
+    currentCharIndex = 0;
+
+    // Clear any existing interval
+    if (typewriterInterval) {
+        clearInterval(typewriterInterval);
+    }
+
+    // Start typing
+    typewriterInterval = setInterval(typeNextChar, 50);
+};

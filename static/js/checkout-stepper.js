@@ -48,10 +48,14 @@ class CheckoutStepper {
         const checkmark = document.createElement('i');
         checkmark.dataset.lucide = 'check';
         checkmark.classList.add('lucide');
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons({ attrs: { class: 'lucide' }, icons: { check: lucide.icons.check } });
-        }
         this.checkmarkIcon = checkmark;
+
+        // Initialize Lucide icons after a short delay to ensure DOM is ready
+        if (typeof lucide !== 'undefined') {
+            setTimeout(() => {
+                lucide.createIcons();
+            }, 50);
+        }
     }
 
     _setActiveStep(index) {
@@ -79,6 +83,10 @@ class CheckoutStepper {
                     const numberSpan = indicator.querySelector('span');
                     if (numberSpan) {
                         numberSpan.style.display = 'none';
+                    }
+                    // Re-initialize Lucide for the new icon
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
                     }
                 }
             } else if (i === index) {
