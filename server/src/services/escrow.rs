@@ -296,6 +296,22 @@ impl EscrowOrchestrator {
             }
         };
 
+        // 🔓 CRITICAL: Close wallets after successful multisig setup to free RPC slots
+        // Wallet rotation pattern: Create → Setup multisig → CLOSE → Save to disk
+        // Wallets will be automatically reopened later for signing/reading balance
+        info!("🔓 Multisig complete! Closing 3 wallets to free RPC slots (will reopen for signing)...");
+        let mut wallet_manager = self.wallet_manager.lock().await;
+        let freed_count = Self::cleanup_escrow_wallets(
+            &mut wallet_manager,
+            buyer_temp_wallet_id,
+            vendor_temp_wallet_id,
+            arbiter_temp_wallet_id,
+        )
+        .await;
+        drop(wallet_manager);
+
+        info!("✅ Freed {} RPC slots - wallets saved to disk, will reopen for signing", freed_count);
+
         // 6. Reload escrow again to get final state
         escrow = db_load_escrow(&self.db, escrow_id).await?;
 
