@@ -1686,6 +1686,82 @@ impl WalletManager {
             .await?;
         info!("✅ Reopened arbiter wallet: {}", arbiter_id);
 
+        // Synchronize multisig info before creating transaction
+        info!("🔄 Synchronizing multisig outputs before transaction...");
+
+        // Export multisig info from all 3 wallets
+        let buyer_wallet = self.wallets.get(&buyer_id)
+            .ok_or(WalletManagerError::WalletNotFound(buyer_id))?;
+        let buyer_info = buyer_wallet.rpc_client.rpc().export_multisig_info().await
+            .map_err(|e| WalletManagerError::RpcError(convert_monero_error(e)))?;
+
+        let vendor_wallet = self.wallets.get(&_vendor_id)
+            .ok_or(WalletManagerError::WalletNotFound(_vendor_id))?;
+        let vendor_info = vendor_wallet.rpc_client.rpc().export_multisig_info().await
+            .map_err(|e| WalletManagerError::RpcError(convert_monero_error(e)))?;
+
+        let arbiter_wallet = self.wallets.get(&arbiter_id)
+            .ok_or(WalletManagerError::WalletNotFound(arbiter_id))?;
+        let arbiter_info = arbiter_wallet.rpc_client.rpc().export_multisig_info().await
+            .map_err(|e| WalletManagerError::RpcError(convert_monero_error(e)))?;
+
+        info!("📤 Exported multisig info from 3 wallets");
+
+        // Import on each wallet
+        let buyer_wallet = self.wallets.get(&buyer_id)
+            .ok_or(WalletManagerError::WalletNotFound(buyer_id))?;
+        buyer_wallet.rpc_client.rpc()
+            .import_multisig_info(vec![vendor_info.info.clone(), arbiter_info.info.clone()])
+            .await
+            .map_err(|e| WalletManagerError::RpcError(convert_monero_error(e)))?;
+
+        let vendor_wallet = self.wallets.get(&_vendor_id)
+            .ok_or(WalletManagerError::WalletNotFound(_vendor_id))?;
+        vendor_wallet.rpc_client.rpc()
+            .import_multisig_info(vec![buyer_info.info.clone(), arbiter_info.info.clone()])
+            .await
+            .map_err(|e| WalletManagerError::RpcError(convert_monero_error(e)))?;
+
+        let arbiter_wallet = self.wallets.get(&arbiter_id)
+            .ok_or(WalletManagerError::WalletNotFound(arbiter_id))?;
+        arbiter_wallet.rpc_client.rpc()
+            .import_multisig_info(vec![buyer_info.info, vendor_info.info])
+            .await
+            .map_err(|e| WalletManagerError::RpcError(convert_monero_error(e)))?;
+
+        info!("✅ Multisig outputs synchronized");
+
+        // Get wallet balance and adjust amount for fees
+        let buyer_wallet = self.wallets.get(&buyer_id)
+            .ok_or(WalletManagerError::WalletNotFound(buyer_id))?;
+        let (total_balance, unlocked_balance) = buyer_wallet.rpc_client.rpc().get_balance().await
+            .map_err(|e| WalletManagerError::RpcError(convert_monero_error(e)))?;
+
+        info!("Wallet balance: total={}, unlocked={}", total_balance, unlocked_balance);
+
+        // Reserve space for transaction fees (0.0001 XMR = 100000000 atomic units)
+        const FEE_RESERVE: u64 = 100_000_000;
+
+        // Adjust destinations to account for fees
+        let mut adjusted_destinations = destinations.clone();
+        if let Some(dest) = adjusted_destinations.first_mut() {
+            if unlocked_balance > FEE_RESERVE {
+                let max_sendable = unlocked_balance - FEE_RESERVE;
+                if dest.amount > max_sendable {
+                    info!(
+                        "Adjusting amount from {} to {} to reserve {} for fees",
+                        dest.amount, max_sendable, FEE_RESERVE
+                    );
+                    dest.amount = max_sendable;
+                }
+            } else {
+                return Err(WalletManagerError::InvalidState {
+                    expected: format!("balance > {}", FEE_RESERVE),
+                    actual: format!("balance = {}", unlocked_balance),
+                });
+            }
+        }
+
         // 3. Create unsigned transaction using buyer wallet
         info!("Creating unsigned transaction with buyer wallet");
         let buyer_wallet = self
@@ -1696,31 +1772,20 @@ impl WalletManager {
         let create_result = buyer_wallet
             .rpc_client
             .rpc()
-            .transfer_multisig(destinations.clone())
+            .transfer_multisig(adjusted_destinations)
             .await
             .map_err(|e| WalletManagerError::RpcError(convert_monero_error(e)))?;
 
         info!(
-            "Transaction created: hash={}, fee={} atomic units",
+            "Transaction created and auto-signed by buyer: hash={}, fee={} atomic units",
             create_result.tx_hash, create_result.fee
         );
 
-        // 4. Sign with buyer wallet (1st signature)
-        info!("Signing transaction with buyer wallet (1/2)");
-        let buyer_wallet = self
-            .wallets
-            .get(&buyer_id)
-            .ok_or(WalletManagerError::WalletNotFound(buyer_id))?;
+        // NOTE: transfer_multisig() automatically signs with the creating wallet (buyer)
+        // So we skip manual buyer signing and go directly to arbiter
 
-        let buyer_signed = buyer_wallet
-            .rpc_client
-            .rpc()
-            .sign_multisig(create_result.multisig_txset.clone())
-            .await
-            .map_err(|e| WalletManagerError::RpcError(convert_monero_error(e)))?;
-
-        // 5. Sign with arbiter wallet (2nd signature - completes 2-of-3)
-        info!("Signing transaction with arbiter wallet (2/2)");
+        // 4. Sign with arbiter wallet (2nd signature - completes 2-of-3)
+        info!("Adding arbiter signature (2/2 required)");
         let arbiter_wallet = self
             .wallets
             .get(&arbiter_id)
@@ -1729,7 +1794,7 @@ impl WalletManager {
         let arbiter_signed = arbiter_wallet
             .rpc_client
             .rpc()
-            .sign_multisig(buyer_signed.tx_data_hex.clone())
+            .sign_multisig(create_result.multisig_txset.clone())
             .await
             .map_err(|e| WalletManagerError::RpcError(convert_monero_error(e)))?;
 
