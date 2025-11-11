@@ -288,20 +288,39 @@ impl EscrowOrchestrator {
         // 5. Setup multisig to generate the shared address (Phase 2 - NON-CUSTODIAL)
         info!("🔐 [PHASE 2] Starting real multisig setup to generate shared address");
 
-        let multisig_address = self
+        let multisig_result = self
             .setup_multisig_non_custodial(
                 escrow_id,
                 buyer_temp_wallet_id,
                 vendor_temp_wallet_id,
                 arbiter_temp_wallet_id,
             )
-            .await
-            .context("Failed to setup multisig")?;
+            .await;
 
-        info!(
-            "✅ [PHASE 2] Multisig address generated: {}",
-            &multisig_address[..10]
-        );
+        let multisig_address = match multisig_result {
+            Ok(address) => {
+                info!(
+                    "✅ [PHASE 2] Multisig address generated: {}",
+                    &address[..10]
+                );
+                address
+            }
+            Err(e) => {
+                // CRITICAL: Cleanup on failure to free RPC slots
+                error!("❌ Multisig setup failed: {}. Cleaning up wallets to free RPC slots...", e);
+
+                let mut wallet_manager = self.wallet_manager.lock().await;
+                Self::cleanup_escrow_wallets(
+                    &mut wallet_manager,
+                    buyer_temp_wallet_id,
+                    vendor_temp_wallet_id,
+                    arbiter_temp_wallet_id,
+                )
+                .await;
+
+                return Err(e.context("Failed to setup multisig"));
+            }
+        };
 
         // 6. Reload escrow again to get final state
         escrow = db_load_escrow(&self.db, escrow_id).await?;
@@ -317,6 +336,80 @@ impl EscrowOrchestrator {
         );
 
         Ok(escrow)
+    }
+
+    /// Close all 3 temporary escrow wallets to free RPC slots (DRY helper)
+    ///
+    /// This method is called in multiple scenarios:
+    /// 1. After successful multisig setup
+    /// 2. After multisig setup failure (cleanup on error)
+    /// 3. On timeout or any other error during escrow initialization
+    ///
+    /// # Arguments
+    /// * `wallet_manager` - Locked WalletManager reference
+    /// * `buyer_id` - Buyer wallet UUID
+    /// * `vendor_id` - Vendor wallet UUID
+    /// * `arbiter_id` - Arbiter wallet UUID
+    ///
+    /// # Returns
+    /// Number of wallets successfully closed
+    async fn cleanup_escrow_wallets(
+        wallet_manager: &mut WalletManager,
+        buyer_id: Uuid,
+        vendor_id: Uuid,
+        arbiter_id: Uuid,
+    ) -> usize {
+        info!("🔓 Closing 3 temporary wallets to free RPC instances...");
+
+        let mut cleanup_count = 0;
+
+        if let Some(pool) = wallet_manager.wallet_pool() {
+            // Get pool stats BEFORE closing
+            let stats_before = pool.stats().await;
+            info!(
+                "🔍 WalletPool stats BEFORE cleanup: {}/{} RPC slots free",
+                stats_before.free, stats_before.total
+            );
+
+            // Collect wallet IDs
+            let wallet_ids = [buyer_id, vendor_id, arbiter_id];
+
+            // Close each wallet
+            for wallet_id in &wallet_ids {
+                if let Some(wallet) = wallet_manager.wallets.get(wallet_id) {
+                    if let Some(port) = wallet.rpc_port {
+                        match pool.close_wallet(port).await {
+                            Ok(_) => {
+                                info!("✅ Cleanup: Closed wallet {} on port {}", wallet_id, port);
+                                cleanup_count += 1;
+                            }
+                            Err(e) => {
+                                error!(
+                                    "❌ Cleanup failed for wallet {} on port {}: {}",
+                                    wallet_id, port, e
+                                );
+                            }
+                        }
+                    } else {
+                        warn!("⚠️ Wallet {} has no rpc_port tracked", wallet_id);
+                    }
+                } else {
+                    warn!("⚠️ Wallet {} not found in WalletManager", wallet_id);
+                }
+            }
+
+            // Get pool stats AFTER closing
+            let stats_after = pool.stats().await;
+            info!(
+                "🔍 WalletPool stats AFTER cleanup: {}/{} RPC slots free (freed {} slots)",
+                stats_after.free, stats_after.total, cleanup_count
+            );
+        } else {
+            warn!("⚠️ WalletPool not enabled - wallets will remain open (legacy mode)");
+        }
+
+        info!("✅ Cleanup complete: closed {} wallets", cleanup_count);
+        cleanup_count
     }
 
     /// Setup multisig for non-custodial architecture (private method)
@@ -451,61 +544,19 @@ impl EscrowOrchestrator {
             &multisig_address[..15]
         );
 
-        // Close all 3 temporary wallets to free RPC slots for other escrows
-        info!("🔓 Closing 3 temporary wallets to free RPC instances...");
-
+        // Register escrow wallet filenames for future reopening
         if let Some(pool) = wallet_manager.wallet_pool() {
-            // Register escrow wallet filenames in pool for future reopening
             pool.register_escrow_wallets(escrow_id).await;
-
-            // Get pool stats BEFORE closing
-            let stats_before = pool.stats().await;
-            info!(
-                "🔍 WalletPool stats BEFORE close: {}/{} RPC slots free",
-                stats_before.free, stats_before.total
-            );
-
-            // Collect rpc_port from each wallet
-            let mut ports_to_close = Vec::new();
-
-            for wallet_id in &[buyer_temp_wallet_id, vendor_temp_wallet_id, arbiter_temp_wallet_id] {
-                if let Some(wallet) = wallet_manager.wallets.get(wallet_id) {
-                    if let Some(port) = wallet.rpc_port {
-                        ports_to_close.push(port);
-                        info!("📍 Will close wallet {} on port {}", wallet_id, port);
-                    } else {
-                        warn!("⚠️ Wallet {} has no rpc_port tracked", wallet_id);
-                    }
-                } else {
-                    warn!("⚠️ Wallet {} not found in WalletManager", wallet_id);
-                }
-            }
-
-            // Close all wallets via pool
-            let mut closed_count = 0;
-            for port in ports_to_close {
-                match pool.close_wallet(port).await {
-                    Ok(_) => {
-                        info!("✅ Closed wallet on port {}", port);
-                        closed_count += 1;
-                    }
-                    Err(e) => {
-                        error!("❌ Failed to close wallet on port {}: {}", port, e);
-                    }
-                }
-            }
-
-            // Get pool stats AFTER closing
-            let stats_after = pool.stats().await;
-            info!(
-                "🔍 WalletPool stats AFTER close: {}/{} RPC slots free (freed {} slots)",
-                stats_after.free, stats_after.total, closed_count
-            );
-
-            info!("✅ Closed {} wallets successfully", closed_count);
-        } else {
-            warn!("⚠️ WalletPool not enabled - wallets will remain open (legacy mode)");
         }
+
+        // Close all 3 temporary wallets to free RPC slots (DRY)
+        Self::cleanup_escrow_wallets(
+            &mut wallet_manager,
+            buyer_temp_wallet_id,
+            vendor_temp_wallet_id,
+            arbiter_temp_wallet_id,
+        )
+        .await;
 
         Ok(multisig_address)
     }
@@ -719,18 +770,25 @@ impl EscrowOrchestrator {
             return Err(anyhow::anyhow!("Only buyer can release funds"));
         }
 
-        // Validate escrow is in funded state
-        if escrow.status != "funded" {
+        // Validate escrow is in funded/active state (active = funds received and confirmed)
+        if escrow.status != "funded" && escrow.status != "active" {
             return Err(anyhow::anyhow!(
-                "Escrow must be in 'funded' state to release funds (current: {})",
+                "Escrow must be in 'funded' or 'active' state to release funds (current: {})",
                 escrow.status
             ));
         }
 
-        // Validate vendor address format (basic check)
-        if !vendor_address.starts_with('4') || vendor_address.len() != 95 {
+        // Validate vendor address format (mainnet: 4/8, testnet: 9/A/B, 95-106 chars)
+        let first_char = vendor_address.chars().next().unwrap_or('0');
+        let len = vendor_address.len();
+        if len < 95 || len > 106 {
             return Err(anyhow::anyhow!(
-                "Invalid Monero address format (must start with 4 and be 95 chars)"
+                "Invalid Monero address length: {} (must be 95-106 characters)", len
+            ));
+        }
+        if first_char != '4' && first_char != '8' && first_char != '9' && first_char != 'A' && first_char != 'B' {
+            return Err(anyhow::anyhow!(
+                "Invalid Monero address format: must start with 4/8 (mainnet) or 9/A/B (testnet)"
             ));
         }
 
@@ -816,18 +874,25 @@ impl EscrowOrchestrator {
             ));
         }
 
-        // Validate escrow is in funded state
-        if escrow.status != "funded" {
+        // Validate escrow is in funded/active state (active = funds received and confirmed)
+        if escrow.status != "funded" && escrow.status != "active" {
             return Err(anyhow::anyhow!(
-                "Escrow must be in 'funded' state to refund (current: {})",
+                "Escrow must be in 'funded' or 'active' state to refund (current: {})",
                 escrow.status
             ));
         }
 
-        // Validate buyer address format (basic check)
-        if !buyer_address.starts_with('4') || buyer_address.len() != 95 {
+        // Validate buyer address format (mainnet: 4/8, testnet: 9/A/B, 95-106 chars)
+        let first_char = buyer_address.chars().next().unwrap_or('0');
+        let len = buyer_address.len();
+        if len < 95 || len > 106 {
             return Err(anyhow::anyhow!(
-                "Invalid Monero address format (must start with 4 and be 95 chars)"
+                "Invalid Monero address length: {} (must be 95-106 characters)", len
+            ));
+        }
+        if first_char != '4' && first_char != '8' && first_char != '9' && first_char != 'A' && first_char != 'B' {
+            return Err(anyhow::anyhow!(
+                "Invalid Monero address format: must start with 4/8 (mainnet) or 9/A/B (testnet)"
             ));
         }
 

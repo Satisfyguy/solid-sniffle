@@ -1053,8 +1053,20 @@ pub async fn init_escrow(
         .await
     {
         Ok(escrow) => {
-            // Update order with escrow_id
-            match Order::set_escrow(&mut conn, order_id_str, escrow.id.clone()) {
+            // Get FRESH DB connection after async operation (multisig setup takes ~144s)
+            // The old connection may have timed out or been locked by other services
+            let mut fresh_conn = match pool.get() {
+                Ok(conn) => conn,
+                Err(e) => {
+                    tracing::error!("Failed to get fresh DB connection after escrow init: {}", e);
+                    return HttpResponse::InternalServerError().json(serde_json::json!({
+                        "error": "Failed to get DB connection for order update"
+                    }))
+                }
+            };
+
+            // Update order with escrow_id using fresh connection
+            match Order::set_escrow(&mut fresh_conn, order_id_str, escrow.id.clone()) {
                 Ok(_) => {
                     tracing::info!("Escrow initialized for order {}: escrow_id={}", order.id, escrow.id);
 

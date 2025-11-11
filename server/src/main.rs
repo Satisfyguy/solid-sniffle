@@ -302,6 +302,21 @@ async fn main() -> Result<()> {
     });
     info!("TimeoutMonitor background service started");
 
+    // Initialize and start BlockchainMonitor for automatic payment detection
+    use server::services::blockchain_monitor::{BlockchainMonitor, MonitorConfig};
+    let blockchain_monitor = Arc::new(BlockchainMonitor::new(
+        wallet_manager.clone(),
+        pool.clone(),
+        websocket_server.clone(),
+        MonitorConfig::default(), // poll_interval: 30s, required_confirmations: 10
+    ));
+
+    let blockchain_monitor_handle = blockchain_monitor.clone();
+    tokio::spawn(async move {
+        blockchain_monitor_handle.start_monitoring().await;
+    });
+    info!("BlockchainMonitor background service started (30s polling interval)");
+
     // 10. Initialize Tera template engine
     let tera = Tera::new("templates/**/*.html").context("Failed to initialize Tera templates")?;
     info!("Tera template engine initialized");

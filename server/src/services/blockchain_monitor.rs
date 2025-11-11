@@ -165,14 +165,66 @@ impl BlockchainMonitor {
             buyer_temp_wallet_id
         );
 
-        // Query blockchain for wallet balance
-        let wallet_manager = self.wallet_manager.lock().await;
-        let (total_balance, unlocked_balance) = wallet_manager
-            .get_balance(buyer_temp_wallet_id)
-            .await
-            .context("Failed to get wallet balance")?;
+        // Query blockchain for wallet balance directly via RPC
+        // Open the wallet file first (wallets are stored as buyer_temp_escrow_{escrow_id})
+        let wallet_filename = format!("buyer_temp_escrow_{}", escrow_id);
 
-        drop(wallet_manager);
+        // Use the first RPC instance (port 18082) for balance checks
+        let rpc_url = "http://127.0.0.1:18082/json_rpc";
+        let client = reqwest::Client::new();
+
+        // Open wallet
+        let open_payload = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": "0",
+            "method": "open_wallet",
+            "params": {
+                "filename": wallet_filename
+            }
+        });
+
+        client.post(rpc_url)
+            .json(&open_payload)
+            .send()
+            .await
+            .context("Failed to send open_wallet request")?;
+
+        // Refresh wallet to sync with blockchain
+        let refresh_payload = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": "0",
+            "method": "refresh"
+        });
+
+        client.post(rpc_url)
+            .json(&refresh_payload)
+            .send()
+            .await
+            .context("Failed to refresh wallet")?;
+
+        // Get balance
+        let balance_payload = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": "0",
+            "method": "get_balance"
+        });
+
+        let response = client.post(rpc_url)
+            .json(&balance_payload)
+            .send()
+            .await
+            .context("Failed to send get_balance request")?;
+
+        let balance_result: serde_json::Value = response.json().await
+            .context("Failed to parse balance response")?;
+
+        let total_balance = balance_result["result"]["balance"]
+            .as_u64()
+            .ok_or_else(|| anyhow::anyhow!("Missing balance in response"))?;
+
+        let unlocked_balance = balance_result["result"]["unlocked_balance"]
+            .as_u64()
+            .ok_or_else(|| anyhow::anyhow!("Missing unlocked_balance in response"))?;
 
         info!(
             "Escrow {} wallet balance: total={}, unlocked={}, expected={}",
@@ -417,8 +469,15 @@ impl BlockchainMonitor {
             use crate::schema::escrows::dsl::*;
             use diesel::prelude::*;
 
+            // Monitor escrows in "created" or "funded" status that have a multisig address
+            // "created" = multisig setup complete, waiting for payment
+            // "funded" = payment detected but not yet confirmed (legacy status)
             escrows
-                .filter(status.eq("funded"))
+                .filter(
+                    status.eq("created")
+                    .or(status.eq("funded"))
+                )
+                .filter(multisig_address.is_not_null())
                 .select(id)
                 .load::<String>(&mut conn)
         })

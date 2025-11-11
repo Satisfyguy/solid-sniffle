@@ -62,14 +62,16 @@ pub struct RegisterRequest {
     pub csrf_token: String,
 }
 
-/// Validate Monero address format (simple check: starts with 4 or 8, 95-106 chars)
+/// Validate Monero address format (mainnet: 4/8, testnet: 9/A/B, 95-106 chars)
 fn is_valid_monero_address(addr: &str) -> bool {
     let len = addr.len();
     if len < 95 || len > 106 {
         return false;
     }
     let first_char = addr.chars().next().unwrap_or('0');
-    if first_char != '4' && first_char != '8' {
+    // Mainnet: 4 (standard) or 8 (subaddress)
+    // Testnet: 9 (standard) or A (subaddress) or B (subaddress)
+    if first_char != '4' && first_char != '8' && first_char != '9' && first_char != 'A' && first_char != 'B' {
         return false;
     }
     // Check all characters are alphanumeric
@@ -117,7 +119,7 @@ pub async fn register(
     if let Some(ref addr) = req.wallet_address {
         if !is_valid_monero_address(addr) {
             return if is_htmx {
-                Ok(htmx_error_response("Invalid Monero address format. Must start with 4 or 8 and be 95-106 characters."))
+                Ok(htmx_error_response("Invalid Monero address format. Mainnet: starts with 4 or 8. Testnet: starts with 9, A, or B. Length: 95-106 characters."))
             } else {
                 Err(ApiError::Internal("Invalid Monero address format".to_string()))
             };
@@ -467,7 +469,7 @@ pub async fn update_wallet_address(
     // Validate wallet address format
     if !is_valid_monero_address(&req.wallet_address) {
         return if is_htmx {
-            Ok(htmx_error_response("Invalid Monero address format. Must start with 4 or 8 and be 95-106 characters."))
+            Ok(htmx_error_response("Invalid Monero address format. Mainnet: starts with 4 or 8. Testnet: starts with 9, A, or B. Length: 95-106 characters."))
         } else {
             Err(ApiError::Internal("Invalid Monero address format".to_string()))
         };
