@@ -131,23 +131,44 @@ async fn main() -> Result<()> {
     // 6. Initialize Wallet Manager with persistence and automatic recovery
     let encryption_key = hex::decode(&db_encryption_key).context("Failed to hex decode DB_ENCRYPTION_KEY")?;
     let wallet_manager = {
-        // Configure 3 RPC instances (one per role: buyer, vendor, arbiter)
+        // Configure 6 RPC instances with failover (2 per role)
+        // Pattern: index % 3 determines role (0=Buyer, 1=Vendor, 2=Arbiter)
         // NOTE: URL should NOT include /json_rpc suffix - it's added by the RPC client
         let rpc_configs = vec![
+            // Primary RPCs
             MoneroConfig {
-                rpc_url: "http://127.0.0.1:18082".to_string(), // Buyer
+                rpc_url: "http://127.0.0.1:18082".to_string(), // Buyer primary
                 rpc_user: None,
                 rpc_password: None,
                 timeout_seconds: 30,
             },
             MoneroConfig {
-                rpc_url: "http://127.0.0.1:18083".to_string(), // Vendor
+                rpc_url: "http://127.0.0.1:18083".to_string(), // Vendor primary
                 rpc_user: None,
                 rpc_password: None,
                 timeout_seconds: 30,
             },
             MoneroConfig {
-                rpc_url: "http://127.0.0.1:18084".to_string(), // Arbiter
+                rpc_url: "http://127.0.0.1:18084".to_string(), // Arbiter primary
+                rpc_user: None,
+                rpc_password: None,
+                timeout_seconds: 30,
+            },
+            // Backup RPCs for Phase 1.1 failover testing
+            MoneroConfig {
+                rpc_url: "http://127.0.0.1:18085".to_string(), // Buyer backup
+                rpc_user: None,
+                rpc_password: None,
+                timeout_seconds: 30,
+            },
+            MoneroConfig {
+                rpc_url: "http://127.0.0.1:18086".to_string(), // Vendor backup
+                rpc_user: None,
+                rpc_password: None,
+                timeout_seconds: 30,
+            },
+            MoneroConfig {
+                rpc_url: "http://127.0.0.1:18087".to_string(), // Arbiter backup
                 rpc_user: None,
                 rpc_password: None,
                 timeout_seconds: 30,

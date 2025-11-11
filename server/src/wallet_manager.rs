@@ -228,6 +228,189 @@ impl WalletManager {
         self.wallet_pool.as_ref()
     }
 
+    // ===== PHASE 1.1: RPC HEALTH CHECKS WITH AUTOMATIC FAILOVER =====
+
+    /// Get RPC list for a specific role (HELPER - no health checks)
+    ///
+    /// Internal helper that filters rpc_configs by role index pattern.
+    /// Use get_healthy_rpc_for_role() for production (includes health checks).
+    ///
+    /// # Architecture
+    /// - Buyer wallets: Ports 18082, 18085, 18088... (index % 3 == 0)
+    /// - Vendor wallets: Ports 18083, 18086, 18089... (index % 3 == 1)
+    /// - Arbiter wallets: Ports 18084, 18087, 18090... (index % 3 == 2)
+    fn get_rpcs_for_role(&self, role: &WalletRole) -> Result<Vec<MoneroConfig>, WalletManagerError> {
+        let rpcs: Vec<MoneroConfig> = match role {
+            WalletRole::Buyer => {
+                self.rpc_configs
+                    .iter()
+                    .enumerate()
+                    .filter(|(i, _)| i % 3 == 0)
+                    .map(|(_, config)| config.clone())
+                    .collect()
+            }
+            WalletRole::Vendor => {
+                self.rpc_configs
+                    .iter()
+                    .enumerate()
+                    .filter(|(i, _)| i % 3 == 1)
+                    .map(|(_, config)| config.clone())
+                    .collect()
+            }
+            WalletRole::Arbiter => {
+                self.rpc_configs
+                    .iter()
+                    .enumerate()
+                    .filter(|(i, _)| i % 3 == 2)
+                    .map(|(_, config)| config.clone())
+                    .collect()
+            }
+        };
+
+        if rpcs.is_empty() {
+            return Err(WalletManagerError::NoAvailableRpc);
+        }
+
+        Ok(rpcs)
+    }
+
+    /// Get healthy RPC instance for a specific role with automatic failover (PHASE 1.1 - PRODUCTION)
+    ///
+    /// **PRODUCTION-READY:** Tests health of each RPC before assignment.
+    /// If an RPC is down, automatically tries the next one (failover).
+    ///
+    /// # Flow
+    /// 1. Get list of RPC instances for this role
+    /// 2. Try each RPC with 1s health check timeout
+    /// 3. Return first healthy RPC
+    /// 4. If all RPCs down → NoAvailableRpc error
+    ///
+    /// # Arguments
+    /// * `role` - Wallet role (Buyer, Vendor, or Arbiter)
+    ///
+    /// # Returns
+    /// MoneroConfig for a healthy RPC instance for this role
+    ///
+    /// # Errors
+    /// - NoAvailableRpc - No RPC instances configured for this role OR all RPCs are down
+    /// - RpcError - Unexpected error during health check
+    ///
+    /// # Performance
+    /// - Expected latency: 100-200ms per RPC (timeout 1s)
+    /// - Scales with number of RPCs: 3 RPCs = worst case 3s
+    /// - In practice, first RPC is usually healthy (sub-100ms)
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// // Get a healthy RPC for buyer wallet
+    /// let config = wallet_manager.get_healthy_rpc_for_role(&WalletRole::Buyer).await?;
+    ///
+    /// // If buyer RPC 1 (port 18082) is down:
+    /// // - Tries port 18082 (1s timeout) → fails
+    /// // - Tries port 18085 (1s timeout) → succeeds ✅
+    /// // - Returns config for port 18085
+    /// ```
+    pub async fn get_healthy_rpc_for_role(
+        &self,
+        role: &WalletRole,
+    ) -> Result<MoneroConfig, WalletManagerError> {
+        let role_rpcs = self.get_rpcs_for_role(role)?;
+
+        info!("🔍 Finding healthy RPC for {:?} role ({} candidates)...", role, role_rpcs.len());
+
+        // Try each RPC until we find a healthy one
+        for (attempt, config) in role_rpcs.iter().enumerate() {
+            match self.check_rpc_health(config).await {
+                Ok(true) => {
+                    info!(
+                        "✅ Using healthy RPC for {:?}: {} (attempt {}/{})",
+                        role, config.rpc_url, attempt + 1, role_rpcs.len()
+                    );
+                    return Ok(config.clone());
+                }
+                Ok(false) => {
+                    warn!(
+                        "⚠️  RPC unhealthy: {} (attempt {}/{})",
+                        config.rpc_url, attempt + 1, role_rpcs.len()
+                    );
+                    continue;
+                }
+                Err(e) => {
+                    error!(
+                        "❌ Health check error for {}: {} (attempt {}/{})",
+                        config.rpc_url, e, attempt + 1, role_rpcs.len()
+                    );
+                    continue;
+                }
+            }
+        }
+
+        error!(
+            "❌ No healthy RPC instances available for role={:?} (tested {} endpoints)",
+            role,
+            role_rpcs.len()
+        );
+        Err(WalletManagerError::NoAvailableRpc)
+    }
+
+    /// Check if an RPC instance is healthy (1s timeout)
+    ///
+    /// # Flow
+    /// 1. Create temporary RPC client
+    /// 2. Call get_wallet_info() (lightweight, quick verification)
+    /// 3. Timeout after 1s
+    ///
+    /// # Returns
+    /// - Ok(true) - RPC responded within timeout
+    /// - Ok(false) - RPC didn't respond or returned error
+    /// - Err - Unexpected error (should not fail health check)
+    ///
+    /// # Performance
+    /// - Healthy RPC: 10-50ms
+    /// - Slow RPC: 500-1000ms (hits timeout)
+    /// - Dead RPC: ~1s (timeout fires)
+    async fn check_rpc_health(&self, config: &MoneroConfig) -> Result<bool, WalletManagerError> {
+        use std::time::Duration;
+
+        match tokio::time::timeout(
+            Duration::from_secs(1),
+            self.ping_rpc(config)
+        )
+        .await
+        {
+            Ok(Ok(())) => Ok(true),
+            Ok(Err(e)) => {
+                debug!("RPC health check failed: {}", e);
+                Ok(false)
+            }
+            Err(_timeout) => {
+                warn!("RPC health check timeout for {}", config.rpc_url);
+                Ok(false)
+            }
+        }
+    }
+
+    /// Ping RPC with get_version() call
+    ///
+    /// Lightweight health check that doesn't require a wallet to be open.
+    /// Uses get_version() which only verifies RPC connectivity.
+    ///
+    /// # Returns
+    /// - Ok(()) if RPC responded
+    /// - Err(WalletManagerError) if connection failed
+    async fn ping_rpc(&self, config: &MoneroConfig) -> Result<(), WalletManagerError> {
+        use monero_marketplace_wallet::rpc::MoneroRpcClient;
+
+        let rpc_client = MoneroRpcClient::new(config.clone())
+            .map_err(|e| WalletManagerError::RpcError(CommonError::MoneroRpc(e.to_string())))?;
+
+        rpc_client
+            .get_version()
+            .await
+            .map(|_| ())
+            .map_err(|e| WalletManagerError::RpcError(CommonError::MoneroRpc(e.to_string())))
+    }
+
     /// Get dedicated RPC instance for a specific role (PRODUCTION SCALABILITY)
     ///
     /// This method implements role-based RPC assignment to prevent collisions
@@ -644,7 +827,8 @@ impl WalletManager {
 
         // PRODUCTION SCALABILITY: Use role-based RPC assignment instead of round-robin
         // This ensures buyer/vendor/arbiter wallets use different RPC instances
-        let config = self.get_rpc_for_role(&wallet_role)?;
+        // PHASE 1.1: Health check with automatic failover
+        let config = self.get_healthy_rpc_for_role(&wallet_role).await?;
         info!("🎯 Assigned {} to RPC: {}", role, config.rpc_url);
 
         // Create wallet filename based on escrow_id (for later reopening)
@@ -841,7 +1025,8 @@ impl WalletManager {
         );
 
         // 1. Get role-specific RPC config (PRODUCTION SCALABILITY)
-        let config = self.get_rpc_for_role(&role)?;
+        // PHASE 1.1: Health check with automatic failover
+        let config = self.get_healthy_rpc_for_role(&role).await?;
         info!("🎯 Assigned {:?} to RPC: {}", role, config.rpc_url);
 
         // 2. Extract port from config

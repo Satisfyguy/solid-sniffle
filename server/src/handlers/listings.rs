@@ -429,12 +429,18 @@ pub async fn create_listing_with_images(
                 .insert_header(("HX-Redirect", format!("/listings/{}", listing.id)))
                 .json(ListingResponse::from(listing))
         }
-        Ok(Err(e)) => HttpResponse::InternalServerError().json(serde_json::json!({
-            "error": format!("Failed to create listing: {}", e)
-        })),
-        Err(e) => HttpResponse::InternalServerError().json(serde_json::json!({
-            "error": format!("Async task failed: {}", e)
-        })),
+        Ok(Err(e)) => {
+            tracing::error!("Failed to create listing in database: {:?}", e);
+            HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": format!("Failed to create listing: {}", e)
+            }))
+        }
+        Err(e) => {
+            tracing::error!("Async task failed during listing creation: {:?}", e);
+            HttpResponse::InternalServerError().json(serde_json::json!({
+                "error": format!("Async task failed: {}", e)
+            }))
+        }
     }
 }
 

@@ -1,0 +1,554 @@
+2025-11-11 18:55:15.187	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:15.187	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #702 to 0.0.0.0 currently we have sockets count:3
+2025-11-11 18:55:15.187	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:53058 (via 127.0.0.1:53058)
+2025-11-11 18:55:15.187	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:15.187	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:15.187	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:145	[127.0.0.1:53058 INC] Calling RPC method open_wallet
+2025-11-11 18:55:15.187	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:6764	trimming to 1449999, offset 1450000
+2025-11-11 18:55:15.187	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:6764	trimming to 1449999, offset 1450000
+2025-11-11 18:55:15.485	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:55:15.485	[RPC0]	DEBUG	util	src/common/util.cpp:947	Address '127.0.0.1:28081' is local
+2025-11-11 18:55:15.485	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:458	Daemon is local, assuming trusted
+2025-11-11 18:55:15.485	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:1403	setting daemon to 127.0.0.1:28081
+2025-11-11 18:55:15.485	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:55:15.514	[RPC0]	INFO	net.ssl	contrib/epee/src/net_ssl.cpp:145	Generating SSL certificate
+2025-11-11 18:55:16.119	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:8745	ringdb path set to /home/malix/.shared-ringdb/testnet
+2025-11-11 18:55:16.150	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:55:16.182	[RPC0]	INFO	net.ssl	contrib/epee/src/net_ssl.cpp:145	Generating SSL certificate
+2025-11-11 18:55:16.901	[RPC0]	ERROR	wallet.wallet2	src/wallet/wallet2.cpp:6463	e || !exists. THROW EXCEPTION: error::file_not_found
+2025-11-11 18:55:16.901	[RPC0]	WARNING	net.http	src/wallet/wallet_errors.h:996	/tmp/monero-0.18.4.3-git/src/wallet/wallet2.cpp:6463:N5tools5error15file_error_baseILi1EEE: file not found "./testnet-wallets/buyer_temp_escrow_52ba6bdf-5c03-4189-af96-1f5c19f264ab.keys"
+2025-11-11 18:55:16.901	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:134	Exception: tools::error::file_error_base<1>
+2025-11-11 18:55:16.901	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:135	Unwound call stack:
+2025-11-11 18:55:16.901	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [1]  0xb0) [0x5959a6b54cfc]:__cxa_throw+0xb0) [0x5959a6b54cfc]
+2025-11-11 18:55:16.901	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [2] monero-wallet-rpc(+0x43633c) [0x5959a6e3d33c] 
+2025-11-11 18:55:16.901	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [3] monero-wallet-rpc(+0x3a14c3) [0x5959a6da84c3] 
+2025-11-11 18:55:16.901	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [4] monero-wallet-rpc(+0x3a2fcb) [0x5959a6da9fcb] 
+2025-11-11 18:55:16.901	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [5] monero-wallet-rpc(+0x1c7c34) [0x5959a6bcec34] 
+2025-11-11 18:55:16.901	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [6] monero-wallet-rpc(+0x2ded79) [0x5959a6ce5d79] 
+2025-11-11 18:55:16.901	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [7] monero-wallet-rpc(+0x2eb637) [0x5959a6cf2637] 
+2025-11-11 18:55:16.901	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [8] monero-wallet-rpc(+0x22936d) [0x5959a6c3036d] 
+2025-11-11 18:55:16.901	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [9] monero-wallet-rpc(+0x26a143) [0x5959a6c71143] 
+2025-11-11 18:55:16.901	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [10] monero-wallet-rpc(+0x26a5a1) [0x5959a6c715a1] 
+2025-11-11 18:55:16.901	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [11] monero-wallet-rpc(+0x27bd4b) [0x5959a6c82d4b] 
+2025-11-11 18:55:16.901	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [12] monero-wallet-rpc(+0x2162b5) [0x5959a6c1d2b5] 
+2025-11-11 18:55:16.901	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [13] monero-wallet-rpc(+0x1b84ad) [0x5959a6bbf4ad] 
+2025-11-11 18:55:16.901	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [14] monero-wallet-rpc(+0x231ffc) [0x5959a6c38ffc] 
+2025-11-11 18:55:16.902	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [15]  0x1699f) [0x7e691440b99f]:_64-linux-gnu/libboost_thread.so.1.83.0(+0x1699f) [0x7e691440b99f]
+2025-11-11 18:55:16.902	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [16]  0x9caa4) [0x7e691349caa4]:_64-linux-gnu/libc.so.6(+0x9caa4) [0x7e691349caa4]
+2025-11-11 18:55:16.902	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [17]  0x129c6c) [0x7e6913529c6c]:_64-linux-gnu/libc.so.6(+0x129c6c) [0x7e6913529c6c]
+2025-11-11 18:55:16.902	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	
+2025-11-11 18:55:16.902	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:8979	./testnet-wallets/buyer_temp_escrow_52ba6bdf-5c03-4189-af96-1f5c19f264ab.keys is already unlocked.
+2025-11-11 18:55:16.902	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:9007	background keys file locker is not set
+2025-11-11 18:55:16.902	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:647	Problems at ssl shutdown: uninitialized (SSL routines)
+2025-11-11 18:55:16.902	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:571	Problems at cancel: Bad file descriptor
+2025-11-11 18:55:16.902	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:574	Problems at shutdown: Bad file descriptor
+2025-11-11 18:55:16.903	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:647	Problems at ssl shutdown: uninitialized (SSL routines)
+2025-11-11 18:55:16.903	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:571	Problems at cancel: Bad file descriptor
+2025-11-11 18:55:16.903	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:574	Problems at shutdown: Bad file descriptor
+2025-11-11 18:55:16.904	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:16.904	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:16.904	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #703 to 0.0.0.0 currently we have sockets count:4
+2025-11-11 18:55:16.904	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:53072 (via 127.0.0.1:53072)
+2025-11-11 18:55:16.904	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:16.904	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:16.904	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:137	[127.0.0.1:53058 INC] Calling RPC method refresh
+2025-11-11 18:55:16.904	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3169	Pulling blocks: start_height 0
+2025-11-11 18:55:16.905	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3199	Pulled blocks: blocks_start_height 0, count 0, height 0, node height 2873349, pool info 1
+2025-11-11 18:55:16.905	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:4298	Refresh done, blocks received: 0, balance (all accounts): 0.000000000000, unlocked: 0.000000000000
+2025-11-11 18:55:16.905	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:137	/json_rpc[refresh] processed with 0/1/0ms
+2025-11-11 18:55:16.905	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:16.905	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:53072 INC] Calling RPC method get_address
+2025-11-11 18:55:16.905	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:55:16.905	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:16.905	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:72	[127.0.0.1:53058 INC] Calling RPC method get_balance
+2025-11-11 18:55:16.905	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:72	/json_rpc[get_balance] processed with 0/0/0ms
+2025-11-11 18:55:16.905	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #702 to 0.0.0.0
+2025-11-11 18:55:16.906	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #701 to 0.0.0.0
+2025-11-11 18:55:16.965	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:16.965	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:16.965	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #704 to 0.0.0.0 currently we have sockets count:3
+2025-11-11 18:55:16.965	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:53080 (via 127.0.0.1:53080)
+2025-11-11 18:55:16.965	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:16.965	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:16.965	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:145	[127.0.0.1:53080 INC] Calling RPC method open_wallet
+2025-11-11 18:55:16.965	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:6764	trimming to 1449999, offset 1450000
+2025-11-11 18:55:16.965	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:6764	trimming to 1449999, offset 1450000
+2025-11-11 18:55:17.258	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:55:17.258	[RPC0]	DEBUG	util	src/common/util.cpp:947	Address '127.0.0.1:28081' is local
+2025-11-11 18:55:17.258	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:458	Daemon is local, assuming trusted
+2025-11-11 18:55:17.258	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:1403	setting daemon to 127.0.0.1:28081
+2025-11-11 18:55:17.258	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:55:17.290	[RPC0]	INFO	net.ssl	contrib/epee/src/net_ssl.cpp:145	Generating SSL certificate
+2025-11-11 18:55:19.443	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:8745	ringdb path set to /home/malix/.shared-ringdb/testnet
+2025-11-11 18:55:19.462	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:55:19.489	[RPC0]	INFO	net.ssl	contrib/epee/src/net_ssl.cpp:145	Generating SSL certificate
+2025-11-11 18:55:21.952	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:8769	caching ringdb key
+2025-11-11 18:55:21.975	[RPC0]	WARNING	wallet.wallet2	src/wallet/wallet2.cpp:6473	Loaded wallet keys file, with public address: 9xYeEeSC5Bu6uwHMzAJ4Kw1xfKJFDcVeRTY3aGYaSdcDKqCMZ2nuoT5eRU2hBt2QBfMP1VzA3HsSu1QhivHMapqv6M5Vuuh
+2025-11-11 18:55:22.048	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:6567	Trying to decrypt cache data
+2025-11-11 18:55:22.253	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:6764	trimming to 1449999, offset 1450000
+2025-11-11 18:55:22.253	[RPC0]	INFO	wallet.mms	src/wallet/message_store.cpp:778	No message store file found: ./testnet-wallets/buyer_temp_escrow_5b9f693e-55d8-4a7f-8461-6ef9309fb953.mms
+2025-11-11 18:55:22.253	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:9007	background keys file locker is not set
+2025-11-11 18:55:22.253	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:647	Problems at ssl shutdown: uninitialized (SSL routines)
+2025-11-11 18:55:22.253	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:571	Problems at cancel: Bad file descriptor
+2025-11-11 18:55:22.253	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:574	Problems at shutdown: Bad file descriptor
+2025-11-11 18:55:22.261	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:145	/json_rpc[open_wallet] processed with 0/5295/0ms
+2025-11-11 18:55:22.261	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:22.261	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:22.261	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #705 to 0.0.0.0 currently we have sockets count:4
+2025-11-11 18:55:22.261	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:34626 (via 127.0.0.1:34626)
+2025-11-11 18:55:22.261	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3169	Pulling blocks: start_height 0
+2025-11-11 18:55:22.261	[RPC0]	DEBUG	net.http	contrib/epee/include/net/http_client.h:240	Reconnecting...
+2025-11-11 18:55:22.415	[RPC0]	WARNING	net.ssl	contrib/epee/src/net_ssl.cpp:547	SSL peer has not been verified
+2025-11-11 18:55:22.415	[RPC0]	WARNING	net.ssl	contrib/epee/src/net_ssl.cpp:547	SSL peer has not been verified
+2025-11-11 18:55:22.507	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:650	SSL handshake success
+2025-11-11 18:55:22.508	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3199	Pulled blocks: blocks_start_height 0, count 0, height 0, node height 2873349, pool info 2
+2025-11-11 18:55:22.508	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:4298	Refresh done, blocks received: 0, balance (all accounts): 0.000000000000, unlocked: 0.000000000000
+2025-11-11 18:55:22.508	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:22.509	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:22.509	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:137	[127.0.0.1:53080 INC] Calling RPC method refresh
+2025-11-11 18:55:22.509	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3169	Pulling blocks: start_height 0
+2025-11-11 18:55:22.510	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3199	Pulled blocks: blocks_start_height 0, count 0, height 0, node height 2873349, pool info 1
+2025-11-11 18:55:22.510	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:4298	Refresh done, blocks received: 0, balance (all accounts): 0.000000000000, unlocked: 0.000000000000
+2025-11-11 18:55:22.510	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:137	/json_rpc[refresh] processed with 0/2/0ms
+2025-11-11 18:55:22.510	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:22.511	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:34626 INC] Calling RPC method get_address
+2025-11-11 18:55:22.511	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:55:22.511	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:22.511	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:72	[127.0.0.1:53080 INC] Calling RPC method get_balance
+2025-11-11 18:55:22.511	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:72	/json_rpc[get_balance] processed with 0/0/0ms
+2025-11-11 18:55:22.511	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #704 to 0.0.0.0
+2025-11-11 18:55:22.516	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #703 to 0.0.0.0
+2025-11-11 18:55:24.684	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:24.684	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:24.684	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #706 to 0.0.0.0 currently we have sockets count:3
+2025-11-11 18:55:24.684	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:34628 (via 127.0.0.1:34628)
+2025-11-11 18:55:24.684	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:24.684	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:24.684	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:34628 INC] Calling RPC method get_address
+2025-11-11 18:55:24.684	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:55:24.685	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #705 to 0.0.0.0
+2025-11-11 18:55:26.815	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:26.815	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:26.815	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #707 to 0.0.0.0 currently we have sockets count:3
+2025-11-11 18:55:26.815	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:34638 (via 127.0.0.1:34638)
+2025-11-11 18:55:26.815	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:26.815	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:26.815	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:34638 INC] Calling RPC method get_address
+2025-11-11 18:55:26.816	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:55:26.816	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #706 to 0.0.0.0
+2025-11-11 18:55:28.961	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:28.961	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:28.961	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #708 to 0.0.0.0 currently we have sockets count:3
+2025-11-11 18:55:28.961	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:38412 (via 127.0.0.1:38412)
+2025-11-11 18:55:28.961	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:28.961	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:28.961	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:38412 INC] Calling RPC method get_address
+2025-11-11 18:55:28.961	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:55:28.961	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #707 to 0.0.0.0
+2025-11-11 18:55:31.103	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:31.103	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:31.104	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #709 to 0.0.0.0 currently we have sockets count:3
+2025-11-11 18:55:31.104	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:38424 (via 127.0.0.1:38424)
+2025-11-11 18:55:31.104	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:31.104	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:31.104	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:38424 INC] Calling RPC method get_address
+2025-11-11 18:55:31.104	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:55:31.104	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #708 to 0.0.0.0
+2025-11-11 18:55:33.248	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:33.248	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:33.249	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #710 to 0.0.0.0 currently we have sockets count:3
+2025-11-11 18:55:33.249	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:38430 (via 127.0.0.1:38430)
+2025-11-11 18:55:33.249	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:33.249	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:33.249	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:38430 INC] Calling RPC method get_address
+2025-11-11 18:55:33.249	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:55:33.249	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #709 to 0.0.0.0
+2025-11-11 18:55:35.358	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:35.358	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:35.358	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #711 to 0.0.0.0 currently we have sockets count:3
+2025-11-11 18:55:35.358	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:38440 (via 127.0.0.1:38440)
+2025-11-11 18:55:35.359	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:35.359	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:35.359	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:38440 INC] Calling RPC method get_address
+2025-11-11 18:55:35.359	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:55:35.359	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #710 to 0.0.0.0
+2025-11-11 18:55:37.495	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:37.495	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:37.495	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #712 to 0.0.0.0 currently we have sockets count:3
+2025-11-11 18:55:37.495	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:38446 (via 127.0.0.1:38446)
+2025-11-11 18:55:37.495	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:37.495	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:37.495	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:38446 INC] Calling RPC method get_address
+2025-11-11 18:55:37.495	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:55:37.495	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #711 to 0.0.0.0
+2025-11-11 18:55:39.616	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:39.616	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:39.616	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #713 to 0.0.0.0 currently we have sockets count:3
+2025-11-11 18:55:39.616	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:50612 (via 127.0.0.1:50612)
+2025-11-11 18:55:39.616	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:39.616	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:39.616	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:50612 INC] Calling RPC method get_address
+2025-11-11 18:55:39.616	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:55:39.616	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #712 to 0.0.0.0
+2025-11-11 18:55:39.696	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #647 to 0.0.0.0
+2025-11-11 18:55:41.753	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:41.753	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:41.753	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #714 to 0.0.0.0 currently we have sockets count:2
+2025-11-11 18:55:41.760	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:50614 (via 127.0.0.1:50614)
+2025-11-11 18:55:41.760	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:41.760	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:41.761	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:50614 INC] Calling RPC method get_address
+2025-11-11 18:55:41.761	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:55:41.761	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #713 to 0.0.0.0
+2025-11-11 18:55:42.520	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3169	Pulling blocks: start_height 0
+2025-11-11 18:55:42.520	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3199	Pulled blocks: blocks_start_height 0, count 0, height 0, node height 2873349, pool info 1
+2025-11-11 18:55:42.520	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:4298	Refresh done, blocks received: 0, balance (all accounts): 0.000000000000, unlocked: 0.000000000000
+2025-11-11 18:55:43.872	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:43.873	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:43.873	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #715 to 0.0.0.0 currently we have sockets count:2
+2025-11-11 18:55:43.873	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:50628 (via 127.0.0.1:50628)
+2025-11-11 18:55:43.873	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:43.873	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:43.873	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:50628 INC] Calling RPC method get_address
+2025-11-11 18:55:43.873	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/1/0ms
+2025-11-11 18:55:43.873	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #714 to 0.0.0.0
+2025-11-11 18:55:45.157	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:45.157	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:45.157	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #716 to 0.0.0.0 currently we have sockets count:2
+2025-11-11 18:55:45.157	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:50644 (via 127.0.0.1:50644)
+2025-11-11 18:55:45.157	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:45.157	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:45.157	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:145	[127.0.0.1:50644 INC] Calling RPC method open_wallet
+2025-11-11 18:55:45.157	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:6764	trimming to 1449999, offset 1450000
+2025-11-11 18:55:45.157	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:6764	trimming to 1449999, offset 1450000
+2025-11-11 18:55:45.436	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:55:45.437	[RPC0]	DEBUG	util	src/common/util.cpp:947	Address '127.0.0.1:28081' is local
+2025-11-11 18:55:45.437	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:458	Daemon is local, assuming trusted
+2025-11-11 18:55:45.437	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:1403	setting daemon to 127.0.0.1:28081
+2025-11-11 18:55:45.437	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:55:45.471	[RPC0]	INFO	net.ssl	contrib/epee/src/net_ssl.cpp:145	Generating SSL certificate
+2025-11-11 18:55:46.239	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:8745	ringdb path set to /home/malix/.shared-ringdb/testnet
+2025-11-11 18:55:46.257	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:55:46.288	[RPC0]	INFO	net.ssl	contrib/epee/src/net_ssl.cpp:145	Generating SSL certificate
+2025-11-11 18:55:47.346	[RPC0]	ERROR	wallet.wallet2	src/wallet/wallet2.cpp:6463	e || !exists. THROW EXCEPTION: error::file_not_found
+2025-11-11 18:55:47.347	[RPC0]	WARNING	net.http	src/wallet/wallet_errors.h:996	/tmp/monero-0.18.4.3-git/src/wallet/wallet2.cpp:6463:N5tools5error15file_error_baseILi1EEE: file not found "./testnet-wallets/buyer_temp_escrow_52ba6bdf-5c03-4189-af96-1f5c19f264ab.keys"
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:134	Exception: tools::error::file_error_base<1>
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:135	Unwound call stack:
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [1]  0xb0) [0x5959a6b54cfc]:__cxa_throw+0xb0) [0x5959a6b54cfc]
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [2] monero-wallet-rpc(+0x43633c) [0x5959a6e3d33c] 
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [3] monero-wallet-rpc(+0x3a14c3) [0x5959a6da84c3] 
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [4] monero-wallet-rpc(+0x3a2fcb) [0x5959a6da9fcb] 
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [5] monero-wallet-rpc(+0x1c7c34) [0x5959a6bcec34] 
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [6] monero-wallet-rpc(+0x2ded79) [0x5959a6ce5d79] 
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [7] monero-wallet-rpc(+0x2eb637) [0x5959a6cf2637] 
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [8] monero-wallet-rpc(+0x22936d) [0x5959a6c3036d] 
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [9] monero-wallet-rpc(+0x26a143) [0x5959a6c71143] 
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [10] monero-wallet-rpc(+0x26a5a1) [0x5959a6c715a1] 
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [11] monero-wallet-rpc(+0x27bd4b) [0x5959a6c82d4b] 
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [12] monero-wallet-rpc(+0x2162b5) [0x5959a6c1d2b5] 
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [13] monero-wallet-rpc(+0x1b84ad) [0x5959a6bbf4ad] 
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [14] monero-wallet-rpc(+0x231ffc) [0x5959a6c38ffc] 
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [15]  0x1699f) [0x7e691440b99f]:_64-linux-gnu/libboost_thread.so.1.83.0(+0x1699f) [0x7e691440b99f]
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [16]  0x9caa4) [0x7e691349caa4]:_64-linux-gnu/libc.so.6(+0x9caa4) [0x7e691349caa4]
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [17]  0x129c6c) [0x7e6913529c6c]:_64-linux-gnu/libc.so.6(+0x129c6c) [0x7e6913529c6c]
+2025-11-11 18:55:47.347	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	
+2025-11-11 18:55:47.347	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:8979	./testnet-wallets/buyer_temp_escrow_52ba6bdf-5c03-4189-af96-1f5c19f264ab.keys is already unlocked.
+2025-11-11 18:55:47.347	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:9007	background keys file locker is not set
+2025-11-11 18:55:47.347	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:647	Problems at ssl shutdown: uninitialized (SSL routines)
+2025-11-11 18:55:47.347	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:571	Problems at cancel: Bad file descriptor
+2025-11-11 18:55:47.347	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:574	Problems at shutdown: Bad file descriptor
+2025-11-11 18:55:47.348	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:647	Problems at ssl shutdown: uninitialized (SSL routines)
+2025-11-11 18:55:47.348	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:571	Problems at cancel: Bad file descriptor
+2025-11-11 18:55:47.348	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:574	Problems at shutdown: Bad file descriptor
+2025-11-11 18:55:47.350	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:47.350	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:47.351	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #717 to 0.0.0.0 currently we have sockets count:3
+2025-11-11 18:55:47.351	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:50650 (via 127.0.0.1:50650)
+2025-11-11 18:55:47.351	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:47.351	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:47.351	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:137	[127.0.0.1:50644 INC] Calling RPC method refresh
+2025-11-11 18:55:47.351	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3169	Pulling blocks: start_height 0
+2025-11-11 18:55:47.352	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3199	Pulled blocks: blocks_start_height 0, count 0, height 0, node height 2873349, pool info 1
+2025-11-11 18:55:47.352	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:4298	Refresh done, blocks received: 0, balance (all accounts): 0.000000000000, unlocked: 0.000000000000
+2025-11-11 18:55:47.352	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:137	/json_rpc[refresh] processed with 0/1/0ms
+2025-11-11 18:55:47.352	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:47.352	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:50650 INC] Calling RPC method get_address
+2025-11-11 18:55:47.352	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:55:47.353	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:47.353	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:72	[127.0.0.1:50644 INC] Calling RPC method get_balance
+2025-11-11 18:55:47.353	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:72	/json_rpc[get_balance] processed with 0/0/0ms
+2025-11-11 18:55:47.353	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #716 to 0.0.0.0
+2025-11-11 18:55:47.354	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #715 to 0.0.0.0
+2025-11-11 18:55:47.419	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:47.419	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:47.419	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #718 to 0.0.0.0 currently we have sockets count:2
+2025-11-11 18:55:47.419	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:50662 (via 127.0.0.1:50662)
+2025-11-11 18:55:47.419	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:47.419	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:47.419	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:145	[127.0.0.1:50662 INC] Calling RPC method open_wallet
+2025-11-11 18:55:47.419	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:6764	trimming to 1449999, offset 1450000
+2025-11-11 18:55:47.419	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:6764	trimming to 1449999, offset 1450000
+2025-11-11 18:55:47.707	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:55:47.707	[RPC0]	DEBUG	util	src/common/util.cpp:947	Address '127.0.0.1:28081' is local
+2025-11-11 18:55:47.707	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:458	Daemon is local, assuming trusted
+2025-11-11 18:55:47.708	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:1403	setting daemon to 127.0.0.1:28081
+2025-11-11 18:55:47.708	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:55:47.741	[RPC0]	INFO	net.ssl	contrib/epee/src/net_ssl.cpp:145	Generating SSL certificate
+2025-11-11 18:55:50.001	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:8745	ringdb path set to /home/malix/.shared-ringdb/testnet
+2025-11-11 18:55:50.022	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:55:50.050	[RPC0]	INFO	net.ssl	contrib/epee/src/net_ssl.cpp:145	Generating SSL certificate
+2025-11-11 18:55:52.970	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:8769	caching ringdb key
+2025-11-11 18:55:52.989	[RPC0]	WARNING	wallet.wallet2	src/wallet/wallet2.cpp:6473	Loaded wallet keys file, with public address: 9xYeEeSC5Bu6uwHMzAJ4Kw1xfKJFDcVeRTY3aGYaSdcDKqCMZ2nuoT5eRU2hBt2QBfMP1VzA3HsSu1QhivHMapqv6M5Vuuh
+2025-11-11 18:55:53.066	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:6567	Trying to decrypt cache data
+2025-11-11 18:55:53.273	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:6764	trimming to 1449999, offset 1450000
+2025-11-11 18:55:53.273	[RPC0]	INFO	wallet.mms	src/wallet/message_store.cpp:778	No message store file found: ./testnet-wallets/buyer_temp_escrow_5b9f693e-55d8-4a7f-8461-6ef9309fb953.mms
+2025-11-11 18:55:53.273	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:9007	background keys file locker is not set
+2025-11-11 18:55:53.273	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:647	Problems at ssl shutdown: uninitialized (SSL routines)
+2025-11-11 18:55:53.273	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:571	Problems at cancel: Bad file descriptor
+2025-11-11 18:55:53.273	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:574	Problems at shutdown: Bad file descriptor
+2025-11-11 18:55:53.282	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:145	/json_rpc[open_wallet] processed with 0/5862/0ms
+2025-11-11 18:55:53.282	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:53.282	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:53.282	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #719 to 0.0.0.0 currently we have sockets count:3
+2025-11-11 18:55:53.282	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:60110 (via 127.0.0.1:60110)
+2025-11-11 18:55:53.282	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:53.282	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:53.282	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:137	[127.0.0.1:50662 INC] Calling RPC method refresh
+2025-11-11 18:55:53.282	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3169	Pulling blocks: start_height 0
+2025-11-11 18:55:53.282	[RPC0]	DEBUG	net.http	contrib/epee/include/net/http_client.h:240	Reconnecting...
+2025-11-11 18:55:53.435	[RPC0]	WARNING	net.ssl	contrib/epee/src/net_ssl.cpp:547	SSL peer has not been verified
+2025-11-11 18:55:53.435	[RPC0]	WARNING	net.ssl	contrib/epee/src/net_ssl.cpp:547	SSL peer has not been verified
+2025-11-11 18:55:53.526	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:650	SSL handshake success
+2025-11-11 18:55:53.527	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3199	Pulled blocks: blocks_start_height 2873348, count 2, height 2873350, node height 2873350, pool info 2
+2025-11-11 18:55:53.528	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3428	Block is already in blockchain: f99663c1abcbf9355d121f22ac06e304bb73745dfcb08cc2ba1050834c490e5f
+2025-11-11 18:55:53.528	[RPC0]	INFO	perf.wallet.wallet2	src/common/perf_timer.cpp:120	PERF             ----------
+2025-11-11 18:55:53.528	[RPC0]	INFO	perf.wallet.wallet2	src/common/perf_timer.cpp:156	PERF      122    process_new_transaction
+2025-11-11 18:55:53.528	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3035	Processed block: <f52293b27bab6a0ef1f189627ad96094f0fd9bfbf1ecf285610a807afcc7c763>, height 2873349, 0(0/0)ms
+2025-11-11 18:55:53.528	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:4298	Refresh done, blocks received: 1, balance (all accounts): 0.000000000000, unlocked: 0.000000000000
+2025-11-11 18:55:53.528	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:137	/json_rpc[refresh] processed with 0/246/0ms
+2025-11-11 18:55:53.529	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:53.529	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:60110 INC] Calling RPC method get_address
+2025-11-11 18:55:53.529	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:55:53.529	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:53.529	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:72	[127.0.0.1:50662 INC] Calling RPC method get_balance
+2025-11-11 18:55:53.530	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:72	/json_rpc[get_balance] processed with 0/0/0ms
+2025-11-11 18:55:53.530	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #718 to 0.0.0.0
+2025-11-11 18:55:53.533	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #717 to 0.0.0.0
+2025-11-11 18:55:55.665	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:55.665	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:55.665	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #720 to 0.0.0.0 currently we have sockets count:2
+2025-11-11 18:55:55.665	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:60124 (via 127.0.0.1:60124)
+2025-11-11 18:55:55.665	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:55.665	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:55.665	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:60124 INC] Calling RPC method get_address
+2025-11-11 18:55:55.665	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:55:55.666	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #719 to 0.0.0.0
+2025-11-11 18:55:57.779	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:57.779	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:57.779	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #721 to 0.0.0.0 currently we have sockets count:2
+2025-11-11 18:55:57.779	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:60136 (via 127.0.0.1:60136)
+2025-11-11 18:55:57.779	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:57.780	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:57.780	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:60136 INC] Calling RPC method get_address
+2025-11-11 18:55:57.780	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:55:57.780	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #720 to 0.0.0.0
+2025-11-11 18:55:59.914	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:55:59.914	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:55:59.914	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #722 to 0.0.0.0 currently we have sockets count:2
+2025-11-11 18:55:59.914	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:51362 (via 127.0.0.1:51362)
+2025-11-11 18:55:59.914	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:55:59.914	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:55:59.914	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:51362 INC] Calling RPC method get_address
+2025-11-11 18:55:59.914	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:55:59.914	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #721 to 0.0.0.0
+2025-11-11 18:56:02.026	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:56:02.026	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:56:02.026	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #723 to 0.0.0.0 currently we have sockets count:2
+2025-11-11 18:56:02.026	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:51364 (via 127.0.0.1:51364)
+2025-11-11 18:56:02.026	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:56:02.026	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:56:02.026	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:51364 INC] Calling RPC method get_address
+2025-11-11 18:56:02.026	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:56:02.026	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #722 to 0.0.0.0
+2025-11-11 18:56:02.531	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3169	Pulling blocks: start_height 0
+2025-11-11 18:56:02.532	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3199	Pulled blocks: blocks_start_height 0, count 0, height 0, node height 2873350, pool info 1
+2025-11-11 18:56:02.532	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:4298	Refresh done, blocks received: 0, balance (all accounts): 0.000000000000, unlocked: 0.000000000000
+2025-11-11 18:56:04.139	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:56:04.139	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:56:04.140	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #724 to 0.0.0.0 currently we have sockets count:2
+2025-11-11 18:56:04.140	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:51374 (via 127.0.0.1:51374)
+2025-11-11 18:56:04.140	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:56:04.140	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:56:04.140	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:51374 INC] Calling RPC method get_address
+2025-11-11 18:56:04.140	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:56:04.140	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #723 to 0.0.0.0
+2025-11-11 18:56:06.548	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:56:06.548	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:56:06.548	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #725 to 0.0.0.0 currently we have sockets count:2
+2025-11-11 18:56:06.548	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:51380 (via 127.0.0.1:51380)
+2025-11-11 18:56:06.548	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:56:06.548	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:56:06.549	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:51380 INC] Calling RPC method get_address
+2025-11-11 18:56:06.549	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:56:06.549	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #724 to 0.0.0.0
+2025-11-11 18:56:08.677	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:56:08.677	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:56:08.677	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #726 to 0.0.0.0 currently we have sockets count:2
+2025-11-11 18:56:08.677	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:51396 (via 127.0.0.1:51396)
+2025-11-11 18:56:08.677	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:56:08.677	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:56:08.677	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:51396 INC] Calling RPC method get_address
+2025-11-11 18:56:08.677	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:56:08.677	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #725 to 0.0.0.0
+2025-11-11 18:56:10.793	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:56:10.793	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:56:10.793	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #727 to 0.0.0.0 currently we have sockets count:2
+2025-11-11 18:56:10.793	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:40130 (via 127.0.0.1:40130)
+2025-11-11 18:56:10.793	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:56:10.793	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:56:10.793	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:40130 INC] Calling RPC method get_address
+2025-11-11 18:56:10.793	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:56:10.793	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #726 to 0.0.0.0
+2025-11-11 18:56:12.910	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:56:12.910	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:56:12.910	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #728 to 0.0.0.0 currently we have sockets count:2
+2025-11-11 18:56:12.910	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:40134 (via 127.0.0.1:40134)
+2025-11-11 18:56:12.910	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:56:12.910	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:56:12.910	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:40134 INC] Calling RPC method get_address
+2025-11-11 18:56:12.910	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:56:12.911	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #727 to 0.0.0.0
+2025-11-11 18:56:15.031	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:56:15.031	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:56:15.031	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #729 to 0.0.0.0 currently we have sockets count:2
+2025-11-11 18:56:15.031	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:40150 (via 127.0.0.1:40150)
+2025-11-11 18:56:15.031	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:56:15.031	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:56:15.031	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:40150 INC] Calling RPC method get_address
+2025-11-11 18:56:15.031	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:56:15.031	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #728 to 0.0.0.0
+2025-11-11 18:56:15.159	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:56:15.159	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:56:15.159	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #730 to 0.0.0.0 currently we have sockets count:2
+2025-11-11 18:56:15.159	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:40164 (via 127.0.0.1:40164)
+2025-11-11 18:56:15.160	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:56:15.160	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:56:15.160	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:145	[127.0.0.1:40164 INC] Calling RPC method open_wallet
+2025-11-11 18:56:15.160	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:6764	trimming to 1449999, offset 1450000
+2025-11-11 18:56:15.160	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:6764	trimming to 1449999, offset 1450000
+2025-11-11 18:56:15.426	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:56:15.426	[RPC0]	DEBUG	util	src/common/util.cpp:947	Address '127.0.0.1:28081' is local
+2025-11-11 18:56:15.426	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:458	Daemon is local, assuming trusted
+2025-11-11 18:56:15.427	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:1403	setting daemon to 127.0.0.1:28081
+2025-11-11 18:56:15.427	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:56:15.458	[RPC0]	INFO	net.ssl	contrib/epee/src/net_ssl.cpp:145	Generating SSL certificate
+2025-11-11 18:56:17.183	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:8745	ringdb path set to /home/malix/.shared-ringdb/testnet
+2025-11-11 18:56:17.202	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:56:17.233	[RPC0]	INFO	net.ssl	contrib/epee/src/net_ssl.cpp:145	Generating SSL certificate
+2025-11-11 18:56:22.538	[RPC0]	ERROR	wallet.wallet2	src/wallet/wallet2.cpp:6463	e || !exists. THROW EXCEPTION: error::file_not_found
+2025-11-11 18:56:22.538	[RPC0]	WARNING	net.http	src/wallet/wallet_errors.h:996	/tmp/monero-0.18.4.3-git/src/wallet/wallet2.cpp:6463:N5tools5error15file_error_baseILi1EEE: file not found "./testnet-wallets/buyer_temp_escrow_52ba6bdf-5c03-4189-af96-1f5c19f264ab.keys"
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:134	Exception: tools::error::file_error_base<1>
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:135	Unwound call stack:
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [1]  0xb0) [0x5959a6b54cfc]:__cxa_throw+0xb0) [0x5959a6b54cfc]
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [2] monero-wallet-rpc(+0x43633c) [0x5959a6e3d33c] 
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [3] monero-wallet-rpc(+0x3a14c3) [0x5959a6da84c3] 
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [4] monero-wallet-rpc(+0x3a2fcb) [0x5959a6da9fcb] 
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [5] monero-wallet-rpc(+0x1c7c34) [0x5959a6bcec34] 
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [6] monero-wallet-rpc(+0x2ded79) [0x5959a6ce5d79] 
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [7] monero-wallet-rpc(+0x2eb637) [0x5959a6cf2637] 
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [8] monero-wallet-rpc(+0x22936d) [0x5959a6c3036d] 
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [9] monero-wallet-rpc(+0x26a143) [0x5959a6c71143] 
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [10] monero-wallet-rpc(+0x26a5a1) [0x5959a6c715a1] 
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [11] monero-wallet-rpc(+0x27bd4b) [0x5959a6c82d4b] 
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [12] monero-wallet-rpc(+0x2162b5) [0x5959a6c1d2b5] 
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [13] monero-wallet-rpc(+0x1b84ad) [0x5959a6bbf4ad] 
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [14] monero-wallet-rpc(+0x231ffc) [0x5959a6c38ffc] 
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [15]  0x1699f) [0x7e691440b99f]:_64-linux-gnu/libboost_thread.so.1.83.0(+0x1699f) [0x7e691440b99f]
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [16]  0x9caa4) [0x7e691349caa4]:_64-linux-gnu/libc.so.6(+0x9caa4) [0x7e691349caa4]
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	    [17]  0x129c6c) [0x7e6913529c6c]:_64-linux-gnu/libc.so.6(+0x129c6c) [0x7e6913529c6c]
+2025-11-11 18:56:22.539	[RPC0]	INFO	stacktrace	src/common/stack_trace.cpp:173	
+2025-11-11 18:56:22.539	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:8979	./testnet-wallets/buyer_temp_escrow_52ba6bdf-5c03-4189-af96-1f5c19f264ab.keys is already unlocked.
+2025-11-11 18:56:22.539	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:9007	background keys file locker is not set
+2025-11-11 18:56:22.539	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:647	Problems at ssl shutdown: uninitialized (SSL routines)
+2025-11-11 18:56:22.539	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:571	Problems at cancel: Bad file descriptor
+2025-11-11 18:56:22.539	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:574	Problems at shutdown: Bad file descriptor
+2025-11-11 18:56:22.540	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:647	Problems at ssl shutdown: uninitialized (SSL routines)
+2025-11-11 18:56:22.540	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:571	Problems at cancel: Bad file descriptor
+2025-11-11 18:56:22.540	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:574	Problems at shutdown: Bad file descriptor
+2025-11-11 18:56:22.541	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:56:22.541	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:56:22.542	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #731 to 0.0.0.0 currently we have sockets count:3
+2025-11-11 18:56:22.542	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:40166 (via 127.0.0.1:40166)
+2025-11-11 18:56:22.542	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3169	Pulling blocks: start_height 0
+2025-11-11 18:56:22.542	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3199	Pulled blocks: blocks_start_height 2873349, count 2, height 2873351, node height 2873351, pool info 1
+2025-11-11 18:56:22.543	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3428	Block is already in blockchain: f52293b27bab6a0ef1f189627ad96094f0fd9bfbf1ecf285610a807afcc7c763
+2025-11-11 18:56:22.543	[RPC0]	INFO	perf.wallet.wallet2	src/common/perf_timer.cpp:120	PERF             ----------
+2025-11-11 18:56:22.543	[RPC0]	INFO	perf.wallet.wallet2	src/common/perf_timer.cpp:156	PERF       40    process_new_transaction
+2025-11-11 18:56:22.543	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3035	Processed block: <c41ec59ffa538001c061198099a8c86bb543bbcdb408832c88e92666a5d5e065>, height 2873350, 0(0/0)ms
+2025-11-11 18:56:22.543	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:4298	Refresh done, blocks received: 1, balance (all accounts): 0.000000000000, unlocked: 0.000000000000
+2025-11-11 18:56:22.543	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:56:22.543	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:56:22.543	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:137	[127.0.0.1:40164 INC] Calling RPC method refresh
+2025-11-11 18:56:22.543	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3169	Pulling blocks: start_height 0
+2025-11-11 18:56:22.543	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3199	Pulled blocks: blocks_start_height 0, count 0, height 0, node height 2873351, pool info 1
+2025-11-11 18:56:22.543	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:4298	Refresh done, blocks received: 0, balance (all accounts): 0.000000000000, unlocked: 0.000000000000
+2025-11-11 18:56:22.543	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:137	/json_rpc[refresh] processed with 0/0/0ms
+2025-11-11 18:56:22.544	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:56:22.544	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:40166 INC] Calling RPC method get_address
+2025-11-11 18:56:22.544	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:56:22.544	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:56:22.544	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:72	[127.0.0.1:40164 INC] Calling RPC method get_balance
+2025-11-11 18:56:22.544	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:72	/json_rpc[get_balance] processed with 0/0/0ms
+2025-11-11 18:56:22.544	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #730 to 0.0.0.0
+2025-11-11 18:56:22.545	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #729 to 0.0.0.0
+2025-11-11 18:56:22.624	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:56:22.624	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:56:22.624	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #732 to 0.0.0.0 currently we have sockets count:2
+2025-11-11 18:56:22.624	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:57932 (via 127.0.0.1:57932)
+2025-11-11 18:56:22.624	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:56:22.624	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:56:22.624	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:145	[127.0.0.1:57932 INC] Calling RPC method open_wallet
+2025-11-11 18:56:22.624	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:6764	trimming to 1449999, offset 1450000
+2025-11-11 18:56:22.624	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:6764	trimming to 1449999, offset 1450000
+2025-11-11 18:56:22.922	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:56:22.922	[RPC0]	DEBUG	util	src/common/util.cpp:947	Address '127.0.0.1:28081' is local
+2025-11-11 18:56:22.922	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:458	Daemon is local, assuming trusted
+2025-11-11 18:56:22.922	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:1403	setting daemon to 127.0.0.1:28081
+2025-11-11 18:56:22.922	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:56:22.952	[RPC0]	INFO	net.ssl	contrib/epee/src/net_ssl.cpp:145	Generating SSL certificate
+2025-11-11 18:56:24.677	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:8745	ringdb path set to /home/malix/.shared-ringdb/testnet
+2025-11-11 18:56:24.697	[RPC0]	INFO	net	contrib/epee/src/net_parse_helpers.cpp:144	[PARSE URI] regex not matched for uri: ^(([^:]*?)://)?(\[(.*)\](:(\d+))?)(.*)?
+2025-11-11 18:56:24.727	[RPC0]	INFO	net.ssl	contrib/epee/src/net_ssl.cpp:145	Generating SSL certificate
+2025-11-11 18:56:26.197	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:8769	caching ringdb key
+2025-11-11 18:56:26.245	[RPC0]	WARNING	wallet.wallet2	src/wallet/wallet2.cpp:6473	Loaded wallet keys file, with public address: 9xYeEeSC5Bu6uwHMzAJ4Kw1xfKJFDcVeRTY3aGYaSdcDKqCMZ2nuoT5eRU2hBt2QBfMP1VzA3HsSu1QhivHMapqv6M5Vuuh
+2025-11-11 18:56:26.352	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:6567	Trying to decrypt cache data
+2025-11-11 18:56:26.674	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:6764	trimming to 1449999, offset 1450000
+2025-11-11 18:56:26.674	[RPC0]	INFO	wallet.mms	src/wallet/message_store.cpp:778	No message store file found: ./testnet-wallets/buyer_temp_escrow_5b9f693e-55d8-4a7f-8461-6ef9309fb953.mms
+2025-11-11 18:56:26.674	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:9007	background keys file locker is not set
+2025-11-11 18:56:26.674	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:647	Problems at ssl shutdown: uninitialized (SSL routines)
+2025-11-11 18:56:26.675	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:571	Problems at cancel: Bad file descriptor
+2025-11-11 18:56:26.675	[RPC0]	DEBUG	net	contrib/epee/include/net/net_helper.h:574	Problems at shutdown: Bad file descriptor
+2025-11-11 18:56:26.687	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:145	/json_rpc[open_wallet] processed with 0/4063/0ms
+2025-11-11 18:56:26.687	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1535	handle_accept
+2025-11-11 18:56:26.687	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1560	New server for RPC connections, SSL autodetection
+2025-11-11 18:56:26.687	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:146	Spawned connection #733 to 0.0.0.0 currently we have sockets count:3
+2025-11-11 18:56:26.687	[RPC0]	DEBUG	net	contrib/epee/include/net/abstract_tcp_server2.inl:1057	 connection type 1 127.0.0.1:18082 <--> 127.0.0.1:57938 (via 127.0.0.1:57938)
+2025-11-11 18:56:26.688	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:430	SSL detection buffer, 9 bytes: 80 79 83 84 32 47 106 115 111
+2025-11-11 18:56:26.688	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:56:26.688	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:137	[127.0.0.1:57932 INC] Calling RPC method refresh
+2025-11-11 18:56:26.688	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3169	Pulling blocks: start_height 0
+2025-11-11 18:56:26.688	[RPC0]	DEBUG	net.http	contrib/epee/include/net/http_client.h:240	Reconnecting...
+2025-11-11 18:56:26.840	[RPC0]	WARNING	net.ssl	contrib/epee/src/net_ssl.cpp:547	SSL peer has not been verified
+2025-11-11 18:56:26.840	[RPC0]	WARNING	net.ssl	contrib/epee/src/net_ssl.cpp:547	SSL peer has not been verified
+2025-11-11 18:56:26.931	[RPC0]	DEBUG	net.ssl	contrib/epee/src/net_ssl.cpp:650	SSL handshake success
+2025-11-11 18:56:26.931	[RPC0]	DEBUG	wallet.wallet2	src/wallet/wallet2.cpp:3199	Pulled blocks: blocks_start_height 0, count 0, height 0, node height 2873351, pool info 2
+2025-11-11 18:56:26.931	[RPC0]	INFO	wallet.wallet2	src/wallet/wallet2.cpp:4298	Refresh done, blocks received: 0, balance (all accounts): 0.000000000000, unlocked: 0.000000000000
+2025-11-11 18:56:26.931	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:137	/json_rpc[refresh] processed with 0/244/0ms
+2025-11-11 18:56:26.932	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:56:26.932	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:73	[127.0.0.1:57938 INC] Calling RPC method get_address
+2025-11-11 18:56:26.932	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:73	/json_rpc[get_address] processed with 0/0/0ms
+2025-11-11 18:56:26.932	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:68	HTTP [127.0.0.1] POST /json_rpc
+2025-11-11 18:56:26.932	[RPC0]	INFO	wallet.rpc	src/wallet/wallet_rpc_server.h:72	[127.0.0.1:57932 INC] Calling RPC method get_balance
+2025-11-11 18:56:26.932	[RPC0]	DEBUG	wallet.rpc	src/wallet/wallet_rpc_server.h:72	/json_rpc[get_balance] processed with 0/0/0ms
+2025-11-11 18:56:26.932	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #732 to 0.0.0.0
+2025-11-11 18:56:26.933	[RPC0]	DEBUG	net.conn	contrib/epee/src/connection_basic.cpp:177	Destructing connection #731 to 0.0.0.0
