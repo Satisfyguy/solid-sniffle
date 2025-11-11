@@ -256,34 +256,8 @@ impl EscrowOrchestrator {
         // (which will need to acquire the lock again)
         drop(wallet_manager);
 
-        // 4. Store temp wallet IDs in escrow record
-        use diesel::prelude::*;
-        use crate::schema::escrows;
-
-        let db_clone = self.db.clone();
-        let escrow_id_str = escrow_id.to_string();
-        let buyer_temp_id_str = buyer_temp_wallet_id.to_string();
-        let vendor_temp_id_str = vendor_temp_wallet_id.to_string();
-        let arbiter_temp_id_str = arbiter_temp_wallet_id.to_string();
-
-        tokio::task::spawn_blocking(move || {
-            let mut conn = db_clone.get().context("Failed to get DB connection")?;
-            diesel::update(escrows::table.filter(escrows::id.eq(&escrow_id_str)))
-                .set((
-                    escrows::buyer_temp_wallet_id.eq(Some(buyer_temp_id_str)),
-                    escrows::vendor_temp_wallet_id.eq(Some(vendor_temp_id_str)),
-                    escrows::arbiter_temp_wallet_id.eq(Some(arbiter_temp_id_str)),
-                ))
-                .execute(&mut conn)
-                .context("Failed to update escrow with temp wallet IDs")
-        })
-        .await
-        .context("Database task panicked")??;
-
-        // Reload escrow with updated wallet IDs
-        escrow = db_load_escrow(&self.db, escrow_id).await?;
-
-        info!("✅ Escrow updated with temp wallet IDs");
+        // 4. Wallet IDs kept in memory only (no DB persistence needed for deprecated feature)
+        info!("✅ Temporary wallets ready: buyer={}, vendor={}, arbiter={}", buyer_temp_wallet_id, vendor_temp_wallet_id, arbiter_temp_wallet_id);
 
         // 5. Setup multisig to generate the shared address (Phase 2 - NON-CUSTODIAL)
         info!("🔐 [PHASE 2] Starting real multisig setup to generate shared address");

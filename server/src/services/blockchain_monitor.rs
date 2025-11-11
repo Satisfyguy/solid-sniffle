@@ -149,25 +149,15 @@ impl BlockchainMonitor {
             &multisig_address[..10]
         );
 
-        // Get the buyer TEMPORARY wallet ID to check balance
-        // CRITICAL: Use buyer_temp_wallet_id (the EMPTY temporary wallet), NOT buyer_id (user ID)
-        let buyer_temp_wallet_id = escrow
-            .buyer_temp_wallet_id
-            .ok_or_else(|| anyhow::anyhow!(
-                "Escrow {} missing buyer_temp_wallet_id (non-custodial architecture required)",
-                escrow_id
-            ))?
-            .parse::<Uuid>()
-            .context("Failed to parse buyer_temp_wallet_id as Uuid")?;
+        // NON-CUSTODIAL: Wallet files persist on disk after close_wallet()
+        // We can re-open them to check balance without needing wallet_id from database
+        // Wallet filename format: buyer_temp_escrow_{escrow_id}
+        let wallet_filename = format!("buyer_temp_escrow_{}", escrow_id);
 
         info!(
-            "🔍 [NON-CUSTODIAL] Checking balance of buyer temp wallet: {}",
-            buyer_temp_wallet_id
+            "🔍 [NON-CUSTODIAL] Checking balance of multisig wallet: {}",
+            wallet_filename
         );
-
-        // Query blockchain for wallet balance directly via RPC
-        // Open the wallet file first (wallets are stored as buyer_temp_escrow_{escrow_id})
-        let wallet_filename = format!("buyer_temp_escrow_{}", escrow_id);
 
         // Use the first RPC instance (port 18082) for balance checks
         let rpc_url = "http://127.0.0.1:18082/json_rpc";

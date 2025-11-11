@@ -1671,32 +1671,6 @@ impl WalletManager {
     ) -> Result<String, WalletManagerError> {
         info!("release_funds called for escrow {}", escrow_id);
 
-        // DEV MODE: If no wallets found, auto-create mock wallets for testing
-        let has_wallets = self.wallets.iter().any(|(_, w)| {
-            matches!(w.role, WalletRole::Buyer | WalletRole::Arbiter)
-        });
-
-        if !has_wallets {
-            warn!("DEV: No wallets found for escrow {} - auto-creating mock wallets", escrow_id);
-            self.dev_create_mock_multisig(escrow_id).await
-                .map_err(|e| WalletManagerError::InvalidState {
-                    expected: "mock wallets created".to_string(),
-                    actual: format!("failed to create: {}", e),
-                })?;
-        }
-
-        // DEV MODE: Check if mock wallets exist (for testing)
-        let has_mock_wallets = self.wallets.iter().any(|(_, w)| {
-            w.address.starts_with("mock_address_")
-        });
-
-        if has_mock_wallets {
-            info!("DEV: Using mock wallets - simulating release without RPC calls");
-            let mock_tx_hash = format!("mock_release_tx_{}", Uuid::new_v4());
-            info!("DEV: Simulated release transaction: {}", mock_tx_hash);
-            return Ok(mock_tx_hash);
-        }
-
         // PRODUCTION: Reopen wallets for signing (they were closed after multisig setup)
         info!("🔓 Reopening 3 wallets for transaction signing...");
 
@@ -1824,32 +1798,6 @@ impl WalletManager {
         destinations: Vec<monero_marketplace_common::types::TransferDestination>,
     ) -> Result<String, WalletManagerError> {
         info!("refund_funds called for escrow {}", escrow_id);
-
-        // DEV MODE: If no wallets found, auto-create mock wallets for testing
-        let has_wallets = self.wallets.iter().any(|(_, w)| {
-            matches!(w.role, WalletRole::Vendor | WalletRole::Arbiter)
-        });
-
-        if !has_wallets {
-            warn!("DEV: No wallets found for escrow {} - auto-creating mock wallets", escrow_id);
-            self.dev_create_mock_multisig(escrow_id).await
-                .map_err(|e| WalletManagerError::InvalidState {
-                    expected: "mock wallets created".to_string(),
-                    actual: format!("failed to create: {}", e),
-                })?;
-        }
-
-        // DEV MODE: Check if mock wallets exist (for testing)
-        let has_mock_wallets = self.wallets.iter().any(|(_, w)| {
-            w.address.starts_with("mock_address_")
-        });
-
-        if has_mock_wallets {
-            info!("DEV: Using mock wallets - simulating refund without RPC calls");
-            let mock_tx_hash = format!("mock_refund_tx_{}", Uuid::new_v4());
-            info!("DEV: Simulated refund transaction: {}", mock_tx_hash);
-            return Ok(mock_tx_hash);
-        }
 
         // PRODUCTION: Reopen wallets for signing (they were closed after multisig setup)
         info!("🔓 Reopening 3 wallets for refund transaction signing...");
