@@ -10,7 +10,9 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::crypto::encryption::{decrypt_field, encrypt_field};
+use base64::Engine;
+use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
+use crate::crypto::encryption::encrypt_field;
 use crate::db::{DbPool, db_load_escrow};
 use crate::middleware::csrf::validate_csrf_token;
 use crate::models::cart::Cart;
@@ -218,7 +220,7 @@ pub async fn create_order_from_cart(
         (listing.vendor_id.clone(), listing.id.clone(), listing.price_xmr, 1)
     } else {
         // Cart mode (existing logic)
-        let mut cart = match session.get::<Cart>("cart") {
+        let cart = match session.get::<Cart>("cart") {
             Ok(Some(c)) => c,
             _ => {
                 return HttpResponse::BadRequest().json(serde_json::json!({
@@ -274,7 +276,7 @@ pub async fn create_order_from_cart(
     // Only the vendor can decrypt this address using the same encryption key
     // Database is also encrypted at rest with SQLCipher (defense in depth)
     let encrypted_address = match encrypt_field(&req.shipping_address, &encryption_key) {
-        Ok(encrypted_bytes) => base64::encode(&encrypted_bytes),
+        Ok(encrypted_bytes) => BASE64_STANDARD.encode(&encrypted_bytes),
         Err(e) => {
             tracing::error!("Failed to encrypt shipping address: {}", e);
             return HttpResponse::InternalServerError().json(serde_json::json!({
@@ -486,7 +488,7 @@ pub async fn create_order(
 
     // SECURITY: Field-level AES-256-GCM encryption for shipping address
     let encrypted_address = match encrypt_field(&req.shipping_address, &encryption_key) {
-        Ok(encrypted_bytes) => base64::encode(&encrypted_bytes),
+        Ok(encrypted_bytes) => BASE64_STANDARD.encode(&encrypted_bytes),
         Err(e) => {
             tracing::error!("Failed to encrypt shipping address: {}", e);
             return HttpResponse::InternalServerError().json(serde_json::json!({

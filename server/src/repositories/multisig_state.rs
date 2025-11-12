@@ -20,6 +20,8 @@
 //! - Connection pooling via r2d2
 
 use anyhow::{Context, Result};
+use base64::Engine;
+use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
 use diesel::prelude::*;
 use tracing::{debug, error, info, warn};
 
@@ -104,7 +106,7 @@ impl MultisigStateRepository {
         // Encrypt sensitive multisig_infos if present
         let encrypted_json = if snapshot.multisig_infos.is_some() {
             let encrypted_bytes = self.encrypt_snapshot_data(&state_json)?;
-            base64::encode(&encrypted_bytes)
+            BASE64_STANDARD.encode(&encrypted_bytes)
         } else {
             state_json
         };
@@ -178,7 +180,7 @@ impl MultisigStateRepository {
         match state_json {
             Some(json) if !json.is_empty() => {
                 // Attempt base64 decode (encrypted data)
-                let snapshot = if let Ok(encrypted_bytes) = base64::decode(&json) {
+                let snapshot = if let Ok(encrypted_bytes) = BASE64_STANDARD.decode(&json) {
                     // Decrypt and parse
                     let decrypted = self.decrypt_snapshot_data(&encrypted_bytes)?;
                     MultisigSnapshot::from_json(&decrypted)?
@@ -366,7 +368,7 @@ impl MultisigStateRepository {
 
     /// Parse and decrypt a snapshot JSON string
     fn parse_and_decrypt_snapshot(&self, json: &str) -> Result<MultisigSnapshot> {
-        if let Ok(encrypted_bytes) = base64::decode(json) {
+        if let Ok(encrypted_bytes) = BASE64_STANDARD.decode(json) {
             let decrypted = self.decrypt_snapshot_data(&encrypted_bytes)?;
             MultisigSnapshot::from_json(&decrypted)
         } else {
