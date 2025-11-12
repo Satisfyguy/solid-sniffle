@@ -18,6 +18,8 @@ use crate::db::{db_load_escrow, db_update_escrow_status, DbPool};
 use crate::models::order::{Order, OrderStatus};
 use crate::wallet_manager::WalletManager;
 use crate::websocket::WebSocketServer;
+use crate::services::wallet_session_manager::WalletSessionManager;
+use crate::wallet_pool::WalletRole;
 
 /// Configuration for blockchain monitoring
 #[derive(Clone, Debug)]
@@ -43,6 +45,7 @@ impl Default for MonitorConfig {
 /// Blockchain monitoring service
 pub struct BlockchainMonitor {
     wallet_manager: Arc<Mutex<WalletManager>>,
+    session_manager: Arc<WalletSessionManager>,
     db: DbPool,
     #[allow(dead_code)]
     websocket: Addr<WebSocketServer>,
@@ -53,6 +56,7 @@ impl BlockchainMonitor {
     /// Create a new blockchain monitor
     pub fn new(
         wallet_manager: Arc<Mutex<WalletManager>>,
+        session_manager: Arc<WalletSessionManager>,
         db: DbPool,
         websocket: Addr<WebSocketServer>,
         config: MonitorConfig,
@@ -63,6 +67,7 @@ impl BlockchainMonitor {
         );
         Self {
             wallet_manager,
+            session_manager,
             db,
             websocket,
             config,
@@ -149,75 +154,25 @@ impl BlockchainMonitor {
             &multisig_address[..10]
         );
 
-        // NON-CUSTODIAL: Wallet files persist on disk after close_wallet()
-        // We can re-open them to check balance without needing wallet_id from database
-        // Wallet filename format: buyer_temp_escrow_{escrow_id}
-        let wallet_filename = format!("buyer_temp_escrow_{}", escrow_id);
-
+        // PHASE 2: Use WalletSessionManager for persistent wallet sessions
+        // Get the already-open buyer wallet from session (no open/close overhead!)
         info!(
-            "🔍 [NON-CUSTODIAL] Checking balance of multisig wallet: {}",
-            wallet_filename
+            "🚀 [PHASE 2] Getting wallet from session manager for escrow {}",
+            escrow_id
         );
 
-        // CRITICAL FIX: Use dedicated RPC port (18087) for balance checks
-        // This prevents collision with wallets being created during escrow initialization
-        // Ports 18082-18086 are used for buyer/vendor/arbiter wallet creation
-        // Port 18087 is RESERVED for blockchain monitoring only
-        let rpc_url = "http://127.0.0.1:18087/json_rpc";
-        let client = reqwest::Client::new();
-
-        // Open wallet
-        let open_payload = serde_json::json!({
-            "jsonrpc": "2.0",
-            "id": "0",
-            "method": "open_wallet",
-            "params": {
-                "filename": wallet_filename
-            }
-        });
-
-        client.post(rpc_url)
-            .json(&open_payload)
-            .send()
+        let buyer_wallet = self.session_manager
+            .get_wallet(escrow_id, WalletRole::Buyer)
             .await
-            .context("Failed to send open_wallet request")?;
+            .context("Failed to get buyer wallet from session")?;
 
-        // Refresh wallet to sync with blockchain
-        let refresh_payload = serde_json::json!({
-            "jsonrpc": "2.0",
-            "id": "0",
-            "method": "refresh"
-        });
-
-        client.post(rpc_url)
-            .json(&refresh_payload)
-            .send()
-            .await
+        // Refresh wallet to sync with blockchain (still needed)
+        buyer_wallet.refresh().await
             .context("Failed to refresh wallet")?;
 
-        // Get balance
-        let balance_payload = serde_json::json!({
-            "jsonrpc": "2.0",
-            "id": "0",
-            "method": "get_balance"
-        });
-
-        let response = client.post(rpc_url)
-            .json(&balance_payload)
-            .send()
-            .await
-            .context("Failed to send get_balance request")?;
-
-        let balance_result: serde_json::Value = response.json().await
-            .context("Failed to parse balance response")?;
-
-        let total_balance = balance_result["result"]["balance"]
-            .as_u64()
-            .ok_or_else(|| anyhow::anyhow!("Missing balance in response"))?;
-
-        let unlocked_balance = balance_result["result"]["unlocked_balance"]
-            .as_u64()
-            .ok_or_else(|| anyhow::anyhow!("Missing unlocked_balance in response"))?;
+        // Get balance (instant - wallet already open!)
+        let (total_balance, unlocked_balance) = buyer_wallet.get_balance().await
+            .context("Failed to get wallet balance")?;
 
         info!(
             "Escrow {} wallet balance: total={}, unlocked={}, expected={}",
@@ -285,27 +240,8 @@ impl BlockchainMonitor {
             );
         }
 
-        // CRITICAL FIX (Phase 1): Close wallet to free RPC slot for next escrow
-        // Without this, wallet stays open and blocks RPC instance, preventing concurrent escrows
-        let close_payload = serde_json::json!({
-            "jsonrpc": "2.0",
-            "id": "0",
-            "method": "close_wallet"
-        });
-
-        match client.post(rpc_url)
-            .json(&close_payload)
-            .send()
-            .await
-        {
-            Ok(_) => {
-                info!("✅ Closed wallet {} to free RPC slot", wallet_filename);
-            }
-            Err(e) => {
-                warn!("⚠️  Failed to close wallet {}: {} (RPC slot may remain occupied)", wallet_filename, e);
-                // Don't fail the whole operation, just log warning
-            }
-        }
+        // PHASE 2: No need to close wallet - session manager keeps it open for entire escrow lifecycle
+        info!("🚀 [PHASE 2] Wallet remains open in session for future operations (zero overhead!)");
 
         Ok(())
     }
