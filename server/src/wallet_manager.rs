@@ -1122,17 +1122,30 @@ impl WalletManager {
 
         let rpc_port = wallet.rpc_port;
 
-        // 2. Close wallet via RPC
+        // 2. CRITICAL: Store wallet to disk BEFORE closing!
+        // Without this, multisig state and all wallet data is LOST!
+        wallet
+            .rpc_client
+            .store_wallet()
+            .await
+            .map_err(|e| {
+                warn!("Failed to store wallet {} before closing: {}", wallet_id, e);
+                WalletManagerError::RpcError(CommonError::MoneroRpc(format!("Failed to store wallet: {}", e)))
+            })?;
+
+        info!("💾 Wallet {} saved to disk", wallet_id);
+
+        // 3. Close wallet via RPC (frees RPC slot)
         wallet
             .rpc_client
             .close_wallet()
             .await
             .map_err(|e| WalletManagerError::RpcError(CommonError::MoneroRpc(e.to_string())))?;
 
-        // 3. Remove from wallets map
+        // 4. Remove from wallets map
         self.wallets.remove(&wallet_id);
 
-        // 4. If WalletPool is enabled, release the RPC slot
+        // 5. If WalletPool is enabled, release the RPC slot
         if let (Some(ref pool), Some(port)) = (&self.wallet_pool, rpc_port) {
             pool.release_rpc(port).await.map_err(|e| {
                 warn!("Failed to release RPC port {} via pool: {}", port, e);

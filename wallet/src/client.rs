@@ -133,6 +133,16 @@ impl MoneroClient {
             .map_err(convert_monero_error)
     }
 
+    /// Store (save) the currently open wallet to disk
+    ///
+    /// CRITICAL: Must be called BEFORE close_wallet() to persist changes!
+    pub async fn store_wallet(&self) -> Result<()> {
+        self.rpc_client
+            .store_wallet()
+            .await
+            .map_err(convert_monero_error)
+    }
+
     /// Close the currently open wallet in the wallet-rpc
     pub async fn close_wallet(&self) -> Result<()> {
         self.rpc_client
