@@ -166,13 +166,12 @@ impl BlockchainMonitor {
             .await
             .context("Failed to get buyer wallet from session")?;
 
-        // Refresh wallet to sync with blockchain (still needed)
-        buyer_wallet.refresh().await
-            .context("Failed to refresh wallet")?;
+        // Note: No explicit refresh() needed - Monero RPC auto-refreshes on balance queries
+        // The wallet is persistent in the session, so it stays synced with blockchain
 
         // Get balance (instant - wallet already open!)
-        let (total_balance, unlocked_balance) = buyer_wallet.get_balance().await
-            .context("Failed to get wallet balance")?;
+        let (total_balance, unlocked_balance) = buyer_wallet.rpc().get_balance().await
+            .map_err(|e| anyhow::anyhow!("Failed to get wallet balance: {:?}", e))?;
 
         info!(
             "Escrow {} wallet balance: total={}, unlocked={}, expected={}",
@@ -281,97 +280,41 @@ impl BlockchainMonitor {
             escrow_id
         );
 
-        // CRITICAL FIX (Phase 1): Re-open buyer wallet to check transaction confirmations
-        // The wallet was closed after release_funds() was called, so we need to reopen it
-        // to query the transaction status from the blockchain.
-        let wallet_filename = format!("buyer_temp_escrow_{}", escrow_id);
+        // 🚀 [PHASE 2] Get wallet from session manager (wallet stays open)
+        info!(
+            "🚀 [PHASE 2] Getting buyer wallet from session for confirmation check - escrow {}",
+            escrow_id
+        );
 
-        // CRITICAL FIX: Use dedicated RPC port (18087) for confirmation checks
-        // Same as balance checks - prevents collision with active wallet creation
-        let rpc_url = "http://127.0.0.1:18087/json_rpc";
-        let client = reqwest::Client::new();
-
-        // Open wallet
-        let open_payload = serde_json::json!({
-            "jsonrpc": "2.0",
-            "id": "0",
-            "method": "open_wallet",
-            "params": {
-                "filename": wallet_filename,
-                "password": ""
-            }
-        });
-
-        if let Err(e) = client.post(rpc_url)
-            .json(&open_payload)
-            .send()
+        let buyer_wallet = match self.session_manager
+            .get_wallet(escrow_id, WalletRole::Buyer)
             .await
         {
-            warn!("Failed to open wallet {} for confirmation check: {}", wallet_filename, e);
-            return Ok(());
-        }
-
-        // Get transfer by transaction ID
-        let get_transfer_payload = serde_json::json!({
-            "jsonrpc": "2.0",
-            "id": "0",
-            "method": "get_transfer_by_txid",
-            "params": {
-                "txid": tx_hash
-            }
-        });
-
-        let response = match client.post(rpc_url)
-            .json(&get_transfer_payload)
-            .send()
-            .await
-        {
-            Ok(resp) => resp,
+            Ok(wallet) => wallet,
             Err(e) => {
-                warn!("Failed to get transaction details for {}: {}", &tx_hash[..10], e);
-                // Close wallet before returning
-                let _ = client.post(rpc_url)
-                    .json(&serde_json::json!({"jsonrpc": "2.0", "id": "0", "method": "close_wallet"}))
-                    .send()
-                    .await;
+                warn!(
+                    "Failed to get buyer wallet from session for escrow {}: {}. \
+                    This is expected if escrow session was already cleaned up.",
+                    escrow_id, e
+                );
                 return Ok(());
             }
         };
 
-        let transfer_result: serde_json::Value = match response.json().await {
-            Ok(val) => val,
+        // Get transaction details (instant - wallet already open!)
+        let transfer_info = match buyer_wallet.rpc().get_transfer_by_txid(tx_hash.clone()).await {
+            Ok(info) => info,
             Err(e) => {
-                warn!("Failed to parse transfer response: {}", e);
-                // Close wallet before returning
-                let _ = client.post(rpc_url)
-                    .json(&serde_json::json!({"jsonrpc": "2.0", "id": "0", "method": "close_wallet"}))
-                    .send()
-                    .await;
+                warn!("Failed to get transaction details for {}: {:?}", &tx_hash[..10], e);
                 return Ok(());
             }
         };
 
-        // Extract confirmations from response
-        let confirmations = transfer_result["result"]["transfer"]["confirmations"]
-            .as_u64()
-            .unwrap_or(0) as u32;
+        let confirmations = transfer_info.confirmations as u32;
 
-        // Close wallet immediately after getting the info
-        let close_payload = serde_json::json!({
-            "jsonrpc": "2.0",
-            "id": "0",
-            "method": "close_wallet"
-        });
-
-        if let Err(e) = client.post(rpc_url)
-            .json(&close_payload)
-            .send()
-            .await
-        {
-            warn!("Failed to close wallet {} after confirmation check: {}", wallet_filename, e);
-        } else {
-            info!("✅ Closed wallet {} after confirmation check", wallet_filename);
-        }
+        info!(
+            "🚀 [PHASE 2] Transaction query completed instantly (wallet persistent in session)"
+        );
 
         info!(
             "Transaction {} has {} confirmations (required: {})",
@@ -426,6 +369,18 @@ impl BlockchainMonitor {
                 final_status,
                 &tx_hash[..10]
             );
+
+            // 🚀 [PHASE 2] Close wallet session - escrow lifecycle complete
+            info!("🚀 [PHASE 2] Closing wallet session for completed escrow {}", escrow_id);
+            if let Err(e) = self.session_manager.close_session(escrow_id).await {
+                warn!(
+                    "⚠️ [PHASE 2] Failed to close wallet session for escrow {}: {}. \
+                    Session will be cleaned up by TTL (2h timeout)",
+                    escrow_id, e
+                );
+            } else {
+                info!("✅ [PHASE 2] Wallet session closed - 3 wallets freed");
+            }
         }
 
         Ok(())

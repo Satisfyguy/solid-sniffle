@@ -285,13 +285,8 @@ async fn main() -> Result<()> {
         }
     }
 
-    // 8. Initialize Escrow Orchestrator
-    let escrow_orchestrator = Arc::new(EscrowOrchestrator::new(
-        wallet_manager.clone(),
-        pool.clone(),
-        websocket_server.clone(),
-        encryption_key.clone(),
-    ));
+    // 8. Escrow Orchestrator initialization moved to after WalletSessionManager (Phase 2)
+    // See line ~380 for new instantiation with session_manager parameter
 
     // 8b. Initialize Non-Custodial Escrow Coordinator (Haveno-inspired)
     let escrow_coordinator = Arc::new(EscrowCoordinator::new());
@@ -323,10 +318,21 @@ async fn main() -> Result<()> {
     });
     info!("TimeoutMonitor background service started");
 
+    // 🚀 [PHASE 2] Initialize WalletSessionManager for persistent wallet sessions
+    use server::services::wallet_session_manager::WalletSessionManager;
+    let wallet_pool = wallet_manager.lock().await.wallet_pool()
+        .ok_or_else(|| anyhow::anyhow!("WalletPool not enabled"))?.clone();
+
+    let wallet_session_manager = Arc::new(WalletSessionManager::new(wallet_pool));
+    info!(
+        "✅ WalletSessionManager initialized (max 10 concurrent sessions, 2h TTL) - [PHASE 2]"
+    );
+
     // Initialize and start BlockchainMonitor for automatic payment detection
     use server::services::blockchain_monitor::{BlockchainMonitor, MonitorConfig};
     let blockchain_monitor = Arc::new(BlockchainMonitor::new(
         wallet_manager.clone(),
+        wallet_session_manager.clone(),  // 🚀 [PHASE 2] Pass session manager
         pool.clone(),
         websocket_server.clone(),
         MonitorConfig::default(), // poll_interval: 30s, required_confirmations: 10
@@ -338,6 +344,31 @@ async fn main() -> Result<()> {
     });
     info!("BlockchainMonitor background service started (30s polling interval)");
 
+    // 🚀 [PHASE 2] Spawn background task for session TTL cleanup
+    let session_manager_cleanup = wallet_session_manager.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(600)); // 10 minutes
+        info!("🧹 [PHASE 2] Background session cleanup task started (runs every 10 min)");
+
+        loop {
+            interval.tick().await;
+
+            info!("🧹 [PHASE 2] Running session TTL cleanup...");
+            session_manager_cleanup.cleanup_stale_sessions().await;
+
+            // Log statistics for monitoring
+            let stats = session_manager_cleanup.get_stats().await;
+            info!(
+                "📊 [PHASE 2] Session stats: {}/{} active ({}% utilization), avg age: {:?}",
+                stats.active_sessions,
+                stats.max_sessions,
+                stats.utilization_pct,
+                stats.avg_session_age
+            );
+        }
+    });
+    info!("✅ Session cleanup background task started - [PHASE 2]");
+
     // 10. Initialize Tera template engine
     let tera = Tera::new("templates/**/*.html").context("Failed to initialize Tera templates")?;
     info!("Tera template engine initialized");
@@ -346,6 +377,16 @@ async fn main() -> Result<()> {
     use server::ipfs::client::IpfsClient;
     let ipfs_client = IpfsClient::new_local().context("Failed to initialize IPFS client")?;
     info!("IPFS client initialized (local node at 127.0.0.1:5001)");
+
+    // 12. 🚀 [PHASE 2] Initialize Escrow Orchestrator (now with session_manager)
+    let escrow_orchestrator = Arc::new(EscrowOrchestrator::new(
+        wallet_manager.clone(),
+        wallet_session_manager.clone(),  // 🚀 [PHASE 2]
+        pool.clone(),
+        websocket_server.clone(),
+        encryption_key.clone(),
+    ));
+    info!("✅ EscrowOrchestrator initialized with WalletSessionManager - [PHASE 2]");
 
     info!("Starting HTTP server on http://127.0.0.1:8080");
 

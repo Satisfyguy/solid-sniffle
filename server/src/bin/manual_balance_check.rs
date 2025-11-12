@@ -51,14 +51,21 @@ async fn main() -> Result<()> {
         eprintln!("Warning: Failed to enable wallet pool: {}", e);
     }
 
+    // Create session manager for Phase 2
+    use server::services::wallet_session_manager::WalletSessionManager;
+    let wallet_pool = wallet_manager.wallet_pool()
+        .ok_or_else(|| anyhow::anyhow!("WalletPool not enabled"))?.clone();
+    let session_manager = std::sync::Arc::new(WalletSessionManager::new(wallet_pool));
+
     // Create dummy websocket server (not used in this test)
     use actix::Actor;
     use server::websocket::WebSocketServer;
     let ws_server = WebSocketServer::default().start();
 
-    // Create orchestrator
+    // Create orchestrator (Phase 2: now with session_manager)
     let orchestrator = EscrowOrchestrator::new(
         std::sync::Arc::new(tokio::sync::Mutex::new(wallet_manager)),
+        session_manager,  // Phase 2
         pool,
         ws_server,
         db_encryption_key.as_bytes().to_vec(),

@@ -22,6 +22,8 @@ use tokio::sync::Mutex;
 pub struct EscrowOrchestrator {
     /// Monero wallet manager for blockchain operations
     wallet_manager: Arc<Mutex<WalletManager>>,
+    /// 🚀 [PHASE 2] Wallet session manager for persistent wallet sessions
+    session_manager: Arc<crate::services::wallet_session_manager::WalletSessionManager>,
     /// Database connection pool
     db: DbPool,
     /// WebSocket server actor address for real-time notifications
@@ -34,12 +36,14 @@ impl EscrowOrchestrator {
     /// Create a new EscrowOrchestrator
     pub fn new(
         wallet_manager: Arc<Mutex<WalletManager>>,
+        session_manager: Arc<crate::services::wallet_session_manager::WalletSessionManager>,  // 🚀 [PHASE 2]
         db: DbPool,
         websocket: Addr<WebSocketServer>,
         encryption_key: Vec<u8>,
     ) -> Self {
         Self {
             wallet_manager,
+            session_manager,  // 🚀 [PHASE 2]
             db,
             websocket,
             encryption_key,
@@ -296,10 +300,8 @@ impl EscrowOrchestrator {
             }
         };
 
-        // 🔓 CRITICAL: Close wallets after successful multisig setup to free RPC slots
-        // Wallet rotation pattern: Create → Setup multisig → CLOSE → Save to disk
-        // Wallets will be automatically reopened later for signing/reading balance
-        info!("🔓 Multisig complete! Closing 3 wallets to free RPC slots (will reopen for signing)...");
+        // 🔓 PHASE 1: Close wallets temporarily (Phase 2 will reopen and persist them)
+        info!("🔓 Multisig complete! Closing 3 wallets temporarily...");
         let mut wallet_manager = self.wallet_manager.lock().await;
         let freed_count = Self::cleanup_escrow_wallets(
             &mut wallet_manager,
@@ -310,7 +312,30 @@ impl EscrowOrchestrator {
         .await;
         drop(wallet_manager);
 
-        info!("✅ Freed {} RPC slots - wallets saved to disk, will reopen for signing", freed_count);
+        info!("✅ Phase 1 cleanup: Freed {} RPC slots", freed_count);
+
+        // 🚀 [PHASE 2] Create persistent wallet session (opens all 3 wallets and keeps them open)
+        info!(
+            "🚀 [PHASE 2] Creating persistent wallet session for escrow {} (opens all 3 wallets)",
+            escrow_id
+        );
+
+        match self.session_manager.get_or_create_session(escrow_id).await {
+            Ok(_) => {
+                info!(
+                    "✅ [PHASE 2] Wallet session created - all 3 wallets open and ready! \
+                    Future operations will be instant (no open/close overhead)"
+                );
+            }
+            Err(e) => {
+                warn!(
+                    "⚠️ [PHASE 2] Failed to create wallet session: {}. \
+                    Escrow will still work but operations will be slower (Phase 1 fallback)",
+                    e
+                );
+                // Non-critical: Continue even if session creation fails (Phase 1 fallback)
+            }
+        }
 
         // 6. Reload escrow again to get final state
         escrow = db_load_escrow(&self.db, escrow_id).await?;

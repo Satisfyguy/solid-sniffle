@@ -19,7 +19,7 @@ use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
 use uuid::Uuid;
 use anyhow::{Result, Context};
-use tracing::{info, warn, error};
+use tracing::{info, warn};
 
 use crate::wallet_pool::{WalletPool, WalletRole};
 use monero_marketplace_wallet::client::MoneroClient;
