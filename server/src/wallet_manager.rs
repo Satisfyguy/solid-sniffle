@@ -947,6 +947,51 @@ impl WalletManager {
                                     match rpc_client.open_wallet(&wallet_filename, "").await {
                                         Ok(_) => {
                                             info!("✅ Wallet reopened - multisig experimental setting active");
+
+                                            // CRITICAL: Check if wallet has stale multisig state from RPC cache
+                                            // This can happen if previous wallet on same RPC was in multisig mode
+                                            match rpc_client.rpc().is_multisig().await {
+                                                Ok(true) => {
+                                                    warn!("⚠️  CACHE POLLUTION: Newly created wallet shows multisig=true (RPC cache issue)");
+                                                    warn!("⚠️  This is a monero-wallet-rpc bug - wallet {} should NOT be in multisig mode yet", wallet_filename);
+                                                    warn!("⚠️  Attempting to clear cache by closing and reopening with 2s delay...");
+
+                                                    // Try to clear cache with extended delay
+                                                    let _ = rpc_client.close_wallet().await;
+                                                    tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+                                                    match rpc_client.open_wallet(&wallet_filename, "").await {
+                                                        Ok(_) => {
+                                                            // Verify cache is cleared
+                                                            match rpc_client.rpc().is_multisig().await {
+                                                                Ok(true) => {
+                                                                    error!("❌ CRITICAL: Wallet STILL in multisig mode after cache clear attempt");
+                                                                    error!("❌ This indicates a serious RPC state corruption - aborting");
+                                                                    return Err(WalletManagerError::InvalidState {
+                                                                        expected: "fresh wallet with multisig=false".to_string(),
+                                                                        actual: "multisig=true after creation (RPC cache corrupted)".to_string(),
+                                                                    });
+                                                                }
+                                                                Ok(false) => {
+                                                                    info!("✅ Cache cleared successfully - wallet is now clean");
+                                                                }
+                                                                Err(e) => {
+                                                                    warn!("⚠️  Could not verify multisig status after cache clear: {:?}", e);
+                                                                }
+                                                            }
+                                                        }
+                                                        Err(e) => {
+                                                            warn!("⚠️  Failed to reopen wallet after cache clear: {:?}", e);
+                                                        }
+                                                    }
+                                                }
+                                                Ok(false) => {
+                                                    // Normal case - wallet is clean
+                                                }
+                                                Err(e) => {
+                                                    warn!("⚠️  Could not check multisig status: {:?}", e);
+                                                }
+                                            }
                                         }
                                         Err(e) => {
                                             warn!("⚠️  Failed to reopen wallet: {:?}", e);
@@ -1469,6 +1514,57 @@ impl WalletManager {
             .wallets
             .get_mut(&wallet_id)
             .ok_or(WalletManagerError::WalletNotFound(wallet_id))?;
+
+        // CRITICAL: Check for RPC cache pollution before calling prepare_multisig
+        // This can happen when reusing the same RPC instance for multiple escrows
+        match wallet.rpc_client.rpc().is_multisig().await {
+            Ok(true) => {
+                warn!("⚠️  RPC CACHE POLLUTION DETECTED: Wallet {:?} shows multisig=true BEFORE prepare_multisig() call", wallet_id);
+                warn!("⚠️  This is a monero-wallet-rpc bug - attempting to clear cache...");
+
+                // Try to clear cache by closing and reopening with delay
+                let wallet_name = format!("{}_temp_escrow_{}",
+                    match wallet.role {
+                        WalletRole::Buyer => "buyer",
+                        WalletRole::Vendor => "vendor",
+                        WalletRole::Arbiter => "arbiter",
+                    },
+                    escrow_id
+                );
+
+                let _ = wallet.rpc_client.close_wallet().await;
+                tokio::time::sleep(tokio::time::Duration::from_secs(3)).await;
+
+                match wallet.rpc_client.open_wallet(&wallet_name, "").await {
+                    Ok(_) => {
+                        match wallet.rpc_client.rpc().is_multisig().await {
+                            Ok(true) => {
+                                error!("❌ CRITICAL: RPC cache STILL polluted after clear attempt - wallet CANNOT be used");
+                                return Err(WalletManagerError::InvalidState {
+                                    expected: "multisig=false before prepare_multisig".to_string(),
+                                    actual: "multisig=true (RPC cache corrupted)".to_string(),
+                                });
+                            }
+                            Ok(false) => {
+                                info!("✅ RPC cache cleared successfully - wallet is clean");
+                            }
+                            Err(e) => {
+                                warn!("⚠️  Could not verify cache clear: {:?}", e);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        warn!("⚠️  Failed to reopen wallet after cache clear: {:?}", e);
+                    }
+                }
+            }
+            Ok(false) => {
+                // Normal case - wallet is clean
+            }
+            Err(e) => {
+                warn!("⚠️  Could not check multisig status before prepare: {:?}", e);
+            }
+        }
 
         let info = wallet.rpc_client.multisig().prepare_multisig().await?;
         wallet.multisig_state = MultisigState::PreparedInfo(info.clone());

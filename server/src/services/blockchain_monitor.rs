@@ -159,8 +159,11 @@ impl BlockchainMonitor {
             wallet_filename
         );
 
-        // Use the first RPC instance (port 18082) for balance checks
-        let rpc_url = "http://127.0.0.1:18082/json_rpc";
+        // CRITICAL FIX: Use dedicated RPC port (18087) for balance checks
+        // This prevents collision with wallets being created during escrow initialization
+        // Ports 18082-18086 are used for buyer/vendor/arbiter wallet creation
+        // Port 18087 is RESERVED for blockchain monitoring only
+        let rpc_url = "http://127.0.0.1:18087/json_rpc";
         let client = reqwest::Client::new();
 
         // Open wallet
@@ -282,6 +285,28 @@ impl BlockchainMonitor {
             );
         }
 
+        // CRITICAL FIX (Phase 1): Close wallet to free RPC slot for next escrow
+        // Without this, wallet stays open and blocks RPC instance, preventing concurrent escrows
+        let close_payload = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": "0",
+            "method": "close_wallet"
+        });
+
+        match client.post(rpc_url)
+            .json(&close_payload)
+            .send()
+            .await
+        {
+            Ok(_) => {
+                info!("✅ Closed wallet {} to free RPC slot", wallet_filename);
+            }
+            Err(e) => {
+                warn!("⚠️  Failed to close wallet {}: {} (RPC slot may remain occupied)", wallet_filename, e);
+                // Don't fail the whole operation, just log warning
+            }
+        }
+
         Ok(())
     }
 
@@ -320,39 +345,107 @@ impl BlockchainMonitor {
             escrow_id
         );
 
-        // Get buyer wallet ID to query transaction details
-        let buyer_wallet_id = escrow
-            .buyer_id
-            .parse::<Uuid>()
-            .context("Failed to parse buyer_id as Uuid")?;
+        // CRITICAL FIX (Phase 1): Re-open buyer wallet to check transaction confirmations
+        // The wallet was closed after release_funds() was called, so we need to reopen it
+        // to query the transaction status from the blockchain.
+        let wallet_filename = format!("buyer_temp_escrow_{}", escrow_id);
 
-        // Query transaction details from blockchain
-        let wallet_manager = self.wallet_manager.lock().await;
-        let transfer_info = match wallet_manager
-            .get_transfer_by_txid(buyer_wallet_id, tx_hash)
+        // CRITICAL FIX: Use dedicated RPC port (18087) for confirmation checks
+        // Same as balance checks - prevents collision with active wallet creation
+        let rpc_url = "http://127.0.0.1:18087/json_rpc";
+        let client = reqwest::Client::new();
+
+        // Open wallet
+        let open_payload = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": "0",
+            "method": "open_wallet",
+            "params": {
+                "filename": wallet_filename,
+                "password": ""
+            }
+        });
+
+        if let Err(e) = client.post(rpc_url)
+            .json(&open_payload)
+            .send()
             .await
         {
-            Ok(info) => info,
+            warn!("Failed to open wallet {} for confirmation check: {}", wallet_filename, e);
+            return Ok(());
+        }
+
+        // Get transfer by transaction ID
+        let get_transfer_payload = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": "0",
+            "method": "get_transfer_by_txid",
+            "params": {
+                "txid": tx_hash
+            }
+        });
+
+        let response = match client.post(rpc_url)
+            .json(&get_transfer_payload)
+            .send()
+            .await
+        {
+            Ok(resp) => resp,
             Err(e) => {
-                warn!(
-                    "Failed to get transaction details for {}: {}",
-                    &tx_hash[..10],
-                    e
-                );
+                warn!("Failed to get transaction details for {}: {}", &tx_hash[..10], e);
+                // Close wallet before returning
+                let _ = client.post(rpc_url)
+                    .json(&serde_json::json!({"jsonrpc": "2.0", "id": "0", "method": "close_wallet"}))
+                    .send()
+                    .await;
                 return Ok(());
             }
         };
-        drop(wallet_manager);
+
+        let transfer_result: serde_json::Value = match response.json().await {
+            Ok(val) => val,
+            Err(e) => {
+                warn!("Failed to parse transfer response: {}", e);
+                // Close wallet before returning
+                let _ = client.post(rpc_url)
+                    .json(&serde_json::json!({"jsonrpc": "2.0", "id": "0", "method": "close_wallet"}))
+                    .send()
+                    .await;
+                return Ok(());
+            }
+        };
+
+        // Extract confirmations from response
+        let confirmations = transfer_result["result"]["transfer"]["confirmations"]
+            .as_u64()
+            .unwrap_or(0) as u32;
+
+        // Close wallet immediately after getting the info
+        let close_payload = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": "0",
+            "method": "close_wallet"
+        });
+
+        if let Err(e) = client.post(rpc_url)
+            .json(&close_payload)
+            .send()
+            .await
+        {
+            warn!("Failed to close wallet {} after confirmation check: {}", wallet_filename, e);
+        } else {
+            info!("✅ Closed wallet {} after confirmation check", wallet_filename);
+        }
 
         info!(
             "Transaction {} has {} confirmations (required: {})",
             &tx_hash[..10],
-            transfer_info.confirmations,
+            confirmations,
             self.config.required_confirmations
         );
 
         // Check if transaction has enough confirmations
-        if transfer_info.confirmations >= self.config.required_confirmations {
+        if confirmations >= self.config.required_confirmations {
             // Determine final status based on current status
             let final_status = match escrow.status.as_str() {
                 "releasing" => {
@@ -388,7 +481,7 @@ impl BlockchainMonitor {
             use crate::websocket::WsEvent;
             self.websocket.do_send(WsEvent::TransactionConfirmed {
                 tx_hash: tx_hash.clone(),
-                confirmations: transfer_info.confirmations,
+                confirmations,
             });
 
             info!(
