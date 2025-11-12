@@ -443,7 +443,7 @@ impl TimeoutMonitor {
             if let Some(escrow) = escrow_result {
                 match repo.load_snapshot(&escrow_id_str) {
                     Ok(Some(snapshot)) => {
-                        let minutes_stuck = (chrono::Utc::now().naive_utc().timestamp()
+                        let minutes_stuck = (chrono::Utc::now().naive_utc().and_utc().timestamp()
                             - escrow.multisig_updated_at as i64) / 60;
 
                         warn!(
