@@ -24,6 +24,28 @@ impl CustomizeConnection<SqliteConnection, diesel::r2d2::Error> for SqlCipherCon
             .execute(conn)
             .map_err(diesel::r2d2::Error::QueryError)?;
 
+        // Configure SQLite for concurrent access and corruption prevention
+        // CRITICAL: These settings prevent database corruption
+        sql_query("PRAGMA journal_mode = WAL;")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        sql_query("PRAGMA busy_timeout = 5000;")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        sql_query("PRAGMA synchronous = NORMAL;")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        sql_query("PRAGMA cache_size = -64000;")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
+        sql_query("PRAGMA temp_store = MEMORY;")
+            .execute(conn)
+            .map_err(diesel::r2d2::Error::QueryError)?;
+
         // Verify encryption is working by checking we can read from sqlite_master
         sql_query("SELECT count(*) FROM sqlite_master;")
             .execute(conn)

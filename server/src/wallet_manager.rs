@@ -865,10 +865,10 @@ impl WalletManager {
             info!("🔄 Wallet creation attempt {}/{} for role={}", attempts, max_attempts, role);
 
             // Create new wallet in the RPC (or open if exists)
-            let creation_result = match rpc_client.create_wallet(&wallet_filename, "").await {
+            let (creation_result, wallet_existed) = match rpc_client.create_wallet(&wallet_filename, "").await {
                 Ok(_) => {
                     info!("✅ Created new temporary wallet: {}", wallet_filename);
-                    Ok(())
+                    (Ok(()), false)
                 }
                 Err(e) => {
                     // Wallet might already exist, try to open it
@@ -876,15 +876,61 @@ impl WalletManager {
                     match rpc_client.open_wallet(&wallet_filename, "").await {
                         Ok(_) => {
                             info!("✅ Opened existing wallet: {}", wallet_filename);
-                            Ok(())
+                            (Ok(()), true)
                         }
-                        Err(open_err) => Err(open_err),
+                        Err(open_err) => (Err(open_err), false),
                     }
                 }
             };
 
             match creation_result {
                 Ok(_) => {
+                    // Check if wallet is already in multisig mode (only for existing wallets)
+                    if wallet_existed {
+                        match rpc_client.rpc().is_multisig().await {
+                            Ok(true) => {
+                                info!("✅ Wallet already in multisig mode - skipping setup");
+
+                                // Get wallet address and return immediately
+                                match rpc_client.get_address().await {
+                                    Ok(addr) => {
+                                        info!(
+                                            "✅ Reusing existing multisig wallet: role={:?}, address={}",
+                                            wallet_role, addr
+                                        );
+                                        break addr;
+                                    }
+                                    Err(e) => {
+                                        last_error = Some(WalletManagerError::from(e));
+                                        warn!("❌ Failed to get wallet address from existing wallet (attempt {}/{})", attempts, max_attempts);
+                                    }
+                                }
+
+                                // If we got here, address retrieval failed - continue to retry logic
+                                if attempts >= max_attempts {
+                                    error!("❌ All {} attempts failed for role={}", max_attempts, role);
+                                    return Err(last_error.unwrap_or(WalletManagerError::InvalidState {
+                                        expected: "successful wallet address retrieval".to_string(),
+                                        actual: format!("failed after {} attempts", max_attempts),
+                                    }));
+                                }
+
+                                let delay_ms = 500 * (2_u64.pow(attempts - 1));
+                                info!("⏳ Waiting {}ms before retry...", delay_ms);
+                                tokio::time::sleep(tokio::time::Duration::from_millis(delay_ms)).await;
+                                continue;
+                            }
+                            Ok(false) => {
+                                info!("🔄 Wallet exists but not in multisig mode - proceeding with setup");
+                                // Continue to normal multisig setup below
+                            }
+                            Err(e) => {
+                                warn!("⚠️  Failed to check multisig status: {:?} - assuming not multisig", e);
+                                // Continue to normal multisig setup below
+                            }
+                        }
+                    }
+
                     // CRITICAL: Enable multisig experimental BEFORE any multisig operations
                     // This must be done immediately after wallet creation/opening
                     match rpc_client.rpc().set_attribute("enable-multisig-experimental", "1").await {
