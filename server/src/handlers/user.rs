@@ -2,7 +2,6 @@
 
 use actix_session::Session;
 use actix_web::{web, HttpResponse, Responder};
-use diesel::prelude::*;
 use serde::Serialize;
 use tracing::{error, info};
 

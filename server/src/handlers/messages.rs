@@ -4,7 +4,6 @@
 
 use actix_session::Session;
 use actix_web::{get, post, web, HttpRequest, HttpResponse, Responder};
-use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
