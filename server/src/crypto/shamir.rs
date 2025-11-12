@@ -32,7 +32,7 @@
 //! assert_eq!(reconstructed, key);
 //! ```
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use sharks::{Share, Sharks};
 
 /// Split a 256-bit encryption key into N shares with threshold K

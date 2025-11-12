@@ -17,7 +17,6 @@
 /// 3. `GET /api/escrow/:id/dispute/qr` - Generate QR code image (PNG data URI)
 use actix_session::Session;
 use actix_web::{get, post, web, HttpResponse, Responder};
-use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

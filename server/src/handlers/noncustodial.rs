@@ -14,11 +14,10 @@
 
 use actix_web::{web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use validator::Validate;
 
 use crate::coordination::{
-    CoordinationState, EscrowCoordinator, EscrowRole, MultisigExchangeResult,
+    EscrowCoordinator, EscrowRole, MultisigExchangeResult,
 };
 
 // ============================================================================

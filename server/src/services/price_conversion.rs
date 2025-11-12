@@ -8,7 +8,7 @@ use reqwest::Proxy;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 /// Cache entry for XMR/USD rate with timestamp
 #[derive(Clone, Debug)]

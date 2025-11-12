@@ -1910,7 +1910,7 @@ pub async fn show_featured(
     let vendor_ids: Vec<String> = recent_listings.iter().map(|l| l.vendor_id.clone()).collect();
 
     // Fetch usernames for these vendors
-    use crate::models::user::User;
+    
     let vendor_map: HashMap<String, String> = if !vendor_ids.is_empty() {
         match users::table
             .filter(users::id.eq_any(&vendor_ids))

@@ -3,7 +3,7 @@
 /// TM-004 Fix: Remplace le faible `contains()` par un parsing IP réel
 
 use anyhow::{Context, Result};
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::net::{Ipv4Addr, Ipv6Addr};
 use url::Url;
 
 /// Valide qu'une URL RPC est STRICTEMENT localhost

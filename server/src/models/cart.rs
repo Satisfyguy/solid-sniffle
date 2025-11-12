@@ -47,7 +47,7 @@ impl Cart {
     }
 
     /// Add item to cart or update quantity if already exists
-    pub fn add_item(&mut self, mut item: CartItem) -> Result<(), String> {
+    pub fn add_item(&mut self, item: CartItem) -> Result<(), String> {
         // Check if item already in cart
         if let Some(existing) = self.items.iter_mut().find(|i| i.listing_id == item.listing_id) {
             // Update quantity
