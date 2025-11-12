@@ -10,8 +10,8 @@ use uuid::Uuid;
 
 use crate::crypto::multisig_validation::{ChallengeStore, MultisigChallenge, verify_multisig_submission};
 
-/// Global challenge store (in-memory for now)
-/// TODO: Move to Redis in production for multi-server support
+// Global challenge store (in-memory for now)
+// TODO: Move to Redis in production for multi-server support
 lazy_static::lazy_static! {
     pub static ref CHALLENGE_STORE: ChallengeStore = ChallengeStore::new();
 }
