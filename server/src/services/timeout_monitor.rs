@@ -212,7 +212,7 @@ impl TimeoutMonitor {
     /// Handle timeout for multisig setup (status: "created")
     ///
     /// Action: Cancel the escrow (no funds at risk, setup incomplete)
-    async fn handle_multisig_setup_timeout(&self, escrow_id: Uuid, escrow: Escrow) -> Result<()> {
+    async fn handle_multisig_setup_timeout(&self, escrow_id: Uuid, _escrow: Escrow) -> Result<()> {
         info!(
             "Multisig setup timeout for escrow {}: cancelling",
             escrow_id
@@ -241,7 +241,7 @@ impl TimeoutMonitor {
     /// Handle timeout for funding (status: "funded")
     ///
     /// Action: Cancel the escrow (multisig ready but buyer never deposited)
-    async fn handle_funding_timeout(&self, escrow_id: Uuid, escrow: Escrow) -> Result<()> {
+    async fn handle_funding_timeout(&self, escrow_id: Uuid, _escrow: Escrow) -> Result<()> {
         info!(
             "Funding timeout for escrow {}: cancelling",
             escrow_id

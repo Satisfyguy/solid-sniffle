@@ -1581,7 +1581,7 @@ impl WalletManager {
         escrow_id: Uuid,
         info_from_all: Vec<MultisigInfo>,
     ) -> Result<(), WalletManagerError> {
-        let escrow_id_str = escrow_id.to_string();
+        let _escrow_id_str = escrow_id.to_string();
         info!("🔄 Round 1/2: Exchanging multisig info (make_multisig) for escrow {}", escrow_id);
 
         if info_from_all.len() != 3 {
@@ -2521,7 +2521,7 @@ impl WalletManager {
 
         // Load RPC configs from database
         let db_query_start = std::time::Instant::now();
-        let rpc_configs = if let (Some(ref pool), Some(ref key)) = (&self.db_pool, &self.encryption_key) {
+        let rpc_configs = if let (Some(ref pool), Some(ref _key)) = (&self.db_pool, &self.encryption_key) {
             use crate::models::wallet_rpc_config::WalletRpcConfig;
 
             let mut conn = pool.get()

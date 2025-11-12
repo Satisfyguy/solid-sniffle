@@ -172,7 +172,7 @@ pub async fn create_order_from_cart(
     };
 
     // Handle different checkout modes
-    let (vendor_id, listing_id, total_xmr, quantity) = if req.checkout_mode == "listing" {
+    let (vendor_id, listing_id, total_xmr, _quantity) = if req.checkout_mode == "listing" {
         // Single listing mode (Buy Now)
         let listing_id_from_session = match session.get::<String>("checkout_listing_id") {
             Ok(Some(id)) => id,

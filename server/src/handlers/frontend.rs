@@ -681,7 +681,7 @@ pub async fn show_vendor_dashboard(
     }
 
     // Calculate stats
-    let total_listings = listings.len();
+    let _total_listings = listings.len();
     let active_listings = listings.iter().filter(|l| l.status == "active").count();
 
     // Stats will be loaded dynamically via API, but provide initial values

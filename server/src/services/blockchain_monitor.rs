@@ -251,7 +251,7 @@ impl BlockchainMonitor {
                     info!("Order {} status updated to 'funded'", order_id_for_log);
 
                     // Notify vendor that order is now funded
-                    if let Ok(vendor_uuid) = Uuid::parse_str(&escrow.vendor_id) {
+                    if let Ok(_vendor_uuid) = Uuid::parse_str(&escrow.vendor_id) {
                         if let Ok(order_uuid) = Uuid::parse_str(&order_id_for_log) {
                             use crate::websocket::WsEvent;
                             self.websocket.do_send(WsEvent::OrderStatusChanged {
