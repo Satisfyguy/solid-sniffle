@@ -3,6 +3,10 @@ name = "server"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+# QR code generation for airgap dispute transactions
+qr_generation = ["qrcode"]
+
 [dependencies]
 actix-web = "4.4"
 actix-session = { version = "0.9", features = ["cookie-session"] }
@@ -41,6 +45,9 @@ prometheus = "0.13"
 reqwest = { version = "0.11", features = ["json", "multipart", "stream", "socks"] }
 
 infer = "0.15"
+
+# Optional QR code generation for airgap features
+qrcode = { version = "0.14", optional = true }
 
 # Reputation system
 reputation-common = { path = "../reputation/common" }
