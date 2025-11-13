@@ -1,55 +1,80 @@
 # Monero Marketplace - Tor Hidden Service
 
-Marketplace décentralisé avec escrow Monero 2-of-3 multisig sur Tor.
+**Privacy-first marketplace. Monero-only by design. No compromises.**
 
-## 🎯 Statut Projet
+Decentralized marketplace with Monero 2-of-3 multisig escrow on Tor. Non-custodial architecture with cryptographic privacy guarantees at the protocol level.
 
-**Version:** 0.1.0-alpha  
-**Status:** 🟡 En développement  
+## 🎯 Project Status
+
+**Version:** 0.1.0-alpha
+**Status:** 🟡 In Development
 **Security Score:** 80/100
 
-### ✅ Fonctionnalités Implémentées
-- [x] Vérification connexion Tor
-- [x] Client RPC Monero (localhost isolation)
-- [x] `prepare_multisig` (étape 1/6)
-- [x] Système Reality Check Tor automatique
-- [x] Dashboard métriques projet
+### ✅ Implemented Features
+- [x] Tor connection verification
+- [x] Monero RPC client (localhost isolation)
+- [x] `prepare_multisig` (step 1/6)
+- [x] Automatic Tor Reality Check system
+- [x] Project metrics dashboard
 
-### 🚧 En Cours
-- [ ] `make_multisig` (étape 2/6)
-- [ ] `export_multisig_info` (étape 3/6)
-- [ ] `import_multisig_info` (étape 4/6)
-- [ ] Setup multisig complet
-- [ ] Hidden service .onion
+### 🚧 In Progress
+- [ ] `make_multisig` (step 2/6)
+- [ ] `export_multisig_info` (step 3/6)
+- [ ] `import_multisig_info` (step 4/6)
+- [ ] Complete multisig setup
+- [ ] .onion hidden service
+
+---
+
+## 💎 Why Monero-Only?
+
+**This marketplace exclusively supports Monero (XMR). This is not a limitation—it's an architectural requirement.**
+
+### Core Guarantees
+
+- **🔒 Privacy at Protocol Level:** Ring signatures, stealth addresses, RingCT provide unlinkability and fungibility
+- **🚫 No Transparent Chains:** Bitcoin/Ethereum expose transaction graphs—incompatible with privacy-first mandate
+- **🎯 Single Attack Surface:** One RPC implementation, one multisig protocol, focused security hardening
+- **✅ Technical Honesty:** "Privacy marketplace" backed by cryptography, not marketing claims
+
+### Trade-Off Accepted
+
+- **Market size:** Structurally limited (~0.5% crypto market cap, ~50-100K daily users)
+- **Why it's worth it:** Cryptographic privacy guarantees without compromise
+
+**Question:** "Isn't Monero-only too niche?"
+**Answer:** The niche size is a direct consequence of architectural integrity. This is success, not failure.
+
+📖 **Full rationale:** See [ADR-001: Monero-Only Architecture](DOX/architecture/ADR-001-MONERO-ONLY-RATIONALE.md)
 
 ---
 
 ## 🚀 Quick Start
 
-### Prérequis
+### Prerequisites
 - Windows 10/11
 - Rust 1.75+
 - PowerShell 5.1+
-- Tor (daemon ou browser)
+- Tor (daemon or browser)
 - Monero CLI (testnet)
 
 ### Installation
 
 ```powershell
-# 1. Cloner repo
+# 1. Clone repository
 git clone <repo-url>
 cd monero-marketplace
 
 # 2. Setup Monero testnet
 .\scripts\setup-monero-testnet.ps1
 
-# 3. Lancer Tor
-tor  # OU lancer Tor Browser
+# 3. Start Tor
+tor  # OR launch Tor Browser
 
-# 4. Compiler
+# 4. Build
 cargo build
 
-# 5. Tester
+# 5. Test
 cargo test --workspace
 ```
 
@@ -89,23 +114,23 @@ cargo test --workspace
 ```
 
 **OPSEC Critical:**
-- ✅ Wallet RPC bind `127.0.0.1` UNIQUEMENT
+- ✅ Wallet RPC bind `127.0.0.1` ONLY
 - ✅ Daemon connections via Tor
-- ✅ Pas de logs contenant .onion/keys
-- ✅ Tous les appels externes via SOCKS5
+- ✅ No logs containing .onion/keys
+- ✅ All external calls via SOCKS5
 
 ---
 
-## 📊 Métriques Projet
+## 📊 Project Metrics
 
-Lancer dashboard:
+Launch dashboard:
 ```powershell
 .\scripts\metrics-dashboard.ps1
 ```
 
-**Dernières métriques:**
+**Latest metrics:**
 - LOC: 1034
-- Functions: 23 (14 sans spec)
+- Functions: 23 (14 without spec)
 - Tests: 4/4 ✅
 - Unwraps: 0 ✅
 - Security Score: 80/100
@@ -114,26 +139,26 @@ Lancer dashboard:
 
 ## 🧪 Tests
 
-### Tests Unitaires
+### Unit Tests
 ```powershell
 cargo test --workspace
 ```
 
-### Tests Tor
+### Tor Tests
 ```powershell
-# 1. Lancer Tor
+# 1. Start Tor
 tor
 
-# 2. Tester connexion Tor
+# 2. Test Tor connection
 cargo test --package wallet test_check_tor_connection
 ```
 
-### Tests Monero RPC
+### Monero RPC Tests
 ```powershell
 # 1. Setup testnet
 .\scripts\setup-monero-testnet.ps1
 
-# 2. Tester RPC
+# 2. Test RPC
 cargo test --package wallet test_prepare_multisig
 ```
 
@@ -141,151 +166,151 @@ cargo test --package wallet test_prepare_multisig
 
 ## 📋 Reality Checks
 
-Chaque fonction réseau a un **Reality Check Tor** obligatoire.
+Every network function requires a **Tor Reality Check**.
 
-### Créer Reality Check
+### Create Reality Check
 ```powershell
 .\scripts\auto-reality-check-tor.ps1 <function_name>
 ```
 
-### Valider Reality Check
+### Validate Reality Check
 ```powershell
 .\scripts\validate-reality-check-tor.ps1 <function_name>
 ```
 
-**Checks automatiques:**
+**Automatic checks:**
 - ✅ Tor daemon running
-- ✅ Pas de fuites IP
+- ✅ No IP leaks
 - ✅ RPC isolation (localhost)
-- ✅ Pas de données sensibles dans logs
+- ✅ No sensitive data in logs
 
 ---
 
 ## 🔐 OPSEC Guidelines
 
-### Règles Absolues
+### Absolute Rules
 
-1. **JAMAIS exposer RPC publiquement**
+1. **NEVER expose RPC publicly**
    ```bash
-   # ✅ BON
+   # ✅ GOOD
    --rpc-bind-ip 127.0.0.1
-   
-   # ❌ MAUVAIS
+
+   # ❌ BAD
    --rpc-bind-ip 0.0.0.0
    ```
 
-2. **JAMAIS logger de données sensibles**
-   - ❌ Adresses .onion
+2. **NEVER log sensitive data**
+   - ❌ .onion addresses
    - ❌ View/Spend keys
    - ❌ Passwords
-   - ❌ IPs réelles
+   - ❌ Real IP addresses
 
-3. **TOUJOURS router via Tor**
+3. **ALWAYS route via Tor**
    ```rust
-   // ✅ BON
+   // ✅ GOOD
    let proxy = Proxy::all("socks5h://127.0.0.1:9050")?;
-   
-   // ❌ MAUVAIS - connexion directe
+
+   // ❌ BAD - direct connection
    reqwest::get("http://example.com")
    ```
 
-4. **TOUJOURS valider inputs**
-   - Pas de `.unwrap()` sans contexte
-   - Retourner `Result<T, E>`
-   - Valider formats (ex: MultisigV1...)
+4. **ALWAYS validate inputs**
+   - No `.unwrap()` without context
+   - Return `Result<T, E>`
+   - Validate formats (e.g., MultisigV1...)
 
 ### Threat Model
 
-**Adversaires considérés:**
-- ISP / Surveillance réseau
-- Exit nodes malveillants
+**Adversaries considered:**
+- ISP / Network surveillance
+- Malicious exit nodes
 - Blockchain analysis
 - Timing correlation attacks
 - Global passive adversary
 
 **Mitigations:**
-- Tout le trafic via Tor
-- Monero pour paiements (privacy by default)
-- Multisig 2-of-3 (arbitre neutre)
-- Pas de metadata dans transactions
-- Random delays pour timing
+- All traffic via Tor
+- Monero for payments (privacy by default)
+- Multisig 2-of-3 (neutral arbiter)
+- No metadata in transactions
+- Random delays for timing
 
 ---
 
-## 📁 Structure Projet
+## 📁 Project Structure
 
 ```
 monero-marketplace/
-├── .cursorrules              # Rules Cursor (Tor-aware)
+├── .cursorrules              # Cursor rules (Tor-aware)
 ├── Cargo.toml                # Workspace
 ├── README.md
 │
 ├── docs/
-│   ├── specs/                # Spec par fonction
+│   ├── specs/                # Spec per function
 │   │   ├── check_tor_connection.md
 │   │   └── prepare_multisig.md
-│   ├── reality-checks/       # Reality checks Tor
+│   ├── reality-checks/       # Tor Reality Checks
 │   │   ├── tor-check_tor_connection-2024-12-08.md
 │   │   └── tor-prepare_multisig-2024-12-08.md
-│   └── metrics/              # Métriques projet
+│   └── metrics/              # Project metrics
 │
-├── scripts/                  # Scripts PowerShell
+├── scripts/                  # PowerShell scripts
 │   ├── new-spec.ps1
 │   ├── auto-reality-check-tor.ps1
 │   ├── validate-reality-check-tor.ps1
 │   ├── setup-monero-testnet.ps1
 │   └── metrics-dashboard.ps1
 │
-├── common/                   # Types partagés
+├── common/                   # Shared types
 │   └── src/
 │       ├── error.rs          # TorError, MoneroError
 │       ├── types.rs          # TorStatus, MultisigInfo
 │       └── lib.rs
 │
-├── wallet/                   # Logique Monero
+├── wallet/                   # Monero logic
 │   └── src/
 │       ├── tor.rs            # check_tor_connection
 │       ├── rpc.rs            # MoneroRpcClient
 │       └── lib.rs
 │
-└── cli/                      # Interface CLI (TODO)
+└── cli/                      # CLI interface (TODO)
     └── src/
         └── main.rs
 ```
 
 ---
 
-## 🛠️ Scripts Disponibles
+## 🛠️ Available Scripts
 
-| Script | Commande | Description |
+| Script | Command | Description |
 |--------|----------|-------------|
-| **New Spec** | `.\scripts\new-spec.ps1 <name>` | Créer spec depuis template |
-| **Reality Check Tor** | `.\scripts\auto-reality-check-tor.ps1 <name>` | Générer RC avec tests auto |
-| **Validate RC** | `.\scripts\validate-reality-check-tor.ps1 <name>` | Valider RC avant merge |
-| **Setup Monero** | `.\scripts\setup-monero-testnet.ps1` | Setup testnet automatique |
-| **Metrics** | `.\scripts\metrics-dashboard.ps1` | Dashboard métriques |
+| **New Spec** | `.\scripts\new-spec.ps1 <name>` | Create spec from template |
+| **Reality Check Tor** | `.\scripts\auto-reality-check-tor.ps1 <name>` | Generate RC with auto tests |
+| **Validate RC** | `.\scripts\validate-reality-check-tor.ps1 <name>` | Validate RC before merge |
+| **Setup Monero** | `.\scripts\setup-monero-testnet.ps1` | Automatic testnet setup |
+| **Metrics** | `.\scripts\metrics-dashboard.ps1` | Metrics dashboard |
 
 ---
 
-## 🎓 Développement
+## 🎓 Development
 
-### Workflow Standard
+### Standard Workflow
 
 ```powershell
-# 1. Créer spec
+# 1. Create spec
 .\scripts\new-spec.ps1 my_function
 
-# 2. Éditer spec
+# 2. Edit spec
 code docs/specs/my_function.md
 
-# 3. Coder (Cursor détecte mode Tor si applicable)
+# 3. Code (Cursor detects Tor mode if applicable)
 
 # 4. Reality Check
 .\scripts\auto-reality-check-tor.ps1 my_function
 
-# 5. Compléter tests manuels
+# 5. Complete manual tests
 
-# 6. Valider
+# 6. Validate
 .\scripts\validate-reality-check-tor.ps1 my_function
 
 # 7. Commit
@@ -295,50 +320,50 @@ git commit -m "[CODE] Implement my_function"
 
 ### Cursor Rules
 
-Le projet utilise `.cursorrules` v2.1 avec:
-- ✅ Détection automatique code Tor
-- ✅ Blocage si spec manquante
-- ✅ Reality Check obligatoire
-- ✅ Interdiction `.unwrap()`
-- ✅ Validation OPSEC
+Project uses `.cursorrules` v2.1 with:
+- ✅ Automatic Tor code detection
+- ✅ Block if spec missing
+- ✅ Mandatory Reality Check
+- ✅ `.unwrap()` forbidden
+- ✅ OPSEC validation
 
 ---
 
-## 🚨 Dépannage
+## 🚨 Troubleshooting
 
-### Tor ne se connecte pas
+### Tor won't connect
 ```powershell
-# Vérifier process
+# Check process
 Get-Process tor
 
-# Tester manuellement
+# Test manually
 curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org/api/ip
 
-# Relancer
+# Restart
 tor
 ```
 
-### Monero RPC injoignable
+### Monero RPC unreachable
 ```powershell
-# Vérifier process
+# Check process
 Get-Process monero-wallet-rpc
 
-# Tester
+# Test
 Invoke-RestMethod -Uri "http://127.0.0.1:18082/json_rpc" -Method Post -Body '{"jsonrpc":"2.0","id":"0","method":"get_version"}'
 
-# Relancer
+# Restart
 .\scripts\setup-monero-testnet.ps1
 ```
 
-### Tests échouent
+### Tests failing
 ```powershell
-# Vérifier que Tor + Monero tournent
+# Check that Tor + Monero are running
 .\scripts\metrics-dashboard.ps1
 
-# Relancer setup complet
+# Restart complete setup
 .\scripts\setup-monero-testnet.ps1
 
-# Nettoyer et rebuild
+# Clean and rebuild
 cargo clean
 cargo build
 cargo test
@@ -357,29 +382,29 @@ cargo test
 
 ## 📄 License
 
-MIT (à définir selon besoins)
+MIT (to be defined as needed)
 
 ---
 
-## 🤝 Contribution
+## 🤝 Contributing
 
-1. Fork le repo
-2. Créer branch feature (`git checkout -b feature/my-function`)
-3. **TOUJOURS créer spec avant code**
-4. **TOUJOURS faire Reality Check Tor**
-5. Commit avec format standard
-6. Push et créer PR
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/my-function`)
+3. **ALWAYS create spec before code**
+4. **ALWAYS perform Tor Reality Check**
+5. Commit with standard format
+6. Push and create PR
 
-**Note:** PRs sans Reality Check validé seront rejetées.
+**Note:** PRs without validated Reality Check will be rejected.
 
 ---
 
 ## ⚠️ Disclaimer
 
-**Projet éducatif en développement.**
+**Educational project in development.**
 
-- ❌ Ne PAS utiliser en production
-- ❌ Ne PAS utiliser avec vrais fonds
-- ✅ Testnet UNIQUEMENT pour l'instant
+- ❌ DO NOT use in production
+- ❌ DO NOT use with real funds
+- ✅ Testnet ONLY for now
 
-**OPSEC:** Même en testnet, suivre bonnes pratiques pour habituation.
+**OPSEC:** Even on testnet, follow best practices for training purposes.

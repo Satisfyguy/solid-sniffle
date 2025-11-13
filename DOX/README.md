@@ -12,6 +12,7 @@ Protocoles officiels de développement et validation:
 
 ### 📚 `/guides/`
 Guides d'installation, configuration et utilisation:
+- **`SERVER-MANAGED-MULTISIG-GUIDE.md`** - **Architecture Guide: Server-Managed Multisig (Non-Custodial)**
 - Quick-start guides (Ubuntu, reputation system, etc.)
 - Setup et migration guides
 - Instructions Gemini/AI
@@ -42,6 +43,14 @@ Rapports Alpha/Beta Terminal, completions, fixes:
 - Production-ready fixes
 - Healthchecks, images, reputation, timeout implementations
 - Clippy reports
+
+### 🏗️ `/architecture/`
+Décisions architecturales et guides techniques:
+- `ADR-001-MONERO-ONLY-RATIONALE.md` - **Architecture Decision Record: Monero-Only Design**
+- `MONERO-MULTISIG-2OF3-COMPLETE-GUIDE.md` - Guide complet multisig
+- `MULTISIG-SYNC-IMPLEMENTATION.md` - Détails implémentation sync
+- `PRODUCTION-OPTIMIZATION-ROADMAP.md` - Optimisations production
+- `PRODUCTION-WALLET-ROTATION.md` - Rotation wallets sécurisée
 
 ### 🔒 `/audits/`
 Audits de sécurité et validations:
@@ -83,12 +92,16 @@ Seuls 2 fichiers Markdown restent à la racine du projet (requis par les scripts
 ### Documents les Plus Consultés
 
 1. **Plan principal**: [`phases/PLAN-COMPLET.md`](phases/PLAN-COMPLET.md)
-2. **Protocole Alpha Terminal**: [`protocols/PROTOCOLE-ALPHA-TERMINAL.md`](protocols/PROTOCOLE-ALPHA-TERMINAL.md)
-3. **Guide démarrage rapide**: [`guides/DEMARRAGE_RAPIDE.md`](guides/DEMARRAGE_RAPIDE.md)
-4. **État du marketplace**: [`reports/ETAT-FLOW-MARKETPLACE.md`](reports/ETAT-FLOW-MARKETPLACE.md)
+2. **Server-Managed Multisig Guide**: [`guides/SERVER-MANAGED-MULTISIG-GUIDE.md`](guides/SERVER-MANAGED-MULTISIG-GUIDE.md)
+3. **Protocole Alpha Terminal**: [`protocols/PROTOCOLE-ALPHA-TERMINAL.md`](protocols/PROTOCOLE-ALPHA-TERMINAL.md)
+4. **ADR-001: Monero-Only Architecture**: [`architecture/ADR-001-MONERO-ONLY-RATIONALE.md`](architecture/ADR-001-MONERO-ONLY-RATIONALE.md)
+5. **Guide démarrage rapide**: [`guides/DEMARRAGE_RAPIDE.md`](guides/DEMARRAGE_RAPIDE.md)
+6. **État du marketplace**: [`reports/ETAT-FLOW-MARKETPLACE.md`](reports/ETAT-FLOW-MARKETPLACE.md)
 
 ### Par Tâche
 
+- **Comprendre l'architecture escrow** → `/guides/SERVER-MANAGED-MULTISIG-GUIDE.md`
+- **Comprendre le "pourquoi" du design** → `/architecture/ADR-001-MONERO-ONLY-RATIONALE.md`
 - **Installation/Setup** → `/guides/`
 - **Développement d'une feature** → `/phases/PLAN-COMPLET.md`
 - **Post-commit** → `/protocols/PROTOCOLE-ALPHA-TERMINAL.md`

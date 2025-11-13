@@ -2,7 +2,9 @@
 
 ## Overview
 
-Monero Marketplace is a high-security, privacy-focused escrow platform built with **zero tolerance for security theatre**. This document describes our security posture, responsible disclosure process, and threat model.
+Monero Marketplace is a high-security, privacy-focused **Monero-only** escrow platform built with **zero tolerance for security theatre**. This document describes our security posture, responsible disclosure process, and threat model.
+
+**Architecture:** Monero-only by design for cryptographic privacy guarantees. See [ADR-001](DOX/architecture/ADR-001-MONERO-ONLY-RATIONALE.md) for rationale.
 
 **Security Grade:** A- (as of 2025-11-07)
 **Audit Trail:** [DOX/security/AUDIT-IMPROVEMENTS-2025-11-07.md](DOX/security/AUDIT-IMPROVEMENTS-2025-11-07.md)
@@ -76,11 +78,12 @@ We take security vulnerabilities seriously and respond within **24 hours**.
 
 ### Core Principles
 
-1. **Non-Custodial** - Users control private keys
-2. **2-of-3 Multisig** - Buyer + Vendor + Arbiter escrow
-3. **Tor-Only** - Hidden service deployment
-4. **End-to-End Encrypted** - SQLCipher + Monero privacy
-5. **Shamir 3-of-5** - Database key protection (TM-002)
+1. **Monero-Only** - Protocol-level privacy (unlinkability, fungibility) - No transparent chains
+2. **Non-Custodial** - Users control private keys
+3. **2-of-3 Multisig** - Buyer + Vendor + Arbiter escrow
+4. **Tor-Only** - Hidden service deployment
+5. **End-to-End Encrypted** - SQLCipher + Monero privacy
+6. **Shamir 3-of-5** - Database key protection (TM-002)
 
 ### Threat Model
 

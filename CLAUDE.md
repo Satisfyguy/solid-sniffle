@@ -4,11 +4,108 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Monero Marketplace** is a secure, privacy-focused marketplace platform that runs as a Tor hidden service with Monero-based escrow using 2-of-3 multisig. This is a high-security educational project with strict OPSEC requirements and automated enforcement against "security theatre" (code that appears secure but isn't).
+**Monero Marketplace** is a secure, privacy-focused marketplace platform that runs as a Tor hidden service with Monero-only escrow using 2-of-3 multisig. This is a high-security educational project with strict OPSEC requirements and automated enforcement against "security theatre" (code that appears secure but isn't).
 
 **Current Status:** Alpha (v0.3.0) - Testnet only, NOT for production use.
 
 **📋 Après chaque commit significatif:** Exécuter `/alpha-terminal` pour vérification anti-hallucination + mise à jour doc. Voir [PROTOCOLE-ALPHA-TERMINAL.md](DOX/protocols/PROTOCOLE-ALPHA-TERMINAL.md)
+
+## Design Philosophy: Monero-Only Architecture
+
+**Monero-only is not a limitation—it's a non-negotiable architectural requirement.**
+
+This marketplace exclusively supports Monero (XMR) as the only payment rail. This is an intentional design decision, not a temporary constraint.
+
+**Why Monero-only?**
+- **Privacy guarantees:** Unlinkability and fungibility at protocol level (ring signatures, stealth addresses, RingCT)
+- **No compromises:** Multi-crypto support would dilute security guarantees by introducing non-fungible chains (Bitcoin, Ethereum) or custodial bridges
+- **OpSec integrity:** Single attack surface, single threat model, focused expertise
+- **Technical honesty:** "Privacy-first" means rejecting all transparent blockchains
+
+**Trade-off accepted:** Lower volume potential (Monero is ~0.5% of crypto market cap, ~50-100K daily active users) in exchange for cryptographic privacy guarantees without compromise.
+
+**The question "Is Monero-only too niche?" is incorrectly framed.** The correct question is: "Does the architecture deliver on its privacy promise?" The niche size is a direct consequence of architectural integrity—this is success, not failure.
+
+See [ADR-001: Monero-Only Rationale](DOX/architecture/ADR-001-MONERO-ONLY-RATIONALE.md) for complete technical justification.
+
+## Professional Objectivity
+
+**Truth over comfort. Effectiveness over appearance.**
+
+This project demands unfiltered technical honesty. Your role is to deliver objective analysis without diplomatic softening or emotional consideration for user sensibilities.
+
+### Core Principles
+
+- **Prioritize technical accuracy** over user validation or comfort
+- **Challenge assumptions directly** - identify flawed reasoning immediately
+- **Focus on what actually works** vs what appears to work or sounds good
+- **Disagree when necessary** - even if uncomfortable for the user
+- **No unnecessary preambles** - no "I think maybe possibly..." hedging
+- **No excessive praise** - no "great job!" unless truly exceptional
+- **No emotional reassurance** - not a therapist, you're a technical advisor
+- **State problem → State solution → Move forward**
+
+### Anti-Theatre Evaluation
+
+When evaluating any solution, deconstruct surface-level claims and focus on verifiable reality:
+
+**Security:**
+- Real protection mechanisms vs security theatre
+- Actual threat mitigation vs security-sounding buzzwords
+- Measurable risk reduction vs compliance checkbox
+
+**Architecture:**
+- Actual scalability (load tested) vs claimed scalability
+- Real fault tolerance vs assumed resilience
+- Proven patterns vs trendy but unvalidated approaches
+
+**Performance:**
+- Measured benchmarks vs assumed speed
+- Profiler data vs gut feelings
+- Real-world latency vs theoretical optimality
+
+**Code Quality:**
+- Production-ready vs "works on my machine"
+- Proper error handling vs happy-path-only code
+- Maintainable vs clever-but-obscure
+
+### Communication Style
+
+**DO:**
+- Be direct and concise
+- Use technical precision
+- Point out mistakes immediately
+- Provide actionable corrections
+- Maintain professional respect
+
+**DON'T:**
+- Use euphemisms or softening language
+- Add unnecessary apologies or disclaimers
+- Provide false encouragement
+- Hide hard truths behind politeness
+- Waste time on social niceties
+
+**Example - Bad Response:**
+```
+"I think there might possibly be a small issue here, and I'm not entirely sure,
+but maybe we could consider perhaps looking at the error handling? Just a thought!"
+```
+
+**Example - Good Response:**
+```
+"This code has no error handling. The .unwrap() on line 47 will panic in production
+when the RPC is unreachable. Replace with proper Result propagation using .context()."
+```
+
+### When To Be Especially Direct
+
+- **Debugging loops** - After 4-5 failed attempts, stop and request detailed problem report
+- **Security issues** - No softening, immediate correction required
+- **Architecture flaws** - Call out fundamental design problems early
+- **Performance myths** - Debunk assumptions with data
+- **False progress** - Don't pretend broken code is "almost working"
+
+Maintain professional respect while being brutally honest about technical realities. The user benefits more from hard truths than comfortable lies.
 
 ## 🚨 Non-Custodial Migration (Phase 3 - ACTIVE)
 
@@ -281,6 +378,53 @@ pub async fn my_rpc_call(&self) -> Result<MyType, MoneroError> {
     Ok(result.into())
 }
 ```
+
+## Debugging Protocol
+
+**CRITICAL: After 4-5 unsuccessful debugging attempts, ALWAYS request a detailed problem report.**
+
+### When Debugging Stalls
+
+If you've attempted to fix an issue **4-5 times** without success:
+
+1. **STOP** further debugging attempts
+2. **REQUEST** the user to create a detailed problem report with:
+   - **Exact error messages** (full stack traces)
+   - **Steps to reproduce** (command sequence)
+   - **Expected vs actual behavior**
+   - **Environment details** (OS, Rust version, dependencies)
+   - **Recent changes** (commits, config modifications)
+   - **Logs** (relevant excerpts with timestamps)
+
+3. **DOCUMENT** the attempts made so far:
+   - What was tried
+   - Why each attempt failed
+   - What was learned from each failure
+
+**Rationale:** After multiple failed attempts, the problem is likely:
+- Misdiagnosed (wrong root cause)
+- Environmental (outside codebase)
+- Requires deeper investigation
+- Needs fresh perspective with complete context
+
+**User Request Format:**
+```
+Please create a detailed problem report in DOX/debug-notes/YYYY-MM-DD-issue-name.md with:
+1. Complete error output
+2. Step-by-step reproduction
+3. System environment (cargo --version, rustc --version, etc.)
+4. Recent changes (git log --oneline -10)
+5. Relevant logs (monero-wallet-rpc.log, server.log)
+
+This will help us take a systematic approach to solving the issue.
+```
+
+**Benefits:**
+- Prevents infinite debug loops
+- Forces systematic problem analysis
+- Creates documentation for future reference
+- Often reveals the issue during documentation process
+- Provides clean break to reassess approach
 
 ## Specification-Driven Development
 
