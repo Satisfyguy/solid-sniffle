@@ -259,7 +259,7 @@
                         </div>
 
                         <div class="multisig-progress">
-                            <div class="progress-label">Multisig Phase: ${escrow.multisig_phase.replace(/_/g, ' ').toUpperCase()}</div>
+                            <div class="progress-label">Multisig Phase: ${formatPhase(escrow.multisig_phase)}</div>
                             <div class="progress-bar">
                                 <div class="progress-fill" style="width: ${progressPercent}%"></div>
                             </div>
@@ -291,12 +291,19 @@
 
         function getProgressPercent(phase) {
             const map = {
+                // Legacy mappings
                 'init': 10,
                 'prepared': 33,
                 'awaiting_signatures': 50,
                 'finalized': 75,
                 'funded': 100,
-                'released': 100
+                'released': 100,
+                // Server MultisigPhase mappings
+                'NotStarted': 10,
+                'Preparing': 33,
+                'Exchanging': 60,
+                'Ready': 80,
+                'Failed': 0
             };
             return map[phase] || 0;
         }
@@ -305,6 +312,25 @@
             navigator.clipboard.writeText(id);
             // Could add a toast notification here
             console.log('Copied:', id);
+        }
+
+        function formatPhase(phase) {
+            const mapping = {
+                // Legacy
+                'init': 'INIT',
+                'prepared': 'PREPARED',
+                'awaiting_signatures': 'AWAITING SIGNATURES',
+                'finalized': 'FINALIZED',
+                'funded': 'FUNDED',
+                'released': 'RELEASED',
+                // Server-side states
+                'NotStarted': 'INIT',
+                'Preparing': 'PREPARING',
+                'Exchanging': 'EXCHANGING',
+                'Ready': 'READY',
+                'Failed': 'FAILED'
+            };
+            return mapping[phase] || (phase || '').toString().replace(/_/g, ' ').toUpperCase();
         }
     </script>
 </body>

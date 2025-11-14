@@ -182,6 +182,7 @@ pub struct SubmitMultisigInfoRequest {
 /// ```
 #[post("/api/escrow/{escrow_id}/multisig/prepare")]
 pub async fn submit_multisig_info_with_signature(
+    orchestrator: web::Data<crate::services::escrow::EscrowOrchestrator>,
     escrow_id: web::Path<Uuid>,
     payload: web::Json<SubmitMultisigInfoRequest>,
     session: Session,
@@ -227,13 +228,27 @@ pub async fn submit_multisig_info_with_signature(
         escrow_id
     );
 
-    // TODO: Store validated multisig_info in database
-    // orchestrator.collect_prepare_info(*escrow_id, user_id, payload.multisig_info.clone()).await?;
-
-    Ok(HttpResponse::Ok().json(serde_json::json!({
-        "status": "accepted",
-        "message": "Multisig info validated and stored"
-    })))
+    // Persist validated multisig_info and transition state via orchestrator
+    match orchestrator
+        .collect_prepare_info(*escrow_id, user_id, payload.multisig_info.clone())
+        .await
+    {
+        Ok(()) => Ok(HttpResponse::Ok().json(serde_json::json!({
+            "status": "accepted",
+            "message": "Multisig info validated and stored"
+        }))),
+        Err(e) => {
+            tracing::error!(
+                user_id = %user_id,
+                escrow_id = %escrow_id,
+                error = %e,
+                "Failed to store validated multisig_info"
+            );
+            Err(actix_web::error::ErrorInternalServerError(
+                format!("Failed to store multisig info: {}", e)
+            ))
+        }
+    }
 }
 
 /// Cleanup expired challenges (called periodically)
