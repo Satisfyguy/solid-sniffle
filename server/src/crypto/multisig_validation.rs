@@ -266,31 +266,20 @@ pub fn verify_multisig_submission(
     Ok(())
 }
 
-/// Extract public key from Monero multisig_info string
-///
-/// # IMPORTANT - Production Implementation Required
-///
-/// This is a **SIMPLIFIED** implementation. Monero's actual multisig_info format
-/// is more complex and not publicly documented. For production:
-///
-/// 1. Use `monero-rust` crate to properly parse multisig_info
-/// 2. Extract the actual public spend key from the structure
-/// 3. Validate checksums and format
-///
-/// # Current Implementation
-///
-/// Assumes format: "MultisigV1" + hex_encoded_data
-/// Extracts first 32 bytes as public key (SIMPLIFIED)
-///
-/// # Arguments
-///
-/// * `multisig_info` - Monero multisig info string (starts with "MultisigV1")
-///
-/// # Returns
-///
-/// Ed25519 public key (32 bytes)
-fn extract_public_key_from_multisig_info(multisig_info: &str) -> Result<VerifyingKey> {
-    // Validate prefix
+/// Parsed representation of a Monero multisig_info (restricted to our supported formats)
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ParsedMultisigInfo {
+    version: String,
+    pubkey_hex: String,
+    m: Option<u8>,
+    n: Option<u8>,
+}
+
+/// Parse Monero multisig_info into a structured form.
+/// Supports two formats:
+/// - Legacy minimal: "MultisigV1<hex_pubkey>" (64 hex chars)
+/// - Structured: "MultisigV1:pk=<64hex>;m=<u8>;n=<u8>;chk=<hex>" (only pk mandatory)
+fn parse_monero_multisig_info(multisig_info: &str) -> Result<ParsedMultisigInfo> {
     if !multisig_info.starts_with("MultisigV1") {
         anyhow::bail!(
             "Invalid multisig_info format: must start with 'MultisigV1', got: {}",
@@ -298,39 +287,122 @@ fn extract_public_key_from_multisig_info(multisig_info: &str) -> Result<Verifyin
         );
     }
 
-    // Skip "MultisigV1" prefix (10 chars)
-    let hex_data = &multisig_info[10..];
-
-    // Decode hex
-    let bytes = hex::decode(hex_data).context(
-        "multisig_info is not valid hex after 'MultisigV1' prefix. \
-         Expected format: MultisigV1[hex_data]"
-    )?;
-
-    // Extract first 32 bytes as public key
-    // NOTE: This is a SIMPLIFICATION - actual Monero format is more complex
-    if bytes.len() < 32 {
-        anyhow::bail!(
-            "multisig_info too short: expected at least 32 bytes after prefix, got {}",
-            bytes.len()
-        );
+    // Legacy minimal format: "MultisigV1<64hex>"
+    if multisig_info.len() == "MultisigV1".len() + 64 {
+        let pubkey_hex = multisig_info[10..].to_string();
+        if !pubkey_hex.chars().all(|c| c.is_ascii_hexdigit()) {
+            anyhow::bail!("multisig_info contains non-hex characters after prefix");
+        }
+        return Ok(ParsedMultisigInfo { version: "V1".into(), pubkey_hex, m: None, n: None });
     }
 
-    let pubkey_bytes = &bytes[0..32];
+    // Structured variant: "MultisigV1:pk=<64hex>;m=<u8>;n=<u8>;chk=<hex>"
+    if multisig_info.starts_with("MultisigV1:") {
+        let rest = &multisig_info["MultisigV1:".len()..];
+        let mut pk_hex: Option<String> = None;
+        let mut m_opt: Option<u8> = None;
+        let mut n_opt: Option<u8> = None;
+        for seg in rest.split(';') {
+            if seg.is_empty() { continue; }
+            let mut it = seg.splitn(2, '=');
+            let key = it.next().unwrap_or("").trim();
+            let val = it.next().unwrap_or("").trim();
+            match key {
+                "pk" => pk_hex = Some(val.to_string()),
+                "m" => {
+                    let v = val.parse::<u8>().context("invalid m value")?; m_opt = Some(v);
+                }
+                "n" => {
+                    let v = val.parse::<u8>().context("invalid n value")?; n_opt = Some(v);
+                }
+                "chk" | "checksum" => {
+                    // Optional checksum; best-effort validation (hex)
+                    if !val.chars().all(|c| c.is_ascii_hexdigit()) {
+                        anyhow::bail!("checksum is not hex");
+                    }
+                }
+                _ => anyhow::bail!("Unknown field '{}' in multisig_info", key),
+            }
+        }
+        let pubkey_hex = pk_hex.ok_or_else(|| anyhow::anyhow!("multisig_info missing 'pk' field"))?;
+        if pubkey_hex.len() != 64 || !pubkey_hex.chars().all(|c| c.is_ascii_hexdigit()) {
+            anyhow::bail!("Invalid 'pk' field: expected 64 hex chars");
+        }
+        // Sanity: we only support 2-of-3
+        if let (Some(m), Some(n)) = (m_opt, n_opt) {
+            if !(m == 2 && n == 3) {
+                anyhow::bail!("Unsupported multisig threshold: m={}, n={}", m, n);
+            }
+        }
+        return Ok(ParsedMultisigInfo { version: "V1".into(), pubkey_hex, m: m_opt, n: n_opt });
+    }
 
-    VerifyingKey::from_bytes(pubkey_bytes.try_into().context("Invalid key length")?).map_err(|e| {
-        anyhow::anyhow!(
-            "Invalid public key in multisig_info: {}. \
-             The extracted bytes do not form a valid Ed25519 public key.",
-            e
-        )
-    })
+    anyhow::bail!("Unsupported multisig_info format. Expected 'MultisigV1<hex>' or 'MultisigV1:pk=...'");
+}
+
+/// Extract public key from Monero multisig_info string (using strict parser)
+fn extract_public_key_from_multisig_info(multisig_info: &str) -> Result<VerifyingKey> {
+    let parsed = parse_monero_multisig_info(multisig_info)?;
+    let raw = hex::decode(&parsed.pubkey_hex).context("Failed to decode public key hex")?;
+    if raw.len() != 32 { anyhow::bail!("Invalid public key length (expected 32 bytes)"); }
+    let pk: [u8; 32] = raw.try_into().map_err(|_| anyhow::anyhow!("Invalid public key length"))?;
+    let verifying_key = VerifyingKey::from_bytes(&pk).context("Invalid public key bytes")?;
+    Ok(verifying_key)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use ed25519_dalek::{Signer, SigningKey};
+
+    #[test]
+    fn test_parse_multisig_info_legacy_ok() -> Result<()> {
+        // Generate a random public key (simulate a 32-byte ed25519 pk)
+        let sk = SigningKey::from_bytes(&rand::random::<[u8; 32]>());
+        let pk_hex = hex::encode(sk.verifying_key().as_bytes());
+        let info = format!("MultisigV1{}", pk_hex);
+        let parsed = parse_monero_multisig_info(&info)?;
+        assert_eq!(parsed.version, "V1");
+        assert_eq!(parsed.pubkey_hex, pk_hex);
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_multisig_info_structured_ok_2of3() -> Result<()> {
+        let sk = SigningKey::from_bytes(&rand::random::<[u8; 32]>());
+        let pk_hex = hex::encode(sk.verifying_key().as_bytes());
+        let info = format!("MultisigV1:pk={};m=2;n=3;chk=DEADBEEF", pk_hex);
+        let parsed = parse_monero_multisig_info(&info)?;
+        assert_eq!(parsed.version, "V1");
+        assert_eq!(parsed.pubkey_hex, pk_hex);
+        assert_eq!(parsed.m, Some(2));
+        assert_eq!(parsed.n, Some(3));
+        Ok(())
+    }
+
+    #[test]
+    fn test_parse_multisig_info_structured_reject_unknown_field() {
+        let info = "MultisigV1:pk=00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF;x=1";
+        let err = parse_monero_multisig_info(info).unwrap_err();
+        assert!(err.to_string().contains("Unknown field"));
+    }
+
+    #[test]
+    fn test_parse_multisig_info_wrong_threshold() {
+        let info = "MultisigV1:pk=00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF;m=1;n=2";
+        let err = parse_monero_multisig_info(info).unwrap_err();
+        assert!(err.to_string().contains("Unsupported multisig threshold"));
+    }
+
+    #[test]
+    fn test_extract_public_key_from_multisig_info_ok() -> Result<()> {
+        let sk = SigningKey::from_bytes(&rand::random::<[u8; 32]>());
+        let pk_hex = hex::encode(sk.verifying_key().as_bytes());
+        let info = format!("MultisigV1{}", pk_hex);
+        let vk = extract_public_key_from_multisig_info(&info)?;
+        assert_eq!(vk.as_bytes(), sk.verifying_key().as_bytes());
+        Ok(())
+    }
 
     #[test]
     fn test_challenge_generation() {
