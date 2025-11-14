@@ -21,6 +21,7 @@ Thumbs.db
 
 # Logs
 *.log
+monero-wallet-rpc.log-*
 logs/
 log/
 
