@@ -329,6 +329,7 @@ async fn main() -> Result<()> {
     info!("Starting HTTP server on http://127.0.0.1:8080");
 
     // 12. Start HTTP server
+    let port: u16 = std::env::var("SERVER_PORT").ok().and_then(|s| s.parse().ok()).unwrap_or(8081);
     HttpServer::new(move || {
         App::new()
             // Security headers (CSP, X-Frame-Options, etc.)
@@ -542,10 +543,8 @@ async fn main() -> Result<()> {
                     .service(monitoring::get_escrow_status),
             )
     })
-    // Read port from env, default 8081 to avoid clashing with local dev
-    let port: u16 = std::env::var("SERVER_PORT").ok().and_then(|s| s.parse().ok()).unwrap_or(8081);
     .bind(("127.0.0.1", port))
-    .context(format!("Failed to bind to 127.0.0.1:{}", port))?
+    .with_context(|| format!("Failed to bind to 127.0.0.1:{}", port))?
     .run()
     .await
     .context("HTTP server error")?;
