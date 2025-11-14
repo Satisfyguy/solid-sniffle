@@ -542,8 +542,10 @@ async fn main() -> Result<()> {
                     .service(monitoring::get_escrow_status),
             )
     })
-    .bind(("127.0.0.1", 8080))
-    .context("Failed to bind to 127.0.0.1:8080")?
+    // Read port from env, default 8081 to avoid clashing with local dev
+    let port: u16 = std::env::var("SERVER_PORT").ok().and_then(|s| s.parse().ok()).unwrap_or(8081);
+    .bind(("127.0.0.1", port))
+    .context(format!("Failed to bind to 127.0.0.1:{}", port))?
     .run()
     .await
     .context("HTTP server error")?;
