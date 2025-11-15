@@ -8,6 +8,7 @@ use actix_web::{
 use actix_web_actors::ws;
 use anyhow::{Context, Result};
 use monero_marketplace_common::types::MoneroConfig;
+use server::concurrency::{EscrowLockRegistry, WalletOperationLock};
 use server::db::create_pool;
 use server::handlers::{auth, cart, escrow, frontend, listings, messages, monitoring, multisig_challenge, noncustodial, orders, reputation, reputation_ipfs, user};
 use server::middleware::{
@@ -111,6 +112,14 @@ async fn main() -> Result<()> {
 
     info!("Database connection pool created with SQLCipher encryption");
 
+    // 3.5. PHASE 1: Create global escrow lock registry
+    let escrow_locks = Arc::new(EscrowLockRegistry::new());
+    info!("✅ EscrowLockRegistry initialized");
+
+    // 3.6. PHASE 1.5: Create per-wallet operation lock registry
+    let wallet_operation_locks = Arc::new(WalletOperationLock::new());
+    info!("✅ WalletOperationLock initialized (per-wallet serialization)");
+
     // 4. Session secret key
     // IMPORTANT: In production, load from secure environment variable
     // This should be a 64-byte cryptographically random key
@@ -158,6 +167,8 @@ async fn main() -> Result<()> {
             rpc_configs,
             pool.clone(),
             encryption_key.clone(),
+            escrow_locks.clone(),
+            wallet_operation_locks.clone(),
         )?;
 
         // Enable wallet pool for production-ready wallet rotation
@@ -270,6 +281,7 @@ async fn main() -> Result<()> {
         pool.clone(),
         websocket_server.clone(),
         encryption_key.clone(),
+        escrow_locks.clone(),
     ));
 
     // 8b. Initialize Non-Custodial Escrow Coordinator (Haveno-inspired)
@@ -309,6 +321,7 @@ async fn main() -> Result<()> {
         pool.clone(),
         websocket_server.clone(),
         MonitorConfig::default(), // poll_interval: 30s, required_confirmations: 10
+        escrow_locks.clone(),
     ));
 
     let blockchain_monitor_handle = blockchain_monitor.clone();

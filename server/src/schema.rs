@@ -137,7 +137,24 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    multisig_round_state (id) {
+        id -> Integer,
+        escrow_id -> Text,
+        round_number -> Integer,
+        status -> Text,
+        rpc_url -> Text,
+        wallet_filename -> Text,
+        role -> Text,
+        multisig_info -> Nullable<Text>,
+        started_at -> Timestamp,
+        completed_at -> Nullable<Timestamp>,
+        last_error -> Nullable<Text>,
+    }
+}
+
 diesel::joinable!(escrows -> orders (order_id));
+diesel::joinable!(multisig_round_state -> escrows (escrow_id));
 diesel::joinable!(listings -> users (vendor_id));
 diesel::joinable!(order_messages -> orders (order_id));
 diesel::joinable!(order_messages -> users (sender_id));
@@ -149,6 +166,7 @@ diesel::joinable!(wallet_rpc_configs -> escrows (escrow_id));
 diesel::allow_tables_to_appear_in_same_query!(
     escrows,
     listings,
+    multisig_round_state,
     order_messages,
     orders,
     reviews,

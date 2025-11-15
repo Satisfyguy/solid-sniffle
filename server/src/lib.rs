@@ -20,12 +20,14 @@ macro_rules! log_amount {
     };
 }
 
+pub mod concurrency;
 pub mod config;
 pub mod coordination;
 pub mod crypto;
 pub mod db;
 pub mod error;
 pub mod handlers;
+pub mod instrumentation;
 pub mod ipfs;
 pub mod logging;
 pub mod middleware;

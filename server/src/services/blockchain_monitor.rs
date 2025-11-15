@@ -47,6 +47,8 @@ pub struct BlockchainMonitor {
     #[allow(dead_code)]
     websocket: Addr<WebSocketServer>,
     config: MonitorConfig,
+    /// PHASE 1: Per-escrow locks to prevent race conditions
+    escrow_locks: Arc<crate::concurrency::EscrowLockRegistry>,
 }
 
 impl BlockchainMonitor {
@@ -56,6 +58,7 @@ impl BlockchainMonitor {
         db: DbPool,
         websocket: Addr<WebSocketServer>,
         config: MonitorConfig,
+        escrow_locks: Arc<crate::concurrency::EscrowLockRegistry>,
     ) -> Self {
         info!(
             "BlockchainMonitor initialized with poll_interval={}s, required_confirmations={}",
@@ -66,6 +69,7 @@ impl BlockchainMonitor {
             db,
             websocket,
             config,
+            escrow_locks,
         }
     }
 
@@ -136,6 +140,10 @@ impl BlockchainMonitor {
     /// when funds are detected. The escrow must be in 'funded' status
     /// (multisig setup complete) and waiting for buyer deposit.
     async fn check_escrow_funding(&self, escrow_id: Uuid) -> Result<()> {
+        // PHASE 1: Acquire per-escrow lock to prevent concurrent operations
+        let lock = self.escrow_locks.get_lock(escrow_id);
+        let _guard = lock.lock().await;
+
         let escrow = db_load_escrow(&self.db, escrow_id).await?;
 
         // Escrow must have a multisig address
@@ -290,6 +298,10 @@ impl BlockchainMonitor {
     /// Monitors transactions in 'releasing' or 'refunding' status to track
     /// blockchain confirmations. When threshold is reached, finalizes the escrow.
     async fn check_transaction_confirmations(&self, escrow_id: Uuid) -> Result<()> {
+        // PHASE 1: Acquire per-escrow lock to prevent concurrent operations
+        let lock = self.escrow_locks.get_lock(escrow_id);
+        let _guard = lock.lock().await;
+
         let escrow = db_load_escrow(&self.db, escrow_id).await?;
 
         info!(

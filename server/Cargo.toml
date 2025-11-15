@@ -39,6 +39,7 @@ tera = "1.19"
 lazy_static = "1.4"
 prometheus = "0.13"
 reqwest = { version = "0.11", features = ["json", "multipart", "stream", "socks"] }
+dashmap = "5.5"
 
 infer = "0.15"
 

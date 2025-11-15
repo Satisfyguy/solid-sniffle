@@ -28,6 +28,8 @@ pub struct EscrowOrchestrator {
     websocket: Addr<WebSocketServer>,
     /// Encryption key for sensitive data
     encryption_key: Vec<u8>,
+    /// PHASE 1: Per-escrow locks to prevent race conditions
+    escrow_locks: Arc<crate::concurrency::EscrowLockRegistry>,
 }
 
 impl EscrowOrchestrator {
@@ -37,12 +39,14 @@ impl EscrowOrchestrator {
         db: DbPool,
         websocket: Addr<WebSocketServer>,
         encryption_key: Vec<u8>,
+        escrow_locks: Arc<crate::concurrency::EscrowLockRegistry>,
     ) -> Self {
         Self {
             wallet_manager,
             db,
             websocket,
             encryption_key,
+            escrow_locks,
         }
     }
 
@@ -227,6 +231,10 @@ impl EscrowOrchestrator {
             .context("Failed to create escrow in database")?;
 
         info!("✅ Escrow record created: {}", escrow.id);
+
+        // PHASE 1: Acquire per-escrow lock to prevent concurrent operations
+        let lock = self.escrow_locks.get_lock(escrow_id);
+        let _guard = lock.lock().await;
 
         // 3. Create 3 EMPTY temporary wallets for multisig coordination
         info!("🔒 [NON-CUSTODIAL] Creating 3 EMPTY temporary wallets (0 XMR balance)...");
@@ -737,6 +745,10 @@ impl EscrowOrchestrator {
         requester_id: Uuid,
         vendor_address: String,
     ) -> Result<String> {
+        // PHASE 1: Acquire per-escrow lock to prevent concurrent operations
+        let lock = self.escrow_locks.get_lock(escrow_id);
+        let _guard = lock.lock().await;
+
         let escrow = db_load_escrow(&self.db, escrow_id).await?;
 
         // Only buyer can release funds
@@ -837,6 +849,10 @@ impl EscrowOrchestrator {
         requester_id: Uuid,
         buyer_address: String,
     ) -> Result<String> {
+        // PHASE 1: Acquire per-escrow lock to prevent concurrent operations
+        let lock = self.escrow_locks.get_lock(escrow_id);
+        let _guard = lock.lock().await;
+
         let escrow = db_load_escrow(&self.db, escrow_id).await?;
 
         // Vendor or arbiter can initiate refund

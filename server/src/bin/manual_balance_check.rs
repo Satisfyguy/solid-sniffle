@@ -1,9 +1,11 @@
 use std::env;
+use std::sync::Arc;
 use uuid::Uuid;
 use anyhow::Result;
 use server::services::escrow::EscrowOrchestrator;
 use server::wallet_manager::WalletManager;
 use server::db::create_pool;
+use server::concurrency::{EscrowLockRegistry, WalletOperationLock};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -40,10 +42,16 @@ async fn main() -> Result<()> {
         },
     ];
 
+    // Create lock registries
+    let escrow_locks = Arc::new(EscrowLockRegistry::new());
+    let wallet_operation_locks = Arc::new(WalletOperationLock::new());
+
     let mut wallet_manager = WalletManager::new_with_persistence(
         rpc_configs,
         pool.clone(),
         db_encryption_key.as_bytes().to_vec(),
+        escrow_locks.clone(),
+        wallet_operation_locks.clone(),
     )?;
 
     // Enable wallet pool functionality
@@ -62,6 +70,7 @@ async fn main() -> Result<()> {
         pool,
         ws_server,
         db_encryption_key.as_bytes().to_vec(),
+        escrow_locks,
     );
 
     // Specific escrow ID to check

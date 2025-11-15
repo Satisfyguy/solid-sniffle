@@ -93,6 +93,10 @@ pub struct WalletManager {
     encryption_key: Option<Vec<u8>>,
     // Wallet pool for rotation management (Option for backward compatibility)
     wallet_pool: Option<Arc<WalletPool>>,
+    // PHASE 1: Per-escrow locks to prevent race conditions
+    escrow_locks: Option<Arc<crate::concurrency::EscrowLockRegistry>>,
+    // PHASE 1.5: Per-wallet operation locks to prevent RPC-level races
+    wallet_operation_locks: Option<Arc<crate::concurrency::WalletOperationLock>>,
 }
 
 impl WalletManager {
@@ -117,6 +121,8 @@ impl WalletManager {
             db_pool: None,
             encryption_key: None,
             wallet_pool: None,
+            escrow_locks: None,
+            wallet_operation_locks: None,
         })
     }
 
@@ -146,6 +152,8 @@ impl WalletManager {
         configs: Vec<MoneroConfig>,
         db_pool: DbPool,
         encryption_key: Vec<u8>,
+        escrow_locks: Arc<crate::concurrency::EscrowLockRegistry>,
+        wallet_operation_locks: Arc<crate::concurrency::WalletOperationLock>,
     ) -> Result<Self> {
         if configs.is_empty() {
             return Err(anyhow::anyhow!(
@@ -171,6 +179,8 @@ impl WalletManager {
             db_pool: Some(db_pool.clone()),
             encryption_key: Some(encryption_key),
             wallet_pool: None,
+            escrow_locks: Some(escrow_locks),
+            wallet_operation_locks: Some(wallet_operation_locks),
         })
     }
 
@@ -1241,6 +1251,13 @@ impl WalletManager {
         escrow_id: Uuid,
         info_from_all: Vec<MultisigInfo>,
     ) -> Result<(), WalletManagerError> {
+        // PHASE 1: Acquire per-escrow lock to prevent concurrent operations
+        let lock = self.escrow_locks.as_ref().map(|locks| locks.get_lock(escrow_id));
+        let _escrow_guard = match lock.as_ref() {
+            Some(l) => Some(l.lock().await),
+            None => None,
+        };
+
         let escrow_id_str = escrow_id.to_string();
         info!("🔄 Round 1/2: Exchanging multisig info (make_multisig) for escrow {}", escrow_id);
 
@@ -1610,6 +1627,13 @@ impl WalletManager {
         &mut self,
         escrow_id: Uuid,
     ) -> Result<String, WalletManagerError> {
+        // PHASE 1: Acquire per-escrow lock to prevent concurrent operations
+        let lock = self.escrow_locks.as_ref().map(|locks| locks.get_lock(escrow_id));
+        let _escrow_guard = match lock.as_ref() {
+            Some(l) => Some(l.lock().await),
+            None => None,
+        };
+
         let escrow_id_str = escrow_id.to_string();
         info!("Finalizing multisig for escrow {}", escrow_id);
 
@@ -1669,6 +1693,13 @@ impl WalletManager {
         escrow_id: Uuid,
         destinations: Vec<monero_marketplace_common::types::TransferDestination>,
     ) -> Result<String, WalletManagerError> {
+        // PHASE 1: Acquire per-escrow lock to prevent concurrent operations
+        let lock = self.escrow_locks.as_ref().map(|locks| locks.get_lock(escrow_id));
+        let _escrow_guard = match lock.as_ref() {
+            Some(l) => Some(l.lock().await),
+            None => None,
+        };
+
         info!("release_funds called for escrow {}", escrow_id);
 
         // PRODUCTION: Reopen wallets for signing (they were closed after multisig setup)
@@ -1862,6 +1893,13 @@ impl WalletManager {
         escrow_id: Uuid,
         destinations: Vec<monero_marketplace_common::types::TransferDestination>,
     ) -> Result<String, WalletManagerError> {
+        // PHASE 1: Acquire per-escrow lock to prevent concurrent operations
+        let lock = self.escrow_locks.as_ref().map(|locks| locks.get_lock(escrow_id));
+        let _escrow_guard = match lock.as_ref() {
+            Some(l) => Some(l.lock().await),
+            None => None,
+        };
+
         info!("refund_funds called for escrow {}", escrow_id);
 
         // PRODUCTION: Reopen wallets for signing (they were closed after multisig setup)
